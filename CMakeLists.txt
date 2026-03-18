@@ -29,6 +29,11 @@ set(CORE_SOURCES
     src/core/Tokens.h
     src/core/ConfigManager.h
     src/core/ConfigManager.cpp
+    src/core/BasePage.h
+    src/core/PageFactoryRegistry.h
+    src/core/PageFactoryRegistry.cpp
+    src/core/PageNavigatorManager.h
+    src/core/PageNavigatorManager.cpp
 )
 
 # Models 数据模型
