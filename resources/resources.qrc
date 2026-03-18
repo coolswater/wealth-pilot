@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/app_icon.png</file>
+        <file>images/app_logo.png</file>
+        <file>images/appicon.ico</file>
+        <file>i18n/wealth-pilot_zh_CN.ts</file>
+        <file>style/theme_dark.qss</file>
+        <file>style/theme_eyecare.qss</file>
+        <file>style/theme_light.qss</file>
+        <file>fonts/Roboto-Bold.ttf</file>
+        <file>fonts/Roboto-Medium.ttf</file>
+        <file>fonts/Roboto-Regular.ttf</file>
+    </qresource>
+</RCC>

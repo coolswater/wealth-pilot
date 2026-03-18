@@ -1,0 +1,176 @@
+/**
+ * WealthPilot 浅色主题样式表
+ * 适合白天使用，高对比度
+ */
+
+/* ========== 全局样式 ========== */
+QWidget {
+    background-color: #F8FAFC;
+    color: #1F2937;
+    font-family: 'Roboto', 'Microsoft YaHei', sans-serif;
+    font-size: 14px;
+}
+
+/* ========== 图标按钮样式 ========== */
+IconButton,
+QPushButton[icon="true"] {
+    color: #6B7280;
+    background-color: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+IconButton:hover,
+QPushButton[icon="true"]:hover {
+    color: #1F2937;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+IconButton:pressed,
+IconButton:checked,
+QPushButton[icon="true"]:pressed,
+QPushButton[icon="true"]:checked {
+    color: #3B82F6;
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+IconButton:disabled,
+QPushButton[icon="true"]:disabled {
+    color: #D1D5DB;
+}
+
+/* ========== 导航项样式 ========== */
+NavItem,
+QPushButton[nav="true"] {
+    color: #6B7280;
+    background-color: transparent;
+    border: none;
+    border-left: 3px solid transparent;
+    padding: 12px 16px;
+    text-align: left;
+}
+
+NavItem:hover,
+QPushButton[nav="true"]:hover {
+    color: #1F2937;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+NavItem:checked,
+NavItem:pressed,
+QPushButton[nav="true"]:checked,
+QPushButton[nav="true"]:pressed {
+    color: #3B82F6;
+    background-color: rgba(59, 130, 246, 0.1);
+    border-left-color: #3B82F6;
+}
+
+/* ========== 工具栏按钮 ========== */
+QToolButton {
+    color: #6B7280;
+    background-color: transparent;
+    border: none;
+    border-radius: 6px;
+    padding: 6px;
+}
+
+QToolButton:hover {
+    color: #1F2937;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+QToolButton:pressed,
+QToolButton:checked {
+    color: #3B82F6;
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* ========== 涨跌颜色类 ========== */
+.up,
+[status="up"] {
+    color: #10B981;
+}
+
+.down,
+[status="down"] {
+    color: #EF4444;
+}
+
+/* ========== 状态颜色类 ========== */
+.success,
+[status="success"] {
+    color: #22C55E;
+}
+
+.warning,
+[status="warning"] {
+    color: #F97316;
+}
+
+.error,
+[status="error"] {
+    color: #EF4444;
+}
+
+.info,
+[status="info"] {
+    color: #0EA5E9;
+}
+
+/* ========== 侧边栏样式 ========== */
+SidebarWidget QPushButton {
+    color: #6B7280;
+    background-color: transparent;
+    border: none;
+    border-left: 3px solid transparent;
+    padding: 12px 16px;
+    text-align: left;
+}
+
+SidebarWidget QPushButton:hover {
+    color: #1F2937;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+SidebarWidget QPushButton:checked,
+SidebarWidget QPushButton:pressed {
+    color: #3B82F6;
+    background-color: rgba(59, 130, 246, 0.1);
+    border-left-color: #3B82F6;
+}
+
+/* ========== 菜单样式 ========== */
+QMenu {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+QMenu::item {
+    color: #1F2937;
+    padding: 10px 20px;
+    border-radius: 6px;
+}
+
+QMenu::item:selected {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+QMenu::icon {
+    color: #6B7280;
+}
+
+/* ========== 标签样式 ========== */
+QLabel[icon="true"] {
+    color: #6B7280;
+}
+
+QLabel[icon="true"][hover="true"] {
+    color: #1F2937;
+}
+
+QLabel[icon="true"][active="true"] {
+    color: #3B82F6;
+}
