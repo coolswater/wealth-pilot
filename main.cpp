@@ -33,6 +33,7 @@
 #include <QFontDatabase>
 #include <QLocale>
 #include <QTranslator>
+#include <core/ThemeManager.h>
 
 int main(int argc, char *argv[])
 {
@@ -73,6 +74,9 @@ int main(int argc, char *argv[])
     defaultFont.setStyleStrategy(QFont::PreferAntialias);  // 优先使用抗锯齿
     app.setFont(defaultFont);
     LOG_INFO("Custom fonts loaded successfully");
+
+    // ========== 初始化主题管理器 ==========
+    ThemeManager::instance()->initialize();
 
 
      // ========== 国际化 ==========

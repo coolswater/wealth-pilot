@@ -23,6 +23,12 @@ find_package(Qt6 REQUIRED COMPONENTS
 
 # Core 核心
 set(CORE_SOURCES
+    src/core/ThemeManager.h
+    src/core/ThemeManager.cpp
+    src/core/Singleton.h
+    src/core/Tokens.h
+    src/core/ConfigManager.h
+    src/core/ConfigManager.cpp
 )
 
 # Models 数据模型
