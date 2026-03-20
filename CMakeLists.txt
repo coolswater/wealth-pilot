@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(WealthPilot VERSION 1.1.0 LANGUAGES CXX)
+project(WealthPilot VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -34,6 +34,10 @@ set(CORE_SOURCES
     src/core/PageFactoryRegistry.cpp
     src/core/PageNavigatorManager.h
     src/core/PageNavigatorManager.cpp
+    src/core/AnimationManager.h
+    src/core/AnimationManager.cpp
+    src/core/IconProvider.h
+    src/core/IconProvider.cpp
 )
 
 # Models 数据模型
@@ -60,12 +64,21 @@ set(CONTROLLER_SOURCES
 
 # Widgets 控件
 set(WIDGET_SOURCES
+    src/views/widgets/BaseWidget.h
+    src/views/widgets/BaseWidget.cpp
+    src/views/widgets/SidebarWidget.h
+    src/views/widgets/SidebarWidget.cpp
+    src/views/widgets/SvgColorIcon.h
+    src/views/widgets/SvgColorIcon.cpp
+
 )
 
 # Views 视图
 set(VIEW_SOURCES
     src/views/mainWindow/MainWindow.cpp
     src/views/mainWindow/MainWindow.h
+    src/views/dashboard/Dashboard.h
+    src/views/dashboard/Dashboard.cpp
 )
 
 # Resources 资源

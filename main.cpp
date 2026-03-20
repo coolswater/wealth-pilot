@@ -24,7 +24,7 @@
  * 11. 进入主事件循环
  *
  * @author WealthPilot Team
- * @version 1.1.0
+ * @version 1.0.0
  * @date 2026
  */
 #include "src/views/mainWindow/MainWindow.h"
@@ -33,6 +33,7 @@
 #include <QFontDatabase>
 #include <QLocale>
 #include <QTranslator>
+#include <core/IconProvider.h>
 #include <core/ThemeManager.h>
 
 int main(int argc, char *argv[])
@@ -47,7 +48,7 @@ int main(int argc, char *argv[])
     // ========== 设置应用元信息 ==========
     app.setApplicationName("WealthPilot-领航财富您的AI助理");
     app.setOrganizationName("Hexd");
-    app.setApplicationVersion("1.1.0");
+    app.setApplicationVersion("1.0.0");
 
     // 设置应用ICon
     app.setWindowIcon(QIcon(":/images/app_icon.png"));
@@ -77,6 +78,10 @@ int main(int argc, char *argv[])
 
     // ========== 初始化主题管理器 ==========
     ThemeManager::instance()->initialize();
+
+    // 2. 初始化图标库（配置所有图标的颜色角色）
+    IconProvider::instance()->initialize();
+
 
 
      // ========== 国际化 ==========
