@@ -10,10 +10,12 @@
 #include <QApplication>
 #include <QFile>
 #include <QTextStream>
+#include "src/views/widgets/SvgColorIcon.h"
 
 struct ThemeManager::Impl {
     Theme currentTheme = Dark;
     QMap<QString, QColor> colors;
+    QSet<SvgColorIconEngine*> iconEngines;  // 新增：注册的图标引擎集合
 
     // 使用数组而不是QMap来存储颜色，提高访问速度
     const std::array<QColor, 13> darkColors = {
@@ -121,10 +123,14 @@ void ThemeManager::setTheme(Theme theme)
 
     ConfigManager::instance()->set(ConfigKeys::Theme, currentThemeName());
 
+    // 先让所有引擎准备批量更新（暂停缓存清理），再统一刷新，最后统一清理缓存
+    notifyIconEnginesThemeChanged();
+
     emit themeChanged(currentThemeName());
     applyCurrentTheme();
 
-    LOG_INFO(QString("Theme switched to: %1").arg(currentThemeName()));
+    LOG_INFO(QString("Theme switched to: %1 (updated %2 icon engines)")
+                 .arg(currentThemeName()).arg(d->iconEngines.size()));
 }
 
 void ThemeManager::setTheme(const QString& themeName)
@@ -212,6 +218,46 @@ void ThemeManager::loadThemeColors()
         }
     }
 }
+
+void ThemeManager::registerIconEngine(SvgColorIconEngine* engine)
+{
+    if (!engine || d->iconEngines.contains(engine))
+        return;
+
+    d->iconEngines.insert(engine);
+    LOG_DEBUG(QString("Registered icon engine, total: %1").arg(d->iconEngines.size()));
+}
+
+void ThemeManager::unregisterIconEngine(SvgColorIconEngine* engine)
+{
+    if (!engine)
+        return;
+
+    d->iconEngines.remove(engine);
+    LOG_DEBUG(QString("Unregistered icon engine, remaining: %1").arg(d->iconEngines.size()));
+}
+
+void ThemeManager::notifyIconEnginesThemeChanged()
+{
+    if (d->iconEngines.isEmpty())
+        return;
+
+    // 阶段1：所有引擎进入批量更新模式（暂停缓存清理）
+    for (auto* engine : d->iconEngines) {
+        engine->beginThemeUpdate();
+    }
+
+    // 阶段2：应用新主题颜色（此时不清理缓存，只更新颜色配置）
+    for (auto* engine : d->iconEngines) {
+        engine->applyThemeColors();
+    }
+
+    // 阶段3：结束批量更新（统一清空缓存，触发重绘）
+    for (auto* engine : d->iconEngines) {
+        engine->endThemeUpdate();
+    }
+}
+
 
 QColor ThemeManager::backgroundColor() const    { return d->colors.value("background"); }
 QColor ThemeManager::surfaceColor() const       { return d->colors.value("surface"); }

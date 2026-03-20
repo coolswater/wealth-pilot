@@ -14,6 +14,9 @@
 #include <QMap>
 #include <memory>
 
+// 前向声明，避免循环包含
+class SvgColorIconEngine;
+
 /**
  * @class ThemeManager
  * @brief 主题管理器
@@ -23,6 +26,8 @@ class ThemeManager : public QObject, public Singleton<ThemeManager>
     Q_OBJECT
     Q_ENUMS(Theme)
     friend class Singleton<ThemeManager>;
+    // 允许图标引擎访问私有注册接口
+    friend class SvgColorIconEngine;
 
 public:
     enum Theme {
@@ -67,6 +72,23 @@ private:
 
     void loadThemeColors();
     QString loadStylesheetFromFile() const;
+
+    /**
+     * @brief 注册图标引擎（由 SvgColorIconEngine 构造函数自动调用）
+     * 非线程安全，必须在主线程调用
+     */
+    void registerIconEngine(SvgColorIconEngine* engine);
+
+    /**
+     * @brief 注销图标引擎（由 SvgColorIconEngine 析构函数自动调用）
+     */
+    void unregisterIconEngine(SvgColorIconEngine* engine);
+
+    /**
+     * @brief 通知所有注册的图标引擎主题已变更
+     * 实现批量更新策略：begin → apply colors → end，避免重复渲染
+     */
+    void notifyIconEnginesThemeChanged();
 
     struct Impl;
     std::unique_ptr<Impl> d;
