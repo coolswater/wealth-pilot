@@ -35,6 +35,9 @@ public:
      */
     ~MainWindow();
 
+    // 更新最大化按钮图标（全屏/正常状态切换时调用）
+    void updateMaximizeButton(bool isMaximized);
+
 protected:
     /**
      * @brief 窗口大小变化事件
@@ -53,16 +56,12 @@ protected:
     void closeEvent(QCloseEvent *event) override;
 
 private slots:
+
     /**
      * @brief 侧边栏项点击处理
      * @param id 点击的项ID
      */
     void onSidebarItemClicked(const QString& id);
-
-    /**
-     * @brief 主题变化处理
-     */
-    void onThemeChanged();
 
 private:
     /**

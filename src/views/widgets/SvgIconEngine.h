@@ -33,18 +33,19 @@ enum class IconColorRole {
 };
 
 /**
- * @class SvgColorIconEngine
- * @brief SVG着色图标引擎（支持 ThemeManager 联动）
+ * @class SvgIconEngine
+ * @brief SVG 着色图标引擎（支持 ThemeManager 联动）
  *
  * 特性：
  * 1. 自动注册到 ThemeManager，生命周期自动管理
  * 2. 支持批量更新，主题切换时高性能刷新
  * 3. 语义化角色映射，适配不同主题模式
+ * 4. 线程安全的 LRU 缓存，优化渲染性能
  */
-class SvgColorIconEngine : public QIconEngine {
+class SvgIconEngine : public QIconEngine {
 public:
-    explicit SvgColorIconEngine(const QString& svgPath);
-    ~SvgColorIconEngine() override;
+    explicit SvgIconEngine(const QString& svgPath);
+    ~SvgIconEngine() override;
 
     // QIconEngine 接口实现
     void paint(QPainter* painter, const QRect& rect, QIcon::Mode mode, QIcon::State state) override;
@@ -71,7 +72,7 @@ public:
      *               false: 使用 setColor 设置的固定颜色
      */
     void setFollowTheme(bool follow);
-    bool isFollowingTheme() const { return m_followTheme; }
+    bool isFollowingTheme() const noexcept { return m_followTheme; }
 
     /**
      * @brief 设置指定状态的颜色角色
@@ -123,7 +124,7 @@ private:
     bool m_isValid = false;
     bool m_followTheme = false;     // 是否跟随主题
     bool m_batchUpdating = false;   // 是否处于批量更新模式（暂停缓存清理）
-    bool m_pendingRefresh = false;    // 批量期间有颜色更新待应用
+    bool m_pendingRefresh = false;   // 批量期间有颜色更新待应用
 
     // PIMPL：LRU 缓存实现（线程安全）
     class CachePrivate;
@@ -132,7 +133,7 @@ private:
 
 /**
  * @class SvgColorIcon
- * @brief SVG着色图标包装类（流式 API）
+ * @brief SVG 着色图标包装类（流式 API）
  *
  * 使用示例：
  * @code
@@ -180,8 +181,8 @@ public:
 
 private:
     // mutable 允许在 const 方法中延迟初始化（逻辑 const）
-    mutable QSharedPointer<SvgColorIconEngine> m_engine;
-    mutable std::optional<QIcon> m_iconCache;  // QIcon 包装器缓存
+    mutable QSharedPointer<SvgIconEngine> m_engine;
+    mutable QScopedPointer<QIcon> m_iconCache;  // 确保是指针类型
 
     void ensureEngine() const;
 };

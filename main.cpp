@@ -33,7 +33,6 @@
 #include <QFontDatabase>
 #include <QLocale>
 #include <QTranslator>
-#include <core/IconProvider.h>
 #include <core/ThemeManager.h>
 
 int main(int argc, char *argv[])
@@ -77,12 +76,8 @@ int main(int argc, char *argv[])
     LOG_INFO("Custom fonts loaded successfully");
 
     // ========== 初始化主题管理器 ==========
+    // 初始化主题管理器
     ThemeManager::instance()->initialize();
-
-    // 2. 初始化图标库（配置所有图标的颜色角色）
-    IconProvider::instance()->initialize();
-
-
 
      // ========== 国际化 ==========
     QTranslator translator;

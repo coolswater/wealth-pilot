@@ -15,7 +15,7 @@
 #include <memory>
 
 // 前向声明，避免循环包含
-class SvgColorIconEngine;
+class SvgIconEngine;
 
 /**
  * @class ThemeManager
@@ -27,7 +27,7 @@ class ThemeManager : public QObject, public Singleton<ThemeManager>
     Q_ENUMS(Theme)
     friend class Singleton<ThemeManager>;
     // 允许图标引擎访问私有注册接口
-    friend class SvgColorIconEngine;
+    friend class SvgIconEngine;
 
 public:
     enum Theme {
@@ -61,7 +61,7 @@ public:
     QColor infoColor() const;
 
 signals:
-    void themeChanged(const QString& theme);
+    void themeChanged(const ::QString& theme);
 
 private:
     explicit ThemeManager(QObject *parent = nullptr);
@@ -74,15 +74,15 @@ private:
     QString loadStylesheetFromFile() const;
 
     /**
-     * @brief 注册图标引擎（由 SvgColorIconEngine 构造函数自动调用）
+     * @brief 注册图标引擎（由 SvgIconEngine 构造函数自动调用）
      * 非线程安全，必须在主线程调用
      */
-    void registerIconEngine(SvgColorIconEngine* engine);
+    void registerIconEngine(SvgIconEngine* engine);
 
     /**
-     * @brief 注销图标引擎（由 SvgColorIconEngine 析构函数自动调用）
+     * @brief 注销图标引擎（由 SvgIconEngine 析构函数自动调用）
      */
-    void unregisterIconEngine(SvgColorIconEngine* engine);
+    void unregisterIconEngine(SvgIconEngine* engine);
 
     /**
      * @brief 通知所有注册的图标引擎主题已变更

@@ -10,12 +10,12 @@
 #include <QApplication>
 #include <QFile>
 #include <QTextStream>
-#include "src/views/widgets/SvgColorIcon.h"
+#include "src/views/widgets/SvgIconEngine.h"
 
 struct ThemeManager::Impl {
     Theme currentTheme = Dark;
     QMap<QString, QColor> colors;
-    QSet<SvgColorIconEngine*> iconEngines;  // 新增：注册的图标引擎集合
+    QSet<SvgIconEngine*> iconEngines;  // 新增：注册的图标引擎集合
 
     // 使用数组而不是QMap来存储颜色，提高访问速度
     const std::array<QColor, 13> darkColors = {
@@ -219,7 +219,7 @@ void ThemeManager::loadThemeColors()
     }
 }
 
-void ThemeManager::registerIconEngine(SvgColorIconEngine* engine)
+void ThemeManager::registerIconEngine(SvgIconEngine* engine)
 {
     if (!engine || d->iconEngines.contains(engine))
         return;
@@ -228,7 +228,7 @@ void ThemeManager::registerIconEngine(SvgColorIconEngine* engine)
     LOG_DEBUG(QString("Registered icon engine, total: %1").arg(d->iconEngines.size()));
 }
 
-void ThemeManager::unregisterIconEngine(SvgColorIconEngine* engine)
+void ThemeManager::unregisterIconEngine(SvgIconEngine* engine)
 {
     if (!engine)
         return;

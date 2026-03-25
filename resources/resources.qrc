@@ -71,5 +71,7 @@
         <file>icons/portfolio.svg</file>
         <file>icons/news.svg</file>
         <file>icons/watchlist.svg</file>
+        <file>images/app_vertical_logo.png</file>
+        <file>icons/restore.svg</file>
     </qresource>
 </RCC>

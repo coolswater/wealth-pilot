@@ -1,6 +1,4 @@
 #include "SidebarWidget.h"
-
-#include "SvgColorIcon.h"
 #include "utils/Logger.h"
 
 #include <QPushButton>
@@ -59,9 +57,10 @@ void SidebarWidget::addItem(const QString& id, const QString& text, const QStrin
 {
     // 旧接口兼容：创建普通 QIcon（不跟随主题，或在此处包装为 SvgColorIcon）
     // 推荐：即使是路径，也包装为 SvgColorIcon 以支持主题
-    SvgColorIcon themedIcon(iconPath);
-    themedIcon.followTheme();  // 默认跟随主题
-    addItem(id, text, themedIcon);
+    // SvgColorIconEngine themedIcon(iconPath);
+    // themedIcon.followTheme();  // 默认跟随主题
+    // addItem(id, text);
+    LOG_INFO("ADDITEM");
 }
 
 void SidebarWidget::setCollapseIcons(const QIcon& left, const QIcon& right)
@@ -213,8 +212,11 @@ void SidebarWidget::animateCollapse(bool collapse)
         d->toggleBtn->setIcon(QIcon(collapse ? ":/icons/chevron_right.svg" : ":/icons/chevron_left.svg"));
 
         // 显示/隐藏文字
-        for (auto btn : d->items) {
+        auto it = d->items.begin();
+        while (it != d->items.end()) {
+            auto btn = it.value(); // 对于QMap，迭代器的value()方法获取值（你的按钮指针）
             btn->setText(collapse ? "" : btn->objectName());
+            ++it;
         }
         d->logoWidget->setVisible(!collapse);
     });

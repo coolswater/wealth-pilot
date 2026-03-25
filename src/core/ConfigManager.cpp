@@ -15,7 +15,6 @@
 #ifdef Q_OS_WIN
 #include <windows.h>
 #include <dpapi.h>
-#pragma comment(lib, "crypt32.lib")
 #endif
 
 ConfigManager::ConfigManager()

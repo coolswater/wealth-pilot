@@ -26,7 +26,6 @@ set(CORE_SOURCES
     src/core/ThemeManager.h
     src/core/ThemeManager.cpp
     src/core/Singleton.h
-    src/core/Tokens.h
     src/core/ConfigManager.h
     src/core/ConfigManager.cpp
     src/core/BasePage.h
@@ -36,8 +35,6 @@ set(CORE_SOURCES
     src/core/PageNavigatorManager.cpp
     src/core/AnimationManager.h
     src/core/AnimationManager.cpp
-    src/core/IconProvider.h
-    src/core/IconProvider.cpp
 )
 
 # Models 数据模型
@@ -68,8 +65,10 @@ set(WIDGET_SOURCES
     src/views/widgets/BaseWidget.cpp
     src/views/widgets/SidebarWidget.h
     src/views/widgets/SidebarWidget.cpp
-    src/views/widgets/SvgColorIcon.h
-    src/views/widgets/SvgColorIcon.cpp
+    src/views/widgets/SvgIconEngine.h
+    src/views/widgets/SvgIconEngine.cpp
+    src/views/widgets/TitleBarWidget.h
+    src/views/widgets/TitleBarWidget.cpp
 
 )
 

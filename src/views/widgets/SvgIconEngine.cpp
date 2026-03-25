@@ -1,4 +1,4 @@
-#include "SvgColorIcon.h"
+#include "SvgIconEngine.h"
 #include <QSvgRenderer>
 #include <QPainter>
 #include <QFile>
@@ -13,7 +13,7 @@
 //======================
 // LRU 缓存私有实现
 //======================
-class SvgColorIconEngine::CachePrivate {
+class SvgIconEngine::CachePrivate {
 public:
     struct Entry {
         QPixmap pixmap;
@@ -98,16 +98,18 @@ private:
 };
 
 //======================
-// SvgColorIconEngine 实现
+// SvgIconEngine 实现
 //======================
 
-SvgColorIconEngine::SvgColorIconEngine(const QString& svgPath)
+SvgIconEngine::SvgIconEngine(const QString& svgPath)
     : m_svgPath(svgPath), m_cache(new CachePrivate())
 {
     // 初始化默认颜色和角色
-    for (size_t i = 0; i < 4; ++i) {
-        m_colors[i] = QColor(0, 0, 0);
-        m_roles[i] = IconColorRole::Custom;
+    for (auto& color : m_colors) {
+        color = QColor(0, 0, 0);
+    }
+    for (auto& role : m_roles) {
+        role = IconColorRole::Custom;
     }
 
     // 验证文件存在性（延迟加载内容）
@@ -120,27 +122,29 @@ SvgColorIconEngine::SvgColorIconEngine(const QString& svgPath)
     registerToThemeManager();
 }
 
-SvgColorIconEngine::~SvgColorIconEngine() {
+SvgIconEngine::~SvgIconEngine() {
     // 自动注销（避免野指针）
     unregisterFromThemeManager();
 }
 
 // 自动注册/注销逻辑
-void SvgColorIconEngine::registerToThemeManager() {
+void SvgIconEngine::registerToThemeManager() {
     if (ThemeManager* tm = ThemeManager::instance()) {
         tm->registerIconEngine(this);
+    } else {
+        qWarning() << "ThemeManager not available, icon engine not registered";
     }
 }
 
-void SvgColorIconEngine::unregisterFromThemeManager() {
+void SvgIconEngine::unregisterFromThemeManager() {
     if (ThemeManager* tm = ThemeManager::instance()) {
         tm->unregisterIconEngine(this);
     }
 }
 
 // QIconEngine 接口实现
-void SvgColorIconEngine::paint(QPainter* painter, const QRect& rect,
-                               QIcon::Mode mode, QIcon::State state) {
+void SvgIconEngine::paint(QPainter* painter, const QRect& rect,
+                          QIcon::Mode mode, QIcon::State state) {
     Q_UNUSED(state)
     if (!m_isValid) return;
 
@@ -153,7 +157,7 @@ void SvgColorIconEngine::paint(QPainter* painter, const QRect& rect,
     }
 }
 
-QPixmap SvgColorIconEngine::pixmap(const QSize& size, QIcon::Mode mode, QIcon::State state) {
+QPixmap SvgIconEngine::pixmap(const QSize& size, QIcon::Mode mode, QIcon::State state) {
     Q_UNUSED(state)
     if (!m_isValid || size.isEmpty()) return QPixmap();
 
@@ -180,26 +184,26 @@ QPixmap SvgColorIconEngine::pixmap(const QSize& size, QIcon::Mode mode, QIcon::S
     return result;
 }
 
-QSize SvgColorIconEngine::actualSize(const QSize& size, QIcon::Mode, QIcon::State) {
+QSize SvgIconEngine::actualSize(const QSize& size, QIcon::Mode, QIcon::State) {
     return size;  // SVG 支持任意缩放
 }
 
-QIconEngine* SvgColorIconEngine::clone() const {
-    auto* clone = new SvgColorIconEngine(m_svgPath);
+QIconEngine* SvgIconEngine::clone() const {
+    auto* clone = new SvgIconEngine(m_svgPath);
     clone->m_colors = m_colors;
     clone->m_roles = m_roles;
-    clone->m_svgData = m_svgData;
+    clone->m_svgData = m_svgData;  // 确保复制了 SVG 数据
     clone->m_isValid = m_isValid;
     clone->m_followTheme = m_followTheme;
-    // 注意：不克隆缓存（避免内存爆炸，新实例独立缓存）
+    // 注意：m_cache 不复制（避免缓存膨胀）
     return clone;
 }
 
-QString SvgColorIconEngine::key() const {
+QString SvgIconEngine::key() const {
     return QLatin1String("svgcolor");
 }
 
-bool SvgColorIconEngine::read(QDataStream& in) {
+bool SvgIconEngine::read(QDataStream& in) {
     in >> m_svgPath;
     quint32 follow;
     in >> follow;
@@ -227,7 +231,7 @@ bool SvgColorIconEngine::read(QDataStream& in) {
     return m_isValid;
 }
 
-bool SvgColorIconEngine::write(QDataStream& out) const {
+bool SvgIconEngine::write(QDataStream& out) const {
     out << m_svgPath;
     out << static_cast<quint32>(m_followTheme);
     for (const auto& color : m_colors) {
@@ -240,7 +244,7 @@ bool SvgColorIconEngine::write(QDataStream& out) const {
 }
 
 // 基础颜色设置（固定颜色模式）
-void SvgColorIconEngine::setColor(QIcon::Mode mode, const QColor& color) {
+void SvgIconEngine::setColor(QIcon::Mode mode, const QColor& color) {
     if (mode < QIcon::Normal || mode > QIcon::Selected || !color.isValid())
         return;
 
@@ -253,25 +257,25 @@ void SvgColorIconEngine::setColor(QIcon::Mode mode, const QColor& color) {
     }
 }
 
-QColor SvgColorIconEngine::color(QIcon::Mode mode) const {
+QColor SvgIconEngine::color(QIcon::Mode mode) const {
     if (mode >= QIcon::Normal && mode <= QIcon::Selected)
         return m_colors[mode];
     return QColor();
 }
 
-void SvgColorIconEngine::clearCache() {
+void SvgIconEngine::clearCache() {
     QMutexLocker locker(&m_cache->mutex);
     m_cache->clear();
 }
 
-void SvgColorIconEngine::setCacheLimit(int maxCostKB) {
+void SvgIconEngine::setCacheLimit(int maxCostKB) {
     QMutexLocker locker(&m_cache->mutex);
     m_cache->setMaxCost(maxCostKB);
 }
 
 // ========== 主题联动核心实现 ==========
 
-void SvgColorIconEngine::setFollowTheme(bool follow) {
+void SvgIconEngine::setFollowTheme(bool follow) {
     if (m_followTheme == follow) return;
 
     m_followTheme = follow;
@@ -301,7 +305,7 @@ void SvgColorIconEngine::setFollowTheme(bool follow) {
     }
 }
 
-void SvgColorIconEngine::setColorRole(QIcon::Mode mode, IconColorRole role) {
+void SvgIconEngine::setColorRole(QIcon::Mode mode, IconColorRole role) {
     if (mode < QIcon::Normal || mode > QIcon::Selected) return;
     m_roles[mode] = role;
 
@@ -311,7 +315,7 @@ void SvgColorIconEngine::setColorRole(QIcon::Mode mode, IconColorRole role) {
     }
 }
 
-IconColorRole SvgColorIconEngine::colorRole(QIcon::Mode mode) const {
+IconColorRole SvgIconEngine::colorRole(QIcon::Mode mode) const {
     if (mode >= QIcon::Normal && mode <= QIcon::Selected)
         return m_roles[mode];
     return IconColorRole::Custom;
@@ -321,7 +325,7 @@ IconColorRole SvgColorIconEngine::colorRole(QIcon::Mode mode) const {
  * @brief 应用当前主题颜色（由 ThemeManager 批量调用）
  * 根据 m_roles 中定义的角色，从 ThemeManager 获取实际颜色并更新 m_colors
  */
-void SvgColorIconEngine::applyThemeColors() {
+void SvgIconEngine::applyThemeColors() {
     if (!m_followTheme) return;
 
     bool colorsChanged = false;
@@ -357,8 +361,12 @@ void SvgColorIconEngine::applyThemeColors() {
 /**
  * @brief 将颜色角色解析为实际 QColor（访问 ThemeManager 单例）
  */
-QColor SvgColorIconEngine::resolveColor(IconColorRole role) const {
+QColor SvgIconEngine::resolveColor(IconColorRole role) const {
     ThemeManager* tm = ThemeManager::instance();
+    if (!tm) {
+        qWarning() << "ThemeManager not available, using fallback color";
+        return QColor(0, 0, 0);  // 返回默认黑色
+    }
     if (!tm) return QColor();
 
     switch (role) {
@@ -377,12 +385,12 @@ QColor SvgColorIconEngine::resolveColor(IconColorRole role) const {
 }
 
 // 批量更新控制（由 ThemeManager 统一调度）
-void SvgColorIconEngine::beginThemeUpdate() {
+void SvgIconEngine::beginThemeUpdate() {
     m_batchUpdating = true;
     m_pendingRefresh = false;
 }
 
-void SvgColorIconEngine::endThemeUpdate() {
+void SvgIconEngine::endThemeUpdate() {
     m_batchUpdating = false;
     // 如果批量期间有颜色更新，统一清空缓存一次（避免多次清空）
     if (m_pendingRefresh) {
@@ -395,8 +403,8 @@ void SvgColorIconEngine::endThemeUpdate() {
 // 私有工具方法
 //======================
 
-QString SvgColorIconEngine::cacheKey(const QSize& size, QIcon::Mode mode,
-                                     const QColor& color, qreal dpr) {
+QString SvgIconEngine::cacheKey(const QSize& size, QIcon::Mode mode,
+                                const QColor& color, qreal dpr) {
     // 格式: "w:h:mode:rgba:dpr"（唯一标识缓存条目）
     return QString("%1:%2:%3:%4:%5")
         .arg(size.width())
@@ -406,7 +414,7 @@ QString SvgColorIconEngine::cacheKey(const QSize& size, QIcon::Mode mode,
         .arg(static_cast<int>(dpr * 100));
 }
 
-QPixmap SvgColorIconEngine::renderPixmap(const QSize& size, QIcon::Mode mode, qreal dpr) {
+QPixmap SvgIconEngine::renderPixmap(const QSize& size, QIcon::Mode mode, qreal dpr) {
     // 延迟加载 SVG 数据（首次渲染时才读取文件，避免构造时 IO）
     if (m_svgData.isEmpty() && !m_svgPath.isEmpty()) {
         QFile file(m_svgPath);
@@ -446,7 +454,7 @@ QPixmap SvgColorIconEngine::renderPixmap(const QSize& size, QIcon::Mode mode, qr
  * 遍历像素，保留 Alpha 通道，替换 RGB 为目标颜色
  * O(n) 复杂度，比 QPainter::CompositionMode_SourceIn 快 3-5 倍（小图标场景）
  */
-void SvgColorIconEngine::tintImage(QImage& image, const QColor& color) {
+void SvgIconEngine::tintImage(QImage& image, const QColor& color) {
     const QRgb targetRgb = color.rgb();
     const int width = image.width();
     const int height = image.height();
@@ -469,18 +477,19 @@ void SvgColorIconEngine::tintImage(QImage& image, const QColor& color) {
 //======================
 
 SvgColorIcon::SvgColorIcon(const QString& svgPath)
-    : m_engine(new SvgColorIconEngine(svgPath)) {}
+    : m_engine(new SvgIconEngine(svgPath)) {}
 
 void SvgColorIcon::ensureEngine() const {
     if (!m_engine) {
-        m_engine.reset(new SvgColorIconEngine(QString()));
+        m_engine.reset(new SvgIconEngine(QString()));
     }
 }
 
 QIcon SvgColorIcon::toIcon() const {
     if (!m_iconCache) {
         ensureEngine();
-        m_iconCache = QIcon(m_engine.data());
+        // 修复：使用 clone() 创建副本，避免双重删除
+        m_iconCache.reset(new QIcon(m_engine->clone()));
     }
     return *m_iconCache;
 }

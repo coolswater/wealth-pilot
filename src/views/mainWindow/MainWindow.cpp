@@ -9,25 +9,29 @@
  */
 
 #include "MainWindow.h"
-#include "../../core/Tokens.h"
 #include "utils/Logger.h"
 
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QStackedWidget>
 #include <QCloseEvent>
+#include <QPushButton>
 
 #include <core/ConfigManager.h>
-#include <core/IconProvider.h>
 #include <core/PageFactoryRegistry.h>
 #include <core/PageNavigatorManager.h>
 #include <core/ThemeManager.h>
 #include <views/dashboard/Dashboard.h>
 #include <views/widgets/SidebarWidget.h>
-
-using namespace Tokens;
+#include <views/widgets/TitleBarWidget.h>
 
 struct MainWindow::Impl {
+
+    QHBoxLayout* topLayout = nullptr;           // 顶部布局
+    QHBoxLayout* contentLayout = nullptr;       // 内容布局
+    QHBoxLayout* statusBarLayout = nullptr;     // 状态栏布局
+    TitleBarWidget *m_titleBarWidget;           // 自定义标题栏实例
+
     SidebarWidget* sidebar = nullptr;
     QStackedWidget* contentStack = nullptr;
     QWidget* centralWidget = nullptr;
@@ -41,8 +45,14 @@ MainWindow::MainWindow(QWidget *parent)
     , d(std::make_unique<Impl>())
 {
     setWindowTitle("WealthPilot - 智能投资管理");
-    setMinimumSize(Size::WindowMinWidth, Size::WindowMinHeight);
-    resize(Size::WindowDefaultWidth, Size::WindowDefaultHeight);
+    setMinimumSize(1280, 800);
+    resize(1600, 900);
+
+    // 设置窗口无边框属性（关键标志）
+    setWindowFlags(Qt::Window | Qt::FramelessWindowHint |
+                   Qt::WindowMinimizeButtonHint |
+                   Qt::WindowMaximizeButtonHint |
+                   Qt::WindowCloseButtonHint);
 
     // 严格按照依赖顺序初始化
     setupUI();          // 1. 构建基础UI框架
@@ -53,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow() = default;
 
+
 /**
  * 构建UI界面
  * @brief MainWindow::setupUI
@@ -62,27 +73,42 @@ void MainWindow::setupUI()
     d->centralWidget = new QWidget(this);
     setCentralWidget(d->centralWidget);
 
-    // 主布局：侧边栏 + 内容区（水平排列）
-    QHBoxLayout* mainLayout = new QHBoxLayout(d->centralWidget);
+    // TODO:删除
+    d->centralWidget->setStyleSheet("border:1px solid red;");
+
+    // // 主布局： 上中下布局
+    QVBoxLayout* mainLayout = new QVBoxLayout(d->centralWidget);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
 
-    // 1. 左侧导航栏
+    // 1、标题栏
+    d->m_titleBarWidget = new TitleBarWidget(this);
+    mainLayout->addWidget(d->m_titleBarWidget);
+
+    // 2、内容布局
+    d->contentLayout = new QHBoxLayout();
+    mainLayout->addLayout(d->contentLayout);
+    d->contentLayout->setContentsMargins(0, 0, 0, 0);
+    d->contentLayout->setSpacing(0);
+
+    // 2.1 左侧导航栏
     d->sidebar = new SidebarWidget(this);
-    d->sidebar->setFixedWidth(Size::SidebarExpanded);
-    mainLayout->addWidget(d->sidebar);
+    d->sidebar->setFixedWidth(200);
+    d->contentLayout->addWidget(d->sidebar);
 
-    // 2. 中间内容区
+    // // 2.2 内容区
     QWidget* contentArea = new QWidget(this);
-    mainLayout->addWidget(contentArea, 1);  // 拉伸因子1占据剩余空间
+    // // 拉伸因子1占据剩余空间
+    d->contentLayout->addWidget(contentArea, 1);
 
-    QVBoxLayout* contentLayout = new QVBoxLayout(contentArea);
-    contentLayout->setContentsMargins(0, 0, 0, 0);
-    contentLayout->setSpacing(0);
-
-    // 页面堆栈容器
+    // 2.3 页面堆栈容器
     d->contentStack = new QStackedWidget(contentArea);
-    contentLayout->addWidget(d->contentStack);
+    d->contentLayout->addWidget(d->contentStack);
+
+    // // 3、底部状态栏布局
+    // d->statusBarLayout = new QHBoxLayout(this);
+    // mainLayout->addLayout(d->statusBarLayout);
+
 
     // 初始化导航器（绑定到UI容器）
     PageNavigatorManager::instance()->initialize(d->contentStack);
@@ -111,9 +137,6 @@ void MainWindow::createPages()
 
     // 配置缓存策略（与注册分离，支持运行时动态调整）
     navigator->registerCachePolicy(QStringLiteral("dashboard"), CachePolicy::StrongCache);
-
-    // 预加载首页（提升感知性能）
-    navigator->preloadPage(QStringLiteral("dashboard"));
 
     // 预加载首页（提升感知性能）
     navigator->preloadPage(QStringLiteral("dashboard"));
@@ -173,10 +196,6 @@ void MainWindow::connectSignals()
                 PageNavigatorManager::instance()->navigateTo(pageId);
             });
 
-    // 主题变更响应
-    connect(ThemeManager::instance(), &ThemeManager::themeChanged,
-            this, &MainWindow::onThemeChanged);
-
     // 导航状态监听（可选：用于调试或状态栏显示）
     auto *navigator = PageNavigatorManager::instance();
     connect(navigator, &PageNavigatorManager::pageChanged,
@@ -195,19 +214,20 @@ void MainWindow::adjustLayout()
 {
     int width = this->width();
 
-    if (width < Breakpoint::LG && d->aiPanelVisible) {
+    if (width < Tokens::Breakpoint::LG && d->aiPanelVisible) {
         // hideAIPanel();
-    } else if (width >= Breakpoint::XL && !d->aiPanelVisible) {
+    } else if (width >= Tokens::Breakpoint::XL && !d->aiPanelVisible) {
         // showAIPanel();
     }
 };
+
 
 
 // 窗口大小变化事件
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     QMainWindow::resizeEvent(event);
-    // adjustLayout();
+    adjustLayout();
 }
 
 // 窗口关闭事件
@@ -229,10 +249,4 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::onSidebarItemClicked(const QString& id)
 {
     PageNavigatorManager::instance()->navigateTo(id);
-}
-
-// 触发切换主题事件
-void MainWindow::onThemeChanged()
-{
-    ThemeManager::instance()->applyCurrentTheme();
 }
