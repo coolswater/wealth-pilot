@@ -17,6 +17,7 @@ find_package(Qt6 REQUIRED COMPONENTS
     Charts
     Concurrent
     Svg
+    StateMachine
 )
 
 # ==================== 源文件分组 ====================
@@ -67,9 +68,10 @@ set(WIDGET_SOURCES
     src/views/widgets/SidebarWidget.cpp
     src/views/widgets/SvgIconEngine.h
     src/views/widgets/SvgIconEngine.cpp
+    src/views/widgets/SvgIconWidget.h
+    src/views/widgets/SvgIconWidget.cpp
     src/views/widgets/TitleBarWidget.h
     src/views/widgets/TitleBarWidget.cpp
-
 )
 
 # Views 视图
@@ -103,7 +105,7 @@ set(SOURCES
 
 # 创建可执行文件
 add_executable(WealthPilot WIN32 MACOSX_BUNDLE ${SOURCES}
-    src/views/widgets/SvgIcon.h src/views/widgets/SvgIcon.cpp)
+)
 
 # 包含目录
 target_include_directories(WealthPilot PRIVATE
@@ -122,6 +124,7 @@ target_link_libraries(WealthPilot PRIVATE
     Qt6::Charts
     Qt6::Concurrent
     Qt6::Svg
+    Qt6::StateMachine
 )
 
 # Windows 平台特定库

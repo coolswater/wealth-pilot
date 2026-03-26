@@ -1,6 +1,5 @@
 // TitleBarWidget.cpp
-#include "SvgIcon.h"
-#include "SvgIconEngine.h"
+#include "SvgIconWidget.h"
 #include "TitleBarWidget.h"
 
 #include <QLabel>
@@ -92,7 +91,7 @@ void TitleBarWidget::setupUI()
     }
 
     // 最小化按钮SvgColorIcon
-    QIcon minIcon = SvgIcon::themedIcon(":/icons/minus.svg", "foreground");
+    QIcon minIcon = SvgIconWidget::themedIcon(":/icons/minus.svg", "foreground");
     d->m_minimizeBtn = new QPushButton(this);
     d->m_minimizeBtn->setProperty("icon", "true");
     d->m_minimizeBtn->setIcon(minIcon);
@@ -101,7 +100,7 @@ void TitleBarWidget::setupUI()
     layout->addWidget(d->m_minimizeBtn);
 
     // 最大化/还原按钮
-    QIcon maxIcon = SvgIcon::themedIcon(":/icons/maximize.svg", "foreground");
+    QIcon maxIcon = SvgIconWidget::themedIcon(":/icons/maximize.svg", "foreground");
     d->m_maximizeBtn = new QPushButton(this);
     d->m_maximizeBtn->setProperty("icon", "true");
     d->m_maximizeBtn->setIcon(maxIcon);
@@ -110,7 +109,7 @@ void TitleBarWidget::setupUI()
     layout->addWidget(d->m_maximizeBtn);
 
     // 关闭按钮
-    QIcon closeIcon = SvgIcon::themedIcon(":/icons/close.svg", "foreground");
+    QIcon closeIcon = SvgIconWidget::themedIcon(":/icons/close.svg", "foreground");
     d->m_closeBtn = new QPushButton(this);
     d->m_closeBtn->setProperty("icon", "true");
     d->m_closeBtn->setIcon(closeIcon);
@@ -168,10 +167,10 @@ void TitleBarWidget::updateMaximizeButton(bool isMaximized)
 {
     d->m_isMaximized = isMaximized;
     if (isMaximized) {
-        QIcon restoreIcon = SvgIcon::themedIcon(":/icons/restore.svg", "foreground");
+        QIcon restoreIcon = SvgIconWidget::themedIcon(":/icons/restore.svg", "foreground");
         d->m_maximizeBtn->setIcon(restoreIcon);
     } else {
-        QIcon maxIcon = SvgIcon::themedIcon(":/icons/maximize.svg", "foreground");
+        QIcon maxIcon = SvgIconWidget::themedIcon(":/icons/maximize.svg", "foreground");
         d->m_maximizeBtn->setIcon(maxIcon);  // 最大化图标
     }
 }

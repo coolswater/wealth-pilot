@@ -1,17 +1,16 @@
-    #ifndef SVGICON_H
-#define SVGICON_H
+#ifndef SVGICONWIDGET_H
+#define SVGICONWIDGET_H
 #include <QIcon>
 #include <QColor>
 #include <QString>
-#include "SvgIconEngine.h"
-#include "src/core/ThemeManager.h"
+
 /**
      * @brief SVG图标便捷工具类
      *
      * 提供更简洁的API来创建和使用SVG图标
      * 支持主题自动适配
      */
-class SvgIcon
+class SvgIconWidget
 {
 public:
     /**
@@ -28,14 +27,7 @@ public:
          * @return QIcon对象
          */
     static QIcon themedIcon(const QString& path, const QString& colorRole);
-    /**
-         * @brief 创建上涨状态图标（红色）
-         */
-    static QIcon riseIcon(const QString& path);
-    /**
-         * @brief 创建下跌状态图标（绿色）
-         */
-    static QIcon fallIcon(const QString& path);
+
     /**
          * @brief 批量创建图标并预渲染
          * @param paths SVG文件路径列表
@@ -48,4 +40,4 @@ public:
          */
     static void clearCache();
 };
-#endif // SVGICON_H
+#endif // SVGICONWIDGET_H

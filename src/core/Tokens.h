@@ -29,47 +29,47 @@ namespace Tokens {
 
 namespace Colors {
     // ========== 主色调 ==========
-    inline const QString Primary = "#3B82F6";        ///< 主色（蓝色）- 品牌标识
-    inline const QString PrimaryHover = "#2563EB";  ///< 主色悬停
-    inline const QString PrimaryLight = "#60A5FA";  ///< 浅主色
-    inline const QString PrimaryDark = "#1D4ED8";   ///< 深主色
+    inline const QString Primary = "#3B82F6";        //< 主色（蓝色）- 品牌标识
+    inline const QString PrimaryHover = "#2563EB";  //< 主色悬停
+    inline const QString PrimaryLight = "#60A5FA";  //< 浅主色
+    inline const QString PrimaryDark = "#1D4ED8";   //< 深主色
 
     // ========== 辅助色 ==========
-    inline const QString Secondary = "#6366F1";     ///< 辅助色（紫色）
+    inline const QString Secondary = "#6366F1";     //< 辅助色（紫色）
     inline const QString SecondaryLight = "#818CF8";
 
     // ========== 功能色 ==========
-    inline const QString Success = "#10B981";       ///< 成功/上涨
+    inline const QString Success = "#10B981";       //< 成功/上涨
     inline const QString SuccessLight = "#34D399";
     inline const QString SuccessBg = "rgba(16, 185, 129, 0.1)";
 
-    inline const QString Danger = "#EF4444";        ///< 错误/下跌
+    inline const QString Danger = "#EF4444";        //< 错误/下跌
     inline const QString DangerLight = "#F87171";
     inline const QString DangerBg = "rgba(239, 68, 68, 0.1)";
 
-    inline const QString Warning = "#F97316";       ///< 警告
+    inline const QString Warning = "#F97316";       //< 警告
     inline const QString WarningLight = "#FB923C";
     inline const QString WarningBg = "rgba(249, 115, 22, 0.1)";
 
-    inline const QString Info = "#0EA5E9";          ///< 信息
+    inline const QString Info = "#0EA5E9";          //< 信息
     inline const QString InfoLight = "#38BDF8";
     inline const QString InfoBg = "rgba(14, 165, 233, 0.1)";
 
     // ========== 背景色 ==========
-    inline const QString BgBase = "#1A1F2E";        ///< 主背景
-    inline const QString BgSurface = "#0F1419";     ///< 表面色（侧边栏等）
-    inline const QString BgElevated = "#242937";    ///< 抬升色（卡片、弹窗）
+    inline const QString BgBase = "#1A1F2E";        //< 主背景
+    inline const QString BgSurface = "#0F1419";     //< 表面色（侧边栏等）
+    inline const QString BgElevated = "#242937";    //< 抬升色（卡片、弹窗）
     inline const QString BgHover = "rgba(255, 255, 255, 0.05)";
     inline const QString BgActive = "rgba(59, 130, 246, 0.15)";
     inline const QString BgOverlay = "rgba(0, 0, 0, 0.5)";
     inline const QString BgCard = "rgba(255, 255, 255, 0.03)";
 
     // ========== 文字色 ==========
-    inline const QString TextPrimary = "#FFFFFF";      ///< 主文字
-    inline const QString TextSecondary = "#9CA3AF";    ///< 次要文字
-    inline const QString TextTertiary = "#6B7280";     ///< 第三级文字
-    inline const QString TextDisabled = "#4B5563";     ///< 禁用文字
-    inline const QString TextInverse = "#1A1F2E";      ///< 反色文字
+    inline const QString TextPrimary = "#FFFFFF";      //< 主文字
+    inline const QString TextSecondary = "#9CA3AF";    //< 次要文字
+    inline const QString TextTertiary = "#6B7280";     //< 第三级文字
+    inline const QString TextDisabled = "#4B5563";     //< 禁用文字
+    inline const QString TextInverse = "#1A1F2E";      //< 反色文字
 
     // ========== 边框色 ==========
     inline const QString Border = "rgba(255, 255, 255, 0.08)";
@@ -109,12 +109,12 @@ namespace Color {
 // 基于 WealthPilot UI 设计规范
 
 namespace Spacing {
-    constexpr int XS = 4;       ///< 极小间距 - 图标与文字间距
-    constexpr int SM = 8;       ///< 小间距 - 紧凑元素间距
-    constexpr int MD = 16;      ///< 中间距 - 标准元素间距
-    constexpr int LG = 24;      ///< 大间距 - 区块间距
-    constexpr int XL = 32;      ///< 超大间距 - 大区块间距
-    constexpr int XXL = 48;     ///< 特大间距 - 页面区块间距
+    constexpr int XS = 4;       //< 极小间距 - 图标与文字间距
+    constexpr int SM = 8;       //< 小间距 - 紧凑元素间距
+    constexpr int MD = 16;      //< 中间距 - 标准元素间距
+    constexpr int LG = 24;      //< 大间距 - 区块间距
+    constexpr int XL = 32;      //< 超大间距 - 大区块间距
+    constexpr int XXL = 48;     //< 特大间距 - 页面区块间距
 
     // 别名
     constexpr int None = 0;
@@ -128,12 +128,12 @@ namespace Spacing {
 // ==================== 圆角系统 ====================
 
 namespace Radius {
-    constexpr int SM = 4;       ///< 小圆角 - 标签、徽章
-    constexpr int MD = 8;       ///< 中圆角 - 按钮、输入框
-    constexpr int LG = 12;      ///< 大圆角 - 卡片
-    constexpr int XL = 16;      ///< 超大圆角 - 弹窗、面板
-    constexpr int XXL = 20;     ///< 特大圆角 - 头部区域
-    constexpr int Full = 9999;  ///< 完全圆形 - 头像
+    constexpr int SM = 4;       //< 小圆角 - 标签、徽章
+    constexpr int MD = 8;       //< 中圆角 - 按钮、输入框
+    constexpr int LG = 12;      //< 大圆角 - 卡片
+    constexpr int XL = 16;      //< 超大圆角 - 弹窗、面板
+    constexpr int XXL = 20;     //< 特大圆角 - 头部区域
+    constexpr int Full = 9999;  //< 完全圆形 - 头像
     constexpr int None = 0;
 }
 
@@ -147,14 +147,14 @@ namespace Font {
 
 // 字号 (基于设计规范)
 namespace Size {
-    constexpr int H1 = 32;      ///< 页面标题
-    constexpr int H2 = 24;      ///< 区块标题
-    constexpr int H3 = 20;      ///< 卡片标题
-    constexpr int Body = 14;    ///< 正文文本
-    constexpr int Small = 12;   ///< 辅助文本、说明
-    constexpr int Data = 16;    ///< 数据展示
-    constexpr int DataLarge = 24; ///< 大数据
-    constexpr int DataXLarge = 32; ///< 超大数据（账户余额等）
+    constexpr int H1 = 32;      //< 页面标题
+    constexpr int H2 = 24;      //< 区块标题
+    constexpr int H3 = 20;      //< 卡片标题
+    constexpr int Body = 14;    //< 正文文本
+    constexpr int Small = 12;   //< 辅助文本、说明
+    constexpr int Data = 16;    //< 数据展示
+    constexpr int DataLarge = 24; //< 大数据
+    constexpr int DataXLarge = 32; //< 超大数据（账户余额等）
 }
 
 // 字重
@@ -186,10 +186,10 @@ namespace Shadow {
 
 namespace Animation {
     // 时长
-    constexpr int DurationFast = 150;      ///< 快速动画 - 悬停
-    constexpr int DurationNormal = 250;    ///< 正常动画 - 页面切换
-    constexpr int DurationSlow = 400;      ///< 慢速动画 - 弹窗
-    constexpr int DurationSlower = 600;    ///< 更慢动画 - 特效
+    constexpr int DurationFast = 150;      //< 快速动画 - 悬停
+    constexpr int DurationNormal = 250;    //< 正常动画 - 页面切换
+    constexpr int DurationSlow = 400;      //< 慢速动画 - 弹窗
+    constexpr int DurationSlower = 600;    //< 更慢动画 - 特效
 
     // 缓动曲线
     inline const QString EaseOut = "ease-out";
@@ -257,11 +257,11 @@ namespace Size {
 // ==================== 断点系统（响应式）====================
 
 namespace Breakpoint {
-    constexpr int SM = 640;    ///< 手机横屏
-    constexpr int MD = 768;    ///< 平板竖屏
-    constexpr int LG = 1024;   ///< 平板横屏/小桌面
-    constexpr int XL = 1280;   ///< 桌面
-    constexpr int XXL = 1536;  ///< 大桌面
+    constexpr int SM = 640;    //< 手机横屏
+    constexpr int MD = 768;    //< 平板竖屏
+    constexpr int LG = 1024;   //< 平板横屏/小桌面
+    constexpr int XL = 1280;   //< 桌面
+    constexpr int XXL = 1536;  //< 大桌面
     constexpr int XXXL = 1920; // 超大桌面
 }
 
