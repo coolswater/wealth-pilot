@@ -1,582 +1,174 @@
-#include "SvgIconEngine.h"
-#include <QSvgRenderer>
+    #include "SvgIconEngine.h"
 #include <QPainter>
 #include <QFile>
-#include <QMutex>
-#include <QMutexLocker>
-#include <QGuiApplication>
+#include <QPixmapCache>
+#include <QDebug>
+#include <QApplication>
 #include <QScreen>
-#include <QHash>
-#include <QList>
-#include <core/ThemeManager.h>
 
-//======================
-// LRU 缓存私有实现
-//======================
-class SvgIconEngine::CachePrivate {
-public:
-    struct Entry {
-        QPixmap pixmap;
-        int cost;
-        qint64 lastAccess;  // 时间戳，用于 LRU 淘汰
-    };
-
-    QHash<QString, Entry> data;     // 缓存存储
-    mutable QMutex mutex;            // 线程安全
-    int maxCost = 100 * 1024;       // 默认 100MB（KB 为单位）
-    int currentCost = 0;
-    qint64 accessCounter = 0;        // 访问计数器（模拟时间）
-
-    // 估算 pixmap 内存占用（KB）
-    static int estimateCost(const QPixmap& px) {
-        return qMax(1, px.width() * px.height() * 4 / 1024);  // ARGB32 = 4 bytes
-    }
-
-    // 插入/更新缓存
-    void insert(const QString& key, const QPixmap& pixmap) {
-        int cost = estimateCost(pixmap);
-
-        // 已存在则更新成本
-        if (data.contains(key)) {
-            currentCost -= data[key].cost;
-        }
-
-        // LRU 淘汰：直到空间足够
-        while (currentCost + cost > maxCost && !data.isEmpty()) {
-            evictLRU();
-        }
-
-        Entry entry{pixmap, cost, ++accessCounter};
-        data.insert(key, entry);
-        currentCost += cost;
-    }
-
-    // 查找（更新访问时间）
-    QPixmap* find(const QString& key) {
-        auto it = data.find(key);
-        if (it != data.end()) {
-            it->lastAccess = ++accessCounter;
-            return &it->pixmap;
-        }
-        return nullptr;
-    }
-
-    // 清空
-    void clear() {
-        data.clear();
-        currentCost = 0;
-    }
-
-    // 设置上限并执行淘汰
-    void setMaxCost(int kb) {
-        maxCost = kb;
-        while (currentCost > maxCost && !data.isEmpty()) {
-            evictLRU();
-        }
-    }
-
-private:
-    // 淘汰最久未使用（LRU 策略）
-    void evictLRU() {
-        if (data.isEmpty()) return;
-
-        QString lruKey;
-        qint64 minTime = INT64_MAX;
-
-        for (auto it = data.begin(); it != data.end(); ++it) {
-            if (it->lastAccess < minTime) {
-                minTime = it->lastAccess;
-                lruKey = it.key();
-            }
-        }
-
-        if (!lruKey.isEmpty()) {
-            currentCost -= data[lruKey].cost;
-            data.remove(lruKey);
-        }
-    }
-};
-
-//======================
-// SvgIconEngine 实现
-//======================
-
-SvgIconEngine::SvgIconEngine(const QString& svgPath)
-    : m_svgPath(svgPath), m_cache(new CachePrivate())
+// 静态成员初始化
+QMap<QString, QSharedPointer<QSvgRenderer>> SvgIconEngine::s_rendererCache;
+QMutex SvgIconEngine::s_cacheMutex;
+SvgIconEngine::SvgIconEngine(const QString& svgFilePath, const QColor& color)
+    : m_svgFilePath(svgFilePath)
+    , m_color(color)
 {
-    // 初始化默认颜色和角色
-    for (auto& color : m_colors) {
-        color = QColor(0, 0, 0);
-    }
-    for (auto& role : m_roles) {
-        role = IconColorRole::Custom;
-    }
-
-    // 验证文件存在性（延迟加载内容）
-    if (!svgPath.isEmpty()) {
-        QFile file(svgPath);
-        m_isValid = file.exists() && file.size() > 0;
-    }
-
-    // 自动注册到 ThemeManager（如果存在）
-    registerToThemeManager();
-}
-
-SvgIconEngine::~SvgIconEngine() {
-    // 自动注销（避免野指针）
-    unregisterFromThemeManager();
-}
-
-// 自动注册/注销逻辑
-void SvgIconEngine::registerToThemeManager() {
-    if (ThemeManager* tm = ThemeManager::instance()) {
-        tm->registerIconEngine(this);
-    } else {
-        qWarning() << "ThemeManager not available, icon engine not registered";
-    }
-}
-
-void SvgIconEngine::unregisterFromThemeManager() {
-    if (ThemeManager* tm = ThemeManager::instance()) {
-        tm->unregisterIconEngine(this);
-    }
-}
-
-// QIconEngine 接口实现
-void SvgIconEngine::paint(QPainter* painter, const QRect& rect,
-                          QIcon::Mode mode, QIcon::State state) {
-    Q_UNUSED(state)
-    if (!m_isValid) return;
-
-    qreal dpr = painter->device() ? painter->device()->devicePixelRatioF() : 1.0;
-    QPixmap px = pixmap(rect.size() * dpr, mode, state);
-
-    if (!px.isNull()) {
-        px.setDevicePixelRatio(dpr);
-        painter->drawPixmap(rect, px);
-    }
-}
-
-QPixmap SvgIconEngine::pixmap(const QSize& size, QIcon::Mode mode, QIcon::State state) {
-    Q_UNUSED(state)
-    if (!m_isValid || size.isEmpty()) return QPixmap();
-
-    // 获取设备像素比（支持 4K/Retina）
-    qreal dpr = 1.0;
-    if (auto* screen = QGuiApplication::primaryScreen()) {
-        dpr = screen->devicePixelRatio();
-    }
-
-    const QString key = cacheKey(size, mode, m_colors[mode], dpr);
-
-    // 线程安全缓存查找
-    QMutexLocker locker(&m_cache->mutex);
-    QPixmap* cached = m_cache->find(key);
-    if (cached) return *cached;
-    locker.unlock();
-
-    // 缓存未命中：渲染并缓存
-    QPixmap result = renderPixmap(size, mode, dpr);
-    if (!result.isNull()) {
-        locker.relock();
-        m_cache->insert(key, result);
-    }
-    return result;
-}
-
-QSize SvgIconEngine::actualSize(const QSize& size, QIcon::Mode, QIcon::State) {
-    return size;  // SVG 支持任意缩放
-}
-
-QIconEngine* SvgIconEngine::clone() const {
-    auto* clone = new SvgIconEngine(m_svgPath);
-    clone->m_colors = m_colors;
-    clone->m_roles = m_roles;
-    clone->m_svgData = m_svgData;  // 确保复制了 SVG 数据
-    clone->m_isValid = m_isValid;
-    clone->m_followTheme = m_followTheme;
-    // 注意：m_cache 不复制（避免缓存膨胀）
-    return clone;
-}
-
-QString SvgIconEngine::key() const {
-    return QLatin1String("svgcolor");
-}
-
-bool SvgIconEngine::read(QDataStream& in) {
-    in >> m_svgPath;
-    quint32 follow;
-    in >> follow;
-    m_followTheme = follow;
-
-    for (auto& color : m_colors) {
-        quint32 rgba;
-        in >> rgba;
-        color = QColor::fromRgba(rgba);
-    }
-    for (auto& role : m_roles) {
-        int r;
-        in >> r;
-        role = static_cast<IconColorRole>(r);
-    }
-
-    // 延迟加载 SVG 数据
-    if (!m_svgPath.isEmpty()) {
-        QFile file(m_svgPath);
-        if (file.open(QIODevice::ReadOnly)) {
-            m_svgData = file.readAll();
-            m_isValid = !m_svgData.isEmpty();
-        }
-    }
-    return m_isValid;
-}
-
-bool SvgIconEngine::write(QDataStream& out) const {
-    out << m_svgPath;
-    out << static_cast<quint32>(m_followTheme);
-    for (const auto& color : m_colors) {
-        out << static_cast<quint32>(color.rgba());
-    }
-    for (const auto& role : m_roles) {
-        out << static_cast<int>(role);
-    }
-    return true;
-}
-
-// 基础颜色设置（固定颜色模式）
-void SvgIconEngine::setColor(QIcon::Mode mode, const QColor& color) {
-    if (mode < QIcon::Normal || mode > QIcon::Selected || !color.isValid())
-        return;
-
-    // 设置固定颜色时自动将角色设为 Custom（优先级高于主题）
-    m_roles[mode] = IconColorRole::Custom;
-    m_colors[mode] = color;
-
-    if (!m_batchUpdating) {
-        clearCache();  // 立即清空缓存（非批量模式）
-    }
-}
-
-QColor SvgIconEngine::color(QIcon::Mode mode) const {
-    if (mode >= QIcon::Normal && mode <= QIcon::Selected)
-        return m_colors[mode];
-    return QColor();
-}
-
-void SvgIconEngine::clearCache() {
-    QMutexLocker locker(&m_cache->mutex);
-    m_cache->clear();
-}
-
-void SvgIconEngine::setCacheLimit(int maxCostKB) {
-    QMutexLocker locker(&m_cache->mutex);
-    m_cache->setMaxCost(maxCostKB);
-}
-
-// ========== 主题联动核心实现 ==========
-
-void SvgIconEngine::setFollowTheme(bool follow) {
-    if (m_followTheme == follow) return;
-
-    m_followTheme = follow;
-
-    if (follow) {
-        // 设置默认推荐映射（如果当前全是 Custom）
-        bool hasCustomRole = false;
-        for (auto role : m_roles) {
-            if (role == IconColorRole::Custom) hasCustomRole = true;
-        }
-
-        if (hasCustomRole) {
-            // 默认映射：Normal→Primary, Disabled→TextSecondary,
-            //           Active→Secondary, Selected→Primary
-            if (m_roles[QIcon::Normal] == IconColorRole::Custom)
-                m_roles[QIcon::Normal] = IconColorRole::Primary;
-            if (m_roles[QIcon::Disabled] == IconColorRole::Custom)
-                m_roles[QIcon::Disabled] = IconColorRole::TextSecondary;
-            if (m_roles[QIcon::Active] == IconColorRole::Custom)
-                m_roles[QIcon::Active] = IconColorRole::Secondary;
-            if (m_roles[QIcon::Selected] == IconColorRole::Custom)
-                m_roles[QIcon::Selected] = IconColorRole::Primary;
-        }
-
-        // 立即应用当前主题
-        applyThemeColors();
-    }
-}
-
-void SvgIconEngine::setColorRole(QIcon::Mode mode, IconColorRole role) {
-    if (mode < QIcon::Normal || mode > QIcon::Selected) return;
-    m_roles[mode] = role;
-
-    // 如果正在跟随主题且不是批量模式，立即应用
-    if (m_followTheme && !m_batchUpdating) {
-        applyThemeColors();
-    }
-}
-
-IconColorRole SvgIconEngine::colorRole(QIcon::Mode mode) const {
-    if (mode >= QIcon::Normal && mode <= QIcon::Selected)
-        return m_roles[mode];
-    return IconColorRole::Custom;
-}
-
-/**
- * @brief 应用当前主题颜色（由 ThemeManager 批量调用）
- * 根据 m_roles 中定义的角色，从 ThemeManager 获取实际颜色并更新 m_colors
- */
-void SvgIconEngine::applyThemeColors() {
-    if (!m_followTheme) return;
-
-    bool colorsChanged = false;
-
-    for (int i = QIcon::Normal; i <= QIcon::Selected; ++i) {
-        QIcon::Mode mode = static_cast<QIcon::Mode>(i);
-        IconColorRole role = m_roles[mode];
-
-        if (role == IconColorRole::Custom) continue;
-
-        QColor newColor = resolveColor(role);
-        if (!newColor.isValid()) continue;
-
-        // 微调：Selected 状态加亮 20% 提供视觉反馈
-        if (mode == QIcon::Selected) {
-            newColor = newColor.lighter(120);
-        }
-
-        if (m_colors[mode] != newColor) {
-            m_colors[mode] = newColor;
-            colorsChanged = true;
-        }
-    }
-
-    // 仅在颜色实际改变且非批量模式时清空缓存
-    if (colorsChanged && !m_batchUpdating) {
-        clearCache();
-    } else if (colorsChanged) {
-        m_pendingRefresh = true;  // 标记批量期间有更新待处理
-    }
-}
-
-/**
- * @brief 将颜色角色解析为实际 QColor（访问 ThemeManager 单例）
- */
-QColor SvgIconEngine::resolveColor(IconColorRole role) const {
-    ThemeManager* tm = ThemeManager::instance();
-    if (!tm) {
-        qWarning() << "ThemeManager not available, using fallback color";
-        return QColor(0, 0, 0);  // 返回默认黑色
-    }
-    if (!tm) return QColor();
-
-    switch (role) {
-    case IconColorRole::Primary:       return tm->primaryColor();
-    case IconColorRole::Secondary:     return tm->secondaryColor();
-    case IconColorRole::TextPrimary:   return tm->textPrimaryColor();
-    case IconColorRole::TextSecondary: return tm->textSecondaryColor();
-    case IconColorRole::Success:       return tm->successColor();
-    case IconColorRole::Warning:       return tm->warningColor();
-    case IconColorRole::Danger:        return tm->errorColor();
-    case IconColorRole::Info:          return tm->infoColor();
-    case IconColorRole::Up:            return tm->upColor();
-    case IconColorRole::Down:          return tm->downColor();
-    default: return QColor();
-    }
-}
-
-// 批量更新控制（由 ThemeManager 统一调度）
-void SvgIconEngine::beginThemeUpdate() {
-    m_batchUpdating = true;
-    m_pendingRefresh = false;
-}
-
-void SvgIconEngine::endThemeUpdate() {
-    m_batchUpdating = false;
-    // 如果批量期间有颜色更新，统一清空缓存一次（避免多次清空）
-    if (m_pendingRefresh) {
-        clearCache();
-        m_pendingRefresh = false;
-    }
-}
-
-//======================
-// 私有工具方法
-//======================
-
-QString SvgIconEngine::cacheKey(const QSize& size, QIcon::Mode mode,
-                                const QColor& color, qreal dpr) {
-    // 格式: "w:h:mode:rgba:dpr"（唯一标识缓存条目）
-    return QString("%1:%2:%3:%4:%5")
-        .arg(size.width())
-        .arg(size.height())
-        .arg(static_cast<int>(mode))
-        .arg(color.rgba(), 0, 16)  // 十六进制存储颜色
-        .arg(static_cast<int>(dpr * 100));
-}
-
-QPixmap SvgIconEngine::renderPixmap(const QSize& size, QIcon::Mode mode, qreal dpr) {
-    // 延迟加载 SVG 数据（首次渲染时才读取文件，避免构造时 IO）
-    if (m_svgData.isEmpty() && !m_svgPath.isEmpty()) {
-        QFile file(m_svgPath);
-        if (!file.open(QIODevice::ReadOnly)) {
-            m_isValid = false;
-            return QPixmap();
-        }
+    // 加载SVG文件数据
+    QFile file(svgFilePath);
+    if (file.open(QIODevice::ReadOnly)) {
         m_svgData = file.readAll();
+        file.close();
     }
-
-    // 使用 QImage CPU 渲染（支持像素级着色）
-    QImage image(size * dpr, QImage::Format_ARGB32_Premultiplied);
-    image.fill(Qt::transparent);
-    image.setDevicePixelRatio(dpr);
-
-    QSvgRenderer renderer(m_svgData);
-    if (!renderer.isValid()) {
-        m_isValid = false;
+}
+SvgIconEngine::SvgIconEngine(const QByteArray& svgData, const QColor& color)
+    : m_svgData(svgData)
+    , m_color(color)
+{
+}
+SvgIconEngine::SvgIconEngine(const SvgIconEngine& other)
+    : QIconEngine(other)
+    , m_svgFilePath(other.m_svgFilePath)
+    , m_svgData(other.m_svgData)
+    , m_color(other.m_color)
+{
+}
+SvgIconEngine::~SvgIconEngine()
+{
+}
+void SvgIconEngine::paint(QPainter* painter, const QRect& rect, QIcon::Mode mode, QIcon::State state)
+{
+    Q_UNUSED(state);
+    // 获取设备像素比
+    qreal dpr = painter->device()->devicePixelRatioF();
+    QSize size = rect.size() * dpr;
+    // 获取或渲染Pixmap
+    QPixmap pix = pixmap(size, mode, state);
+    if (!pix.isNull()) {
+        painter->drawPixmap(rect, pix);
+    }
+}
+QPixmap SvgIconEngine::pixmap(const QSize& size, QIcon::Mode mode, QIcon::State state)
+{
+    Q_UNUSED(mode);
+    Q_UNUSED(state);
+    // 生成缓存键
+    QString key = cacheKey(size, mode);
+    // 尝试从全局缓存获取
+    QPixmap cachedPixmap;
+    if (QPixmapCache::find(key, &cachedPixmap)) {
+        return cachedPixmap;
+    }
+    // 渲染SVG
+    QPixmap pix = renderSvg(size);
+    if (pix.isNull()) {
         return QPixmap();
     }
-
-    QPainter painter(&image);
-    renderer.render(&painter);
-    painter.end();
-
-    // CPU 像素级着色（性能优于 QPainter 混合模式）
-    const QColor& target = m_colors[mode];
-    if (target.isValid() && target != QColor(0, 0, 0)) {
-        tintImage(image, target);
+    // 如果指定了颜色，应用颜色遮罩
+    if (m_color.isValid()) {
+        pix = applyColorMask(pix, m_color);
     }
-
-    return QPixmap::fromImage(image);
+    // 存入缓存
+    QPixmapCache::insert(key, pix);
+    return pix;
 }
-
-/**
- * @brief 像素级快速着色
- * 遍历像素，保留 Alpha 通道，替换 RGB 为目标颜色
- * O(n) 复杂度，比 QPainter::CompositionMode_SourceIn 快 3-5 倍（小图标场景）
- */
-void SvgIconEngine::tintImage(QImage& image, const QColor& color) {
-    const QRgb targetRgb = color.rgb();
-    const int width = image.width();
-    const int height = image.height();
-
-    for (int y = 0; y < height; ++y) {
-        QRgb* row = reinterpret_cast<QRgb*>(image.scanLine(y));
-        for (int x = 0; x < width; ++x) {
-            QRgb pixel = row[x];
-            int alpha = qAlpha(pixel);
-            if (alpha != 0) {
-                // 保持原 Alpha，替换 RGB
-                row[x] = qRgba(qRed(targetRgb), qGreen(targetRgb), qBlue(targetRgb), alpha);
+QIconEngine* SvgIconEngine::clone() const
+{
+    return new SvgIconEngine(*this);
+}
+void SvgIconEngine::setColor(const QColor& color)
+{
+    if (m_color != color) {
+        m_color = color;
+        // 颜色变化需要清除相关缓存
+        // 这里不主动清除，依靠PixmapCache的LRU机制自动管理
+    }
+}
+QColor SvgIconEngine::color() const
+{
+    return m_color;
+}
+void SvgIconEngine::setSvgData(const QByteArray& data)
+{
+    m_svgData = data;
+    m_svgFilePath.clear();
+}
+void SvgIconEngine::clearCache()
+{
+    QMutexLocker locker(&s_cacheMutex);
+    s_rendererCache.clear();
+    QPixmapCache::clear();
+}
+void SvgIconEngine::preRender(const QSize& size)
+{
+    // 预渲染并缓存指定尺寸
+    pixmap(size, QIcon::Normal, QIcon::Off);
+}
+QString SvgIconEngine::cacheKey(const QSize& size, QIcon::Mode mode) const
+{
+    // 生成唯一缓存键
+    QString colorStr = m_color.isValid() ? m_color.name(QColor::HexArgb) : "original";
+    return QString("svg_icon_%1_%2x%3_%4_%5")
+        .arg(m_svgFilePath.isEmpty() ? QString::number(qHash(m_svgData)) : m_svgFilePath)
+        .arg(size.width())
+        .arg(size.height())
+        .arg(colorStr)
+        .arg(static_cast<int>(mode));
+}
+QPixmap SvgIconEngine::renderSvg(const QSize& size)
+{
+    if (m_svgData.isEmpty()) {
+        return QPixmap();
+    }
+    // 获取或创建渲染器
+    QSharedPointer<QSvgRenderer> renderer;
+    QString cacheKey = m_svgFilePath.isEmpty()
+                           ? QString::number(qHash(m_svgData))
+                           : m_svgFilePath;
+    {
+        QMutexLocker locker(&s_cacheMutex);
+        if (s_rendererCache.contains(cacheKey)) {
+            renderer = s_rendererCache[cacheKey];
+        } else {
+            renderer = QSharedPointer<QSvgRenderer>::create(m_svgData);
+            if (renderer->isValid()) {
+                // 实现简单的LRU淘汰
+                if (s_rendererCache.size() >= MAX_CACHE_SIZE) {
+                    s_rendererCache.remove(s_rendererCache.firstKey());
+                }
+                s_rendererCache[cacheKey] = renderer;
             }
         }
     }
-}
-
-//======================
-// SvgColorIcon 包装类实现
-//======================
-
-SvgColorIcon::SvgColorIcon(const QString& svgPath)
-    : m_engine(new SvgIconEngine(svgPath)) {}
-
-void SvgColorIcon::ensureEngine() const {
-    if (!m_engine) {
-        m_engine.reset(new SvgIconEngine(QString()));
+    if (!renderer || !renderer->isValid()) {
+        return QPixmap();
     }
+    // 创建高DPI Pixmap
+    qreal dpr = qApp->devicePixelRatio();
+    QPixmap pix(size * dpr);
+    pix.setDevicePixelRatio(dpr);
+    pix.fill(Qt::transparent);
+    // 渲染SVG
+    QPainter painter(&pix);
+    renderer->render(&painter);
+    painter.end();
+    return pix;
 }
-
-QIcon SvgColorIcon::toIcon() const {
-    if (!m_iconCache) {
-        ensureEngine();
-        // 修复：使用 clone() 创建副本，避免双重删除
-        m_iconCache.reset(new QIcon(m_engine->clone()));
+QPixmap SvgIconEngine::applyColorMask(const QPixmap& source, const QColor& color)
+{
+    if (source.isNull()) {
+        return source;
     }
-    return *m_iconCache;
-}
-
-// 固定颜色模式接口
-SvgColorIcon& SvgColorIcon::setColor(QIcon::Mode mode, const QColor& color) {
-    ensureEngine();
-    m_engine->setColor(mode, color);
-    m_iconCache.reset();  // 失效 QIcon 缓存
-    return *this;
-}
-
-SvgColorIcon& SvgColorIcon::setNormalColor(const QColor& color) {
-    return setColor(QIcon::Normal, color);
-}
-
-SvgColorIcon& SvgColorIcon::setDisabledColor(const QColor& color) {
-    return setColor(QIcon::Disabled, color);
-}
-
-SvgColorIcon& SvgColorIcon::setActiveColor(const QColor& color) {
-    return setColor(QIcon::Active, color);
-}
-
-SvgColorIcon& SvgColorIcon::setSelectedColor(const QColor& color) {
-    return setColor(QIcon::Selected, color);
-}
-
-QColor SvgColorIcon::color(QIcon::Mode mode) const {
-    return m_engine ? m_engine->color(mode) : QColor();
-}
-
-// 主题联动流式接口
-SvgColorIcon& SvgColorIcon::followTheme(bool enabled) {
-    ensureEngine();
-    m_engine->setFollowTheme(enabled);
-    m_iconCache.reset();
-    return *this;
-}
-
-SvgColorIcon& SvgColorIcon::setNormalRole(IconColorRole role) {
-    ensureEngine();
-    m_engine->setColorRole(QIcon::Normal, role);
-    m_iconCache.reset();
-    return *this;
-}
-
-SvgColorIcon& SvgColorIcon::setDisabledRole(IconColorRole role) {
-    ensureEngine();
-    m_engine->setColorRole(QIcon::Disabled, role);
-    m_iconCache.reset();
-    return *this;
-}
-
-SvgColorIcon& SvgColorIcon::setActiveRole(IconColorRole role) {
-    ensureEngine();
-    m_engine->setColorRole(QIcon::Active, role);
-    m_iconCache.reset();
-    return *this;
-}
-
-SvgColorIcon& SvgColorIcon::setSelectedRole(IconColorRole role) {
-    ensureEngine();
-    m_engine->setColorRole(QIcon::Selected, role);
-    m_iconCache.reset();
-    return *this;
-}
-
-SvgColorIcon& SvgColorIcon::setRole(QIcon::Mode mode, IconColorRole role) {
-    ensureEngine();
-    m_engine->setColorRole(mode, role);
-    m_iconCache.reset();
-    return *this;
-}
-
-bool SvgColorIcon::isFollowingTheme() const {
-    return m_engine && m_engine->isFollowingTheme();
-}
-
-bool SvgColorIcon::isValid() const noexcept {
-    return m_engine && m_engine->isValid();
-}
-
-QString SvgColorIcon::svgPath() const {
-    return m_engine ? m_engine->svgPath() : QString();
-}
-
-void SvgColorIcon::clearCache() {
-    if (m_engine) m_engine->clearCache();
+    // 创建遮罩图像
+    QPixmap result(source.size());
+    result.setDevicePixelRatio(source.devicePixelRatioF());
+    result.fill(Qt::transparent);
+    QPainter painter(&result);
+    // 先绘制原图（获取形状）
+    painter.drawPixmap(0, 0, source);
+    // 使用CompositionMode_SourceIn进行着色
+    // 这会保留原图的透明度，但替换颜色
+    painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+    painter.fillRect(result.rect(), color);
+    painter.end();
+    return result;
 }

@@ -1,97 +1,78 @@
-/**
- * @file ThemeManager.h
- * @brief 主题管理器 - 统一管理应用主题（单例）
- */
-
 #ifndef THEMEMANAGER_H
 #define THEMEMANAGER_H
-
-#include "Singleton.h"
-#include "Tokens.h"
-
 #include <QObject>
-#include <QColor>
 #include <QMap>
-#include <memory>
-
-// 前向声明，避免循环包含
-class SvgIconEngine;
-
+#include <QColor>
+#include <QString>
+#include <QJsonObject>
 /**
- * @class ThemeManager
- * @brief 主题管理器
- */
-class ThemeManager : public QObject, public Singleton<ThemeManager>
+     * @brief 主题管理器 - 单例模式
+     *
+     * 功能：
+     * 1. 管理应用程序的主题配置（亮色/暗色）
+     * 2. 提供统一颜色接口（背景、前景、强调色、涨跌色等）
+     * 3. 支持主题动态切换并通知所有监听控件
+     * 4. 支持自定义主题扩展
+     */
+class ThemeManager : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(Theme)
-    friend class Singleton<ThemeManager>;
-    // 允许图标引擎访问私有注册接口
-    friend class SvgIconEngine;
-
 public:
-    enum Theme {
-        Dark,     ///< 深色主题
-        Light,    ///< 浅色主题
-        EyeCare   ///< 护眼主题
+    // 主题类型枚举
+    enum class ThemeType {
+        Light,  // 亮色主题
+        Dark,   // 暗色主题
+        Custom  // 自定义主题
     };
-
-    void initialize();
-    void setTheme(Theme theme);
-    void setTheme(const QString& themeName);
-    Theme currentTheme() const;
-    QString currentThemeName() const;
-
-    void applyCurrentTheme();
-
-    // 颜色获取
+    Q_ENUM(ThemeType)
+    // 获取单例实例
+    static ThemeManager* instance();
+    // 获取当前主题类型
+    ThemeType currentTheme() const;
+    // 切换主题
+    void setTheme(ThemeType type);
+    // 获取主题颜色配置
     QColor backgroundColor() const;
-    QColor surfaceColor() const;
-    QColor primaryColor() const;
-    QColor secondaryColor() const;
-    QColor textPrimaryColor() const;
-    QColor textSecondaryColor() const;
+    QColor foregroundColor() const;
+    QColor accentColor() const;
+    QColor riseColor() const;      // 股票上涨颜色（红色）
+    QColor fallColor() const;      // 股票下跌颜色（绿色）
+    QColor neutralColor() const;   // 中性颜色（持平）
     QColor borderColor() const;
-
-    QColor upColor() const;
-    QColor downColor() const;
-    QColor warningColor() const;
-    QColor successColor() const;
-    QColor errorColor() const;
-    QColor infoColor() const;
-
+    QColor cardColor() const;
+    // 获取指定角色的颜色
+    QColor color(const QString& role) const;
+    // 获取主题样式表
+    QString themeStyleSheet() const;
+    // 注册自定义主题
+    void registerCustomTheme(const QString& name, const QJsonObject& config);
 signals:
-    void themeChanged(const ::QString& theme);
-
-private:
-    explicit ThemeManager(QObject *parent = nullptr);
+    // 主题切换信号
+    void themeChanged(ThemeType newTheme);
+protected:
+    // 禁用拷贝和赋值
+    ThemeManager(QObject* parent = nullptr);
     ~ThemeManager();
-
     ThemeManager(const ThemeManager&) = delete;
     ThemeManager& operator=(const ThemeManager&) = delete;
+private:
+    // 加载内置主题配置
+    void loadBuiltinThemes();
 
-    void loadThemeColors();
-    QString loadStylesheetFromFile() const;
+    // 新增：从文件加载主题配置的辅助函数
+    bool loadThemeFromFile(ThemeType type, const QString& filePath);
 
-    /**
-     * @brief 注册图标引擎（由 SvgIconEngine 构造函数自动调用）
-     * 非线程安全，必须在主线程调用
-     */
-    void registerIconEngine(SvgIconEngine* engine);
-
-    /**
-     * @brief 注销图标引擎（由 SvgIconEngine 析构函数自动调用）
-     */
-    void unregisterIconEngine(SvgIconEngine* engine);
-
-    /**
-     * @brief 通知所有注册的图标引擎主题已变更
-     * 实现批量更新策略：begin → apply colors → end，避免重复渲染
-     */
-    void notifyIconEnginesThemeChanged();
-
-    struct Impl;
-    std::unique_ptr<Impl> d;
+    // 应用主题配置
+    void applyTheme(ThemeType type);
+private:
+    static ThemeManager* m_instance;
+    ThemeType m_currentTheme;
+    // 主题配置数据结构
+    struct ThemeConfig {
+        QMap<QString, QColor> colors;
+        QString styleSheet;
+    };
+    QMap<ThemeType, ThemeConfig> m_themes;
+    QMap<QString, ThemeType> m_customThemeMap;
 };
-
 #endif // THEMEMANAGER_H

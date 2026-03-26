@@ -3,6 +3,16 @@
  * 适合白天使用，高对比度
  */
 
+/* [颜色定义] */
+/* @background: #FFFFFF */
+/* @foreground: #1A1A1A */
+/* @accent: #1890FF */
+/* @rise: #E74C3C */       /* 中国股市：红涨 */
+/* @fall: #27AE60 */       /* 中国股市：绿跌 */
+/* @neutral: #95A5A6 */
+/* @border: #E0E0E0 */
+/* @card: #F5F5F5 */
+
 /* ========== 全局样式 ========== */
 QWidget {
     background-color: #F8FAFC;

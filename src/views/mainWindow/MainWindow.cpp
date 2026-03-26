@@ -9,6 +9,7 @@
  */
 
 #include "MainWindow.h"
+#include "core/Tokens.h"
 #include "utils/Logger.h"
 
 #include <QHBoxLayout>

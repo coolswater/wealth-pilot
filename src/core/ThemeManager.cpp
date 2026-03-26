@@ -1,275 +1,148 @@
-/**
- * @file ThemeManager.cpp
- * @brief 主题管理器实现
- */
-
 #include "ThemeManager.h"
-#include "ConfigManager.h"
-#include "../utils/Logger.h"
-
-#include <QApplication>
 #include <QFile>
-#include <QTextStream>
-#include "src/views/widgets/SvgIconEngine.h"
+#include <QJsonDocument>
+#include <QJsonValue>
+#include <QDebug>
+#include <QApplication>
 
-struct ThemeManager::Impl {
-    Theme currentTheme = Dark;
-    QMap<QString, QColor> colors;
-    QSet<SvgIconEngine*> iconEngines;  // 新增：注册的图标引擎集合
-
-    // 使用数组而不是QMap来存储颜色，提高访问速度
-    const std::array<QColor, 13> darkColors = {
-        QColor(Tokens::Colors::BgBase),       // background
-        QColor(Tokens::Colors::BgSurface),    // surface
-        QColor(Tokens::Colors::Primary),      // primary
-        QColor(Tokens::Colors::PrimaryLight), // secondary
-        QColor(Tokens::Colors::TextPrimary),  // textPrimary
-        QColor(Tokens::Colors::TextSecondary),// textSecondary
-        QColor(255,255,255),                 // border
-        QColor(Tokens::Colors::Success),      // up
-        QColor(Tokens::Colors::Danger),       // down
-        QColor(Tokens::Colors::Warning),      // warning
-        QColor(Tokens::Colors::Success),      // success
-        QColor(Tokens::Colors::Danger),       // error
-        QColor(Tokens::Colors::Info)         // info
-    };
-
-    const std::array<QColor, 13> lightColors = {
-        QColor(248,250,252),                 // background
-        QColor(255,255,255),                 // surface
-        QColor(Tokens::Colors::Primary),      // primary
-        QColor(Tokens::Colors::PrimaryLight), // secondary
-        QColor(31,41,55),                    // textPrimary
-        QColor(107,114,128),                 // textSecondary
-        QColor(229,231,235),                 // border
-        QColor(Tokens::Colors::Success),      // up
-        QColor(Tokens::Colors::Danger),       // down
-        QColor(Tokens::Colors::Warning),      // warning
-        QColor(Tokens::Colors::Success),      // success
-        QColor(Tokens::Colors::Danger),       // error
-        QColor(Tokens::Colors::Info)         // info
-    };
-
-    const std::array<QColor, 13> eyeCareColors = {
-        QColor(30,26,20),                    // background
-        QColor(21,18,15),                    // surface
-        QColor(212,165,116),                 // primary
-        QColor(196,154,108),                 // secondary
-        QColor(232,220,200),                 // textPrimary
-        QColor(168,155,133),                 // textSecondary
-        QColor(61,53,43),                    // border
-        QColor(124,179,66),                  // up
-        QColor(229,115,115),                 // down
-        QColor(255,183,77),                  // warning
-        QColor(129,199,132),                 // success
-        QColor(229,115,115),                 // error
-        QColor(100,181,246)                  // info
-    };
-
-    // 颜色名称到索引的映射
-    const QMap<QString, int> colorIndexMap = {
-        {"background", 0},
-        {"surface", 1},
-        {"primary", 2},
-        {"secondary", 3},
-        {"textPrimary", 4},
-        {"textSecondary", 5},
-        {"border", 6},
-        {"up", 7},
-        {"down", 8},
-        {"warning", 9},
-        {"success", 10},
-        {"error", 11},
-        {"info", 12}
-    };
-};
-
-ThemeManager::ThemeManager(QObject *parent)
+// 单例实例
+ThemeManager* ThemeManager::m_instance = nullptr;
+ThemeManager::ThemeManager(QObject* parent)
     : QObject(parent)
-    , d(std::make_unique<Impl>())
+    , m_currentTheme(ThemeType::Light)
+{
+    loadBuiltinThemes();
+}
+ThemeManager::~ThemeManager()
 {
 }
-
-ThemeManager::~ThemeManager() = default;
-
-void ThemeManager::initialize()
+ThemeManager* ThemeManager::instance()
 {
-    LOG_INFO("ThemeManager initializing...");
-
-    QString savedTheme = ConfigManager::instance()->getString(ConfigKeys::Theme, "Dark");
-
-    if (savedTheme == "Dark")
-        d->currentTheme = Dark;
-    else if (savedTheme == "Light")
-        d->currentTheme = Light;
-    else if (savedTheme == "EyeCare")
-        d->currentTheme = EyeCare;
-    else
-        d->currentTheme = Dark;
-
-    loadThemeColors();
-    applyCurrentTheme();
-
-    LOG_INFO(QString("ThemeManager initialized with theme: %1").arg(currentThemeName()));
-}
-
-void ThemeManager::setTheme(Theme theme)
-{
-    if (d->currentTheme == theme)
-        return;
-
-    d->currentTheme = theme;
-    loadThemeColors();
-
-    ConfigManager::instance()->set(ConfigKeys::Theme, currentThemeName());
-
-    // 先让所有引擎准备批量更新（暂停缓存清理），再统一刷新，最后统一清理缓存
-    notifyIconEnginesThemeChanged();
-
-    emit themeChanged(currentThemeName());
-    applyCurrentTheme();
-
-    LOG_INFO(QString("Theme switched to: %1 (updated %2 icon engines)")
-                 .arg(currentThemeName()).arg(d->iconEngines.size()));
-}
-
-void ThemeManager::setTheme(const QString& themeName)
-{
-    if (themeName == "Dark")
-        setTheme(Dark);
-    else if (themeName == "Light")
-        setTheme(Light);
-    else if (themeName == "EyeCare")
-        setTheme(EyeCare);
-    else
-        LOG_WARNING(QString("Unknown theme name: %1").arg(themeName));
-}
-
-ThemeManager::Theme ThemeManager::currentTheme() const
-{
-    return d->currentTheme;
-}
-
-QString ThemeManager::currentThemeName() const
-{
-    switch (d->currentTheme) {
-    case Dark:    return "Dark";
-    case Light:   return "Light";
-    case EyeCare: return "EyeCare";
-    default:      return "Dark";
+    if (!m_instance) {
+        m_instance = new ThemeManager();
     }
+    return m_instance;
 }
-
-void ThemeManager::applyCurrentTheme()
+ThemeManager::ThemeType ThemeManager::currentTheme() const
 {
-    if (!qApp) {
-        LOG_WARNING("QApplication not available, cannot apply stylesheet.");
+    return m_currentTheme;
+}
+void ThemeManager::setTheme(ThemeType type)
+{
+    if (m_currentTheme == type) {
         return;
     }
-
-    QString style = loadStylesheetFromFile();
-    if (style.isEmpty()) {
-        LOG_WARNING("Failed to load stylesheet, using empty style.");
-        qApp->setStyleSheet(QString());
-        return;
-    }
-
-    qApp->setStyleSheet(style);
-    LOG_INFO(QString("Applied stylesheet for theme: %1").arg(currentThemeName()));
+    m_currentTheme = type;
+    applyTheme(type);
+    emit themeChanged(type);
+}
+void ThemeManager::loadBuiltinThemes()
+{
+    // 将 qss 文件添加到资源文件 中
+    loadThemeFromFile(ThemeType::Light, ":/style/theme_light.qss");
+    loadThemeFromFile(ThemeType::Dark, ":/style/theme_dark.qss");
 }
 
-QString ThemeManager::loadStylesheetFromFile() const
+// 文件解析与加载实现
+bool ThemeManager::loadThemeFromFile(ThemeType type, const QString& filePath)
 {
-    QString themeName = currentThemeName().toLower();
-    QString path = QString(":/style/theme_%1.qss").arg(themeName);
-
-    QFile file(path);
-    if (!file.open(QFile::ReadOnly | QFile::Text)) {
-        LOG_WARNING(QString("Cannot open stylesheet file: %1").arg(path));
-        return QString();
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning() << "Failed to load theme file:" << filePath;
+        return false;
     }
 
-    QTextStream stream(&file);
-    QString style = stream.readAll();
+    QString content = QString::fromUtf8(file.readAll());
     file.close();
-    return style;
+
+    ThemeConfig config;
+
+    // 1. 解析颜色变量
+    // 我们在 QSS 文件头部定义颜色变量，格式为：/* @key: #RRGGBB */
+    // 示例: /* @rise: #E74C3C */
+    QRegularExpression colorRegex(R"(\/\*\s*@(\w+):\s*(#[A-Fa-f0-9]{6,8})\s*\*\/)");
+    QRegularExpressionMatchIterator it = colorRegex.globalMatch(content);
+
+    while (it.hasNext()) {
+        QRegularExpressionMatch match = it.next();
+        QString key = match.captured(1);    // 捕获键，如 "rise"
+        QString hex = match.captured(2);    // 捕获值，如 "#E74C3C"
+        config.colors[key] = QColor(hex);
+    }
+
+    // 2. 设置样式表
+    // 移除注释块，保留纯净的 CSS，或者直接使用全部内容（Qt 会忽略注释）
+    // 为了性能和纯净性，这里直接使用全部内容，Qt 引擎会自动处理注释
+    config.styleSheet = content;
+
+    // 3. 存入主题表
+    m_themes[type] = config;
+
+    return true;
 }
 
-void ThemeManager::loadThemeColors()
+void ThemeManager::applyTheme(ThemeType type)
 {
-    const std::array<QColor, 13>* colorArray = nullptr;
-
-    switch (d->currentTheme) {
-    case Dark:
-        colorArray = &d->darkColors;
-        break;
-    case Light:
-        colorArray = &d->lightColors;
-        break;
-    case EyeCare:
-        colorArray = &d->eyeCareColors;
-        break;
-    }
-
-    if (colorArray) {
-        d->colors.clear();
-        for (auto it = d->colorIndexMap.begin(); it != d->colorIndexMap.end(); ++it) {
-            d->colors[it.key()] = (*colorArray)[it.value()];
-        }
-    }
+    // 这里可以添加额外的主题应用逻辑
+    // 例如更新QApplication的样式表等
+    qApp->setStyleSheet(m_themes[type].styleSheet);
 }
-
-void ThemeManager::registerIconEngine(SvgIconEngine* engine)
+QColor ThemeManager::backgroundColor() const
 {
-    if (!engine || d->iconEngines.contains(engine))
-        return;
-
-    d->iconEngines.insert(engine);
-    LOG_DEBUG(QString("Registered icon engine, total: %1").arg(d->iconEngines.size()));
+    return color("background");
 }
-
-void ThemeManager::unregisterIconEngine(SvgIconEngine* engine)
+QColor ThemeManager::foregroundColor() const
 {
-    if (!engine)
-        return;
-
-    d->iconEngines.remove(engine);
-    LOG_DEBUG(QString("Unregistered icon engine, remaining: %1").arg(d->iconEngines.size()));
+    return color("foreground");
 }
-
-void ThemeManager::notifyIconEnginesThemeChanged()
+QColor ThemeManager::accentColor() const
 {
-    if (d->iconEngines.isEmpty())
-        return;
-
-    // 阶段1：所有引擎进入批量更新模式（暂停缓存清理）
-    for (auto* engine : d->iconEngines) {
-        engine->beginThemeUpdate();
-    }
-
-    // 阶段2：应用新主题颜色（此时不清理缓存，只更新颜色配置）
-    for (auto* engine : d->iconEngines) {
-        engine->applyThemeColors();
-    }
-
-    // 阶段3：结束批量更新（统一清空缓存，触发重绘）
-    for (auto* engine : d->iconEngines) {
-        engine->endThemeUpdate();
-    }
+    return color("accent");
 }
-
-
-QColor ThemeManager::backgroundColor() const    { return d->colors.value("background"); }
-QColor ThemeManager::surfaceColor() const       { return d->colors.value("surface"); }
-QColor ThemeManager::primaryColor() const       { return d->colors.value("primary"); }
-QColor ThemeManager::secondaryColor() const     { return d->colors.value("secondary"); }
-QColor ThemeManager::textPrimaryColor() const   { return d->colors.value("textPrimary"); }
-QColor ThemeManager::textSecondaryColor() const { return d->colors.value("textSecondary"); }
-QColor ThemeManager::borderColor() const        { return d->colors.value("border"); }
-
-QColor ThemeManager::upColor() const      { return d->colors.value("up"); }
-QColor ThemeManager::downColor() const    { return d->colors.value("down"); }
-QColor ThemeManager::warningColor() const { return d->colors.value("warning"); }
-QColor ThemeManager::successColor() const { return d->colors.value("success"); }
-QColor ThemeManager::errorColor() const   { return d->colors.value("error"); }
-QColor ThemeManager::infoColor() const    { return d->colors.value("info"); }
+QColor ThemeManager::riseColor() const
+{
+    return color("rise");
+}
+QColor ThemeManager::fallColor() const
+{
+    return color("fall");
+}
+QColor ThemeManager::neutralColor() const
+{
+    return color("neutral");
+}
+QColor ThemeManager::borderColor() const
+{
+    return color("border");
+}
+QColor ThemeManager::cardColor() const
+{
+    return color("card");
+}
+QColor ThemeManager::color(const QString& role) const
+{
+    if (m_themes.contains(m_currentTheme)) {
+        return m_themes[m_currentTheme].colors.value(role);
+    }
+    return QColor();
+}
+QString ThemeManager::themeStyleSheet() const
+{
+    if (m_themes.contains(m_currentTheme)) {
+        return m_themes[m_currentTheme].styleSheet;
+    }
+    return QString();
+}
+void ThemeManager::registerCustomTheme(const QString& name, const QJsonObject& config)
+{
+    ThemeConfig customTheme;
+    // 解析颜色配置
+    QJsonObject colors = config["colors"].toObject();
+    for (auto it = colors.begin(); it != colors.end(); ++it) {
+        customTheme.colors[it.key()] = QColor(it.value().toString());
+    }
+    // 解析样式表
+    customTheme.styleSheet = config["styleSheet"].toString();
+    m_themes[ThemeType::Custom] = customTheme;
+    m_customThemeMap[name] = ThemeType::Custom;
+}

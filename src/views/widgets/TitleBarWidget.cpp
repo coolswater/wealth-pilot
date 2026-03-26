@@ -1,4 +1,5 @@
 // TitleBarWidget.cpp
+#include "SvgIcon.h"
 #include "SvgIconEngine.h"
 #include "TitleBarWidget.h"
 
@@ -91,43 +92,30 @@ void TitleBarWidget::setupUI()
     }
 
     // 最小化按钮SvgColorIcon
-    SvgColorIcon minIcon(":/icons/minus.svg");
-    minIcon.followTheme()
-        .setNormalRole(IconColorRole::Primary)
-        .setDisabledRole(IconColorRole::TextSecondary)
-        .setSelectedRole(IconColorRole::Secondary);
-
+    QIcon minIcon = SvgIcon::themedIcon(":/icons/minus.svg", "foreground");
     d->m_minimizeBtn = new QPushButton(this);
     d->m_minimizeBtn->setProperty("icon", "true");
-    d->m_minimizeBtn->setIcon(minIcon.toIcon());
+    d->m_minimizeBtn->setIcon(minIcon);
     d->m_minimizeBtn->setIconSize(QSize(16, 16));
-    d->m_minimizeBtn->setFixedSize(46, 32);
+    d->m_minimizeBtn->setFixedSize(20, 20);
     layout->addWidget(d->m_minimizeBtn);
 
     // 最大化/还原按钮
-    SvgColorIcon maxIcon(":/icons/maximize.svg");
-    maxIcon.followTheme()
-        .setNormalRole(IconColorRole::Primary)
-        .setDisabledRole(IconColorRole::TextSecondary)
-        .setSelectedRole(IconColorRole::Secondary);
+    QIcon maxIcon = SvgIcon::themedIcon(":/icons/maximize.svg", "foreground");
     d->m_maximizeBtn = new QPushButton(this);
     d->m_maximizeBtn->setProperty("icon", "true");
     d->m_maximizeBtn->setIcon(maxIcon);
     d->m_maximizeBtn->setIconSize(QSize(16, 16));
-    d->m_maximizeBtn->setFixedSize(46, 32);
+    d->m_maximizeBtn->setFixedSize(20, 20);
     layout->addWidget(d->m_maximizeBtn);
 
     // 关闭按钮
-    SvgColorIcon closeIcon(":/icons/close.svg");
-    closeIcon.followTheme()
-        .setNormalRole(IconColorRole::Primary)
-        .setDisabledRole(IconColorRole::TextSecondary)
-        .setSelectedRole(IconColorRole::Secondary);
+    QIcon closeIcon = SvgIcon::themedIcon(":/icons/close.svg", "foreground");
     d->m_closeBtn = new QPushButton(this);
     d->m_closeBtn->setProperty("icon", "true");
     d->m_closeBtn->setIcon(closeIcon);
     d->m_closeBtn->setIconSize(QSize(16, 16));
-    d->m_closeBtn->setFixedSize(46, 32);
+    d->m_closeBtn->setFixedSize(20, 20);
     layout->addWidget(d->m_closeBtn);
 
     // 设置布局
@@ -180,19 +168,10 @@ void TitleBarWidget::updateMaximizeButton(bool isMaximized)
 {
     d->m_isMaximized = isMaximized;
     if (isMaximized) {
-        SvgColorIcon restoreIcon(":/icons/restore.svg");
-        restoreIcon.followTheme()
-            .setNormalRole(IconColorRole::Primary)
-            .setDisabledRole(IconColorRole::TextSecondary)
-            .setSelectedRole(IconColorRole::Secondary);
-
+        QIcon restoreIcon = SvgIcon::themedIcon(":/icons/restore.svg", "foreground");
         d->m_maximizeBtn->setIcon(restoreIcon);
     } else {
-        SvgColorIcon maxIcon(":/icons/maximize.svg");
-        maxIcon.followTheme()
-            .setNormalRole(IconColorRole::Primary)
-            .setDisabledRole(IconColorRole::TextSecondary)
-            .setSelectedRole(IconColorRole::Secondary);
+        QIcon maxIcon = SvgIcon::themedIcon(":/icons/maximize.svg", "foreground");
         d->m_maximizeBtn->setIcon(maxIcon);  // 最大化图标
     }
 }

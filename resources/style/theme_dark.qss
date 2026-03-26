@@ -28,6 +28,16 @@
  * 圆角: 4px / 8px / 12px / 16px
  */
 
+/* [颜色定义] */
+/* @background: #1E1E1E */
+/* @foreground: #E0E0E0 */
+/* @accent: #3B82F6 */
+/* @rise: #FF4757 */
+/* @fall: #2ED573 */
+/* @neutral: #747D8C */
+/* @border: #3A3A3A */
+/* @card: #2A2A2A */
+
 /* ==================== 全局样式 ==================== */
 * {
     margin: 0;
@@ -100,7 +110,7 @@ QScrollBar::handle:horizontal:hover {
 
 /* 主按钮 */
 QPushButton {
-    background-color: #3B82F6;
+    background-color: none;
     color: #FFFFFF;
     border: none;
     padding: 10px 20px;
@@ -109,15 +119,15 @@ QPushButton {
 }
 
 QPushButton:hover {
-    background-color: #3B82F6;
+    background-color: rgba(26, 31, 46, 0.15);
 }
 
 QPushButton:pressed {
-    background-color: #3B82F6;
+   background-color: rgba(26, 31, 46, 0.15);
 }
 
 QPushButton:disabled {
-    background-color: #3B82F6;
+    background-color: rgba(26, 31, 46, 0.15);
     color: #6B7280;
 }
 
@@ -196,6 +206,12 @@ QPushButton[small="true"] {
     font-size: 12px;
     border-radius: 6px;
 }
+
+/* ==================== 标题栏样式 ==================== */
+TitleBarWidget {
+    background-color: #ffffff;
+}
+
 /* ==================== 导航栏样式 ==================== */
 SidebarWidget {
     background-color: #0F1419;

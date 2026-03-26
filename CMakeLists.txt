@@ -102,7 +102,8 @@ set(SOURCES
 )
 
 # 创建可执行文件
-add_executable(WealthPilot WIN32 MACOSX_BUNDLE ${SOURCES})
+add_executable(WealthPilot WIN32 MACOSX_BUNDLE ${SOURCES}
+    src/views/widgets/SvgIcon.h src/views/widgets/SvgIcon.cpp)
 
 # 包含目录
 target_include_directories(WealthPilot PRIVATE

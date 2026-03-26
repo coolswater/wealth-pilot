@@ -76,8 +76,7 @@ int main(int argc, char *argv[])
     LOG_INFO("Custom fonts loaded successfully");
 
     // ========== 初始化主题管理器 ==========
-    // 初始化主题管理器
-    ThemeManager::instance()->initialize();
+   ThemeManager::instance()->setTheme(ThemeManager::ThemeType::Dark);
 
      // ========== 国际化 ==========
     QTranslator translator;
