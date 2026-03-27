@@ -72,6 +72,8 @@ set(WIDGET_SOURCES
     src/views/widgets/SvgIconWidget.cpp
     src/views/widgets/TitleBarWidget.h
     src/views/widgets/TitleBarWidget.cpp
+    src/views/widgets/ThemeToggleButton.h
+    src/views/widgets/ThemeToggleButton.cpp
 )
 
 # Views 视图
@@ -104,8 +106,7 @@ set(SOURCES
 )
 
 # 创建可执行文件
-add_executable(WealthPilot WIN32 MACOSX_BUNDLE ${SOURCES}
-)
+add_executable(WealthPilot WIN32 MACOSX_BUNDLE ${SOURCES})
 
 # 包含目录
 target_include_directories(WealthPilot PRIVATE

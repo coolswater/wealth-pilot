@@ -145,7 +145,7 @@ void ThemeManager::loadBuiltinThemes()
     loadThemeFromJson(ThemeType::EyeCare, eyeCareTheme);
 
     // 应用默认主题（亮色）
-    applyTheme(ThemeType::Light);
+    applyTheme(ThemeType::Dark);
 }
 
 bool ThemeManager::loadThemeFromJson(ThemeType type, const QJsonObject& json)

@@ -1,5 +1,6 @@
 // TitleBarWidget.cpp
 #include "SvgIconWidget.h"
+#include "ThemeToggleButton.h"
 #include "TitleBarWidget.h"
 
 #include <QLabel>
@@ -19,6 +20,7 @@ struct TitleBarWidget::Impl {
     QPushButton *m_minimizeBtn = nullptr;    // 最小化按钮
     QPushButton *m_maximizeBtn = nullptr;    // 最大化/还原按钮
     QPushButton *m_closeBtn = nullptr;         // 关闭按钮
+    ThemeToggleButton *m_themeButton = nullptr;
 
     // 拖动相关变量
     QPoint m_dragStartPos;           // 拖动起始鼠标位置（全局坐标）
@@ -78,17 +80,15 @@ void TitleBarWidget::setupUI()
     // 中间：弹性空间（将右侧按钮推到右边）
     layout->addStretch(1);
 
-    // 右侧：主题切换 + 窗口控制按钮
-    // d->m_themeToggle = new ThemeToggleButton(this);
-    // layout->addWidget(d->m_themeToggle);
+    // 创建主题切换按钮
+    d->m_themeButton = new ThemeToggleButton(this);
+    d->m_themeButton->setButtonSize(QSize(100, 30));  // 自定义尺寸
+    d->m_themeButton->setIconSize(16);
+
+    layout->addWidget(d->m_themeButton);
 
     // 添加小间距分隔
     layout->addSpacing(12);
-
-    QFile file(":/icons/minus.svg");
-    if (!file.exists()) {
-        qCritical() << "SVG resource not found!";
-    }
 
     // 最小化按钮SvgColorIcon
     QIcon minIcon = SvgIconWidget::themedIcon(":/icons/minus.svg", "foreground");
@@ -133,8 +133,10 @@ void TitleBarWidget::initConnections()
             this, &TitleBarWidget::onCloseClicked);
 
     // 连接主题管理器的信号到主窗口槽
-    // connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
-    //         this, &TitleBarWidget::onThemeChanged);
+    connect(d->m_themeButton, &ThemeToggleButton::themeSwitchRequested,
+            [](ThemeManager::ThemeType type) {
+                qDebug() << "User requested theme change to:" << static_cast<int>(type);
+            });
 }
 
 void TitleBarWidget::applyThemeStyle()
