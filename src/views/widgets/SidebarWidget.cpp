@@ -50,7 +50,7 @@ void SidebarWidget::addItem(const QString& id, const QString& text, const QIcon&
     connect(btn, &QPushButton::clicked, this, &SidebarWidget::onItemClicked);
 
     d->items[id] = btn;
-    d->layout->insertWidget(d->layout->count() - 1, btn);
+    d->layout->insertWidget(d->layout->count(), btn);
 }
 
 void SidebarWidget::addItem(const QString& id, const QString& text)
@@ -66,7 +66,7 @@ void SidebarWidget::addItem(const QString& id, const QString& text)
     connect(btn, &QPushButton::clicked, this, &SidebarWidget::onItemClicked);
 
     d->items[id] = btn;
-    d->layout->insertWidget(d->layout->count() - 1, btn);
+    d->layout->insertWidget(d->layout->count(), btn);
 }
 
 void SidebarWidget::setCollapseIcons(const QIcon& left, const QIcon& right)
@@ -84,7 +84,13 @@ void SidebarWidget::updateToggleButtonIcon()
 
 void SidebarWidget::setCurrentItem(const QString& id)
 {
-    if (d->currentId == id) return;
+    // 修复：即使当前已是选中状态，也要确保按钮保持 checked
+    if (d->currentId == id) {
+        if (!id.isEmpty() && d->items.contains(id)) {
+            d->items[id]->setChecked(true);  // 强制保持选中状态
+        }
+        return;
+    }
 
     // 取消之前的选中
     if (!d->currentId.isEmpty() && d->items.contains(d->currentId)) {
@@ -143,8 +149,8 @@ void SidebarWidget::onItemClicked()
     QPushButton* btn = qobject_cast<QPushButton*>(sender());
     if (!btn) return;
 
-
     QString id = btn->objectName();
+    LOG_DEBUG("当前id：" + d->currentId + "点击id：" + id);
     setCurrentItem(id);
     emit itemClicked(id);
 }

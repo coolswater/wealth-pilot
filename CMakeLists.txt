@@ -78,6 +78,8 @@ set(WIDGET_SOURCES
     src/views/widgets/ThemeToggleButton.cpp
     src/views/widgets/CardWidget.h
     src/views/widgets/CardWidget.cpp
+    src/views/widgets/StatusBarWidget.h
+    src/views/widgets/StatusBarWidget.cpp
 )
 
 # Views 视图
@@ -128,8 +130,7 @@ set(SOURCES
 )
 
 # 创建可执行文件
-add_executable(WealthPilot WIN32 MACOSX_BUNDLE ${SOURCES}
-    src/views/widgets/StatusBarWidget.h src/views/widgets/StatusBarWidget.cpp)
+add_executable(WealthPilot WIN32 MACOSX_BUNDLE ${SOURCES})
 
 # 包含目录
 target_include_directories(WealthPilot PRIVATE

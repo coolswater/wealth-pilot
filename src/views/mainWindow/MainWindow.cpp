@@ -202,25 +202,6 @@ void MainWindow::createPages()
         navigator->navigateTo(QStringLiteral("DashboardPage"));
     });
 
-    // registerPage("stock_quotes", [](QWidget* parent) -> QWidget* {
-    //     return new QWidget(parent);
-    // }, "股票", ":/icons/candlestick-chart.svg");
-    // registerPage("futures_quotes", [](QWidget* parent) -> QWidget* {
-    //     return new QWidget(parent);
-    // }, "期货", ":/icons/line-chart.svg");
-    // registerPage("signals", [](QWidget* parent) -> QWidget* {
-    //     return new QWidget(parent);
-    // }, "订阅", ":/icons/subscribe.svg");
-    // registerPage("portfolio", [](QWidget* parent) -> QWidget* {
-    //     return new QWidget(parent);
-    // }, "持仓", ":/icons/portfolio.svg");
-    // registerPage("warning", [](QWidget* parent) -> QWidget* {
-    //     return new QWidget(parent);
-    // }, "预警", ":/icons/alert.svg");
-    // registerPage("settings", [](QWidget* parent) -> QWidget* {
-    //     return new QWidget(parent);
-    // }, "设置", ":/icons/settings.svg");
-
     LOG_INFO(QStringLiteral("MainWindow: Pages registered successfully"));
 }
 
