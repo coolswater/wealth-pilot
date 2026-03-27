@@ -1,4 +1,4 @@
-#include "Dashboard.h"
+#include "DashboardPage.h"
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -6,7 +6,7 @@
 #include <QGraphicsDropShadowEffect>
 #include <QFont>
 
-struct Dashboard::Impl {
+struct DashboardPage::Impl {
     QVBoxLayout *mainLayout = nullptr;
     QLabel *titleLabel = nullptr;
     QPushButton *actionButton = nullptr;
@@ -16,22 +16,22 @@ struct Dashboard::Impl {
     static constexpr int ContentsMargins = 20;
 };
 
-Dashboard::Dashboard(QWidget *parent)
+DashboardPage::DashboardPage(QWidget *parent)
     : BasePage(parent)
     , d(std::make_unique<Impl>())
 {
     // 构造函数保持轻量，所有UI延迟到initializePage构建
-    setObjectName("DashboardPage");
+    setObjectName("DashboardPagePage");
 }
 
-Dashboard::~Dashboard() = default;
+DashboardPage::~DashboardPage() = default;
 
-QString Dashboard::pageId() const {
+QString DashboardPage::pageId() const {
     // 使用QStringLiteral避免运行时字符串分配
-    return QStringLiteral("dashboard");
+    return QStringLiteral("DashboardPage");
 }
 
-void Dashboard::initializePage() {
+void DashboardPage::initializePage() {
     if (isInitialized()) return;  // 防止重复初始化
 
     setupUI();
@@ -42,7 +42,7 @@ void Dashboard::initializePage() {
     emit pageStatusChanged(QStringLiteral("initialized"));
 }
 
-void Dashboard::setupUI() {
+void DashboardPage::setupUI() {
     // 1. 主布局配置 - 零边距融入父容器
     d->mainLayout = new QVBoxLayout(this);
     d->mainLayout->setContentsMargins(
@@ -56,7 +56,7 @@ void Dashboard::setupUI() {
 
     // 2. 标题标签 - 使用CSS样式表而非多次setFont调用（性能更好）
     d->titleLabel = new QLabel(tr("投资仪表板"), this);
-    d->titleLabel->setObjectName("dashboardTitle");
+    d->titleLabel->setObjectName("DashboardPageTitle");
     d->titleLabel->setAlignment(Qt::AlignCenter);
     d->titleLabel->setStyleSheet(
         QStringLiteral("font-size: 24px; font-weight: bold; color: #2c3e50; margin: 20px;")
@@ -91,7 +91,7 @@ void Dashboard::setupUI() {
     d->mainLayout->addStretch(1);  // 弹性空间将内容推向上方
 }
 
-void Dashboard::setupAnimations() {
+void DashboardPage::setupAnimations() {
     // 入场动画：淡入+上浮效果
     auto *anim = new QPropertyAnimation(this, "windowOpacity", this);
     anim->setDuration(300);
@@ -103,11 +103,11 @@ void Dashboard::setupAnimations() {
     // 此处为简化演示
 }
 
-void Dashboard::connectSignals() {
+void DashboardPage::connectSignals() {
     // 使用C++11 lambda连接，避免槽函数声明
     connect(d->actionButton, &QPushButton::clicked, this, [this]() {
         emit pageStatusChanged(QStringLiteral("refreshing"));
         // 模拟数据刷新，实际项目中应调用Service层
-        emit requestNavigation(QStringLiteral("dashboard"), {}, false);
+        emit requestNavigation(QStringLiteral("DashboardPage"), {}, false);
     });
 }

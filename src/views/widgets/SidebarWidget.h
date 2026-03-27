@@ -25,7 +25,7 @@ public:
     void addItem(const QString& id, const QString& text, const QIcon& icon);
 
     // 保留旧接口用于兼容（内部转换为 QIcon）
-    void addItem(const QString& id, const QString& text, const QString& iconPath);
+    void addItem(const QString& id, const QString& text);
 
     // 新增：设置折叠按钮图标（动态主题切换）
     void setCollapseIcons(const QIcon& left, const QIcon& right);

@@ -42,7 +42,7 @@ void SidebarWidget::addItem(const QString& id, const QString& text, const QIcon&
 
     // 直接使用传入的 QIcon（自动包含 SvgColorIcon 的主题感知能力）
     btn->setIcon(icon);
-    btn->setIconSize(QSize(24, 24));
+    btn->setIconSize(QSize(16, 16));
 
     btn->setText(text);
     btn->setFixedHeight(48);
@@ -53,14 +53,20 @@ void SidebarWidget::addItem(const QString& id, const QString& text, const QIcon&
     d->layout->insertWidget(d->layout->count() - 1, btn);
 }
 
-void SidebarWidget::addItem(const QString& id, const QString& text, const QString& iconPath)
+void SidebarWidget::addItem(const QString& id, const QString& text)
 {
-    // 旧接口兼容：创建普通 QIcon（不跟随主题，或在此处包装为 SvgColorIcon）
-    // 推荐：即使是路径，也包装为 SvgColorIcon 以支持主题
-    // SvgColorIconEngine themedIcon(iconPath);
-    // themedIcon.followTheme();  // 默认跟随主题
-    // addItem(id, text);
-    LOG_INFO("ADDITEM");
+    QPushButton* btn = new QPushButton(this);
+    btn->setObjectName(id);
+    btn->setCheckable(true);
+    btn->setCursor(Qt::PointingHandCursor);
+
+    btn->setText(text);
+    btn->setFixedHeight(48);
+
+    connect(btn, &QPushButton::clicked, this, &SidebarWidget::onItemClicked);
+
+    d->items[id] = btn;
+    d->layout->insertWidget(d->layout->count() - 1, btn);
 }
 
 void SidebarWidget::setCollapseIcons(const QIcon& left, const QIcon& right)
@@ -146,44 +152,25 @@ void SidebarWidget::onItemClicked()
 void SidebarWidget::setupUI()
 {
     d->layout = new QVBoxLayout(this);
-    d->layout->setContentsMargins(0, 20, 0, 20);
+    d->layout->setContentsMargins(0, 0, 0, 0);
     d->layout->setSpacing(4);
     d->layout->setAlignment(Qt::AlignTop);
 
-    // Logo 区域
-    d->logoWidget = new QWidget(this);
-    QHBoxLayout* logoLayout = new QHBoxLayout(d->logoWidget);
-    logoLayout->setContentsMargins(10, 20, 10, 20);
-
-    QLabel* logoLabel = new QLabel("WealthPilot", d->logoWidget);
-    logoLabel->setAlignment(Qt::AlignCenter);
-    logoLabel->setStyleSheet("font-size: 22px; font-weight: 700; color: #3B82F6;");
-    logoLayout->addWidget(logoLabel);
-
-    d->layout->addWidget(d->logoWidget);
-
-    // 分隔线
-    QWidget* line = new QWidget(this);
-    line->setFixedHeight(1);
-    d->layout->addWidget(line);
-
-    d->layout->addSpacing(20);
-
     // 折叠按钮
-    d->toggleBtn = new QPushButton(this);
-    d->toggleBtn->setIcon(QIcon(":/icons/chevron_left.svg"));
-    d->toggleBtn->setIconSize(QSize(20, 20));
-    d->toggleBtn->setFixedSize(40, 40);
-    d->toggleBtn->setCursor(Qt::PointingHandCursor);
+    // d->toggleBtn = new QPushButton(this);
+    // d->toggleBtn->setIcon(QIcon(":/icons/chevron_left.svg"));
+    // d->toggleBtn->setIconSize(QSize(20, 20));
+    // d->toggleBtn->setFixedSize(40, 40);
+    // d->toggleBtn->setCursor(Qt::PointingHandCursor);
 
-    connect(d->toggleBtn, &QPushButton::clicked, this, &SidebarWidget::toggle);
+    // connect(d->toggleBtn, &QPushButton::clicked, this, &SidebarWidget::toggle);
 
-    QHBoxLayout* toggleLayout = new QHBoxLayout();
-    toggleLayout->addStretch();
-    toggleLayout->addWidget(d->toggleBtn);
-    toggleLayout->addStretch();
+    // QHBoxLayout* toggleLayout = new QHBoxLayout();
+    // toggleLayout->addStretch();
+    // toggleLayout->addWidget(d->toggleBtn);
+    // toggleLayout->addStretch();
 
-    d->layout->addLayout(toggleLayout);
+    // d->layout->addLayout(toggleLayout);
 }
 
 void SidebarWidget::animateCollapse(bool collapse)

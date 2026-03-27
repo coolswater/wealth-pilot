@@ -11,6 +11,9 @@
 #include "MainWindow.h"
 #include "core/Tokens.h"
 #include "utils/Logger.h"
+#include "views/dashboard/DashboardPage.h"
+#include "views/signalCenter/SignalCenterPage.h"
+#include "views/watchList/WatchListPage.h"
 
 #include <QHBoxLayout>
 #include <QLabel>
@@ -22,16 +25,24 @@
 #include <core/PageFactoryRegistry.h>
 #include <core/PageNavigatorManager.h>
 #include <core/ThemeManager.h>
-#include <views/dashboard/Dashboard.h>
+#include <views/futures/FuturesQuotesPage.h>
+#include <views/news/NewsPage.h>
+#include <views/portfolio/PortfolioPage.h>
+#include <views/settings/SettingsPage.h>
+#include <views/stock/StockQuotesPage.h>
+#include <views/warning/WarningPage.h>
+#include <views/widgets/DividerWidget.h>
 #include <views/widgets/SidebarWidget.h>
+#include <views/widgets/StatusBarWidget.h>
+#include <views/widgets/SvgIconWidget.h>
 #include <views/widgets/TitleBarWidget.h>
 
 struct MainWindow::Impl {
 
     QHBoxLayout* topLayout = nullptr;           // 顶部布局
     QHBoxLayout* contentLayout = nullptr;       // 内容布局
-    QHBoxLayout* statusBarLayout = nullptr;     // 状态栏布局
     TitleBarWidget *m_titleBarWidget;           // 自定义标题栏实例
+    StatusBarWidget *m_statusBarWidget;         // 自定义状态栏实例
 
     SidebarWidget* sidebar = nullptr;
     QStackedWidget* contentStack = nullptr;
@@ -75,7 +86,7 @@ void MainWindow::setupUI()
     setCentralWidget(d->centralWidget);
 
     // TODO:删除
-    d->centralWidget->setStyleSheet("border:1px solid red;");
+    // d->centralWidget->setStyleSheet("border:1px solid red;");
 
     // // 主布局： 上中下布局
     QVBoxLayout* mainLayout = new QVBoxLayout(d->centralWidget);
@@ -86,6 +97,10 @@ void MainWindow::setupUI()
     d->m_titleBarWidget = new TitleBarWidget(this);
     mainLayout->addWidget(d->m_titleBarWidget);
 
+    // 风格线
+    DividerWidget *titleDivider = DividerWidget::createHorizontal(d->m_titleBarWidget, Tokens::Colors::BgElevated, 1, 0);
+    mainLayout->addWidget(titleDivider);
+
     // 2、内容布局
     d->contentLayout = new QHBoxLayout();
     mainLayout->addLayout(d->contentLayout);
@@ -94,21 +109,23 @@ void MainWindow::setupUI()
 
     // 2.1 左侧导航栏
     d->sidebar = new SidebarWidget(this);
-    d->sidebar->setFixedWidth(200);
+    d->sidebar->setFixedWidth(80);
     d->contentLayout->addWidget(d->sidebar);
+    DividerWidget *contentDivider = DividerWidget::createVertical(d->sidebar, Tokens::Colors::BgElevated, 1, 0);
+    d->contentLayout->addWidget(contentDivider);  // 使用便捷方法
 
     // // 2.2 内容区
-    QWidget* contentArea = new QWidget(this);
-    // // 拉伸因子1占据剩余空间
-    d->contentLayout->addWidget(contentArea, 1);
 
     // 2.3 页面堆栈容器
-    d->contentStack = new QStackedWidget(contentArea);
+    d->contentStack = new QStackedWidget(this);
     d->contentLayout->addWidget(d->contentStack);
 
-    // // 3、底部状态栏布局
-    // d->statusBarLayout = new QHBoxLayout(this);
-    // mainLayout->addLayout(d->statusBarLayout);
+    // 3、底部状态栏布局
+    d->m_statusBarWidget = new StatusBarWidget(this);
+    DividerWidget *statusBarDivider = DividerWidget::createHorizontal(d->m_statusBarWidget, Tokens::Colors::BgElevated, 1, 0);
+    mainLayout->addWidget(statusBarDivider);
+    mainLayout->addWidget(d->m_statusBarWidget);
+
 
 
     // 初始化导航器（绑定到UI容器）
@@ -131,36 +148,60 @@ void MainWindow::createPages()
     auto *registry = PageFactoryRegistry::instance();
     auto *navigator = PageNavigatorManager::instance();
 
+    // 全局
+    registry->registerPage<DashboardPage>(QStringLiteral("DashboardPage"), tr("全局"), true);
+    d->sidebar->addItem("DashboardPage","全局");
+    d->sidebar->setCurrentItem("DashboardPage");
 
-    // 注册页面（模板方法自动推导类型）
-    registry->registerPage<Dashboard>(QStringLiteral("dashboard"), tr("全局概览"), true); // 可缓存
+    // 自选
+    registry->registerPage<WatchListPage>(QStringLiteral("WatchListPage"));
+    d->sidebar->addItem("WatchListPage","自选");
+
+    // 股票
+    registry->registerPage<StockQuotesPage>(QStringLiteral("StockQuotesPage"));
+    d->sidebar->addItem("StockQuotesPage","股票");
+
+    // 期货
+    registry->registerPage<FuturesQuotesPage>(QStringLiteral("FuturesQuotesPage"));
+    d->sidebar->addItem("FuturesQuotesPage","期货");
+
+    // TODO: 外汇
+    // TODO: 基金
+    // TODO: 数字货币
+
+    // 订阅
+    registry->registerPage<SignalCenterPage>(QStringLiteral("SignalCenterPage"));
+    d->sidebar->addItem("SignalCenterPage","订阅");
 
 
-    // 配置缓存策略（与注册分离，支持运行时动态调整）
-    navigator->registerCachePolicy(QStringLiteral("dashboard"), CachePolicy::StrongCache);
+    // 资讯
+    registry->registerPage<NewsPage>(QStringLiteral("NewsPage"));
+    d->sidebar->addItem("NewsPage","资讯");
 
-    // 预加载首页（提升感知性能）
-    navigator->preloadPage(QStringLiteral("dashboard"));
+    // 持仓
+    registry->registerPage<PortfolioPage>(QStringLiteral("PortfolioPage"));
+    d->sidebar->addItem("PortfolioPage","持仓");
 
-    // 添加侧边栏导航项（与页面ID绑定）
-    d->sidebar->addItem("dashboard","全局",QIcon(":/icons/dashboard.svg"));
+    // 预警
+    registry->registerPage<WarningPage>(QStringLiteral("WarningPage"));
+    d->sidebar->addItem("WarningPage","预警");
 
-    // 【关键修复】所有页面准备就绪后，执行默认导航
+
+
+    // // 通知
+    // registry->registerPage<PortfolioPage>(QStringLiteral("PortfolioPage"));
+    // d->sidebar->addItem("PortfolioPage","通知");
+
+    // 设置
+    registry->registerPage<SettingsPage>(QStringLiteral("SettingsPage"));
+    d->sidebar->addItem("SettingsPage","设置");
+
+    // 所有页面准备就绪后，执行默认导航
     // 必须在register之后调用，否则报"not registered in factory"
     QTimer::singleShot(0, this, [navigator]() {
-        navigator->navigateTo(QStringLiteral("dashboard"));
+        navigator->navigateTo(QStringLiteral("DashboardPage"));
     });
 
-
-
-    // 添加侧栏
-
-    // registerPage("dashboard", [](QWidget* parent) -> QWidget* {
-    //     return new Dasha(parent);
-    // }, "看板", ":/icons/dashboard.svg");
-    // registerPage("watchlist", [](QWidget* parent) -> QWidget* {
-    //     return new QWidget(parent);
-    // }, "自选", ":/icons/watchlist.svg");
     // registerPage("stock_quotes", [](QWidget* parent) -> QWidget* {
     //     return new QWidget(parent);
     // }, "股票", ":/icons/candlestick-chart.svg");
@@ -170,9 +211,6 @@ void MainWindow::createPages()
     // registerPage("signals", [](QWidget* parent) -> QWidget* {
     //     return new QWidget(parent);
     // }, "订阅", ":/icons/subscribe.svg");
-    // registerPage("news", [](QWidget* parent) -> QWidget* {
-    //     return new QWidget(parent);
-    // }, "资讯", ":/icons/news.svg");
     // registerPage("portfolio", [](QWidget* parent) -> QWidget* {
     //     return new QWidget(parent);
     // }, "持仓", ":/icons/portfolio.svg");

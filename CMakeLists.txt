@@ -54,6 +54,8 @@ set(NETWORK_SOURCES
 
 # Services 服务
 set(SERVICE_SOURCES
+    src/services/CTPService.h
+    src/services/CTPService.cpp
 )
 
 # Controllers 控制器
@@ -74,14 +76,34 @@ set(WIDGET_SOURCES
     src/views/widgets/TitleBarWidget.cpp
     src/views/widgets/ThemeToggleButton.h
     src/views/widgets/ThemeToggleButton.cpp
+    src/views/widgets/CardWidget.h
+    src/views/widgets/CardWidget.cpp
 )
 
 # Views 视图
 set(VIEW_SOURCES
     src/views/mainWindow/MainWindow.cpp
     src/views/mainWindow/MainWindow.h
-    src/views/dashboard/Dashboard.h
-    src/views/dashboard/Dashboard.cpp
+    src/views/dashboard/DashboardPage.h
+    src/views/dashboard/DashboardPage.cpp
+    src/views/widgets/DividerWidget.h
+    src/views/widgets/DividerWidget.cpp
+    src/views/watchList/WatchListPage.h
+    src/views/watchList/WatchListPage.cpp
+    src/views/signalCenter/SignalCenterPage.h
+    src/views/signalCenter/SignalCenterPage.cpp
+    src/views/news/NewsPage.h
+    src/views/news/NewsPage.cpp
+    src/views/portfolio/PortfolioPage.h
+    src/views/portfolio/PortfolioPage.cpp
+    src/views/futures/FuturesQuotesPage.h
+    src/views/futures/FuturesQuotesPage.cpp
+    src/views/stock/StockQuotesPage.h
+    src/views/stock/StockQuotesPage.cpp
+    src/views/settings/SettingsPage.h
+    src/views/settings/SettingsPage.cpp
+    src/views/warning/WarningPage.h
+    src/views/warning/WarningPage.cpp
 )
 
 # Resources 资源
@@ -106,7 +128,8 @@ set(SOURCES
 )
 
 # 创建可执行文件
-add_executable(WealthPilot WIN32 MACOSX_BUNDLE ${SOURCES})
+add_executable(WealthPilot WIN32 MACOSX_BUNDLE ${SOURCES}
+    src/views/widgets/StatusBarWidget.h src/views/widgets/StatusBarWidget.cpp)
 
 # 包含目录
 target_include_directories(WealthPilot PRIVATE
