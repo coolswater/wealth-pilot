@@ -40,12 +40,19 @@ set(CORE_SOURCES
 
 # Models 数据模型
 set(MODEL_SOURCES
+    src/models/FuturesQuoteItem.h
+    src/models/FuturesQuoteModel.h
+    src/models/FuturesQuoteModel.cpp
+    src/models/FuturesQuoteDelegate.h
+    src/models/FuturesQuoteDelegate.cpp
 )
 
 # Utils 工具
 set(UTIL_SOURCES
     src/utils/Logger.cpp
     src/utils/Logger.h
+    src/utils/FuturesMockDataGenerator.h
+    src/utils/FuturesMockDataGenerator.cpp
 )
 
 # Network 网络

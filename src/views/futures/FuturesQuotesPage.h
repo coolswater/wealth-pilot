@@ -14,6 +14,12 @@
 #include <memory>
 #include <core/BasePage.h>
 #include <services/CTPService.h>
+#include <QTimer>
+
+QT_BEGIN_NAMESPACE
+class QTableView;
+class QLabel;
+QT_END_NAMESPACE
 
 class FuturesQuotesPage : public BasePage
 {
@@ -25,20 +31,15 @@ public:
     QString pageId() const override;
     void initializePage() override;
 
+    void flushPendingUpdates();
 private slots:
-    void onConnectClicked();
-    void onSubscribeClicked();
-    void onMarketDataReceived(const FuturesQuote& quote);
-    void onConnectionStateChanged();
-    void onQuoteItemClicked(int row, int column);
+    void onRowClicked(const QModelIndex &index);
+    void onSimulateTick();
 
 private:
     void setupUI();
-    void createToolbar();
-    void createQuoteTable();
-    void updateQuoteDisplay(const FuturesQuote& quote);
-    void addQuoteRow(const FuturesQuote& quote);
-    void setConnectionStatus(bool connected);
+    void setupConnections();
+    void initData();
 
     class Impl;
     std::unique_ptr<Impl> d;
