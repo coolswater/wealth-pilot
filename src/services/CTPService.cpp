@@ -1,382 +1,239 @@
-/**
- * @file CTPService.cpp
- * @brief CTP期货服务实现
- */
+/////////////////////////////////////////////////////////////////////////
+///@file CTPService.cpp
+///@brief PIMPL实现 - 组装行情与交易SPI
+/////////////////////////////////////////////////////////////////////////
+
 #include "CTPService.h"
-#include "../utils/Logger.h"
+#include <QtCore/QThread>
+#include <QtCore/QDebug>
+#include <QtCore/QDir>
+#include <core/CtpMarketSpi.h>
+#include <core/CtpTradingSpi.h>
+#include <QTimer>
 
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QDateTime>
-#include <QtGlobal>
-#include <QRandomGenerator>
+namespace CTP {
 
-CTPService* CTPService::s_instance = nullptr;
-
-// PIMPL实现
 class CTPService::Impl {
 public:
-    SimnowConfig config;
-    bool marketConnected = false;
-    bool tradeConnected = false;
-    bool loggedIn = false;
-    int requestId = 0;
+    // 双SPI架构
+    CtpMarketSpi* marketSpi{nullptr};
+    CtpTradingSpi* tradingSpi{nullptr};
 
-    QTimer* reconnectTimer = nullptr;
-    QTimer* heartbeatTimer = nullptr;
+    // 独立线程（CTP API线程安全要求）
+    QThread* marketThread{nullptr};
+    QThread* tradingThread{nullptr};
 
-    QMap<QString, FuturesQuote> quotes;
-    QMap<QString, OrderResponse> orders;
+    // 配置
+    QString marketFront;
+    QString tradingFront;
+    QString brokerId;
+    QString userId;
+    QString password;
+    QString appId;
+    QString authCode;
 
-    // 模拟数据（用于演示）
-    bool simulationMode = true;
-    QTimer* simulationTimer = nullptr;
+    bool isLoggedIn{false};
 };
 
-CTPService::CTPService(QObject* parent)
+CTPService::CTPService(QObject *parent)
     : QObject(parent)
-    , d(std::make_unique<Impl>())
-{
+    , d(std::make_unique<Impl>()) {  // C++17 make_unique
 }
 
-CTPService::~CTPService()
-{
-    shutdown();
-}
-
-CTPService* CTPService::instance()
-{
-    if (!s_instance) {
-        s_instance = new CTPService();
-    }
-    return s_instance;
-}
-
-bool CTPService::initialize()
-{
-    LOG_INFO("CTPService initializing...");
-
-    // 创建重连定时器
-    d->reconnectTimer = new QTimer(this);
-    d->reconnectTimer->setInterval(30000);  // 30秒
-    connect(d->reconnectTimer, &QTimer::timeout, this, &CTPService::onReconnectTimer);
-
-    // 创建心跳定时器
-    d->heartbeatTimer = new QTimer(this);
-    d->heartbeatTimer->setInterval(10000);  // 10秒
-    connect(d->heartbeatTimer, &QTimer::timeout, this, &CTPService::onHeartbeatTimer);
-
-    // 创建模拟数据定时器（演示模式）
-    if (d->simulationMode) {
-        d->simulationTimer = new QTimer(this);
-        d->simulationTimer->setInterval(1000);  // 1秒
-        connect(d->simulationTimer, &QTimer::timeout, [this]() {
-            // 模拟行情数据更新
-            for (auto it = d->quotes.begin(); it != d->quotes.end(); ++it) {
-                FuturesQuote& quote = it.value();
-                // 随机波动价格
-                double change = (QRandomGenerator::global()->bounded(100) - 50) / 1000.0;
-                quote.lastPrice += change;
-                quote.updateTime = QDateTime::currentDateTime().toString("hh:mm:ss");
-                emit marketDataReceived(quote);
-            }
-        });
-    }
-
-    LOG_INFO("CTPService initialized successfully");
-}
-
-void CTPService::shutdown()
-{
-    LOG_INFO("CTPService shutting down...");
-
+CTPService::~CTPService() {
     disconnect();
+}
 
-    if (d->reconnectTimer) {
-        d->reconnectTimer->stop();
-        d->reconnectTimer->deleteLater();
-        d->reconnectTimer = nullptr;
+void CTPService::setMarketFrontAddress(const QString& frontAddr) {
+    d->marketFront = frontAddr;
+}
+
+void CTPService::setTradingFrontAddress(const QString& frontAddr) {
+    d->tradingFront = frontAddr;
+}
+
+void CTPService::setCredentials(const QString& brokerId, const QString& userId,
+                               const QString& password, const QString& appId,
+                               const QString& authCode) {
+    d->brokerId = brokerId;
+    d->userId = userId;
+    d->password = password;
+    d->appId = appId;
+    d->authCode = authCode;
+}
+
+void CTPService::setupConnections() {
+    // 创建线程和SPI（C++17 结构化绑定不适用此处，使用传统方式）
+
+    // 确保流文件目录存在
+    QDir().mkpath("market_flow");
+    QDir().mkpath("trading_flow");
+
+    // 1. 启动行情线程
+    d->marketThread = new QThread(this);
+    d->marketSpi = new CtpMarketSpi();
+    d->marketSpi->moveToThread(d->marketThread);
+
+    // 行情信号连接
+    connect(d->marketSpi, &CtpMarketSpi::connected, this, &CTPService::marketConnected);
+    connect(d->marketSpi, &CtpMarketSpi::disconnected, this, &CTPService::marketDisconnected);
+    connect(d->marketSpi, &CtpMarketSpi::marketDataReceived,
+            this, &CTPService::marketDataReceived);
+    connect(d->marketSpi, &CtpMarketSpi::marketDataReceived,
+            this, [this](const MarketData& data) {
+                // 批量缓冲：收集到列表后批量发射
+                static QList<MarketData> batch;
+                batch.append(data);
+                if (batch.size() >= 50) {  // 每50条批量发射一次
+                    emit marketDataBatchReceived(batch);
+                    batch.clear();
+                }
+            });
+
+    d->marketThread->start();
+
+    // 在行情线程中初始化API
+    QMetaObject::invokeMethod(d->marketSpi, [this]() {
+        d->marketSpi->createApi("market_flow/");
+        d->marketSpi->registerFront(d->marketFront);
+        d->marketSpi->init();
+    }, Qt::QueuedConnection);
+
+    // 2. 启动交易线程
+    d->tradingThread = new QThread(this);
+    d->tradingSpi = new CtpTradingSpi();
+    d->tradingSpi->moveToThread(d->tradingThread);
+
+    connect(d->tradingSpi, &CtpTradingSpi::connected, this, &CTPService::tradingConnected);
+    connect(d->tradingSpi, &CtpTradingSpi::loginResult,
+            this, [this](bool success, const QString& msg) {
+                d->isLoggedIn = success;
+                emit loginFinished(success, msg);
+            });
+    connect(d->tradingSpi, &CtpTradingSpi::orderUpdated,
+            this, &CTPService::orderUpdated);
+    connect(d->tradingSpi, &CtpTradingSpi::tradeReceived,
+            this, &CTPService::tradeReceived);
+    connect(d->tradingSpi, &CtpTradingSpi::accountInfo,
+            this, &CTPService::accountInfoReceived);
+
+    d->tradingThread->start();
+
+    QMetaObject::invokeMethod(d->tradingSpi, [this]() {
+        d->tradingSpi->createApi("trading_flow/");
+        d->tradingSpi->registerFront(d->tradingFront);
+        d->tradingSpi->init();
+    }, Qt::QueuedConnection);
+
+    // 连接成功后自动登录（延迟执行，确保OnFrontConnected已触发）
+    QTimer::singleShot(2000, this, [this]() {
+        // 先认证（CTP6.6.1+要求）
+        if (!d->appId.isEmpty() && !d->authCode.isEmpty()) {
+            QMetaObject::invokeMethod(d->tradingSpi, [this]() {
+                d->tradingSpi->authenticate(d->brokerId, d->userId,
+                                            d->appId, d->authCode);
+            }, Qt::QueuedConnection);
+
+            // 认证后登录
+            QTimer::singleShot(1000, this, [this]() {
+                QMetaObject::invokeMethod(d->tradingSpi, [this]() {
+                    d->tradingSpi->login(d->brokerId, d->userId, d->password);
+                }, Qt::QueuedConnection);
+            });
+        } else {
+            // 旧版直接登录
+            QMetaObject::invokeMethod(d->tradingSpi, [this]() {
+                d->tradingSpi->login(d->brokerId, d->userId, d->password);
+            }, Qt::QueuedConnection);
+        }
+
+        // 行情登录（通常无需认证）
+        QMetaObject::invokeMethod(d->marketSpi, [this]() {
+            d->marketSpi->login(d->brokerId, d->userId, d->password);
+        }, Qt::QueuedConnection);
+    });
+}
+
+void CTPService::disconnect() {
+    if (d->marketSpi) {
+        QMetaObject::invokeMethod(d->marketSpi, &CtpMarketSpi::release,
+                                  Qt::BlockingQueuedConnection);
+    }
+    if (d->tradingSpi) {
+        QMetaObject::invokeMethod(d->tradingSpi, &CtpTradingSpi::release,
+                                  Qt::BlockingQueuedConnection);
     }
 
-    if (d->heartbeatTimer) {
-        d->heartbeatTimer->stop();
-        d->heartbeatTimer->deleteLater();
-        d->heartbeatTimer = nullptr;
+    if (d->marketThread) {
+        d->marketThread->quit();
+        d->marketThread->wait(3000);
+    }
+    if (d->tradingThread) {
+        d->tradingThread->quit();
+        d->tradingThread->wait(3000);
     }
 
-    if (d->simulationTimer) {
-        d->simulationTimer->stop();
-        d->simulationTimer->deleteLater();
-        d->simulationTimer = nullptr;
-    }
-
-    LOG_INFO("CTPService shutdown complete");
+    d->isLoggedIn = false;
 }
 
-void CTPService::setConfig(const SimnowConfig& config)
-{
-    d->config = config;
-    LOG_INFO(QString("CTP config updated - Broker: %1, User: %2")
-                 .arg(config.brokerId, config.userId));
+bool CTPService::isLoggedIn() const {
+    return d->isLoggedIn;
 }
 
-SimnowConfig CTPService::config() const
-{
-    return d->config;
-}
-
-bool CTPService::connectMarket()
-{
-    LOG_INFO(QString("Connecting to market front: %1").arg(d->config.marketFront));
-
-    // 实际项目中这里会调用CTP API连接行情服务器
-    // 这里使用模拟模式演示
-
-    if (d->simulationMode) {
-        d->marketConnected = true;
-        emit marketConnected();
-        LOG_INFO("Market connected (simulation mode)");
-        return true;
-    }
-
-    // TODO: 实现真实的CTP API连接
-    return false;
-}
-
-bool CTPService::connectTrade()
-{
-    LOG_INFO(QString("Connecting to trade front: %1").arg(d->config.tradeFront));
-
-    if (d->simulationMode) {
-        d->tradeConnected = true;
-        emit tradeConnected();
-        LOG_INFO("Trade connected (simulation mode)");
-        return true;
-    }
-
-    // TODO: 实现真实的CTP API连接
-    return false;
-}
-
-void CTPService::disconnect()
-{
-    LOG_INFO("Disconnecting from CTP servers");
-
-    d->marketConnected = false;
-    d->tradeConnected = false;
-    d->loggedIn = false;
-
-    emit marketDisconnected();
-    emit tradeDisconnected();
-    emit loggedOut();
-
-    LOG_INFO("Disconnected from CTP servers");
-}
-
-bool CTPService::isMarketConnected() const
-{
-    return d->marketConnected;
-}
-
-bool CTPService::isTradeConnected() const
-{
-    return d->tradeConnected;
-}
-
-bool CTPService::login(const QString& userId, const QString& password)
-{
-    LOG_INFO(QString("Logging in user: %1").arg(userId));
-
-    d->config.userId = userId;
-    d->config.password = password;
-
-    if (d->simulationMode) {
-        d->loggedIn = true;
-        emit loggedIn();
-        d->heartbeatTimer->start();
-        LOG_INFO("Login successful (simulation mode)");
-        return true;
-    }
-
-    // TODO: 实现真实的CTP登录
-    return false;
-}
-
-void CTPService::logout()
-{
-    LOG_INFO("Logging out");
-
-    d->loggedIn = false;
-    emit loggedOut();
-
-    if (d->heartbeatTimer) {
-        d->heartbeatTimer->stop();
-    }
-}
-
-bool CTPService::isLoggedIn() const
-{
-    return d->loggedIn;
-}
-
-void CTPService::subscribeMarketData(const QStringList& instruments)
-{
-    LOG_INFO(QString("Subscribing to %1 instruments").arg(instruments.size()));
-
-    for (const QString& instrument : instruments) {
-        // 初始化行情数据
-        // double change = (QRandomGenerator::global()->bounded(100) - 50) / 1000.0;
-        FuturesQuote quote;
-        quote.instrumentId = instrument;
-        quote.lastPrice = 3000.0 + QRandomGenerator::global()->bounded(1000);
-        quote.preSettlementPrice = quote.lastPrice;
-        quote.openPrice = quote.lastPrice;
-        quote.highestPrice = quote.lastPrice * 1.02;
-        quote.lowestPrice = quote.lastPrice * 0.98;
-        quote.volume = QRandomGenerator::global()->bounded(10000);
-        quote.openInterest = QRandomGenerator::global()->bounded(50000);
-        quote.bidPrice1 = quote.lastPrice - 1;
-        quote.askPrice1 = quote.lastPrice + 1;
-        quote.updateTime = QDateTime::currentDateTime().toString("hh:mm:ss");
-
-        d->quotes[instrument] = quote;
-    }
-
-    if (d->simulationMode && d->simulationTimer) {
-        d->simulationTimer->start();
-    }
-
-    LOG_INFO(QString("Subscribed to %1 instruments").arg(instruments.size()));
-}
-
-void CTPService::unsubscribeMarketData(const QStringList& instruments)
-{
-    LOG_INFO(QString("Unsubscribing from %1 instruments").arg(instruments.size()));
-
-    for (const QString& instrument : instruments) {
-        d->quotes.remove(instrument);
-    }
-
-    if (d->quotes.isEmpty() && d->simulationTimer) {
-        d->simulationTimer->stop();
-    }
-}
-
-QStringList CTPService::subscribedInstruments() const
-{
-    return d->quotes.keys();
-}
-
-QString CTPService::sendOrder(const OrderRequest& request)
-{
-    QString orderId = QString("ORDER_%1").arg(++d->requestId);
-
-    LOG_INFO(QString("Sending order: %1 %2 %3 @ %4")
-                 .arg(orderId,  // QString
-                      request.instrumentId,  // QString
-                      QString::number(request.volume),  // int -> QString
-                      QString::number(request.price, 'f', 2)));  // double -> QString，保留2位小数
-
-    if (d->simulationMode) {
-        OrderResponse response;
-        response.orderId = orderId;
-        response.instrumentId = request.instrumentId;
-        response.status = 3;  // 全部成交
-        response.price = request.price;
-        response.volume = request.volume;
-        response.tradedVolume = request.volume;
-        response.insertTime = QDateTime::currentDateTime().toString("hh:mm:ss");
-
-        d->orders[orderId] = response;
-
-        // 模拟异步响应
-        QTimer::singleShot(100, [this, response]() {
-            emit orderResponseReceived(response);
-        });
-
-        return orderId;
-    }
-
-    // TODO: 实现真实的CTP下单
+QString CTPService::tradingDay() const {
+    // 可通过tradingSpi获取
     return QString();
 }
 
-bool CTPService::cancelOrder(const QString& orderId)
-{
-    LOG_INFO(QString("Cancelling order: %1").arg(orderId));
+void CTPService::subscribeMarketData(const QList<InstrumentID>& instruments, bool useBuffer) {
+    if (!d->marketSpi) return;
 
-    if (d->orders.contains(orderId)) {
-        d->orders[orderId].status = 4;  // 已撤销
-
-        OrderResponse response = d->orders[orderId];
-        emit orderResponseReceived(response);
-
-        return true;
-    }
-
-    return false;
+    QMetaObject::invokeMethod(d->marketSpi, [this, instruments]() {
+        d->marketSpi->subscribeMarketData(instruments);
+    }, Qt::QueuedConnection);
 }
 
-void CTPService::queryPositions()
-{
-    LOG_INFO("Querying positions");
+void CTPService::unsubscribeMarketData(const QList<InstrumentID>& instruments) {
+    if (!d->marketSpi) return;
 
-    // 模拟持仓数据
-    emit positionUpdated("rb2505", 10, 3500.0);
-    emit positionUpdated("m2505", 5, 2800.0);
+    QMetaObject::invokeMethod(d->marketSpi, [this, instruments]() {
+        d->marketSpi->unsubscribeMarketData(instruments);
+    }, Qt::QueuedConnection);
 }
 
-void CTPService::queryAccount()
-{
-    LOG_INFO("Querying account");
+std::optional<OrderRef> CTPService::insertOrder(const OrderInfo& order) {
+    if (!d->tradingSpi || !d->isLoggedIn) return std::nullopt;
 
-    // 模拟账户数据
-    emit accountUpdated(1000000.0, 800000.0, 200000.0);
+    // 跨线程调用（C++17 std::optional返回值处理）
+    std::optional<OrderRef> result;
+    QMetaObject::invokeMethod(d->tradingSpi, [this, &result, order]() {
+        result = d->tradingSpi->insertOrder(order);
+    }, Qt::BlockingQueuedConnection);
+
+    return result;
 }
 
-void CTPService::queryOrders()
-{
-    LOG_INFO("Querying orders");
+void CTPService::cancelOrder(const OrderRef& orderRef) {
+    if (!d->tradingSpi || !d->isLoggedIn) return;
 
-    for (const auto& response : qAsConst(d->orders)) {
-        emit orderResponseReceived(response);
-    }
+    QMetaObject::invokeMethod(d->tradingSpi, [this, orderRef]() {
+        d->tradingSpi->cancelOrder(orderRef);
+    }, Qt::QueuedConnection);
 }
 
-void CTPService::queryTrades()
-{
-    LOG_INFO("Querying trades");
-    // TODO: 实现查询成交记录
+void CTPService::queryTradingAccount() {
+    if (!d->tradingSpi || !d->isLoggedIn) return;
+
+    QMetaObject::invokeMethod(d->tradingSpi, &CtpTradingSpi::queryAccount,
+                              Qt::QueuedConnection);
 }
 
-FuturesQuote CTPService::getQuote(const QString& instrumentId) const
-{
-    return d->quotes.value(instrumentId);
+void CTPService::queryPositions() {
+    if (!d->tradingSpi || !d->isLoggedIn) return;
+
+    QMetaObject::invokeMethod(d->tradingSpi, [this]() {
+        d->tradingSpi->queryPositions(QString());  // 或传入实际合约代码
+    }, Qt::QueuedConnection);
 }
 
-QMap<QString, FuturesQuote> CTPService::getAllQuotes() const
-{
-    return d->quotes;
-}
-
-void CTPService::onReconnectTimer()
-{
-    if (!d->marketConnected) {
-        LOG_INFO("Attempting to reconnect market...");
-        connectMarket();
-    }
-
-    if (!d->tradeConnected) {
-        LOG_INFO("Attempting to reconnect trade...");
-        connectTrade();
-    }
-}
-
-void CTPService::onHeartbeatTimer()
-{
-    if (d->loggedIn) {
-        // 发送心跳包或查询账户保持连接
-        LOG_DEBUG("Sending heartbeat");
-    }
-}
+} // namespace CTP

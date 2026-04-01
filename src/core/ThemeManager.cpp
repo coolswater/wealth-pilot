@@ -189,7 +189,7 @@ QMap<QString, QColor> ThemeManager::parseColorsFromJson(const QJsonObject& color
     QMap<QString, QColor> result;
     for (auto it = colorsObj.begin(); it != colorsObj.end(); ++it) {
         QString colorStr = it.value().toString();
-        if (QColor::isValidColor(colorStr)) {
+        if (QColor::isValidColorName(colorStr)) {
             result[it.key()] = QColor(colorStr);
         } else {
             qWarning() << "Invalid color value for key" << it.key() << ":" << colorStr;

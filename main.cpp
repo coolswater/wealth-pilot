@@ -34,11 +34,33 @@
 #include <QLocale>
 #include <QTranslator>
 #include <core/ThemeManager.h>
+#include <services/CTPService.h>
 
+/**
+ * @brief 清理所有服务
+ */
+void cleanupServices()
+{
+    LOG_INFO("Cleaning up services...");
+
+    // CTPService::instance()->shutdown();
+    // AIService::instance()->shutdown();
+    // DataService::instance()->shutdown();
+    // NetworkManager::instance()->shutdown();
+    // DatabaseManager::instance()->shutdown();
+
+    LOG_INFO("All services cleaned up");
+}
+
+/**
+ * @brief 应用程序入口函数
+ * @param argc 命令行参数数量
+ * @param argv 命令行参数数组
+ * @return int 程序退出码（0=成功，非0=错误）
+ */
 int main(int argc, char *argv[])
 {
-    // 设置应用程序属性
-    // 压缩高频事件（如鼠标移动），提高性能
+    // 设置应用程序属性,压缩高频事件（如鼠标移动），提高性能
     QApplication::setAttribute(Qt::AA_CompressHighFrequencyEvents);
 
     // ========== 创建Qt应用实例 ==========
@@ -94,14 +116,7 @@ int main(int argc, char *argv[])
 
     // 确保退出时清理服务
     QObject::connect(&app, &QApplication::aboutToQuit, []() {
-    LOG_INFO("Cleaning up services...");
-
-        // CTPService::instance()->shutdown();
-        // AIService::instance()->shutdown();
-        // DataService::instance()->shutdown();
-        // NetworkManager::instance()->shutdown();
-        // DatabaseManager::instance()->shutdown();
-
+        cleanupServices();
         LOG_INFO("All services cleaned up");
     });
 

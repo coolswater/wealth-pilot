@@ -83,7 +83,7 @@ QVariant FuturesQuoteModel::data(const QModelIndex &index, int role) const
         switch (index.column()) {
         case SerialNo:       return item.serialNo;
         case ContractName:   return item.contractName;
-        case LatestPrice:    return QString::number(item.latestPrice, 'f', 2);
+        case LatestPrice:    return QString::number(item.lastPrice, 'f', 2);
         case CurrentHand:    return item.currentHand;
         case BidPrice:       return QString::number(item.bidPrice, 'f', 2);
         case AskPrice:       return QString::number(item.askPrice, 'f', 2);
@@ -102,7 +102,7 @@ QVariant FuturesQuoteModel::data(const QModelIndex &index, int role) const
         case CurrentChange:  return QString::number(item.currentChange, 'f', 2);
         case CurrentOiChange:return item.currentOiChange;
         case Dynamic:        return item.dynamic;
-        case PreSettlement:  return QString::number(item.preSettlement, 'f', 2);
+        case PreSettlement:  return QString::number(item.preSettlementPrice, 'f', 2);
         case PreClose:       return QString::number(item.preClose, 'f', 2);
         case Capital:        return QString::number(item.capital, 'f', 2) + "亿";
         case CapitalFlow:    return (item.capitalFlow > 0 ? "+" : "") + QString::number(item.capitalFlow, 'f', 2) + "亿";

@@ -5,6 +5,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QStatusBar>
+#include <QTimer>
 
 #include <services/CTPService.h>
 
@@ -74,11 +75,11 @@ void StatusBarWidget::initConnections()
         QDateTime currentTime = QDateTime::currentDateTime();
         d->timeLabel->setText(currentTime.toString("yyyy/MM/dd HH:mm:ss"));
     });
-    // CTP 状态
-    connect(CTPService::instance(), &CTPService::marketConnected,
-            this, &StatusBarWidget::onCTPStatusChanged);
-    connect(CTPService::instance(), &CTPService::marketDisconnected,
-            this, &StatusBarWidget::onCTPStatusChanged);
+    // // CTP 状态
+    // connect(CTPService::instance(), &CTPService::marketConnected,
+    //         this, &StatusBarWidget::onCTPStatusChanged);
+    // connect(CTPService::instance(), &CTPService::marketDisconnected,
+    //         this, &StatusBarWidget::onCTPStatusChanged);
 
     // AI 面板信号
     // connect(d->aiPanel, &AIAssistantPanel::messageSent,
@@ -92,17 +93,17 @@ void StatusBarWidget::onCTPStatusChanged()
 {
     if (!d->ctpStatusLabel) return;
 
-    bool marketConnected = CTPService::instance()->isMarketConnected();
-    bool tradeConnected = CTPService::instance()->isTradeConnected();
+    // bool marketConnected = CTPService::instance()->isMarketConnected();
+    // bool tradeConnected = CTPService::instance()->isTradeConnected();
 
-    if (marketConnected && tradeConnected) {
-        d->ctpStatusLabel->setText("CTP: 已连接");
-        d->ctpStatusLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::Success));
-    } else if (marketConnected) {
-        d->ctpStatusLabel->setText("CTP: 行情已连接");
-        d->ctpStatusLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::Warning));
-    } else {
-        d->ctpStatusLabel->setText("CTP: 未连接");
-        d->ctpStatusLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::Danger));
-    }
+    // if (marketConnected && tradeConnected) {
+    //     d->ctpStatusLabel->setText("CTP: 已连接");
+    //     d->ctpStatusLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::Success));
+    // } else if (marketConnected) {
+    //     d->ctpStatusLabel->setText("CTP: 行情已连接");
+    //     d->ctpStatusLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::Warning));
+    // } else {
+    //     d->ctpStatusLabel->setText("CTP: 未连接");
+    //     d->ctpStatusLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::Danger));
+    // }
 }

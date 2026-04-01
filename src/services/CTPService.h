@@ -1,152 +1,275 @@
-/**
- * @file CTPService.h
- * @brief CTP期货行情和交易服务 - Simnow模拟交易平台对接
- *
- * 功能：
- * - 连接Simnow行情和交易服务器
- * - 订阅期货行情
- * - 模拟交易（下单、撤单）
- * - 持仓和资金查询
- *
- * Simnow环境配置：
- * - 行情前置: tcp://180.168.146.187:10131
- * - 交易前置: tcp://180.168.146.187:10130
- * - 经纪商代码: 9999
- */
-#pragma once
+/////////////////////////////////////////////////////////////////////////
+///@file CTPService.h
+///@brief CTP客户端对外接口 - PIMPL模式封装
+///@author CTP Service
+///@date 2026-04-01
+/////////////////////////////////////////////////////////////////////////
 
-#include <QObject>
-#include <QTimer>
-#include <QMap>
+#ifndef CTPService_H
+#define CTPService_H
+
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QDateTime>
 #include <memory>
+#include <functional>
+#include <optional>
 
-// 期货行情数据结构
-struct FuturesQuote {
-    QString instrumentId;      // 合约代码
-    QString exchangeId;        // 交易所代码
-    double lastPrice = 0;      // 最新价
-    double preSettlementPrice = 0;  // 昨结算价
-    double preClosePrice = 0;  // 昨收盘价
-    double openPrice = 0;      // 开盘价
-    double highestPrice = 0;   // 最高价
-    double lowestPrice = 0;    // 最低价
-    int volume = 0;            // 成交量
-    double turnover = 0;       // 成交金额
-    int openInterest = 0;      // 持仓量
-    double bidPrice1 = 0;      // 买一价
-    int bidVolume1 = 0;        // 买一量
-    double askPrice1 = 0;      // 卖一价
-    int askVolume1 = 0;        // 卖一量
-    QString updateTime;        // 更新时间
-    int updateMillisec = 0;    // 更新毫秒
+// 前向声明CTP结构体（避免暴露头文件细节）
+struct CThostFtdcDepthMarketDataField;
+struct CThostFtdcOrderField;
+struct CThostFtdcTradeField;
+struct CThostFtdcRspUserLoginField;
+struct CThostFtdcRspInfoField;
+
+namespace CTP {
+
+// C++17 强类型定义
+using InstrumentID = QString;
+using OrderRef = QString;
+using Price = double;
+using Volume = int;
+
+/**
+ * @brief 行情数据结构（Qt友好封装）
+ */
+struct MarketData {
+    InstrumentID instrumentId;          // 合约代码
+    QDateTime updateTime;               // 更新时间
+    Price lastPrice{0.0};              // 最新价
+    Price bidPrice1{0.0};              // 买一价
+    Volume bidVolume1{0};              // 买一量
+    Price askPrice1{0.0};              // 卖一价
+    Volume askVolume1{0};              // 卖一量
+    Volume volume{0};                  // 成交量
+    Price openInterest{0.0};           // 持仓量
+    Price preSettlementPrice{0.0};     // 昨结算
 };
 
-// 订单请求结构
-struct OrderRequest {
-    QString instrumentId;
-    char direction;            // '0'=买, '1'=卖
-    char offsetFlag;           // '0'=开仓, '1'=平仓
-    double price;
-    int volume;
-    char priceType = '2';      // '1'=任意价, '2'=限价
-    char timeCondition = '3';  // '1'=立即完成，否则撤销, '3'=当日有效
+/**
+ * @brief 订单状态枚举
+ */
+enum class OrderStatus {
+    Unknown,
+    AllTraded,              // 全部成交
+    PartTradedQueueing,     // 部分成交还在队列中
+    PartTradedNotQueueing,  // 部分成交不在队列中
+    NoTradeQueueing,        // 未成交还在队列中
+    NoTradeNotQueueing,     // 未成交不在队列中
+    Canceled                // 撤单
 };
 
-// 订单响应结构
-struct OrderResponse {
-    QString orderId;
-    QString instrumentId;
-    int status;                // 0=未知, 1=未成交, 2=部分成交, 3=全部成交, 4=已撤销
-    double price;
-    int volume;
-    int tradedVolume;
-    QString insertTime;
-    QString errorMsg;
+/**
+ * @brief 委托方向
+ */
+enum class Direction {
+    Buy,    // 买
+    Sell    // 卖
 };
 
-// Simnow配置
-struct SimnowConfig {
-    QString marketFront = "tcp://180.168.146.187:10131";  // 行情前置
-    QString tradeFront = "tcp://180.168.146.187:10130";   // 交易前置
-    QString brokerId = "9999";                            // 经纪商代码
-    QString userId;                                       // 用户ID
-    QString password;                                     // 密码
-    QString authCode;                                     // 认证码（如果需要）
-    QString appId = "simnow_client_test";                 // 应用ID
+/**
+ * @brief 开平标志
+ */
+enum class OffsetFlag {
+    Open,           // 开仓
+    Close,          // 平仓
+    CloseToday,     // 平今
+    CloseYesterday  // 平昨
 };
 
-class CTPService : public QObject
-{
+/**
+ * @brief 订单信息结构
+ */
+struct OrderInfo {
+    InstrumentID instrumentId;
+    OrderRef orderRef;
+    Direction direction;
+    OffsetFlag offset;
+    Price price{0.0};
+    Volume totalVolume{0};
+    Volume tradedVolume{0};
+    OrderStatus status{OrderStatus::Unknown};
+    QString statusMsg;
+    QDateTime insertTime;
+};
+
+/**
+ * @brief 成交信息结构
+ */
+struct TradeInfo {
+    InstrumentID instrumentId;
+    OrderRef orderRef;
+    QString tradeId;
+    Direction direction;
+    OffsetFlag offset;
+    Price price{0.0};
+    Volume volume{0};
+    QDateTime tradeTime;
+};
+
+/**
+ * @brief CTP客户端主类 - PIMPL实现
+ * @details 对外隐藏CTP API实现细节，提供线程安全的Qt风格接口
+ */
+class CTPService : public QObject {
     Q_OBJECT
 public:
-    static CTPService* instance();
+    explicit CTPService(QObject *parent = nullptr);
+    ~CTPService() override;
 
-    bool initialize();
-    void shutdown();
+    // 禁止拷贝（资源管理语义）
+    CTPService(const CTPService&) = delete;
+    CTPService& operator=(const CTPService&) = delete;
+    CTPService(CTPService&&) = delete;
+    CTPService& operator=(CTPService&&) = delete;
 
-    // 配置
-    void setConfig(const SimnowConfig& config);
-    SimnowConfig config() const;
+    /////////////////////////////////////////////////////////////////////////
+    /// 配置接口
+    /////////////////////////////////////////////////////////////////////////
 
-    // 连接管理
-    bool connectMarket();
-    bool connectTrade();
+    /**
+     * @brief 设置行情前置地址
+     * @param frontAddr 行情前置地址，如 "tcp://180.168.146.187:10131"
+     */
+    void setMarketFrontAddress(const QString& frontAddr);
+
+    /**
+     * @brief 设置交易前置地址
+     * @param frontAddr 交易前置地址，如 "tcp://180.168.146.187:10101"
+     */
+    void setTradingFrontAddress(const QString& frontAddr);
+
+    /**
+     * @brief 设置认证信息
+     * @param brokerId 经纪公司代码
+     * @param userId 用户代码
+     * @param password 密码
+     * @param appId 应用代码（CTP6.6.1+需要）
+     * @param authCode 认证码（CTP6.6.1+需要）
+     */
+    void setCredentials(const QString& brokerId, const QString& userId,
+                        const QString& password, const QString& appId = "",
+                        const QString& authCode = "");
+
+    /////////////////////////////////////////////////////////////////////////
+    /// 连接管理
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * @brief 初始化并连接（非阻塞，异步完成）
+     * @details 启动后会发射 loginFinished 信号
+     */
+    void setupConnections();
+
+    /**
+     * @brief 断开连接
+     */
     void disconnect();
-    bool isMarketConnected() const;
-    bool isTradeConnected() const;
 
-    // 登录
-    bool login(const QString& userId, const QString& password);
-    void logout();
+    /**
+     * @brief 是否已登录
+     */
     bool isLoggedIn() const;
 
-    // 行情订阅
-    void subscribeMarketData(const QStringList& instruments);
-    void unsubscribeMarketData(const QStringList& instruments);
-    QStringList subscribedInstruments() const;
+    /**
+     * @brief 获取当前交易日
+     */
+    QString tradingDay() const;
 
-    // 交易接口
-    QString sendOrder(const OrderRequest& request);
-    bool cancelOrder(const QString& orderId);
+    /////////////////////////////////////////////////////////////////////////
+    /// 行情接口（批量缓冲优化）
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * @brief 订阅行情（支持批量订阅，内部缓冲优化）
+     * @param instruments 合约代码列表，如 ["cu2505", "ag2506"]
+     * @param useBuffer 是否使用批量缓冲（默认true，降低CPU占用）
+     */
+    void subscribeMarketData(const QList<InstrumentID>& instruments, bool useBuffer = true);
+
+    /**
+     * @brief 取消订阅行情
+     */
+    void unsubscribeMarketData(const QList<InstrumentID>& instruments);
+
+    /////////////////////////////////////////////////////////////////////////
+    /// 交易接口
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * @brief 发送委托单（异步）
+     * @param order 订单信息
+     * @return 本地订单引用（用于后续撤单）
+     */
+    std::optional<OrderRef> insertOrder(const OrderInfo& order);
+
+    /**
+     * @brief 撤销委托单
+     * @param orderRef 订单引用
+     */
+    void cancelOrder(const OrderRef& orderRef);
+
+    /**
+     * @brief 查询账户资金（异步，结果通过 signal 返回）
+     */
+    void queryTradingAccount();
+
+    /**
+     * @brief 查询持仓（异步）
+     */
     void queryPositions();
-    void queryAccount();
-    void queryOrders();
-    void queryTrades();
-
-    // 行情数据获取
-    FuturesQuote getQuote(const QString& instrumentId) const;
-    QMap<QString, FuturesQuote> getAllQuotes() const;
 
 signals:
-    void marketConnected();
-    void marketDisconnected();
-    void tradeConnected();
-    void tradeDisconnected();
-    void loggedIn();
-    void loggedOut();
-    void errorOccurred(const QString& error);
+    /////////////////////////////////////////////////////////////////////////
+    /// 连接状态信号
+    /////////////////////////////////////////////////////////////////////////
 
-    void marketDataReceived(const FuturesQuote& quote);
-    void orderResponseReceived(const OrderResponse& response);
-    void positionUpdated(const QString& instrumentId, int position, double avgPrice);
-    void accountUpdated(double balance, double available, double margin);
+    void marketConnected();                 // 行情前置连接成功
+    void marketDisconnected(int reason);    // 行情前置断开
+    void tradingConnected();                // 交易前置连接成功
+    void tradingDisconnected(int reason);   // 交易前置断开
+    void loginFinished(bool success, const QString& errorMsg);  // 登录完成
+    void heartbeatWarning(int timeLapse);   // 心跳超时警告
 
-private slots:
-    void onReconnectTimer();
-    void onHeartbeatTimer();
+    /////////////////////////////////////////////////////////////////////////
+    /// 行情数据信号（批量缓冲优化）
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * @brief 批量深度行情推送（已解耦并缓冲）
+     * @param dataList 行情数据列表（批量到达）
+     */
+    void marketDataBatchReceived(const QList<MarketData>& dataList);
+
+    /**
+     * @brief 单个行情推送（高频场景）
+     */
+    void marketDataReceived(const MarketData& data);
+
+    /////////////////////////////////////////////////////////////////////////
+    /// 交易回报信号
+    /////////////////////////////////////////////////////////////////////////
+
+    void orderUpdated(const OrderInfo& order);      // 订单状态更新
+    void tradeReceived(const TradeInfo& trade);     // 成交回报
+    void positionReceived(const QString& instrument, int longPos, int shortPos);
+    void accountInfoReceived(double available, double balance);
+
+    /////////////////////////////////////////////////////////////////////////
+    /// 错误信号
+    /////////////////////////////////////////////////////////////////////////
+
+    void errorOccurred(int requestId, int errorId, const QString& errorMsg);
 
 private:
-    explicit CTPService(QObject* parent = nullptr);
-    ~CTPService();
-
-    // CTP回调处理（在实际实现中会连接到CTP API）
-    void onMarketData(const FuturesQuote& quote);
-    void onOrderResponse(const OrderResponse& response);
-    void onTradeResponse(const QString& orderId, int tradedVolume, double tradedPrice);
-    void onError(const QString& error);
-
+    // PIMPL实现指针
     class Impl;
-    std::unique_ptr<Impl> d;
+    std::unique_ptr<Impl> d;  // C++17 unique_ptr支持不完整类型
 
-    static CTPService* s_instance;
+    // 内部初始化（C++17 if constexpr优化）
+    void initializeSpi();
 };
+
+} // namespace CTP
+
+#endif // CTPService_H

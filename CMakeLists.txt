@@ -1,10 +1,17 @@
 cmake_minimum_required(VERSION 3.16)
 project(WealthPilot VERSION 1.0.0 LANGUAGES CXX)
 
+# 设置默认构建类型
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
 # 查找Qt6组件
 find_package(Qt6 REQUIRED COMPONENTS
@@ -19,6 +26,7 @@ find_package(Qt6 REQUIRED COMPONENTS
     Svg
     StateMachine
 )
+find_package(Qt6 REQUIRED COMPONENTS Core5Compat)
 
 # ==================== 源文件分组 ====================
 
@@ -36,6 +44,12 @@ set(CORE_SOURCES
     src/core/PageNavigatorManager.cpp
     src/core/AnimationManager.h
     src/core/AnimationManager.cpp
+    src/core/CtpDataBuffer.h
+    src/core/CtpApiLoader.h
+    src/core/CtpMarketSpi.h
+    src/core/CtpMarketSpi.cpp
+    src/core/CtpTradingSpi.h
+    src/core/CtpTradingSpi.cpp
 )
 
 # Models 数据模型
@@ -113,16 +127,11 @@ set(VIEW_SOURCES
     src/views/settings/SettingsPage.cpp
     src/views/warning/WarningPage.h
     src/views/warning/WarningPage.cpp
+    src/views/aboutus/AboutUSPage.h
+    src/views/aboutus/AboutUSPage.cpp
 )
 
-# Resources 资源
-set(RESOURCE_SOURCES
-    resources/style/theme_dark.qss
-    resources/style/theme_light.qss
-    resources/style/theme_eyecare.qss
-)
-
-# 合并所有源文件
+# 合并所有源文件（只包含C++源文件和头文件，不包含资源文件）
 set(SOURCES
     main.cpp
     ${CORE_SOURCES}
@@ -133,7 +142,6 @@ set(SOURCES
     ${CONTROLLER_SOURCES}
     ${WIDGET_SOURCES}
     ${VIEW_SOURCES}
-    ${RESOURCE_SOURCES}
 )
 
 # 创建可执行文件
@@ -142,6 +150,7 @@ add_executable(WealthPilot WIN32 MACOSX_BUNDLE ${SOURCES})
 # 包含目录
 target_include_directories(WealthPilot PRIVATE
     ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/external
     ${CMAKE_SOURCE_DIR}/src
 )
 
@@ -159,11 +168,21 @@ target_link_libraries(WealthPilot PRIVATE
     Qt6::StateMachine
 )
 
+
 # Windows 平台特定库
 if(WIN32)
     target_link_libraries(WealthPilot PRIVATE
         crypt32
+        Qt6::Core5Compat
     )
+
+    # CTP 使用动态加载（解决 MinGW 与 MSVC DLL 名称修饰不兼容问题）
+    # 不需要静态链接库，只需要确保 DLL 在运行时可用
+
+    # 定义 CTP DLL 导入宏 (使用 DLL 需要 dllimport)
+    target_compile_definitions(WealthPilot PRIVATE ISLIB)
+
+    message(STATUS "CTP API will be loaded dynamically at runtime")
 endif()
 
 # 添加资源文件
@@ -192,6 +211,20 @@ add_custom_command(TARGET WealthPilot POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/resources ${CMAKE_BINARY_DIR}/resources
 )
+
+# 复制 CTP DLL 文件到构建目录
+if(WIN32)
+    # 复制 external/ctp 目录下的 DLL
+    add_custom_command(TARGET WealthPilot POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/external/ctp/thostmduserapi_se.dll"
+        "$<TARGET_FILE_DIR:WealthPilot>/"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/external/ctp/thosttraderapi_se.dll"
+        "$<TARGET_FILE_DIR:WealthPilot>/"
+    )
+    message(STATUS "CTP DLLs will be copied to output directory")
+endif()
 
 # ==================== 安装配置 ====================
 

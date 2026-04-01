@@ -12,7 +12,7 @@ struct FuturesQuoteItem {
     int     serialNo;           // 序号
     QString contractName;       // 合约名称（如"沪铜加权"）
     QString contractCode;       // 合约代码（如"cu2504"）
-    double  latestPrice;        // 最新价
+    double  lastPrice;          // 最新价
     int     currentHand;        // 现手
     double  bidPrice;           // 买价
     double  askPrice;           // 卖价
@@ -31,7 +31,7 @@ struct FuturesQuoteItem {
     double  currentChange;      // 现涨
     int     currentOiChange;    // 现增仓
     QString dynamic;            // 动态（标记等）
-    double  preSettlement;      // 昨结算
+    double  preSettlementPrice; // 昨结算
     double  preClose;           // 昨收
     double  capital;            // 沉淀资金
     double  capitalFlow;        // 资金流向（亿）

@@ -32,9 +32,19 @@ public:
     void initializePage() override;
 
     void flushPendingUpdates();
+    void setupCtpConnections();
+    void switchToRealMode();
+    void switchToSimulateMode();
+    void updateConnectionStatus(const QString& text, const QString& color);
 private slots:
     void onRowClicked(const QModelIndex &index);
     void onSimulateTick();
+    void onConnectionStateChanged();
+    void onMarketDataReceived();
+    void onCtpBatchMarketData(const QList<CTP::MarketData>& dataList);
+    void onCtpSingleMarketData(const CTP::MarketData& data);
+    void onSubscribeContract();
+    void subscribeContracts(const QList<QString>& contracts);
 
 private:
     void setupUI();

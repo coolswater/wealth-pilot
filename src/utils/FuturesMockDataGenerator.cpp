@@ -50,23 +50,23 @@ QVector<FuturesQuoteItem> FuturesMockDataGenerator::generateInitialData()
         }
 
         // 生成昨日数据
-        item.preSettlement = basePrice + randomPrice(0, 500);
-        item.preClose = item.preSettlement + randomPrice(0, 100);
+        item.preSettlementPrice = basePrice + randomPrice(0, 500);
+        item.preClose = item.preSettlementPrice + randomPrice(0, 100);
 
         // 生成今日数据（围绕昨结波动）
-        item.openPrice = item.preSettlement + randomPrice(0, 200);
-        item.latestPrice = item.openPrice + randomPrice(0, 300);
-        item.highPrice = std::max(item.openPrice, item.latestPrice) + randomInt(50, 200);
-        item.lowPrice = std::min(item.openPrice, item.latestPrice) - randomInt(50, 200);
-        item.settlement = item.latestPrice;  // 简化为最新价
+        item.openPrice = item.preSettlementPrice + randomPrice(0, 200);
+        item.lastPrice = item.openPrice + randomPrice(0, 300);
+        item.highPrice = std::max(item.openPrice, item.lastPrice) + randomInt(50, 200);
+        item.lowPrice = std::min(item.openPrice, item.lastPrice) - randomInt(50, 200);
+        item.settlement = item.lastPrice;  // 简化为最新价
 
         // 计算涨跌
-        item.change = item.latestPrice - item.preSettlement;
-        item.changePercent = (item.change / item.preSettlement) * 100;
+        item.change = item.lastPrice - item.preSettlementPrice;
+        item.changePercent = (item.change / item.preSettlementPrice) * 100;
 
         // 盘口数据
-        item.bidPrice = item.latestPrice - randomInt(0, 10);
-        item.askPrice = item.latestPrice + randomInt(0, 10);
+        item.bidPrice = item.lastPrice - randomInt(0, 10);
+        item.askPrice = item.lastPrice + randomInt(0, 10);
         item.bidVolume = randomInt(1, 100);
         item.askVolume = randomInt(1, 100);
 
@@ -107,13 +107,13 @@ QVector<FuturesQuoteItem> FuturesMockDataGenerator::generateTickUpdates(const QV
         int direction = QRandomGenerator::global()->bounded(3) - 1;  // -1, 0, 1
         double priceChange = direction * tickSize * randomInt(1, 5);
 
-        item.latestPrice += priceChange;
-        item.change = item.latestPrice - item.preSettlement;
-        item.changePercent = (item.change / item.preSettlement) * 100;
+        item.lastPrice += priceChange;
+        item.change = item.lastPrice - item.preSettlementPrice;
+        item.changePercent = (item.change / item.preSettlementPrice) * 100;
 
         // 更新盘口
-        item.bidPrice = item.latestPrice - tickSize * randomInt(1, 3);
-        item.askPrice = item.latestPrice + tickSize * randomInt(1, 3);
+        item.bidPrice = item.lastPrice - tickSize * randomInt(1, 3);
+        item.askPrice = item.lastPrice + tickSize * randomInt(1, 3);
         item.bidVolume = randomInt(1, 100);
         item.askVolume = randomInt(1, 100);
         item.currentHand = randomInt(1, 20);

@@ -25,6 +25,7 @@
 #include <core/PageFactoryRegistry.h>
 #include <core/PageNavigatorManager.h>
 #include <core/ThemeManager.h>
+#include <views/aboutus/AboutUSPage.h>
 #include <views/futures/FuturesQuotesPage.h>
 #include <views/news/NewsPage.h>
 #include <views/portfolio/PortfolioPage.h>
@@ -195,6 +196,10 @@ void MainWindow::createPages()
     // 设置
     registry->registerPage<SettingsPage>(QStringLiteral("SettingsPage"));
     d->sidebar->addItem("SettingsPage","设置");
+
+    // 关于
+    registry->registerPage<AboutUSPage>(QStringLiteral("AboutUSPage"));
+    d->sidebar->addItem("AboutUSPage","关于");
 
     // 所有页面准备就绪后，执行默认导航
     // 必须在register之后调用，否则报"not registered in factory"
