@@ -35,16 +35,15 @@ CtpTradingSpi::~CtpTradingSpi() {
 void CtpTradingSpi::createApi(const QString& flowPath) {
     QMutexLocker locker(&d->apiMutex);
     QByteArray path = flowPath.toLocal8Bit();
-    
+
     // 使用动态加载器创建 API（解决 MinGW 与 MSVC 兼容性问题）
     d->api = CtpApiLoader::instance().createTraderApi(path.constData(), true);
-    
+
     if (d->api) {
         d->api->RegisterSpi(this);
-        qDebug() << "CTP Trader API created successfully, version:" 
-                 << CtpApiLoader::instance().getTraderApiVersion();
+        LOG_INFO(QString("CTP Trader API created successfully, version: %1").arg(CtpApiLoader::instance().getTraderApiVersion()));
     } else {
-        qWarning() << "Failed to create CTP Trader API";
+        LOG_ERROR("Failed to create CTP Trader API");
     }
 }
 
@@ -271,7 +270,8 @@ void CtpTradingSpi::OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmFi
     bool success = (pRspInfo && pRspInfo->ErrorID == 0);
     QString msg = success ? "结算单确认成功" :
                       (pRspInfo ? QString::fromLocal8Bit(pRspInfo->ErrorMsg) : "结算单确认失败");
-    qDebug() << "OnRspSettlementInfoConfirm:" << msg;
+
+    LOG_INFO(QString("OnRspSettlementInfoConfirm: %1").arg(msg));
 }
 
 OrderInfo CtpTradingSpi::convertOrderField(const CThostFtdcOrderField& field) {

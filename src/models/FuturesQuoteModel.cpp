@@ -5,6 +5,7 @@
 #include <QFont>
 #include <QLocale>
 #include <QModelIndex>
+#include <cmath>
 
 QStringList FuturesQuoteModel::columnNames()
 {
@@ -81,31 +82,59 @@ QVariant FuturesQuoteModel::data(const QModelIndex &index, int role) const
     switch (role) {
     case Qt::DisplayRole: {
         switch (index.column()) {
-        case SerialNo:       return item.serialNo;
+        case SerialNo:       return index.row() + 1;  // 自动序号
         case ContractName:   return item.contractName;
-        case LatestPrice:    return QString::number(item.lastPrice, 'f', 2);
+        case LatestPrice:    
+            if (item.lastPrice > 1e308) return "--";  // 无效价格
+            return QString::number(item.lastPrice, 'f', 2);
         case CurrentHand:    return item.currentHand;
-        case BidPrice:       return QString::number(item.bidPrice, 'f', 2);
-        case AskPrice:       return QString::number(item.askPrice, 'f', 2);
+        case BidPrice:       
+            if (item.bidPrice > 1e308) return "--";
+            return QString::number(item.bidPrice, 'f', 2);
+        case AskPrice:       
+            if (item.askPrice > 1e308) return "--";
+            return QString::number(item.askPrice, 'f', 2);
         case BidVolume:      return item.bidVolume;
         case AskVolume:      return item.askVolume;
         case Volume:         return QLocale().toString(item.volume);
-        case Change:         return (item.change > 0 ? "+" : "") + QString::number(item.change, 'f', 2);
-        case ChangePercent:  return (item.changePercent > 0 ? "+" : "") + QString::number(item.changePercent, 'f', 2) + "%";
+        case Change:         
+            if (qAbs(item.change) < 0.0001) return "0.00";
+            return QString((item.change > 0 ? "+" : "")) + QString::number(item.change, 'f', 2);
+        case ChangePercent:  
+            if (qAbs(item.changePercent) < 0.0001) return "0.00%";
+            return QString((item.changePercent > 0 ? "+" : "")) + QString::number(item.changePercent, 'f', 2) + "%";
         case OpenInterest:   return QLocale().toString(item.openInterest);
         case OiChange:       return item.oiChange;
-        case OpenPrice:      return QString::number(item.openPrice, 'f', 2);
-        case HighPrice:      return QString::number(item.highPrice, 'f', 2);
-        case LowPrice:       return QString::number(item.lowPrice, 'f', 2);
-        case Settlement:     return QString::number(item.settlement, 'f', 2);
-        case SpeedChange:    return QString::number(item.speedChange, 'f', 2);
-        case CurrentChange:  return QString::number(item.currentChange, 'f', 2);
+        case OpenPrice:      
+            if (item.openPrice > 1e308) return "--";
+            return QString::number(item.openPrice, 'f', 2);
+        case HighPrice:      
+            if (item.highPrice > 1e308) return "--";
+            return QString::number(item.highPrice, 'f', 2);
+        case LowPrice:       
+            if (item.lowPrice > 1e308) return "--";
+            return QString::number(item.lowPrice, 'f', 2);
+        case Settlement:     
+            if (item.settlement > 1e308) return "--";
+            return QString::number(item.settlement, 'f', 2);
+        case SpeedChange:    
+            if (qAbs(item.speedChange) < 0.0001) return "0.00";
+            return QString::number(item.speedChange, 'f', 2);
+        case CurrentChange:  
+            if (qAbs(item.currentChange) < 0.0001) return "0.00";
+            return QString::number(item.currentChange, 'f', 2);
         case CurrentOiChange:return item.currentOiChange;
         case Dynamic:        return item.dynamic;
-        case PreSettlement:  return QString::number(item.preSettlementPrice, 'f', 2);
-        case PreClose:       return QString::number(item.preClose, 'f', 2);
+        case PreSettlement:  
+            if (item.preSettlementPrice > 1e308) return "--";
+            return QString::number(item.preSettlementPrice, 'f', 2);
+        case PreClose:       
+            if (item.preClose > 1e308) return "--";
+            return QString::number(item.preClose, 'f', 2);
         case Capital:        return QString::number(item.capital, 'f', 2) + "亿";
-        case CapitalFlow:    return (item.capitalFlow > 0 ? "+" : "") + QString::number(item.capitalFlow, 'f', 2) + "亿";
+        case CapitalFlow:    
+            if (qAbs(item.capitalFlow) < 0.0001) return "0.00亿";
+            return QString((item.capitalFlow > 0 ? "+" : "")) + QString::number(item.capitalFlow, 'f', 2) + "亿";
         case TrendDegree:    return QString::number(item.trendDegree, 'f', 2);
         case SpeculationDegree: return QString::number(item.speculationDegree, 'f', 2);
         default: return QVariant();
@@ -114,18 +143,6 @@ QVariant FuturesQuoteModel::data(const QModelIndex &index, int role) const
     case Qt::TextAlignmentRole:
         return (index.column() == ContractName) ? Qt::AlignLeft : Qt::AlignRight;
 
-    case Qt::ForegroundRole: {
-        // Qt6推荐使用ForegroundRole代替TextColorRole
-        if (index.column() == LatestPrice || index.column() == Change ||
-            index.column() == ChangePercent || index.column() == SpeedChange ||
-            index.column() == CurrentChange) {
-            return QBrush(item.changeColor());
-        }
-        if (index.column() == CapitalFlow) {
-            return QBrush(item.capitalFlow > 0 ? Qt::red : (item.capitalFlow < 0 ? Qt::green : Qt::white));
-        }
-        return QBrush(Qt::white);
-    }
     case Qt::UserRole:  // 存储原始数据，委托用
         return QVariant::fromValue(item);
 

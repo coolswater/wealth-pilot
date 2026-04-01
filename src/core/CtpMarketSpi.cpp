@@ -7,6 +7,7 @@
 #include "CtpDataBuffer.h"
 #include "CtpMarketSpi.h"
 #include "CtpApiLoader.h"  // 动态加载器
+#include "utils/Logger.h"
 
 #include <QtCore/QString>
 #include <QtCore/QDateTime>
@@ -54,6 +55,8 @@ CtpMarketSpi::~CtpMarketSpi() = default;  // C++17 默认析构
 void CtpMarketSpi::createApi(const QString& flowPath, bool isUdp, bool isMulticast) {
     QMutexLocker locker(&d->apiMutex);
 
+    LOG_INFO(QString("CtpMarketSpi::createApi() called, flowPath= %1").arg(flowPath));
+
     // 使用动态加载器创建 API（解决 MinGW 与 MSVC 兼容性问题）
     QByteArray path = flowPath.toLocal8Bit();
     d->api = CtpApiLoader::instance().createMdApi(
@@ -61,10 +64,10 @@ void CtpMarketSpi::createApi(const QString& flowPath, bool isUdp, bool isMultica
 
     if (d->api) {
         d->api->RegisterSpi(this);
-        qDebug() << "CTP Market API created successfully, version:" 
-                 << CtpApiLoader::instance().getMdApiVersion();
+        LOG_INFO(QString("CTP Market API created successfully, version: %1").arg(CtpApiLoader::instance().getMdApiVersion()));
     } else {
-        qWarning() << "Failed to create CTP Market API";
+        LOG_ERROR(QString("Failed to create CTP Market API - this is likely a DLL loading issue! \n\r"
+                          "Please ensure thostmduserapi_se.dll is in the application directory"));
     }
 }
 
@@ -72,14 +75,21 @@ void CtpMarketSpi::registerFront(const QString& address) {
     QMutexLocker locker(&d->apiMutex);
     if (d->api) {
         QByteArray addr = address.toLocal8Bit();
+        LOG_INFO(QString("CtpMarketSpi::registerFront() called, address= %1").arg(address));
         d->api->RegisterFront(addr.data());
+    } else {
+        LOG_DEBUG(QString("CtpMarketSpi::registerFront() failed: API not created"));
     }
 }
 
 void CtpMarketSpi::init() {
     QMutexLocker locker(&d->apiMutex);
     if (d->api) {
+        LOG_INFO("CtpMarketSpi::init() called, starting CTP connection...");
         d->api->Init();
+        LOG_INFO("CtpMarketSpi::init() completed, CTP thread started");
+    } else {
+        LOG_ERROR("CtpMarketSpi::init() failed: API not created");
     }
 }
 
@@ -114,6 +124,9 @@ void CtpMarketSpi::subscribeMarketData(const QList<QString>& instruments) {
     QMutexLocker locker(&d->apiMutex);
     if (!d->api || instruments.isEmpty()) return;
 
+    LOG_INFO(QString("CtpMarketSpi::subscribeMarketData() - Subscribing %1 instruments: %2")
+             .arg(instruments.size()).arg(instruments.join(", ")));
+
     // 转换为CTP需要的char**
     QList<QByteArray> byteArrays;
     std::vector<char*> ptrs;
@@ -123,7 +136,8 @@ void CtpMarketSpi::subscribeMarketData(const QList<QString>& instruments) {
         ptrs.push_back(byteArrays.last().data());
     }
 
-    d->api->SubscribeMarketData(ptrs.data(), static_cast<int>(ptrs.size()));
+    int result = d->api->SubscribeMarketData(ptrs.data(), static_cast<int>(ptrs.size()));
+    LOG_INFO(QString("SubscribeMarketData API returned: %1").arg(result));
 }
 
 void CtpMarketSpi::unsubscribeMarketData(const QList<QString>& instruments) {
@@ -143,10 +157,14 @@ void CtpMarketSpi::unsubscribeMarketData(const QList<QString>& instruments) {
 
 // CTP回调实现
 void CtpMarketSpi::OnFrontConnected() {
+    qDebug() << "=== CtpMarketSpi::OnFrontConnected() CALLED ===";
+    LOG_INFO("CtpMarketSpi::OnFrontConnected() - CTP server connected!");
     emit connected();
 }
 
 void CtpMarketSpi::OnFrontDisconnected(int nReason) {
+    qDebug() << "=== CtpMarketSpi::OnFrontDisconnected() CALLED, reason=" << nReason << " ===";
+    LOG_WARNING(QString("CtpMarketSpi::OnFrontDisconnected() - reason: %1").arg(nReason));
     emit disconnected(nReason);
 }
 
@@ -157,9 +175,15 @@ void CtpMarketSpi::OnHeartBeatWarning(int nTimeLapse) {
 void CtpMarketSpi::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,
                                   CThostFtdcRspInfoField *pRspInfo,
                                   int nRequestID, bool bIsLast) {
+    qDebug() << "=== CtpMarketSpi::OnRspUserLogin() CALLED ===";
+    
     bool success = (pRspInfo && pRspInfo->ErrorID == 0);
     QString msg = success ? "登录成功" :
                       (pRspInfo ? QString::fromLocal8Bit(pRspInfo->ErrorMsg) : "未知错误");
+
+    qDebug() << "Login result: success=" << success << ", msg=" << msg;
+    LOG_INFO(QString("CtpMarketSpi::OnRspUserLogin() - success: %1, msg: %2, ErrorID: %3")
+             .arg(success).arg(msg).arg(pRspInfo ? pRspInfo->ErrorID : -1));
 
     emit loginResult(success, msg);
 }
@@ -167,15 +191,30 @@ void CtpMarketSpi::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,
 void CtpMarketSpi::OnRspSubMarketData(CThostFtdcSpecificInstrumentField *pSpecificInstrument,
                                       CThostFtdcRspInfoField *pRspInfo,
                                       int nRequestID, bool bIsLast) {
+    QString instrumentId = pSpecificInstrument ? QString::fromLocal8Bit(pSpecificInstrument->InstrumentID) : "unknown";
+    int errorId = pRspInfo ? pRspInfo->ErrorID : 0;
+    
+    qDebug() << "=== CtpMarketSpi::OnRspSubMarketData() ==="
+             << "Instrument:" << instrumentId
+             << "ErrorID:" << errorId;
+    
+    LOG_INFO(QString("CtpMarketSpi::OnRspSubMarketData() - Instrument: %1, ErrorID: %2")
+             .arg(instrumentId).arg(errorId));
+
     // 订阅响应处理
     if (pRspInfo && pRspInfo->ErrorID != 0) {
-        emit error(nRequestID, pRspInfo->ErrorID,
-                   QString::fromLocal8Bit(pRspInfo->ErrorMsg));
+        QString errorMsg = QString::fromLocal8Bit(pRspInfo->ErrorMsg);
+        LOG_ERROR(QString("Subscribe failed: %1").arg(errorMsg));
+        emit error(nRequestID, pRspInfo->ErrorID, errorMsg);
     }
 }
 
 void CtpMarketSpi::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDepthMarketData) {
     if (!pDepthMarketData) return;
+
+    qDebug() << "=== CtpMarketSpi::OnRtnDepthMarketData() ==="
+             << "Instrument:" << pDepthMarketData->InstrumentID
+             << "LastPrice:" << pDepthMarketData->LastPrice;
 
     auto data = convertDepthMarketData(*pDepthMarketData);
 

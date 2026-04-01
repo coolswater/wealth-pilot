@@ -51,7 +51,7 @@ public:
     QTimer *m_simulateTimer = nullptr;
 
     // 状态控制
-    std::atomic<bool> m_isRealMode{false};      // 当前是否为真实行情模式
+    std::atomic<bool> m_isRealMode{true};      // 当前是否为真实行情模式
     std::atomic<bool> m_isCtpConnected{false};
     std::atomic<bool> m_isProcessing{false};
     std::atomic<int> m_tickCount{0};
@@ -74,14 +74,14 @@ FuturesQuotesPage::FuturesQuotesPage(QWidget* parent)
     , d(std::make_unique<Impl>())
 {
     d->m_model = new FuturesQuoteModel(this);
-    d->m_CTPService = std::make_unique<CTP::CTPService>(this);  // C++17 make_unique
+    d->m_CTPService = std::make_unique<CTP::CTPService>(this);
     d->m_generator = new FuturesMockDataGenerator();
     d->m_simulateTimer = new QTimer(this);
     d->m_flushTimer = new QTimer(this);
 
     setupUI();
     setupConnections();
-    setupCtpConnections();  // 新增：CTP信号连接
+    setupCtpConnections();  // CTP信号连接
 
     // 延迟初始化
     QTimer::singleShot(100, this, &FuturesQuotesPage::initData);
@@ -101,26 +101,32 @@ QString FuturesQuotesPage::pageId() const
  */
 void FuturesQuotesPage::initializePage()
 {
+    LOG_INFO("initializePage() called - starting CTP initialization");
+
     // C++17 结构化绑定配置
     // 注意：请将以下占位符替换为您的 SimNow 账号信息
     // SimNow 注册地址：https://www.simnow.com.cn/
     auto [brokerId, userId, password, appId, authCode] = std::make_tuple(
         QString("9999"),                                    // SimNow 经纪公司代码
-        QString("229261"),                                  // 替换为您的 SimNow 账号
-        QString("hh120825!!!"),                                  // 替换为您的密码
-        QString("simnow_client_test"),                                        // SimNow 7x24 环境无需 AppID
-        QString("0000000000000000")                                         // SimNow 7x24 环境无需 AuthCode
+        QString("120750"),                                  // 替换为您的 SimNow 账号
+        QString("ltc@Simnow900624"),                         // 替换为您的密码
+        QString("simnow_client_test"),                       // SimNow 7x24 环境无需 AppID
+        QString("0000000000000000")                          // SimNow 7x24 环境无需 AuthCode
         );
 
     // 配置CTP客户端
     d->m_CTPService->setCredentials(brokerId, userId, password, appId, authCode);
 
-    // SimNow 7x24 小时测试环境
-    d->m_CTPService->setMarketFrontAddress("tcp://180.168.146.187:10131");
-    d->m_CTPService->setTradingFrontAddress("tcp://180.168.146.187:10130");
+    // SimNow 第二套 7x24 小时测试环境（移动线路，更稳定）
+    d->m_CTPService->setMarketFrontAddress("tcp://182.254.243.31:40011");
+    d->m_CTPService->setTradingFrontAddress("tcp://182.254.243.31:40001");
+
+    LOG_INFO("CTP credentials configured, calling setupConnections()...");
 
     // 启动连接（异步）
     d->m_CTPService->setupConnections();
+
+    setupCtpConnections();  // 新增：CTP信号连接
 
     LOG_INFO("CTP initialization started with SimNow 7x24 environment");
 }
@@ -134,12 +140,8 @@ void FuturesQuotesPage::setupCtpConnections()
     connect(d->m_CTPService.get(), &CTP::CTPService::marketConnected, this, [this]() {
         d->m_isCtpConnected.store(true);
         updateConnectionStatus("行情已连接", "#4CAF50");  // 绿色
-        LOG_INFO("CTP Market connected");
-
-        // 自动订阅默认合约（如已配置）
-        if (!d->m_subscribedContracts.isEmpty()) {
-            subscribeContracts(d->m_subscribedContracts.values());
-        }
+        LOG_INFO("CTP Market connected, waiting for login...");
+        // 注意：订阅移到 loginFinished 后执行
     });
 
     connect(d->m_CTPService.get(), &CTP::CTPService::marketDisconnected, this,
@@ -152,8 +154,35 @@ void FuturesQuotesPage::setupCtpConnections()
     connect(d->m_CTPService.get(), &CTP::CTPService::loginFinished, this,
             [this](bool success, const QString& msg) {
                 if (success) {
-                    LOG_INFO("CTP Login successful");
-                    // 登录成功后自动切换到真实模式（如果之前是模拟）
+                    LOG_INFO("CTP Login successful, now subscribing contracts...");
+
+                    // 登录成功后订阅合约
+                    if (d->m_subscribedContracts.isEmpty()) {
+                        // SimNow 7x24 环境支持的测试合约
+                        // 注意：合约代码需要根据当前日期查询，这里使用常见的测试合约
+                        QList<QString> defaultContracts = {
+                            "rb2605",   // 螺纹钢 2026年5月
+                            "cu2605",   // 铜 2026年5月
+                            "au2605",   // 黄金 2026年5月
+                            "ag2605",   // 白银 2026年5月
+                            "i2605",     // 铁矿石 2026年5月
+                            "FU2704‌",
+                            "LU2704‌",
+                            "SC2704‌",
+                            "PPF2704‌",
+                            "PTA2605",
+                        };
+                        LOG_INFO(QString("Auto-subscribing default contracts: %1").arg(defaultContracts.join(", ")));
+
+                        for (const auto& contract : defaultContracts) {
+                            d->m_subscribedContracts.insert(contract);
+                        }
+                        subscribeContracts(defaultContracts);
+                    } else {
+                        subscribeContracts(d->m_subscribedContracts.values());
+                    }
+
+                    // 登录成功后自动切换到真实模式
                     if (!d->m_isRealMode.load()) {
                         switchToRealMode();
                     }
@@ -186,6 +215,8 @@ void FuturesQuotesPage::setupCtpConnections()
                                          "查询过于频繁，请降低刷新率");
                 }
             });
+
+    LOG_INFO("FuturesQuotesPage setupCtpConnections");
 }
 
 /**
@@ -194,6 +225,8 @@ void FuturesQuotesPage::setupCtpConnections()
  */
 void FuturesQuotesPage::onCtpBatchMarketData(const QList<CTP::MarketData>& dataList)
 {
+    LOG_WARNING("================= onCtpBatchMarketData called =================");
+
     if (!d->m_isRealMode.load() || dataList.isEmpty()) return;
 
     // 跳帧保护：如果积压过多，丢弃部分数据保活
@@ -218,13 +251,12 @@ void FuturesQuotesPage::onCtpBatchMarketData(const QList<CTP::MarketData>& dataL
         item.openInterest = static_cast<int>(ctpData.openInterest);
         item.preSettlementPrice = ctpData.preSettlementPrice;
 
-        // 计算涨跌幅（SimNow数据可能需特殊处理）
+        // 计算涨跌（最新价 - 昨结算）
+        item.change = ctpData.lastPrice - ctpData.preSettlementPrice;
+        
+        // 计算涨跌幅
         item.changePercent = (ctpData.preSettlementPrice > 0) ?
                                  ((ctpData.lastPrice - ctpData.preSettlementPrice) / ctpData.preSettlementPrice * 100) : 0.0;
-
-        // 时间戳
-        // item.updateTime = ctpData.updateTime.toString("hh:mm:ss.zzz");
-        // item.sequence = d->m_quoteSequence.fetch_add(1);
 
         updates.append(item);
     }
@@ -261,9 +293,13 @@ void FuturesQuotesPage::onCtpSingleMarketData(const CTP::MarketData& data)
     item.volume = data.volume;
     item.openInterest = static_cast<int>(data.openInterest);
     item.preSettlementPrice = data.preSettlementPrice;
+    
+    // 计算涨跌（最新价 - 昨结算）
+    item.change = data.lastPrice - data.preSettlementPrice;
+    
+    // 计算涨跌幅
     item.changePercent = (data.preSettlementPrice > 0) ?
                              ((data.lastPrice - data.preSettlementPrice) / data.preSettlementPrice * 100) : 0.0;
-    // item.updateTime = data.updateTime.toString("hh:mm:ss.zzz");
 
     {
         QMutexLocker locker(&d->m_pendingMutex);
@@ -451,6 +487,8 @@ void FuturesQuotesPage::flushPendingUpdates()
         updates = std::move(d->m_pendingUpdates);  // C++17 move
         d->m_pendingUpdates.clear();
     }
+
+    LOG_INFO(QString("flushPendingUpdates() - Processing %1 quotes").arg(updates.size()));
 
     // 调用模型批量更新
     if (updates.size() == 1) {

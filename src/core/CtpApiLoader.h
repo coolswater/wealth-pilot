@@ -15,6 +15,7 @@
 // CTP 头文件
 #include "external/ctp/ThostFtdcMdApi.h"
 #include "external/ctp/ThostFtdcTraderApi.h"
+#include "utils/Logger.h"
 
 namespace CTP {
 
@@ -52,23 +53,23 @@ public:
         // 尝试加载 DLL
         m_mdLibrary.setFileName("thostmduserapi_se");
         if (!m_mdLibrary.load()) {
-            qWarning() << "Failed to load thostmduserapi_se.dll:" << m_mdLibrary.errorString();
+            LOG_ERROR(QString("Failed to load thostmduserapi_se.dll: %1").arg(m_mdLibrary.errorString()));
             return false;
         }
 
         // 解析函数
         m_createMdApi = reinterpret_cast<CreateFtdcMdApiFunc>(
             m_mdLibrary.resolve("?CreateFtdcMdApi@CThostFtdcMdApi@@SAPEAV1@PEBD_N1_N@Z"));
-        
+
         m_getMdApiVersion = reinterpret_cast<GetMdApiVersionFunc>(
             m_mdLibrary.resolve("?GetApiVersion@CThostFtdcMdApi@@SAPEBDXZ"));
 
         if (!m_createMdApi) {
-            qWarning() << "Failed to resolve CreateFtdcMdApi function";
+            LOG_ERROR(QString("Failed to resolve CreateFtdcMdApi function"));
             return false;
         }
 
-        qDebug() << "CTP Market API loaded, version:" << (m_getMdApiVersion ? m_getMdApiVersion() : "unknown");
+        LOG_INFO(QString("CTP Market API loaded, version: %1").arg((m_getMdApiVersion ? m_getMdApiVersion() : "unknown")));
         return true;
     }
 
@@ -83,29 +84,29 @@ public:
 
         m_traderLibrary.setFileName("thosttraderapi_se");
         if (!m_traderLibrary.load()) {
-            qWarning() << "Failed to load thosttraderapi_se.dll:" << m_traderLibrary.errorString();
+            LOG_ERROR(QString("Failed to load thosttraderapi_se.dll %1").arg(m_traderLibrary.errorString()));
             return false;
         }
 
         m_createTraderApi = reinterpret_cast<CreateFtdcTraderApiFunc>(
             m_traderLibrary.resolve("?CreateFtdcTraderApi@CThostFtdcTraderApi@@SAPEAV1@PEBD_N@Z"));
-        
+
         m_getTraderApiVersion = reinterpret_cast<GetTraderApiVersionFunc>(
             m_traderLibrary.resolve("?GetApiVersion@CThostFtdcTraderApi@@SAPEBDXZ"));
 
         if (!m_createTraderApi) {
-            qWarning() << "Failed to resolve CreateFtdcTraderApi function";
+            LOG_ERROR(QString("Failed to resolve CreateFtdcTraderApi function"));
             return false;
         }
 
-        qDebug() << "CTP Trader API loaded, version:" << (m_getTraderApiVersion ? m_getTraderApiVersion() : "unknown");
+        LOG_INFO(QString("CTP Trader API loaded, version: %1").arg((m_getTraderApiVersion ? m_getTraderApiVersion() : "unknown")));
         return true;
     }
 
     /**
      * @brief 创建行情 API 实例
      */
-    CThostFtdcMdApi* createMdApi(const char* pszFlowPath = "", 
+    CThostFtdcMdApi* createMdApi(const char* pszFlowPath = "",
                                   bool bIsUsingUdp = false,
                                   bool bIsMulticast = false,
                                   bool bIsProductionMode = true) {
