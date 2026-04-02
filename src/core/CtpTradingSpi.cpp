@@ -215,6 +215,23 @@ void CtpTradingSpi::queryInstruments(const QString& exchangeId)
     LOG_INFO(QString("Query instruments sent, exchangeId: %1").arg(exchangeId.isEmpty() ? "ALL" : exchangeId));
 }
 
+void CtpTradingSpi::confirmSettlement()
+{
+    QMutexLocker locker(&d->apiMutex);
+    if (!d->api) return;
+
+    CThostFtdcSettlementInfoConfirmField req{};
+    strncpy(req.BrokerID, d->brokerId.toLocal8Bit().constData(), sizeof(req.BrokerID) - 1);
+    strncpy(req.InvestorID, d->userId.toLocal8Bit().constData(), sizeof(req.InvestorID) - 1);
+
+    int ret = d->api->ReqSettlementInfoConfirm(&req, ++d->requestId);
+    if (ret != 0) {
+        emit error(d->requestId, ret, "确认结算单请求发送失败");
+    }
+    
+    LOG_INFO("Settlement confirmation sent");
+}
+
 // SPI回调实现
 void CtpTradingSpi::OnFrontConnected() {
     emit connected();
@@ -310,6 +327,7 @@ void CtpTradingSpi::OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmFi
                       (pRspInfo ? QString::fromLocal8Bit(pRspInfo->ErrorMsg) : "结算单确认失败");
 
     LOG_INFO(QString("OnRspSettlementInfoConfirm: %1").arg(msg));
+    emit settlementConfirmed(success, msg);
 }
 
 OrderInfo CtpTradingSpi::convertOrderField(const CThostFtdcOrderField& field) {

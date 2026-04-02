@@ -225,6 +225,11 @@ public:
      */
     void queryInstruments(const QString& exchangeId = QString());
 
+    /**
+     * @brief 确认结算单（查询合约前需要）
+     */
+    void confirmSettlement();
+
 signals:
     /////////////////////////////////////////////////////////////////////////
     /// 连接状态信号
@@ -234,7 +239,9 @@ signals:
     void marketDisconnected(int reason);    // 行情前置断开
     void tradingConnected();                // 交易前置连接成功
     void tradingDisconnected(int reason);   // 交易前置断开
-    void loginFinished(bool success, const QString& errorMsg);  // 登录完成
+    void marketLoginFinished(bool success, const QString& errorMsg);  // 行情登录完成
+    void tradingLoginFinished(bool success, const QString& errorMsg); // 交易登录完成
+    void loginFinished(bool success, const QString& errorMsg);  // 兼容旧信号（行情登录）
     void heartbeatWarning(int timeLapse);   // 心跳超时警告
 
     /////////////////////////////////////////////////////////////////////////
@@ -268,6 +275,7 @@ signals:
     void instrumentQueried(const QString& instrumentId, const QString& exchangeId,
                            const QString& instrumentName, double priceTick, int volumeMultiple);
     void instrumentQueryFinished(int totalCount);
+    void settlementConfirmed(bool success, const QString& msg);
 
     /////////////////////////////////////////////////////////////////////////
     /// 错误信号

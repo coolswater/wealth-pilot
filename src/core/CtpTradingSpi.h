@@ -51,6 +51,7 @@ public:
     void queryOrders();
     void queryTrades();
     void queryInstruments(const QString& exchangeId = QString());  // 查询合约
+    void confirmSettlement();  // 确认结算单
 
     // CTP SPI回调（仅列出关键回调，完整实现见cpp）
     void OnFrontConnected() override;
@@ -84,6 +85,7 @@ signals:
     void instrumentQueried(const QString& instrumentId, const QString& exchangeId,
                            const QString& instrumentName, double priceTick, int volumeMultiple);
     void instrumentQueryFinished(int totalCount);
+    void settlementConfirmed(bool success, const QString& msg);  // 结算单确认结果
     void error(int requestId, int errorId, const QString& msg);
 
 private:

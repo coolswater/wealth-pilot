@@ -40,26 +40,24 @@ void StatusBarWidget::setupUI()
 
     // 版本
     d->versionLabel = new QLabel("@版本: v1.0.0", this);
-    d->versionLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::TextTertiary));
+    d->versionLabel->setObjectName("versionLabel");
     d->layout->addWidget(d->versionLabel);
 
     d->layout->addStretch(1);
 
     // AI 状态
     d->aiStatusLabel = new QLabel("AI: 就绪", this);
-    d->aiStatusLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::Success));
+    d->aiStatusLabel->setObjectName("aiStatus");
     d->layout->addWidget(d->aiStatusLabel);
 
     // CTP 状态
     d->ctpStatusLabel = new QLabel("CTP: 未连接", this);
-    d->ctpStatusLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::Danger));
+    d->ctpStatusLabel->setObjectName("ctpStatus");
     d->layout->addWidget(d->ctpStatusLabel);
-
-
 
     // 时间显示
     d->timeLabel = new QLabel(this);
-    d->timeLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::TextSecondary));
+    d->timeLabel->setObjectName("timeLabel");
     d->layout->addWidget(d->timeLabel);
 
     d->timer = new QTimer(this);

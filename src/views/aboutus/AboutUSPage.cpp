@@ -1,6 +1,6 @@
 /**
  * @file AboutUSPage.cpp
- * @brief 设置页面实现
+ * @brief 关于页面实现
  */
 
 #include "AboutUSPage.h"
@@ -9,37 +9,16 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
-#include <QComboBox>
-#include <QSlider>
-#include <QCheckBox>
-#include <QMessageBox>
-#include <QFileDialog>
-#include <QApplication>
+#include <QPixmap>
 
 #include <views/widgets/CardWidget.h>
-#include <core/ConfigManager.h>
-#include <core/ThemeManager.h>
 #include <core/Tokens.h>
 
 using namespace Tokens;
 
 struct AboutUSPage::Impl {
-    // 外观设置
-    QComboBox* themeCombo = nullptr;
-    QSlider* fontSlider = nullptr;
-    QLabel* fontValueLabel = nullptr;
-    QCheckBox* colorBlindCheck = nullptr;
-
-    // 通知设置
-    QCheckBox* priceAlertCheck = nullptr;
-    QCheckBox* riskAlertCheck = nullptr;
-    QCheckBox* tradeNotifyCheck = nullptr;
-    QCheckBox* systemNotifyCheck = nullptr;
-    QCheckBox* dailySummaryCheck = nullptr;
-
-    // 安全设置
-    QCheckBox* twoFactorCheck = nullptr;
-    QCheckBox* bioCheck = nullptr;
+    QVBoxLayout* mainLayout = nullptr;
+    QLabel* m_logoLabel = nullptr;
 };
 
 AboutUSPage::AboutUSPage(QWidget *parent)
@@ -60,50 +39,50 @@ QString AboutUSPage::pageId() const
 
 void AboutUSPage::initializePage()
 {
-
 }
 
 void AboutUSPage::setupUI()
 {
-    QVBoxLayout* mainLayout = qobject_cast<QVBoxLayout*>(layout());
+    d->mainLayout = new QVBoxLayout(this);
+    d->mainLayout->setContentsMargins(20, 20, 20, 20);
+    d->mainLayout->setSpacing(Spacing::SM);
 
-    CardWidget* card = new CardWidget("关于", this);
+    // Logo
+    d->m_logoLabel = new QLabel(this);
+    d->m_logoLabel->setFixedSize(200, 50);
+    d->m_logoLabel->setScaledContents(true);
+    d->m_logoLabel->setPixmap(QPixmap(":/images/app_vertical_logo.png"));
+    d->mainLayout->addWidget(d->m_logoLabel);
 
-    QWidget* content = new QWidget(card);
-    QVBoxLayout* layout = new QVBoxLayout(content);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(Spacing::SM);
+    // 应用名称 - 样式由QSS管理
+    QLabel* nameLabel = new QLabel("WealthPilot 智能投资管理", this);
+    nameLabel->setProperty("heading", true);
+    nameLabel->setMargin(20);
+    d->mainLayout->addWidget(nameLabel);
 
-    QString labelStyle = QString("color: %1; font-size: %2px;")
-                             .arg(Colors::TextSecondary).arg(Font::Size::Small);
+    // 简介
+    QLabel* infoLabel = new QLabel(
+        "简介: WealthPilot 是一个基于 Qt 框架开发的金融信息展示与分析软件，"
+        "专为 PC 平台设计。该软件提供股票、期货等金融产品的实时数据展示、"
+        "自选股管理、市场全景等功能，旨在为用户提供全面的金融市场信息。", this);
+    infoLabel->setProperty("secondary", true);
+    infoLabel->setWordWrap(true);
+    d->mainLayout->addWidget(infoLabel);
 
-    QLabel* nameLabel = new QLabel("WealthPilot 智能投资管理", content);
-    nameLabel->setStyleSheet(QString("color: %1; font-size: %2px; font-weight: 600;")
-                                 .arg(Colors::TextPrimary).arg(Font::Size::Body));
-    layout->addWidget(nameLabel);
+    // 版本
+    QLabel* versionLabel = new QLabel("版本: v1.0.0", this);
+    versionLabel->setProperty("secondary", true);
+    d->mainLayout->addWidget(versionLabel);
 
-    QLabel* versionLabel = new QLabel("版本: 1.1.0", content);
-    versionLabel->setStyleSheet(labelStyle);
-    layout->addWidget(versionLabel);
+    // 技术栈
+    QLabel* techLabel = new QLabel("技术栈: Qt 6.10.2 / C++17", this);
+    techLabel->setProperty("secondary", true);
+    d->mainLayout->addWidget(techLabel);
 
-    QLabel* techLabel = new QLabel("技术栈: Qt 6.10.2 / C++17", content);
-    techLabel->setStyleSheet(labelStyle);
-    layout->addWidget(techLabel);
+    // 开发者
+    QLabel* devLabel = new QLabel("开发者: WealthPilot Team", this);
+    devLabel->setProperty("secondary", true);
+    d->mainLayout->addWidget(devLabel);
 
-    QLabel* devLabel = new QLabel("开发者: WealthPilot Team", content);
-    devLabel->setStyleSheet(labelStyle);
-    layout->addWidget(devLabel);
-
-    // 导出数据按钮
-    QHBoxLayout* btnRow = new QHBoxLayout();
-    QPushButton* exportBtn = new QPushButton("导出数据", content);
-    exportBtn->setFixedHeight(Size::ButtonHeightMD);
-    exportBtn->setProperty("secondary", true);
-    // connect(exportBtn, &QPushButton::clicked, this, &AboutUSPage::onExportDataClicked);
-    btnRow->addWidget(exportBtn);
-    btnRow->addStretch();
-    layout->addLayout(btnRow);
-
-    card->setContent(content);
-    mainLayout->addWidget(card);
+    d->mainLayout->addStretch();
 }

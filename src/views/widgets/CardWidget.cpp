@@ -120,11 +120,6 @@ void CardWidget::onHoverEnter()
         offsetAnim->start(QAbstractAnimation::DeleteWhenStopped);
     }
 
-    // 边框高亮
-    if (!d->hasCustomBorder) {
-        setStyleSheet(styleSheet() + QString("\n            CardWidget {\n                border-color: rgba(59, 130, 246, 0.4);\n            }\n        "));
-    }
-
     // 轻微上移
     QPropertyAnimation* moveAnim = new QPropertyAnimation(this, "pos");
     moveAnim->setDuration(200);
@@ -153,9 +148,6 @@ void CardWidget::onHoverLeave()
         offsetAnim->setEasingCurve(QEasingCurve::OutCubic);
         offsetAnim->start(QAbstractAnimation::DeleteWhenStopped);
     }
-
-    // 恢复边框
-    applyStyle();
 
     // 恢复位置
     QPropertyAnimation* moveAnim = new QPropertyAnimation(this, "pos");
@@ -210,7 +202,7 @@ void CardWidget::setupUI()
         titleLayout->addWidget(d->iconLabel);
 
         d->titleLabel = new QLabel(d->title, this);
-        d->titleLabel->setStyleSheet("font-size: 16px; font-weight: 600; color: white;");
+        d->titleLabel->setObjectName("cardTitle");
         titleLayout->addWidget(d->titleLabel);
 
         titleLayout->addStretch();
@@ -228,16 +220,12 @@ void CardWidget::setupUI()
 
 void CardWidget::applyStyle()
 {
-    // ThemeManager* theme = ThemeManager::instance();
-
-    QString bgColor = d->hasCustomBg ? d->customBgColor.name() : "rgba(255, 255, 255, 0.03)";
-    QString borderColor = d->hasCustomBorder ? d->customBorderColor.name() : "rgba(255, 255, 255, 0.08)";
-
-    setStyleSheet(QString(R"(
-        CardWidget {
-            background-color: %1;
-            border: 1px solid %2;
-            border-radius: 12px;
-        }
-    )").arg(bgColor, borderColor));
+    // 样式由QSS管理，这里只设置自定义属性
+    if (d->hasCustomBorder) {
+        setStyleSheet(QString("CardWidget { border-color: %1; }").arg(d->customBorderColor.name()));
+    }
+    if (d->hasCustomBg) {
+        QString currentStyle = styleSheet();
+        setStyleSheet(currentStyle + QString("\nCardWidget { background-color: %1; }").arg(d->customBgColor.name()));
+    }
 }

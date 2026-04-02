@@ -90,12 +90,11 @@ void TitleBarWidget::setupUI()
     // 添加小间距分隔
     layout->addSpacing(12);
 
-    // 最小化按钮SvgColorIcon
+    // 最小化按钮
     QIcon minIcon = SvgIconWidget::themedIcon(":/icons/minus.svg", "foreground");
     d->m_minimizeBtn = new QPushButton(this);
     d->m_minimizeBtn->setCursor(Qt::PointingHandCursor);
-    d->m_minimizeBtn->setStyleSheet("QPushButton:hover{background:#3B82F6;}");
-    d->m_minimizeBtn->setProperty("icon", "true");
+    d->m_minimizeBtn->setProperty("icon", true);
     d->m_minimizeBtn->setIcon(minIcon);
     d->m_minimizeBtn->setIconSize(QSize(16, 16));
     d->m_minimizeBtn->setFixedSize(20, 20);
@@ -105,8 +104,7 @@ void TitleBarWidget::setupUI()
     QIcon maxIcon = SvgIconWidget::themedIcon(":/icons/maximize.svg", "foreground");
     d->m_maximizeBtn = new QPushButton(this);
     d->m_maximizeBtn->setCursor(Qt::PointingHandCursor);
-    d->m_maximizeBtn->setStyleSheet("QPushButton:hover{background:#3B82F6;}");
-    d->m_maximizeBtn->setProperty("icon", "true");
+    d->m_maximizeBtn->setProperty("icon", true);
     d->m_maximizeBtn->setIcon(maxIcon);
     d->m_maximizeBtn->setIconSize(QSize(16, 16));
     d->m_maximizeBtn->setFixedSize(20, 20);
@@ -115,9 +113,9 @@ void TitleBarWidget::setupUI()
     // 关闭按钮
     QIcon closeIcon = SvgIconWidget::themedIcon(":/icons/close.svg", "foreground");
     d->m_closeBtn = new QPushButton(this);
+    d->m_closeBtn->setObjectName("closeBtn");
     d->m_closeBtn->setCursor(Qt::PointingHandCursor);
-    d->m_closeBtn->setStyleSheet("QPushButton:hover{background:#3B82F6;}");
-    d->m_closeBtn->setProperty("icon", "true");
+    d->m_closeBtn->setProperty("icon", true);
     d->m_closeBtn->setIcon(closeIcon);
     d->m_closeBtn->setIconSize(QSize(16, 16));
     d->m_closeBtn->setFixedSize(20, 20);

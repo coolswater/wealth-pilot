@@ -108,7 +108,8 @@ void CTPService::setupConnections() {
     connect(d->marketSpi, &CtpMarketSpi::loginResult, this,
             [this](bool success, const QString& msg) {
                 LOG_INFO(QString("CTPService: marketSpi::loginResult success=%1 msg=%2").arg(success).arg(msg));
-                emit loginFinished(success, msg);
+                emit marketLoginFinished(success, msg);
+                emit loginFinished(success, msg);  // 兼容旧代码
             }, Qt::DirectConnection);
 
     connect(d->marketSpi, &CtpMarketSpi::error, this,
@@ -133,7 +134,8 @@ void CTPService::setupConnections() {
     connect(d->tradingSpi, &CtpTradingSpi::loginResult,
             this, [this](bool success, const QString& msg) {
                 d->isLoggedIn = success;
-                emit loginFinished(success, msg);
+                LOG_INFO(QString("CTPService: tradingSpi::loginResult success=%1 msg=%2").arg(success).arg(msg));
+                emit tradingLoginFinished(success, msg);
             }, Qt::DirectConnection);
     connect(d->tradingSpi, &CtpTradingSpi::orderUpdated,
             this, &CTPService::orderUpdated, Qt::DirectConnection);
@@ -145,6 +147,8 @@ void CTPService::setupConnections() {
             this, &CTPService::instrumentQueried, Qt::DirectConnection);
     connect(d->tradingSpi, &CtpTradingSpi::instrumentQueryFinished,
             this, &CTPService::instrumentQueryFinished, Qt::DirectConnection);
+    connect(d->tradingSpi, &CtpTradingSpi::settlementConfirmed,
+            this, &CTPService::settlementConfirmed, Qt::DirectConnection);
 
     LOG_INFO("Trader SPI created and signals connected");
 
@@ -165,23 +169,10 @@ void CTPService::setupConnections() {
             d->marketSpi->login(d->brokerId, d->userId, d->password);
         }
 
-        // 交易登录
+        // 交易登录（SimNow 7x24 环境直接登录，无需认证）
         if (d->tradingSpi) {
-            // 先认证（CTP6.6.1+要求）
-            if (!d->appId.isEmpty() && !d->authCode.isEmpty()) {
-                LOG_INFO("Authenticating with AppID and AuthCode...");
-                d->tradingSpi->authenticate(d->brokerId, d->userId, d->appId, d->authCode);
-
-                // 认证后登录
-                QTimer::singleShot(1000, this, [this]() {
-                    LOG_INFO("Logging in to trader after authentication...");
-                    d->tradingSpi->login(d->brokerId, d->userId, d->password);
-                });
-            } else {
-                // 旧版直接登录
-                LOG_INFO("Direct login to trader (no auth required)...");
-                d->tradingSpi->login(d->brokerId, d->userId, d->password);
-            }
+            LOG_INFO("Direct login to trader (SimNow 7x24 mode)...");
+            d->tradingSpi->login(d->brokerId, d->userId, d->password);
         }
     });
 }
@@ -242,6 +233,12 @@ void CTPService::queryInstruments(const QString& exchangeId) {
     if (!d->tradingSpi) return;
     d->tradingSpi->queryInstruments(exchangeId);
     LOG_INFO(QString("Query instruments requested, exchange: %1").arg(exchangeId.isEmpty() ? "ALL" : exchangeId));
+}
+
+void CTPService::confirmSettlement() {
+    if (!d->tradingSpi) return;
+    d->tradingSpi->confirmSettlement();
+    LOG_INFO("Settlement confirmation requested");
 }
 
 } // namespace CTP

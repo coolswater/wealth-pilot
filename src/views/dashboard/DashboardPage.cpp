@@ -54,13 +54,10 @@ void DashboardPage::setupUI() {
     d->mainLayout->setSpacing(Impl::LayoutSpacing);
     d->mainLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
 
-    // 2. 标题标签 - 使用CSS样式表而非多次setFont调用（性能更好）
+    // 2. 标题标签 - 样式由QSS管理
     d->titleLabel = new QLabel(tr("投资仪表板"), this);
     d->titleLabel->setObjectName("DashboardPageTitle");
     d->titleLabel->setAlignment(Qt::AlignCenter);
-    d->titleLabel->setStyleSheet(
-        QStringLiteral("font-size: 24px; font-weight: bold; color: #2c3e50; margin: 20px;")
-        );
 
     // 添加阴影效果
     auto *shadowEffect = new QGraphicsDropShadowEffect(this);
@@ -71,21 +68,12 @@ void DashboardPage::setupUI() {
 
     d->mainLayout->addWidget(d->titleLabel);
 
-    // 3. 操作按钮 - 使用对象名便于QSS全局样式控制
+    // 3. 操作按钮 - 样式由QSS管理
     d->actionButton = new QPushButton(tr("刷新数据"), this);
     d->actionButton->setObjectName("primaryButton");
+    d->actionButton->setProperty("primary", true);
     d->actionButton->setFixedSize(120, 40);
     d->actionButton->setCursor(Qt::PointingHandCursor);
-    d->actionButton->setStyleSheet(
-        QStringLiteral(
-            "QPushButton#primaryButton {"
-            "  background-color: #3498db; color: white; border-radius: 6px;"
-            "  font-weight: bold; font-size: 14px;"
-            "}"
-            "QPushButton#primaryButton:hover { background-color: #2980b9; }"
-            "QPushButton#primaryButton:pressed { background-color: #1c5a85; }"
-            )
-        );
 
     d->mainLayout->addWidget(d->actionButton, 0, Qt::AlignCenter);
     d->mainLayout->addStretch(1);  // 弹性空间将内容推向上方

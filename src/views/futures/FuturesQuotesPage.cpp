@@ -118,9 +118,13 @@ void FuturesQuotesPage::initializePage()
     // 配置CTP客户端
     d->m_CTPService->setCredentials(brokerId, userId, password, appId, authCode);
 
-    // SimNow 第二套 7x24 小时测试环境
-    d->m_CTPService->setMarketFrontAddress("tcp://180.168.146.187:10211");
-    d->m_CTPService->setTradingFrontAddress("tcp://180.168.146.187:10201");
+    // SimNow 第一套 测试环境
+    d->m_CTPService->setMarketFrontAddress("tcp://182.254.243.31:30011");
+    d->m_CTPService->setTradingFrontAddress("tcp://182.254.243.31:30001");
+
+    // // SimNow 第二套 7x24 小时测试环境
+    // d->m_CTPService->setMarketFrontAddress("tcp://180.168.146.187:10211");
+    // d->m_CTPService->setTradingFrontAddress("tcp://180.168.146.187:10201");
 
     LOG_INFO("CTP credentials configured, calling setupConnections()...");
 
@@ -149,25 +153,60 @@ void FuturesQuotesPage::setupCtpConnections()
                 LOG_WARNING(QString("CTP Market disconnected, reason: %1").arg(reason));
             });
 
-    connect(d->m_CTPService.get(), &CTP::CTPService::loginFinished, this,
+    // 2. 行情登录成功 - 可以开始订阅行情
+    connect(d->m_CTPService.get(), &CTP::CTPService::marketLoginFinished, this,
             [this](bool success, const QString& msg) {
                 if (success) {
-                    LOG_INFO("CTP Login successful, querying instruments...");
-
-                    // 登录成功后查询所有合约
-                    d->m_CTPService->queryInstruments();
-
-                    if (d->m_statusLabel) {
-                        d->m_statusLabel->setText("登录成功，正在查询合约...");
-                    }
+                    LOG_INFO("Market login successful");
+                    updateConnectionStatus("行情登录成功", "#4CAF50");
                 } else {
-                    LOG_ERROR(QString("CTP Login failed: %1").arg(msg));
-                    QMessageBox::warning(this, "连接失败",
-                                         QString("CTP登录失败: %1").arg(msg));
+                    LOG_ERROR(QString("Market login failed: %1").arg(msg));
                 }
             });
 
-    // 2. 合约查询回调
+    // 3. 交易登录成功 - 先确认结算单，再查询合约
+    connect(d->m_CTPService.get(), &CTP::CTPService::tradingLoginFinished, this,
+            [this](bool success, const QString& msg) {
+                if (success) {
+                    LOG_INFO("Trading login successful, confirming settlement...");
+
+                    if (d->m_statusLabel) {
+                        d->m_statusLabel->setText("交易登录成功，正在确认结算单...");
+                    }
+
+                    // 先确认结算单
+                    d->m_CTPService->confirmSettlement();
+                } else {
+                    LOG_ERROR(QString("Trading login failed: %1").arg(msg));
+                    QMessageBox::warning(this, "交易登录失败",
+                                         QString("CTP交易登录失败: %1").arg(msg));
+                }
+            });
+
+    // 3.1 结算单确认成功 - 查询合约
+    connect(d->m_CTPService.get(), &CTP::CTPService::settlementConfirmed, this,
+            [this](bool success, const QString& msg) {
+                if (success) {
+                    LOG_INFO("Settlement confirmed, querying instruments...");
+
+                    if (d->m_statusLabel) {
+                        d->m_statusLabel->setText("结算单已确认，正在查询合约...");
+                    }
+
+                    // 延迟查询，避免流控
+                    QTimer::singleShot(500, this, [this]() {
+                        d->m_CTPService->queryInstruments();
+                    });
+                } else {
+                    LOG_ERROR(QString("Settlement confirmation failed: %1").arg(msg));
+                    // 即使失败也尝试查询
+                    QTimer::singleShot(1000, this, [this]() {
+                        d->m_CTPService->queryInstruments();
+                    });
+                }
+            });
+
+    // 4. 合约查询回调
     connect(d->m_CTPService.get(), &CTP::CTPService::instrumentQueried,
             this, &FuturesQuotesPage::onInstrumentQueried,
             Qt::QueuedConnection);
@@ -176,17 +215,17 @@ void FuturesQuotesPage::setupCtpConnections()
             this, &FuturesQuotesPage::onInstrumentQueryFinished,
             Qt::QueuedConnection);
 
-    // 3. 批量行情接收
+    // 5. 批量行情接收
     connect(d->m_CTPService.get(), &CTP::CTPService::marketDataBatchReceived,
             this, &FuturesQuotesPage::onCtpBatchMarketData,
             Qt::QueuedConnection);
 
-    // 4. 单个行情（备用）
+    // 6. 单个行情（备用）
     connect(d->m_CTPService.get(), &CTP::CTPService::marketDataReceived,
             this, &FuturesQuotesPage::onCtpSingleMarketData,
             Qt::QueuedConnection);
 
-    // 5. 错误处理
+    // 7. 错误处理
     connect(d->m_CTPService.get(), &CTP::CTPService::errorOccurred, this,
             [this](int reqId, int errorId, const QString& errorMsg) {
                 LOG_ERROR(QString("CTP Error [%1] Request:%2 - %3")
@@ -463,14 +502,18 @@ void FuturesQuotesPage::setupUI()
     auto *toolbarLayout = new QHBoxLayout;
 
     auto *refreshBtn = new QPushButton("刷新");
+    refreshBtn->setProperty("ghost", true);
+
     d->m_contractInput = new QLineEdit();
     d->m_contractInput->setPlaceholderText("输入合约代码 (如: rb2505)");
     d->m_contractInput->setMaximumWidth(150);
 
     d->m_subscribeBtn = new QPushButton("订阅");
-    d->m_subscribeBtn->setStyleSheet("background-color: #2196F3; color: white;");
+    d->m_subscribeBtn->setObjectName("subscribeBtn");
+    d->m_subscribeBtn->setProperty("primary", true);
 
     auto *filterLabel = new QLabel("筛选：");
+    filterLabel->setProperty("secondary", true);
     d->m_filterInput = new QLineEdit();
     d->m_filterInput->setPlaceholderText("输入合约代码筛选...");
     d->m_filterInput->setMaximumWidth(120);
@@ -488,9 +531,6 @@ void FuturesQuotesPage::setupUI()
     // 表格视图
     d->m_tableView = new QTableView(this);
     d->m_tableView->setModel(d->m_proxyModel);  // 使用代理模型
-    d->m_tableView->horizontalHeader()->setStyleSheet(
-        "QHeaderView::section { background-color: #1A1F2E; border: 1px solid #323232}"
-        );
 
     d->m_tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     d->m_tableView->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
@@ -514,9 +554,9 @@ void FuturesQuotesPage::setupUI()
 
     mainLayout->addWidget(d->m_tableView);
 
-    // 状态栏
+    // 状态栏 - 样式由QSS管理
     d->m_statusLabel = new QLabel("正在连接CTP...", this);
-    d->m_statusLabel->setStyleSheet("color: #666; padding: 5px; border-top: 1px solid #ddd;");
+    d->m_statusLabel->setObjectName("statusLabel");
     mainLayout->addWidget(d->m_statusLabel);
 
     // 信号连接
