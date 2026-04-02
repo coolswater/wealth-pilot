@@ -141,6 +141,10 @@ void CTPService::setupConnections() {
             this, &CTPService::tradeReceived, Qt::DirectConnection);
     connect(d->tradingSpi, &CtpTradingSpi::accountInfo,
             this, &CTPService::accountInfoReceived, Qt::DirectConnection);
+    connect(d->tradingSpi, &CtpTradingSpi::instrumentQueried,
+            this, &CTPService::instrumentQueried, Qt::DirectConnection);
+    connect(d->tradingSpi, &CtpTradingSpi::instrumentQueryFinished,
+            this, &CTPService::instrumentQueryFinished, Qt::DirectConnection);
 
     LOG_INFO("Trader SPI created and signals connected");
 
@@ -232,6 +236,12 @@ void CTPService::queryTradingAccount() {
 void CTPService::queryPositions() {
     if (!d->tradingSpi || !d->isLoggedIn) return;
     d->tradingSpi->queryPositions(QString());
+}
+
+void CTPService::queryInstruments(const QString& exchangeId) {
+    if (!d->tradingSpi) return;
+    d->tradingSpi->queryInstruments(exchangeId);
+    LOG_INFO(QString("Query instruments requested, exchange: %1").arg(exchangeId.isEmpty() ? "ALL" : exchangeId));
 }
 
 } // namespace CTP

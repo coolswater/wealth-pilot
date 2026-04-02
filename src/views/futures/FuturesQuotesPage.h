@@ -1,16 +1,16 @@
 /**
  * @file FuturesQuotesPage.h
- * @brief 期货行情页面
+ * @brief 期货行情页面 - CTP实时行情
  *
  * 功能：
  * - 显示期货合约行情列表
  * - 连接Simnow行情服务器
- * - 订阅/取消订阅合约
+ * - 自动查询并订阅所有合约
  * - 显示实时价格变动
  */
 #pragma once
 
-#include <QTableWidget>
+#include <QTableView>
 #include <memory>
 #include <core/BasePage.h>
 #include <services/CTPService.h>
@@ -19,6 +19,8 @@
 QT_BEGIN_NAMESPACE
 class QTableView;
 class QLabel;
+class QLineEdit;
+class QSortFilterProxyModel;
 QT_END_NAMESPACE
 
 class FuturesQuotesPage : public BasePage
@@ -33,23 +35,21 @@ public:
 
     void flushPendingUpdates();
     void setupCtpConnections();
-    void switchToRealMode();
-    void switchToSimulateMode();
     void updateConnectionStatus(const QString& text, const QString& color);
+
 private slots:
     void onRowClicked(const QModelIndex &index);
-    void onSimulateTick();
-    void onConnectionStateChanged();
-    void onMarketDataReceived();
     void onCtpBatchMarketData(const QList<CTP::MarketData>& dataList);
     void onCtpSingleMarketData(const CTP::MarketData& data);
     void onSubscribeContract();
     void subscribeContracts(const QList<QString>& contracts);
+    void onInstrumentQueried(const QString& instrumentId, const QString& exchangeId,
+                             const QString& instrumentName, double priceTick, int volumeMultiple);
+    void onInstrumentQueryFinished(int totalCount);
 
 private:
     void setupUI();
     void setupConnections();
-    void initData();
 
     class Impl;
     std::unique_ptr<Impl> d;

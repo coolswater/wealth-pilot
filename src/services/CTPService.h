@@ -219,6 +219,12 @@ public:
      */
     void queryPositions();
 
+    /**
+     * @brief 查询合约列表（异步）
+     * @param exchangeId 交易所代码，为空则查询所有交易所
+     */
+    void queryInstruments(const QString& exchangeId = QString());
+
 signals:
     /////////////////////////////////////////////////////////////////////////
     /// 连接状态信号
@@ -254,6 +260,14 @@ signals:
     void tradeReceived(const TradeInfo& trade);     // 成交回报
     void positionReceived(const QString& instrument, int longPos, int shortPos);
     void accountInfoReceived(double available, double balance);
+
+    /////////////////////////////////////////////////////////////////////////
+    /// 合约查询信号
+    /////////////////////////////////////////////////////////////////////////
+
+    void instrumentQueried(const QString& instrumentId, const QString& exchangeId,
+                           const QString& instrumentName, double priceTick, int volumeMultiple);
+    void instrumentQueryFinished(int totalCount);
 
     /////////////////////////////////////////////////////////////////////////
     /// 错误信号

@@ -50,6 +50,7 @@ public:
     void queryPositions(const QString& instrument = QString());
     void queryOrders();
     void queryTrades();
+    void queryInstruments(const QString& exchangeId = QString());  // 查询合约
 
     // CTP SPI回调（仅列出关键回调，完整实现见cpp）
     void OnFrontConnected() override;
@@ -66,6 +67,8 @@ public:
                                 CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
     void OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pInvestorPosition,
                                   CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
+    void OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument,
+                            CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
     void OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 signals:
@@ -78,6 +81,9 @@ signals:
     void tradeReceived(const TradeInfo& trade);
     void accountInfo(double available, double balance, double margin);
     void positionUpdated(const QString& instrument, int longPos, int shortPos);
+    void instrumentQueried(const QString& instrumentId, const QString& exchangeId,
+                           const QString& instrumentName, double priceTick, int volumeMultiple);
+    void instrumentQueryFinished(int totalCount);
     void error(int requestId, int errorId, const QString& msg);
 
 private:

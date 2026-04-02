@@ -179,33 +179,46 @@ void Logger::writeToFile(const QString& message)
 
 void Logger::rotateLogFile()
 {
-    QMutexLocker locker(&m_mutex);
+    // 注意：调用方已经持有 m_mutex，这里不要再加锁
 
     if (!m_logFile) return;
 
+    // 保存旧文件名
+    QString oldFileName = m_logFile->fileName();
+
     // 关闭当前文件
-    m_stream->flush();
-    m_stream.reset();
+    if (m_stream) {
+        m_stream->flush();
+        m_stream.reset();
+    }
     m_logFile->close();
 
-    // 创建新文件名（添加时间戳）
-    QFileInfo fileInfo(m_logFile->fileName());
-    QString newPath = fileInfo.absolutePath() + "/" + 
-                     fileInfo.baseName() + "_" + 
-                     QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss") + 
-                     fileInfo.suffix();
+    // 创建新文件名（添加时间戳）- 注意要加 "."
+    QFileInfo fileInfo(oldFileName);
+    QString newPath = fileInfo.absolutePath() + "/" +
+                     fileInfo.baseName() + "_" +
+                     QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss") +
+                     "." + fileInfo.suffix();  // 修复：添加点号
 
     // 重命名旧文件
-    QFile::rename(m_logFile->fileName(), newPath);
-
-    // 重新打开新文件
-    bool success = m_logFile->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text);
-    if (!success) {
-        // 处理打开失败的情况，例如输出错误信息
-        LOG_WARNING("Failed to open log file:" + m_logFile->fileName());
+    if (QFile::rename(oldFileName, newPath)) {
+        qDebug() << "Log rotated to:" << newPath;
+    } else {
+        qWarning() << "Failed to rotate log file";
     }
-    m_stream = std::make_unique<QTextStream>(m_logFile.get());
-    m_stream->setEncoding(QStringConverter::Utf8);
+
+    // 重新打开新文件（使用原文件名）
+    m_logFile.reset(new QFile(oldFileName));
+    if (m_logFile->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+        m_stream = std::make_unique<QTextStream>(m_logFile.get());
+        m_stream->setEncoding(QStringConverter::Utf8);
+        *m_stream << QString("\n=== Log continued at %1 ===\n")
+                         .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+        m_stream->flush();
+    } else {
+        qCritical() << "Failed to reopen log file:" << oldFileName;
+        m_logFile.reset();
+    }
 }
 
 void Logger::writeToConsole(const QString& message)

@@ -196,6 +196,25 @@ void CtpTradingSpi::queryPositions(const QString& instrument)
     }
 }
 
+void CtpTradingSpi::queryInstruments(const QString& exchangeId)
+{
+    QMutexLocker locker(&d->apiMutex);
+    if (!d->api) return;
+
+    CThostFtdcQryInstrumentField req{};
+
+    if (!exchangeId.isEmpty()) {
+        strncpy(req.ExchangeID, exchangeId.toLocal8Bit().constData(), sizeof(req.ExchangeID) - 1);
+    }
+
+    int ret = d->api->ReqQryInstrument(&req, ++d->requestId);
+    if (ret != 0) {
+        emit error(d->requestId, ret, "查询合约请求发送失败");
+    }
+    
+    LOG_INFO(QString("Query instruments sent, exchangeId: %1").arg(exchangeId.isEmpty() ? "ALL" : exchangeId));
+}
+
 // SPI回调实现
 void CtpTradingSpi::OnFrontConnected() {
     emit connected();
@@ -262,6 +281,25 @@ void CtpTradingSpi::OnRspQryTradingAccount(CThostFtdcTradingAccountField *pTradi
 void CtpTradingSpi::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pInvestorPosition, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
 
+}
+
+void CtpTradingSpi::OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument,
+                                        CThostFtdcRspInfoField *pRspInfo,
+                                        int nRequestID, bool bIsLast) {
+    if (pInstrument && (!pRspInfo || pRspInfo->ErrorID == 0)) {
+        QString instrumentId = QString::fromLocal8Bit(pInstrument->InstrumentID);
+        QString exchangeId = QString::fromLocal8Bit(pInstrument->ExchangeID);
+        QString instrumentName = QString::fromLocal8Bit(pInstrument->InstrumentName);
+        double priceTick = pInstrument->PriceTick;
+        int volumeMultiple = pInstrument->VolumeMultiple;
+
+        emit instrumentQueried(instrumentId, exchangeId, instrumentName, priceTick, volumeMultiple);
+
+        if (bIsLast) {
+            emit instrumentQueryFinished(d->requestId);
+            LOG_INFO(QString("Instrument query finished, requestId: %1").arg(nRequestID));
+        }
+    }
 }
 
 void CtpTradingSpi::OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm,
