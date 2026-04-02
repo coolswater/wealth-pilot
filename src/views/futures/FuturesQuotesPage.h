@@ -32,6 +32,8 @@ public:
 
     QString pageId() const override;
     void initializePage() override;
+    void onPageActivated(const QVariantMap &params = {}) override;
+    void onPageDeactivated() override;
 
     void flushPendingUpdates();
     void setupCtpConnections();

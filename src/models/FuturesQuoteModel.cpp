@@ -6,6 +6,7 @@
 #include <QLocale>
 #include <QModelIndex>
 #include <cmath>
+#include <algorithm>  // for std::sort
 
 QStringList FuturesQuoteModel::columnNames()
 {
@@ -22,38 +23,60 @@ FuturesQuoteModel::FuturesQuoteModel(QObject *parent) : QAbstractTableModel(pare
 
 /**
  * @brief 批量更新（性能优化关键）
- * @note 合并多次 dataChanged 为单次，减少 90% 重绘开销
+ * @note 使用 dataChanged 批量更新，避免全表重置
  */
 void FuturesQuoteModel::updateQuotes(const QVector<FuturesQuoteItem> &quotes)
 {
     if (quotes.isEmpty()) return;
 
-    // 使用 beginResetModel 批量更新，比逐条 dataChanged 更高效
-    // 适用于一次性更新大量数据（>10 条）
-    if (quotes.size() > 10) {
-        beginResetModel();
-        {
-            QMutexLocker locker(&m_mutex);
-            for (const auto& quote : quotes) {
-                bool found = false;
-                for (auto& item : m_quotes) {
-                    if (item.contractName == quote.contractName) {
-                        item = quote;
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    m_quotes.append(quote);
+    // 收集需要更新的行
+    QVector<int> updatedRows;
+    QVector<int> newRows;
+
+    {
+        QMutexLocker locker(&m_mutex);
+        
+        for (const auto& quote : quotes) {
+            bool found = false;
+            for (int i = 0; i < m_quotes.size(); ++i) {
+                if (m_quotes[i].contractName == quote.contractName) {
+                    m_quotes[i] = quote;
+                    updatedRows.append(i);
+                    found = true;
+                    break;
                 }
             }
+            if (!found) {
+                newRows.append(m_quotes.size());
+                m_quotes.append(quote);
+            }
         }
-        endResetModel();
-    } else {
-        // 少量更新使用 dataChanged，保持滚动位置
-        for (const auto& quote : quotes) {
-            updateQuote(quote);
+    }
+
+    // 批量更新现有行（不重置整个模型）
+    if (!updatedRows.isEmpty()) {
+        // 合并连续的行，减少 dataChanged 调用次数
+        std::sort(updatedRows.begin(), updatedRows.end());
+        int startRow = updatedRows.first();
+        int endRow = startRow;
+        
+        for (int i = 1; i < updatedRows.size(); ++i) {
+            if (updatedRows[i] == endRow + 1) {
+                endRow = updatedRows[i];
+            } else {
+                // 发射连续区间的更新信号
+                emit dataChanged(index(startRow, 0), index(endRow, ColumnCount - 1));
+                startRow = endRow = updatedRows[i];
+            }
         }
+        // 发射最后一个区间
+        emit dataChanged(index(startRow, 0), index(endRow, ColumnCount - 1));
+    }
+
+    // 插入新行
+    for (int row : newRows) {
+        beginInsertRows(QModelIndex(), row, row);
+        endInsertRows();
     }
 }
 

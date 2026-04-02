@@ -70,6 +70,9 @@ public:
     // 性能监控
     QTimer *m_flushTimer = nullptr;
     std::atomic<int> m_quoteSequence{0};
+
+    // 页面可见性控制
+    std::atomic<bool> m_isVisible{true};
 };
 
 FuturesQuotesPage::FuturesQuotesPage(QWidget* parent)
@@ -97,6 +100,40 @@ FuturesQuotesPage::~FuturesQuotesPage() = default;
 QString FuturesQuotesPage::pageId() const
 {
     return QStringLiteral("FuturesQuotesPage");
+}
+
+/**
+ * @brief 页面激活回调 - 恢复数据处理
+ */
+void FuturesQuotesPage::onPageActivated(const QVariantMap &params)
+{
+    LOG_INFO("FuturesQuotesPage activated");
+    d->m_isVisible.store(true);
+
+    // 恢复刷新定时器
+    if (d->m_flushTimer && !d->m_flushTimer->isActive()) {
+        d->m_flushTimer->start(500);
+    }
+}
+
+/**
+ * @brief 页面失活回调 - 暂停数据处理，减少CPU占用
+ */
+void FuturesQuotesPage::onPageDeactivated()
+{
+    LOG_INFO("FuturesQuotesPage deactivated");
+    d->m_isVisible.store(false);
+
+    // 停止刷新定时器
+    if (d->m_flushTimer) {
+        d->m_flushTimer->stop();
+    }
+
+    // 清空待处理数据，避免积压
+    {
+        QMutexLocker locker(&d->m_pendingMutex);
+        d->m_pendingUpdates.clear();
+    }
 }
 
 /**
@@ -282,19 +319,20 @@ void FuturesQuotesPage::onInstrumentQueryFinished(int totalCount)
     // 批量订阅行情（分批订阅，避免一次性订阅过多）
     QList<QString> contracts = d->m_subscribedContracts.values();
     const int batchSize = 100;  // 每批100个
+    subscribeContracts(contracts.mid(0,50));
 
-    for (int i = 0; i < contracts.size(); i += batchSize) {
-        QList<QString> batch;
-        int endIdx = qMin(i + batchSize, static_cast<int>(contracts.size()));
-        for (int j = i; j < endIdx; ++j) {
-            batch.append(contracts[j]);
-        }
+    // for (int i = 0; i < contracts.size(); i += batchSize) {
+    //     QList<QString> batch;
+    //     int endIdx = qMin(i + batchSize, static_cast<int>(contracts.size()));
+    //     for (int j = i; j < endIdx; ++j) {
+    //         batch.append(contracts[j]);
+    //     }
 
-        // 延迟订阅，避免流控
-        QTimer::singleShot(i / batchSize * 1000, this, [this, batch]() {
-            subscribeContracts(batch);
-        });
-    }
+    //     // 延迟订阅，避免流控
+    //     QTimer::singleShot(i / batchSize * 1000, this, [this, batch]() {
+    //         subscribeContracts(batch);
+    //     });
+    // }
 }
 
 /**
@@ -302,7 +340,8 @@ void FuturesQuotesPage::onInstrumentQueryFinished(int totalCount)
  */
 void FuturesQuotesPage::onCtpBatchMarketData(const QList<CTP::MarketData>& dataList)
 {
-    if (dataList.isEmpty()) return;
+    // 页面不可见时跳过处理，减少CPU占用
+    if (!d->m_isVisible.load() || dataList.isEmpty()) return;
 
     // 跳帧保护
     if (d->m_pendingUpdates.size() > 1000) {
@@ -351,6 +390,9 @@ void FuturesQuotesPage::onCtpBatchMarketData(const QList<CTP::MarketData>& dataL
  */
 void FuturesQuotesPage::onCtpSingleMarketData(const CTP::MarketData& data)
 {
+    // 页面不可见时跳过处理
+    if (!d->m_isVisible.load()) return;
+
     FuturesQuoteItem item;
     item.contractName = data.instrumentId;
     item.lastPrice = data.lastPrice;
@@ -458,16 +500,25 @@ void FuturesQuotesPage::onRowClicked(const QModelIndex &index)
  */
 void FuturesQuotesPage::flushPendingUpdates()
 {
+    // 页面不可见时跳过UI更新
+    if (!d->m_isVisible.load()) return;
+
     if (!d->m_model) return;
 
     if (d->m_pendingUpdates.isEmpty()) return;
+
+    // 限制单次处理的最大数量，避免阻塞主线程
+    const int maxBatchSize = 200;
 
     QVector<FuturesQuoteItem> updates;
     {
         QMutexLocker locker(&d->m_pendingMutex);
         if (d->m_pendingUpdates.isEmpty()) return;
-        updates = std::move(d->m_pendingUpdates);
-        d->m_pendingUpdates.clear();
+
+        // 只取前 maxBatchSize 条，其余下次处理
+        int takeCount = qMin(maxBatchSize, d->m_pendingUpdates.size());
+        updates = d->m_pendingUpdates.mid(0, takeCount);
+        d->m_pendingUpdates.remove(0, takeCount);
     }
 
     d->m_tickCount.fetch_add(updates.size());
