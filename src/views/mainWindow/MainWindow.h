@@ -61,7 +61,7 @@ private slots:
      * @brief 侧边栏项点击处理
      * @param id 点击的项ID
      */
-    void onSidebarItemClicked(const QString& id);
+    static void onSidebarItemClicked(const QString& id);
 
 private:
     /**
@@ -72,7 +72,7 @@ private:
     /**
      * @brief 创建所有页面
      */
-    void createPages();
+    void createPages() const;
 
     /**
      * @brief 连接信号槽
@@ -83,7 +83,7 @@ private:
      * @brief 调整布局
      * @details 根据当前窗口大小重新计算各区域尺寸
      */
-    void adjustLayout();
+    void adjustLayout() const;
 
     // 懒加载页面
     QWidget* getPage(const QString& pageId);

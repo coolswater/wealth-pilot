@@ -100,6 +100,10 @@ set(WIDGET_SOURCES
     src/views/widgets/CardWidget.cpp
     src/views/widgets/StatusBarWidget.h
     src/views/widgets/StatusBarWidget.cpp
+    src/views/widgets/AssetCardWidget.h
+    src/views/widgets/AssetCardWidget.cpp
+    src/views/widgets/AssetPieChart.h
+    src/views/widgets/AssetPieChart.cpp
 )
 
 # Views 视图

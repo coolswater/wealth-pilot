@@ -118,7 +118,7 @@ void ThemeManager::loadBuiltinThemes()
     darkColors["rise"] = "#10B981";
     darkColors["fall"] = "#EF4444";
     darkColors["neutral"] = "#9CA3AF";
-    darkColors["border"] = "rgba(255,255,255,0.1)";
+    darkColors["border"] = "#FFFFFF";
     darkColors["card"] = "#242937";
 
     QJsonObject darkTheme;

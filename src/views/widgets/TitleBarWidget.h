@@ -27,13 +27,13 @@ public:
     ~TitleBarWidget() override;
 
     // 设置标题栏标题文本
-    void setTitle(const QString& title);
+    void setTitle(const QString& title) const;
 
     // 设置窗口图标（显示在左上角）
-    void setWindowIcon(const QPixmap& icon);
+    void setWindowIcon(const QPixmap& icon) const;
 
     // 更新最大化按钮图标状态（最大化/还原）
-    void updateMaximizeButton(bool isMaximized);
+    void updateMaximizeButton(bool isMaximized) const;
 
 protected:
     // 鼠标事件处理 - 实现窗口拖动
@@ -50,9 +50,9 @@ private slots:
     void onThemeChanged();
 
     // 窗口控制槽函数
-    void onMinimizeClicked();
-    void onMaximizeClicked();
-    void onCloseClicked();
+    void onMinimizeClicked() const;
+    void onMaximizeClicked() const;
+    void onCloseClicked() const;
 
 private:
     // 初始化UI布局

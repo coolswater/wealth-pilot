@@ -7,7 +7,6 @@
 #include <QPushButton>
 #include <QMouseEvent>
 #include <QHBoxLayout>
-#include <QWindowStateChangeEvent>
 #include <QGraphicsDropShadowEffect>
 #include <QFile>
 
@@ -59,7 +58,7 @@ TitleBarWidget::~TitleBarWidget() = default;
 void TitleBarWidget::setupUI()
 {
     // 主布局 - 水平排列
-    QHBoxLayout *layout = new QHBoxLayout(this);
+    auto *layout = new QHBoxLayout(this);
     layout->setContentsMargins(12, 0, 12, 0);  // 左右边距12，上下0
     layout->setSpacing(5);
     layout->setAlignment(Qt::AlignVCenter);
@@ -73,7 +72,7 @@ void TitleBarWidget::setupUI()
     // 应用图标（默认应用图标）
     d->m_iconLabel->setPixmap(QPixmap(":/images/app_icon.png"));
 
-    d->m_titleLabel = new QLabel(tr("领航财富 - 您的AI助理"), this);
+    d->m_titleLabel = new QLabel(tr("财富领航 - 您的智能AI助理"), this);
     d->m_titleLabel->setObjectName("titleLabel");  // 用于QSS样式
     layout->addWidget(d->m_titleLabel);
 
@@ -155,21 +154,21 @@ void TitleBarWidget::applyThemeStyle()
     update();
 }
 
-void TitleBarWidget::setTitle(const QString& title)
+void TitleBarWidget::setTitle(const QString& title) const
 {
     if (d->m_titleLabel) {
         d->m_titleLabel->setText(title);
     }
 }
 
-void TitleBarWidget::setWindowIcon(const QPixmap& icon)
+void TitleBarWidget::setWindowIcon(const QPixmap& icon) const
 {
     if (d->m_iconLabel) {
         d->m_iconLabel->setPixmap(icon.scaled(24, 24, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
 }
 
-void TitleBarWidget::updateMaximizeButton(bool isMaximized)
+void TitleBarWidget::updateMaximizeButton(const bool isMaximized) const
 {
     d->m_isMaximized = isMaximized;
     if (isMaximized) {
@@ -258,21 +257,18 @@ void TitleBarWidget::onThemeChanged()
     // 实际切换逻辑在ThemeToggleButton中处理，这里只更新标题栏样式
 }
 
-void TitleBarWidget::onMinimizeClicked()
+void TitleBarWidget::onMinimizeClicked() const
 {
     if (d->m_mainWindow) {
         d->m_mainWindow->showMinimized();
     }
 }
 
-void TitleBarWidget::onMaximizeClicked()
+void TitleBarWidget::onMaximizeClicked() const
 {
     if (!d->m_mainWindow) return;
 
-    if (d->m_mainWindow->isFullScreen()) {
-        d->m_mainWindow->showNormal();
-        d->m_isMaximized = false;
-    } else if (d->m_mainWindow->isMaximized()) {
+    if (d->m_mainWindow->isFullScreen() || d->m_mainWindow->isMaximized()) {
         d->m_mainWindow->showNormal();
         d->m_isMaximized = false;
     } else {
@@ -282,7 +278,7 @@ void TitleBarWidget::onMaximizeClicked()
     updateMaximizeButton(d->m_isMaximized);
 }
 
-void TitleBarWidget::onCloseClicked()
+void TitleBarWidget::onCloseClicked() const
 {
     if (d->m_mainWindow) {
         d->m_mainWindow->close();
