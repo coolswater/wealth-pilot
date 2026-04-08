@@ -34,11 +34,14 @@
 #include <views/widgets/StatusBarWidget.h>
 #include <views/widgets/TitleBarWidget.h>
 
+#include "views/widgets/AIAssistantPanelWidget.h"
+
 struct MainWindow::Impl
 {
     QHBoxLayout* contentLayout = nullptr; // 内容布局
     TitleBarWidget* m_titleBarWidget{}; // 自定义标题栏实例
     StatusBarWidget* m_statusBarWidget{}; // 自定义状态栏实例
+    AIAssistantPanelWidget* aiPanel;    // AI面板
 
     SidebarWidget* sidebar = nullptr;
     QStackedWidget* contentStack = nullptr;
@@ -78,15 +81,12 @@ void MainWindow::setupUI()
     d->centralWidget = new QWidget(this);
     setCentralWidget(d->centralWidget);
 
-    // TODO:删除
-    // d->centralWidget->setStyleSheet("border:1px solid red;");
-
-    // // 主布局： 上中下布局
-    QVBoxLayout* mainLayout = new QVBoxLayout(d->centralWidget);
+    // 主布局： 上中下布局
+    auto* mainLayout = new QVBoxLayout(d->centralWidget);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
 
-    // 1、标题栏
+    // 标题栏
     d->m_titleBarWidget = new TitleBarWidget(this);
     mainLayout->addWidget(d->m_titleBarWidget);
 
@@ -95,41 +95,41 @@ void MainWindow::setupUI()
         DividerWidget::createHorizontal(d->m_titleBarWidget, Tokens::Colors::BgElevated, 1, 0);
     mainLayout->addWidget(titleDivider);
 
-    // 2、内容布局
+    // 内容布局
     d->contentLayout = new QHBoxLayout();
     mainLayout->addLayout(d->contentLayout);
     d->contentLayout->setContentsMargins(0, 0, 0, 0);
     d->contentLayout->setSpacing(0);
 
-    // 2.1 左侧导航栏
+    // 左侧导航栏
     d->sidebar = new SidebarWidget(this);
     d->sidebar->setFixedWidth(80);
     d->contentLayout->addWidget(d->sidebar);
     DividerWidget* contentDivider = DividerWidget::createVertical(d->sidebar, Tokens::Colors::BgElevated, 1, 0);
     d->contentLayout->addWidget(contentDivider); // 使用便捷方法
 
-    // // 2.2 内容区
-
-    // 2.3 页面堆栈容器
+    // 页面堆栈容器
     d->contentStack = new QStackedWidget(this);
     d->contentLayout->addWidget(d->contentStack);
 
-    // 3、底部状态栏布局
+    // 分割线
+    DividerWidget* aiDivider = DividerWidget::createVertical(d->sidebar, Tokens::Colors::BgElevated, 1, 0);
+    d->contentLayout->addWidget(aiDivider); // 使用便捷方法
+
+    // AI 助理面板
+    d->aiPanel = new AIAssistantPanelWidget(this);
+    d->aiPanel->setFixedWidth(Tokens::Size::AIPanelWidth);
+    d->contentLayout->addWidget(d->aiPanel);
+
+    // 底部状态栏布局
     d->m_statusBarWidget = new StatusBarWidget(this);
     DividerWidget* statusBarDivider = DividerWidget::createHorizontal(d->m_statusBarWidget, Tokens::Colors::BgElevated,
                                                                       1, 0);
     mainLayout->addWidget(statusBarDivider);
     mainLayout->addWidget(d->m_statusBarWidget);
 
-
     // 初始化导航器（绑定到UI容器）
     PageNavigatorManager::instance()->initialize(d->contentStack);
-
-
-    // // AI 助理面板
-    // d->aiPanel = new AIAssistantPanel(this);
-    // d->aiPanel->setFixedWidth(Size::AIPanelWidth);
-    // mainLayout->addWidget(d->aiPanel);
 }
 
 /**

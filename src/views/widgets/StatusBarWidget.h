@@ -12,7 +12,7 @@ public:
     ~StatusBarWidget();
 
 public slots:
-    void onCTPStatusChanged();
+    void onCTPStatusChanged() const;
 private:
     // 初始化UI布局
     void setupUI();

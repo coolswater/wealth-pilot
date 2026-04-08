@@ -66,16 +66,21 @@ set(UTIL_SOURCES
     src/utils/Logger.h
     src/utils/FuturesMockDataGenerator.h
     src/utils/FuturesMockDataGenerator.cpp
+    src/utils/Result.h
 )
 
 # Network 网络
 set(NETWORK_SOURCES
+    src/network/NetworkManager.cpp
+    src/network/NetworkManager.h
 )
 
 # Services 服务
 set(SERVICE_SOURCES
     src/services/CTPService.h
     src/services/CTPService.cpp
+    src/services/AIService.cpp
+    src/services/AIService.h
 )
 
 # Controllers 控制器
@@ -104,6 +109,10 @@ set(WIDGET_SOURCES
     src/views/widgets/AssetCardWidget.cpp
     src/views/widgets/AssetPieChart.h
     src/views/widgets/AssetPieChart.cpp
+    src/views/widgets/AIAssistantPanelWidget.cpp
+    src/views/widgets/AIAssistantPanelWidget.h
+    src/views/widgets/NetworkIndicator.cpp
+    src/views/widgets/NetworkIndicator.h
 )
 
 # Views 视图

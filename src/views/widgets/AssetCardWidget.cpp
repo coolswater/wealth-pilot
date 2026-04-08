@@ -214,10 +214,3 @@ void AssetCardWidget::paintEvent(QPaintEvent* event)
     // 绘制顶部3px色条
     painter.fillRect(0, 0, width(), 3, topColor);
 }
-
-// void AssetCardWidget::updateStyle()
-// {
-//     style()->unpolish(this);
-//     style()->polish(this);
-//     update();
-// }

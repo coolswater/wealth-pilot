@@ -463,18 +463,22 @@ CardWidget QLabel#cardTitle {
 /* 卡片主题变体 */
 CardWidget[theme="success"] {
     border-color: rgba(16, 185, 129, 0.3);
+    border-radius: 0 0 15px 15px;
 }
 
 CardWidget[theme="warning"] {
     border-color: rgba(249, 115, 22, 0.3);
+    border-radius: 0 0 15px 15px;
 }
 
 CardWidget[theme="danger"] {
     border-color: rgba(239, 68, 68, 0.3);
+    border-radius: 0 0 15px 15px;
 }
 
 CardWidget[theme="primary"] {
     border-color: rgba(59, 130, 246, 0.3);
+    border-radius: 0 0 15px 15px;
 }
 
 /* ==================== 涨跌颜色 ==================== */
@@ -897,6 +901,11 @@ DashboardPage QPushButton#primaryButton:pressed {
     background-color: #1D4ED8;
 }
 
+DashboardPage .AssetCardWidget{
+    border:1px solid #242937;
+    border-radius: 15px;
+}
+
 /* 期货行情页面 */
 FuturesQuotesPage {
     background-color: transparent;
@@ -959,3 +968,5 @@ AboutUSPage CardWidget {
  * - 正常: 250ms
  * - 慢速: 400ms
  */
+
+
