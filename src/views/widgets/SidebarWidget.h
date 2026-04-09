@@ -28,10 +28,10 @@ public:
     void addItem(const QString& id, const QString& text);
 
     // 新增：设置折叠按钮图标（动态主题切换）
-    void setCollapseIcons(const QIcon& left, const QIcon& right);
+    void setCollapseIcons(const QIcon& left, const QIcon& right) const;
 
     // 设置当前选中项
-    void setCurrentItem(const QString& id);
+    void setCurrentItem(const QString& id) const;
     QString currentItem() const;
 
     // 折叠/展开
@@ -54,7 +54,7 @@ private:
     void setupUI();
     void updateLayout();
     void animateCollapse(bool collapse);
-     void updateToggleButtonIcon();
+     void updateToggleButtonIcon() const;
 
     struct Impl;
     std::unique_ptr<Impl> d;

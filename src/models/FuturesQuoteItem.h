@@ -37,12 +37,14 @@ struct FuturesQuoteItem {
     double  capitalFlow;        // 资金流向（亿）
     double  trendDegree;        // 趋势度
     double  speculationDegree;  // 投机度
+    bool isMainContract = false;    // 是否主力合约
+    int activityStatus = 0;          // 活跃度状态（供代理模型过滤）
 
     // 便捷构造函数
     FuturesQuoteItem() = default;
 
     // 获取涨跌颜色：红涨绿跌（A股传统，期货同理）
-    Qt::GlobalColor changeColor() const {
+    [[nodiscard]] Qt::GlobalColor changeColor() const {
         if (change > 0) return Qt::red;
         if (change < 0) return Qt::green;
         return Qt::white;

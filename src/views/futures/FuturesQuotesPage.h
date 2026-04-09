@@ -28,7 +28,7 @@ class FuturesQuotesPage : public BasePage
     Q_OBJECT
 public:
     explicit FuturesQuotesPage(QWidget* parent = nullptr);
-    ~FuturesQuotesPage();
+    ~FuturesQuotesPage() override;
 
     QString pageId() const override;
     void initializePage() override;
@@ -37,17 +37,26 @@ public:
 
     void flushPendingUpdates();
     void setupCtpConnections();
+    void onInstrumentQueried(const QString& instrumentId, const QString& exchangeId, const QString& instrumentName,
+                             double priceTick, int volumeMultiple);
     void updateConnectionStatus(const QString& text, const QString& color);
 
 private slots:
     void onRowClicked(const QModelIndex &index);
     void onCtpBatchMarketData(const QList<CTP::MarketData>& dataList);
+    bool updateContractActivity(const QString& contractId, const CTP::MarketData& data, qint64 currentTime);
+    void updateMainContractByVolume(const QString& contractId, int volume);
+    bool shouldDisplayContract(const QString& contractId, const CTP::MarketData& data);
     void onCtpSingleMarketData(const CTP::MarketData& data);
+    void updateMainContracts();
     void onSubscribeContract();
     void subscribeContracts(const QList<QString>& contracts);
-    void onInstrumentQueried(const QString& instrumentId, const QString& exchangeId,
-                             const QString& instrumentName, double priceTick, int volumeMultiple);
     void onInstrumentQueryFinished(int totalCount);
+    std::tuple<QString, QDate, bool> parseContractCode(const QString& contractId) const;
+    void identifyMainContracts();
+    void subscribeContractsByPriority();
+    void subscribeContractsInBatches(const QList<QString>& contracts);
+    void setActivityFilterMode(int mode);
 
 private:
     void setupUI();

@@ -41,7 +41,7 @@ struct MainWindow::Impl
     QHBoxLayout* contentLayout = nullptr; // 内容布局
     TitleBarWidget* m_titleBarWidget{}; // 自定义标题栏实例
     StatusBarWidget* m_statusBarWidget{}; // 自定义状态栏实例
-    AIAssistantPanelWidget* aiPanel;    // AI面板
+    AIAssistantPanelWidget* aiPanel{};    // AI面板
 
     SidebarWidget* sidebar = nullptr;
     QStackedWidget* contentStack = nullptr;

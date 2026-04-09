@@ -8,18 +8,14 @@
 #include "../../core/Tokens.h"
 #include "../../utils/Logger.h"
 
-#include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QLineEdit>
 #include <QScrollArea>
 #include <QFrame>
-#include <QPropertyAnimation>
 #include <QTimer>
 #include <QScrollBar>
-#include <QJsonDocument>
-#include <QJsonArray>
 
 #include "services/AIService.h"
 
@@ -66,7 +62,7 @@ void AIAssistantPanelWidget::setupUI()
 {
     setStyleSheet(QString(
         "background-color: %1; border-left: 1px solid %2;")
-        .arg(Colors::BgSurface).arg(Colors::BorderLight));
+        .arg(Colors::BgSurface, Colors::BorderLight));
 
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(Spacing::MD, Spacing::MD, Spacing::MD, Spacing::MD);
@@ -92,7 +88,7 @@ void AIAssistantPanelWidget::setupHeader()
         background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
             stop:0 %1, stop:1 %2);
         border-radius: %3px;
-    )").arg(Colors::Primary).arg(Colors::Secondary).arg(Size::AvatarLG / 2));
+    )").arg(Colors::Primary, Colors::Secondary).arg(Size::AvatarLG / 2));
     headerLayout->addWidget(avatarLabel);
 
     // 名称和状态
@@ -128,7 +124,7 @@ void AIAssistantPanelWidget::setupHeader()
         QPushButton:hover {
             background-color: %2;
         }
-    )").arg(Colors::TextSecondary).arg(Colors::BgHover));
+    )").arg(Colors::TextSecondary, Colors::BgHover));
     connect(d->collapseBtn, &QPushButton::clicked, this, [this]() {
         setCollapsed(!d->isCollapsed);
     });
@@ -214,8 +210,7 @@ void AIAssistantPanelWidget::setupInputArea()
         QLineEdit:focus {
             border-color: %7;
         }
-    )").arg(Colors::BgHover)
-       .arg(Colors::Border)
+    )").arg(Colors::BgHover, Colors::Border)
        .arg(Radius::Full)
        .arg(Spacing::MD)
        .arg(Colors::TextPrimary)
@@ -297,7 +292,7 @@ void AIAssistantPanelWidget::showSystemMessage(const QString& message, const QSt
             border-radius: %3px;
             padding: %4px;
         }
-    )").arg(bgColor).arg(borderColor).arg(Radius::MD).arg(Spacing::SM));
+    )").arg(bgColor, borderColor).arg(Radius::MD).arg(Spacing::SM));
 
     auto* layout = new QHBoxLayout(frame);
     layout->setContentsMargins(Spacing::MD, Spacing::SM, Spacing::MD, Spacing::SM);
@@ -315,7 +310,7 @@ void AIAssistantPanelWidget::showSystemMessage(const QString& message, const QSt
     AnimationManager::instance()->fadeIn(frame, Animation::DurationFast);
 }
 
-void AIAssistantPanelWidget::addAIResponse(const QString& response)
+void AIAssistantPanelWidget::addAIResponse(const QString& response) const
 {
     addMessage(response, false);
 }
@@ -379,13 +374,13 @@ void AIAssistantPanelWidget::onQuickActionClicked()
     sendMessage(action);
 }
 
-void AIAssistantPanelWidget::onAIResponseReceived(const QString& response)
+void AIAssistantPanelWidget::onAIResponseReceived(const QString& response) const
 {
     removeTypingIndicator();
     addAIResponse(response);
 }
 
-void AIAssistantPanelWidget::onAIError(const QString& error)
+void AIAssistantPanelWidget::onAIError(const QString& error) const
 {
     removeTypingIndicator();
     showSystemMessage(QString("错误: %1").arg(error), "error");
@@ -425,8 +420,7 @@ void AIAssistantPanelWidget::addMessage(const QString& text, bool isUser) const
             padding: %4px %5px;
             font-size: %6px;
             line-height: 1.5;
-        )").arg(Colors::BgHover)
-           .arg(Colors::TextPrimary)
+        )").arg(Colors::BgHover, Colors::TextPrimary)
            .arg(Radius::LG)
            .arg(Spacing::SM)
            .arg(Spacing::MD)
@@ -463,8 +457,7 @@ void AIAssistantPanelWidget::addTypingIndicator() const
         border-radius: %3px;
         padding: %4px %5px;
         font-size: %6px;
-    )").arg(Colors::BgHover)
-       .arg(Colors::TextSecondary)
+    )").arg(Colors::BgHover, Colors::TextSecondary)
        .arg(Radius::LG)
        .arg(Spacing::SM)
        .arg(Spacing::MD)

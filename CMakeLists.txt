@@ -49,6 +49,8 @@ set(CORE_SOURCES
     src/core/CtpMarketSpi.cpp
     src/core/CtpTradingSpi.h
     src/core/CtpTradingSpi.cpp
+    src/core/QuoteDataManager.cpp
+    src/core/QuoteDataManager.h
 )
 
 # Models 数据模型
@@ -58,6 +60,8 @@ set(MODEL_SOURCES
     src/models/FuturesQuoteModel.cpp
     src/models/FuturesQuoteDelegate.h
     src/models/FuturesQuoteDelegate.cpp
+    src/models/StockQuoteItem.h
+    src/models/StockQuoteItem.cpp
 )
 
 # Utils 工具
@@ -113,6 +117,8 @@ set(WIDGET_SOURCES
     src/views/widgets/AIAssistantPanelWidget.h
     src/views/widgets/NetworkIndicator.cpp
     src/views/widgets/NetworkIndicator.h
+    src/views/widgets/TreeMapWidget.cpp
+    src/views/widgets/TreeMapWidget.h
 )
 
 # Views 视图

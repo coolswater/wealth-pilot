@@ -35,7 +35,7 @@ SidebarWidget::~SidebarWidget() = default;
 
 void SidebarWidget::addItem(const QString& id, const QString& text, const QIcon& icon)
 {
-    QPushButton* btn = new QPushButton(this);
+    auto* btn = new QPushButton(this);
     btn->setObjectName(id);
     btn->setCheckable(true);
     btn->setCursor(Qt::PointingHandCursor);
@@ -55,7 +55,7 @@ void SidebarWidget::addItem(const QString& id, const QString& text, const QIcon&
 
 void SidebarWidget::addItem(const QString& id, const QString& text)
 {
-    QPushButton* btn = new QPushButton(this);
+    auto* btn = new QPushButton(this);
     btn->setObjectName(id);
     btn->setCheckable(true);
     btn->setCursor(Qt::PointingHandCursor);
@@ -69,20 +69,20 @@ void SidebarWidget::addItem(const QString& id, const QString& text)
     d->layout->insertWidget(d->layout->count(), btn);
 }
 
-void SidebarWidget::setCollapseIcons(const QIcon& left, const QIcon& right)
+void SidebarWidget::setCollapseIcons(const QIcon& left, const QIcon& right) const
 {
     d->collapseLeftIcon = left;
     d->collapseRightIcon = right;
     updateToggleButtonIcon();
 }
 
-void SidebarWidget::updateToggleButtonIcon()
+void SidebarWidget::updateToggleButtonIcon() const
 {
-    bool isCollapsed = d->collapsed;
+    const bool isCollapsed = d->collapsed;
     d->toggleBtn->setIcon(isCollapsed ? d->collapseRightIcon : d->collapseLeftIcon);
 }
 
-void SidebarWidget::setCurrentItem(const QString& id)
+void SidebarWidget::setCurrentItem(const QString& id) const
 {
     // 修复：即使当前已是选中状态，也要确保按钮保持 checked
     if (d->currentId == id) {
@@ -146,7 +146,7 @@ void SidebarWidget::setCollapsedWidth(int width)
 
 void SidebarWidget::onItemClicked()
 {
-    QPushButton* btn = qobject_cast<QPushButton*>(sender());
+    auto* btn = qobject_cast<QPushButton*>(sender());
     if (!btn) return;
 
     QString id = btn->objectName();
@@ -181,22 +181,22 @@ void SidebarWidget::setupUI()
 
 void SidebarWidget::animateCollapse(bool collapse)
 {
-    int startWidth = collapse ? d->expandedWidth : d->collapsedWidth;
-    int endWidth = collapse ? d->collapsedWidth : d->expandedWidth;
+    const int startWidth = collapse ? d->expandedWidth : d->collapsedWidth;
+    const int endWidth = collapse ? d->collapsedWidth : d->expandedWidth;
 
-    QPropertyAnimation* widthAnim = new QPropertyAnimation(this, "minimumWidth");
+    auto* widthAnim = new QPropertyAnimation(this, "minimumWidth");
     widthAnim->setDuration(250);
     widthAnim->setStartValue(startWidth);
     widthAnim->setEndValue(endWidth);
     widthAnim->setEasingCurve(QEasingCurve::InOutCubic);
 
-    QPropertyAnimation* maxWidthAnim = new QPropertyAnimation(this, "maximumWidth");
+    auto* maxWidthAnim = new QPropertyAnimation(this, "maximumWidth");
     maxWidthAnim->setDuration(250);
     maxWidthAnim->setStartValue(startWidth);
     maxWidthAnim->setEndValue(endWidth);
     maxWidthAnim->setEasingCurve(QEasingCurve::InOutCubic);
 
-    QParallelAnimationGroup* group = new QParallelAnimationGroup();
+    auto* group = new QParallelAnimationGroup();
     group->addAnimation(widthAnim);
     group->addAnimation(maxWidthAnim);
 

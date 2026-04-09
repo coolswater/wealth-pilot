@@ -45,7 +45,7 @@ public:
     /**
      * @brief 添加 AI 回复
      */
-    void addAIResponse(const QString& response);
+    void addAIResponse(const QString& response) const;
 
     /**
      * @brief 清除对话历史
@@ -76,8 +76,8 @@ signals:
 private slots:
     void onSendClicked();
     void onQuickActionClicked();
-    void onAIResponseReceived(const QString& response);
-    void onAIError(const QString& error);
+    void onAIResponseReceived(const QString& response) const;
+    void onAIError(const QString& error) const;
 
 private:
     void setupUI();
