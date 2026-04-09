@@ -11,11 +11,9 @@
 QStringList FuturesQuoteModel::columnNames()
 {
     return {
-        "序号", "合约名称", "最新", "现手", "买价", "卖价",
-        "买量", "卖量", "成交量", "涨跌", "涨幅%", "持仓量",
-        "日增仓", "开盘", "最高", "最低", "结算", "速涨",
-        "现涨", "现增仓", "动态", "昨结算", "昨收", "沉淀资金",
-        "资金流向", "趋势度", "投机度"
+        "序号", "代码", "名称", "最新", "涨跌", "涨幅%","现手",
+        "买价", "卖价", "买量", "卖量", "成交量","持仓量","日增仓",
+        "开盘", "最高", "最低", "今结算", "速涨","昨结", "昨收"
     };
 }
 
@@ -93,76 +91,65 @@ int FuturesQuoteModel::columnCount(const QModelIndex &parent) const
     return ColumnCount;
 }
 
-QVariant FuturesQuoteModel::data(const QModelIndex &index, int role) const
+QVariant FuturesQuoteModel::data(const QModelIndex &index, const int role) const
 {
     if (!index.isValid() || index.row() >= m_quotes.size())
-        return QVariant();
+        return {};
 
     QMutexLocker locker(&m_mutex);
     const auto &item = m_quotes.at(index.row());
 
-    // 根据角色返回数据
     switch (role) {
-    case Qt::DisplayRole: {
-        switch (index.column()) {
-        case SerialNo:       return index.row() + 1;  // 自动序号
-        case ContractName:   return item.contractName;
-        case LatestPrice:    
-            if (item.lastPrice > 1e308) return "--";  // 无效价格
-            return QString::number(item.lastPrice, 'f', 2);
-        case CurrentHand:    return item.currentHand;
-        case BidPrice:       
-            if (item.bidPrice > 1e308) return "--";
-            return QString::number(item.bidPrice, 'f', 2);
-        case AskPrice:       
-            if (item.askPrice > 1e308) return "--";
-            return QString::number(item.askPrice, 'f', 2);
-        case BidVolume:      return item.bidVolume;
-        case AskVolume:      return item.askVolume;
-        case Volume:         return QLocale().toString(item.volume);
-        case Change:         
-            if (qAbs(item.change) < 0.0001) return "0.00";
-            return QString((item.change > 0 ? "+" : "")) + QString::number(item.change, 'f', 2);
-        case ChangePercent:  
-            if (qAbs(item.changePercent) < 0.0001) return "0.00%";
-            return QString((item.changePercent > 0 ? "+" : "")) + QString::number(item.changePercent, 'f', 2) + "%";
-        case OpenInterest:   return QLocale().toString(item.openInterest);
-        case OiChange:       return item.oiChange;
-        case OpenPrice:      
-            if (item.openPrice > 1e308) return "--";
-            return QString::number(item.openPrice, 'f', 2);
-        case HighPrice:      
-            if (item.highPrice > 1e308) return "--";
-            return QString::number(item.highPrice, 'f', 2);
-        case LowPrice:       
-            if (item.lowPrice > 1e308) return "--";
-            return QString::number(item.lowPrice, 'f', 2);
-        case Settlement:     
-            if (item.settlement > 1e308) return "--";
-            return QString::number(item.settlement, 'f', 2);
-        case SpeedChange:    
-            if (qAbs(item.speedChange) < 0.0001) return "0.00";
-            return QString::number(item.speedChange, 'f', 2);
-        case CurrentChange:  
-            if (qAbs(item.currentChange) < 0.0001) return "0.00";
-            return QString::number(item.currentChange, 'f', 2);
-        case CurrentOiChange:return item.currentOiChange;
-        case Dynamic:        return item.dynamic;
-        case PreSettlement:  
-            if (item.preSettlementPrice > 1e308) return "--";
-            return QString::number(item.preSettlementPrice, 'f', 2);
-        case PreClose:       
-            if (item.preClose > 1e308) return "--";
-            return QString::number(item.preClose, 'f', 2);
-        case Capital:        return QString::number(item.capital, 'f', 2) + "亿";
-        case CapitalFlow:    
-            if (qAbs(item.capitalFlow) < 0.0001) return "0.00亿";
-            return QString((item.capitalFlow > 0 ? "+" : "")) + QString::number(item.capitalFlow, 'f', 2) + "亿";
-        case TrendDegree:    return QString::number(item.trendDegree, 'f', 2);
-        case SpeculationDegree: return QString::number(item.speculationDegree, 'f', 2);
-        default: return QVariant();
+        case Qt::DisplayRole: {
+            switch (index.column()) {
+                case SerialNo:       return index.row() + 1;
+                case ContractCode:   return item.contractName;  // 代码列显示合约名
+                case ContractName:   return item.contractName;  // 名称列（如果有单独的名称字段）
+                case LatestPrice:
+                    if (item.lastPrice > 1e308) return "--";
+                    return QString::number(item.lastPrice, 'f', 2);
+                case Change:
+                    if (qAbs(item.change) < 0.0001) return "0.00";
+                    return QString((item.change > 0 ? "+" : "")) + QString::number(item.change, 'f', 2);
+                case ChangePercent:
+                    if (qAbs(item.changePercent) < 0.0001) return "0.00%";
+                    return QString((item.changePercent > 0 ? "+" : "")) + QString::number(item.changePercent, 'f', 2) + "%";
+                case CurrentHand:    return item.currentHand;
+                case BidPrice:
+                    if (item.bidPrice > 1e308) return "--";
+                    return QString::number(item.bidPrice, 'f', 2);
+                case AskPrice:
+                    if (item.askPrice > 1e308) return "--";
+                    return QString::number(item.askPrice, 'f', 2);
+                case BidVolume:      return item.bidVolume;
+                case AskVolume:      return item.askVolume;
+                case Volume:         return QLocale().toString(item.volume);
+                case OpenInterest:   return QLocale().toString(item.openInterest);
+                case OiChange:       return item.oiChange;
+                case OpenPrice:
+                    if (item.openPrice > 1e308) return "--";
+                    return QString::number(item.openPrice, 'f', 2);
+                case HighPrice:
+                    if (item.highPrice > 1e308) return "--";
+                    return QString::number(item.highPrice, 'f', 2);
+                case LowPrice:
+                    if (item.lowPrice > 1e308) return "--";
+                    return QString::number(item.lowPrice, 'f', 2);
+                case Settlement:
+                    if (item.settlement > 1e308) return "--";
+                    return QString::number(item.settlement, 'f', 2);
+                case SpeedChange:
+                    if (qAbs(item.speedChange) < 0.0001) return "0.00";
+                    return QString::number(item.speedChange, 'f', 2);
+                case PreSettlement:
+                    if (item.preSettlementPrice > 1e308) return "--";
+                    return QString::number(item.preSettlementPrice, 'f', 2);
+                case PreClose:
+                    if (item.preClose > 1e308) return "--";
+                    return QString::number(item.preClose, 'f', 2);
+                default: return {};
+            }
         }
-    }
     case Qt::TextAlignmentRole:
         return (index.column() == ContractName) ? Qt::AlignLeft : Qt::AlignRight;
 
@@ -170,7 +157,7 @@ QVariant FuturesQuoteModel::data(const QModelIndex &index, int role) const
         return QVariant::fromValue(item);
 
     default:
-        return QVariant();
+        return {};
     }
 }
 

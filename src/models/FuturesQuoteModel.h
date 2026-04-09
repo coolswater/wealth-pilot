@@ -35,15 +35,30 @@ private:
 
     // 列定义
     enum Column {
-        SerialNo = 0, ContractName, LatestPrice, CurrentHand,
-        BidPrice, AskPrice, BidVolume, AskVolume, Volume,
-        Change, ChangePercent, OpenInterest, OiChange,
-        OpenPrice, HighPrice, LowPrice, Settlement,
-        SpeedChange, CurrentChange, CurrentOiChange,
-        Dynamic, PreSettlement, PreClose, Capital,
-        CapitalFlow, TrendDegree, SpeculationDegree,
+        SerialNo = 0,       // 序号
+        ContractCode,       // 代码
+        ContractName,       // 名称
+        LatestPrice,        // 最新
+        Change,             // 涨跌
+        ChangePercent,      // 涨幅%
+        CurrentHand,        // 现手
+        BidPrice,           // 买价
+        AskPrice,           // 卖价
+        BidVolume,          // 买量
+        AskVolume,          // 卖量
+        Volume,             // 成交量
+        OpenInterest,       // 持仓量
+        OiChange,           // 日增仓
+        OpenPrice,          // 开盘
+        HighPrice,          // 最高
+        LowPrice,           // 最低
+        Settlement,         // 今结算
+        SpeedChange,        // 速涨
+        PreSettlement,      // 昨结
+        PreClose,           // 昨收
         ColumnCount
     };
+
 };
 
 #endif // FUTURESQUOTEMODEL_H

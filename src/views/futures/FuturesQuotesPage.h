@@ -35,32 +35,33 @@ public:
     void onPageActivated(const QVariantMap &params = {}) override;
     void onPageDeactivated() override;
 
-    void flushPendingUpdates();
+    void flushPendingUpdates() const;
     void setupCtpConnections();
     void onInstrumentQueried(const QString& instrumentId, const QString& exchangeId, const QString& instrumentName,
                              double priceTick, int volumeMultiple);
-    void updateConnectionStatus(const QString& text, const QString& color);
+    void updateConnectionStatus(const QString& text, const QString& color) const;
 
 private slots:
-    void onRowClicked(const QModelIndex &index);
+    void onRowClicked(const QModelIndex &index) const;
     void onCtpBatchMarketData(const QList<CTP::MarketData>& dataList);
     bool updateContractActivity(const QString& contractId, const CTP::MarketData& data, qint64 currentTime);
-    void updateMainContractByVolume(const QString& contractId, int volume);
-    bool shouldDisplayContract(const QString& contractId, const CTP::MarketData& data);
+    void updateMainContractByVolume(const QString& contractId, int volume) const;
+    bool shouldDisplayContract(const QString& contractId, const CTP::MarketData& data) const;
     void onCtpSingleMarketData(const CTP::MarketData& data);
     void updateMainContracts();
     void onSubscribeContract();
-    void subscribeContracts(const QList<QString>& contracts);
+    void subscribeContracts(const QList<QString>& contracts) const;
     void onInstrumentQueryFinished(int totalCount);
-    std::tuple<QString, QDate, bool> parseContractCode(const QString& contractId) const;
-    void identifyMainContracts();
+    static std::tuple<QString, QDate, bool> parseContractCode(const QString& contractId);
+    void identifyMainContracts() const;
     void subscribeContractsByPriority();
-    void subscribeContractsInBatches(const QList<QString>& contracts);
-    void setActivityFilterMode(int mode);
+    void subscribeContractsInBatches(const QList<QString>& contracts) const;
+    void setActivityFilterMode(int mode) const;
 
 private:
     void setupUI();
     void setupConnections();
+    void initializeSampleData() const;  // 【新增】初始化示例数据
 
     class Impl;
     std::unique_ptr<Impl> d;
