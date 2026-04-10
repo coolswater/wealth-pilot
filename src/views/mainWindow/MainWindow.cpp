@@ -103,7 +103,7 @@ void MainWindow::setupUI()
 
     // 左侧导航栏
     d->sidebar = new SidebarWidget(this);
-    d->sidebar->setFixedWidth(80);
+    d->sidebar->setFixedWidth(90);
     d->contentLayout->addWidget(d->sidebar);
     DividerWidget* contentDivider = DividerWidget::createVertical(d->sidebar, Tokens::Colors::BgElevated, 1, 0);
     d->contentLayout->addWidget(contentDivider); // 使用便捷方法
@@ -156,6 +156,10 @@ void MainWindow::createPages() const
     // 期货
     registry->registerPage<FuturesQuotesPage>(QStringLiteral("FuturesQuotesPage"));
     d->sidebar->addItem("FuturesQuotesPage", "期货");
+
+    // 数字货币
+    registry->registerPage<FuturesQuotesPage>(QStringLiteral("FuturesQuotesPage"));
+    d->sidebar->addItem("FuturesQuotesPage", "比特币");
 
     // TODO: 外汇
     // TODO: 基金

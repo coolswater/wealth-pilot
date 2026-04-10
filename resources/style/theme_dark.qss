@@ -48,53 +48,80 @@ QMainWindow {
 }
 
 /* ==================== 滚动条样式 ==================== */
+/* 垂直滚动条整体样式 */
 QScrollBar:vertical {
-    background-color: transparent;
-    width: 8px;
-    margin: 4px 2px;
-    border-radius: 4px;
+    background-color: transparent; /* 透明背景 */
+    width: 8px;                    /* 滚动条宽度 */
+    margin: 4px 2px;               /* 外边距：上下4px，左右2px */
+    border-radius: 4px;            /* 圆角半径4px */
 }
 
+/* 水平滚动条整体样式 */
+QScrollBar:horizontal {
+    background-color: transparent; /* 透明背景 */
+    height: 8px;                   /* 滚动条高度 */
+    margin: 2px 4px;               /* 外边距：上下2px，左右4px */
+    border-radius: 4px;            /* 圆角半径4px */
+}
+
+/* 垂直滚动条滑块样式 */
 QScrollBar::handle:vertical {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-radius: 4px;
-    min-height: 40px;
+    background-color: rgba(255, 255, 255, 0.15); /* 15%不透明度的白色 */
+    border-radius: 4px;  /* 圆角滑块 */
+    min-height: 40px;    /* 最小高度40px */
 }
 
+/* 水平滚动条滑块样式 */
+QScrollBar::handle:horizontal {
+    background-color: rgba(255, 255, 255, 0.15); /* 15%不透明度的白色 */
+    border-radius: 4px;  /* 圆角滑块 */
+    min-width: 40px;     /* 最小宽度40px */
+}
+
+/* 垂直滚动条滑块悬停效果 */
 QScrollBar::handle:vertical:hover {
-    background-color: rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.25); /* 25%不透明度 */
 }
 
+/* 水平滚动条滑块悬停效果 */
+QScrollBar::handle:horizontal:hover {
+    background-color: rgba(255, 255, 255, 0.25); /* 25%不透明度 */
+}
+
+/* 垂直滚动条滑块按下效果 */
 QScrollBar::handle:vertical:pressed {
-    background-color: rgba(255, 255, 255, 0.35);
+    background-color: rgba(255, 255, 255, 0.35); /* 35%不透明度 */
 }
 
+/* 水平滚动条滑块按下效果 */
+QScrollBar::handle:horizontal:pressed {
+    background-color: rgba(255, 255, 255, 0.35); /* 35%不透明度 */
+}
+
+/* 垂直滚动条箭头隐藏 */
 QScrollBar::add-line:vertical,
 QScrollBar::sub-line:vertical {
-    height: 0;
-    background: none;
+    height: 0;         /* 设置高度为0，完全隐藏 */
+    background: none;  /* 无背景 */
 }
 
+/* 垂直滚动条滑块上下区域透明 */
 QScrollBar::add-page:vertical,
 QScrollBar::sub-page:vertical {
-    background: none;
+    background: none; /* 透明背景 */
 }
 
-QScrollBar:horizontal {
-    background-color: transparent;
-    height: 8px;
-    margin: 2px 4px;
-    border-radius: 4px;
+/* 水平滚动条箭头隐藏 */
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0;         /* 设置宽度为0，完全隐藏 */
+    background: none; /* 无背景 */
 }
 
-QScrollBar::handle:horizontal {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-radius: 4px;
-    min-width: 40px;
-}
-
-QScrollBar::handle:horizontal:hover {
-    background-color: rgba(255, 255, 255, 0.25);
+/* 水平滚动条滑块左右区域透明 */
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background: none; /* 透明背景 */
 }
 
 /* ==================== 按钮样式 ==================== */
@@ -410,7 +437,6 @@ QTableWidget {
 QTableView::item,
 QTableWidget::item {
     padding: 10px 14px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     color: #E4E6EB;
 }
 
