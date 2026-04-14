@@ -14,6 +14,8 @@
 #include "utils/Logger.h"
 #include "models/FuturesQuoteModel.h"
 #include "models/FuturesQuoteDelegate.h"
+// 暂时注释掉
+// #include "../../core/PageNavigator.h"  // 添加导航参数定义
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -872,6 +874,34 @@ void FuturesQuotesPage::onRowClicked(const QModelIndex &index) const
     LOG_INFO(QString("Selected contract: %1 @ %2")
                  .arg(item->contractName)
                  .arg(item->lastPrice));
+    
+    // 【新增】双击跳转到K线详情页
+    // 单击只选中，双击跳转
+}
+
+/**
+ * @brief 双击行跳转到K线详情页
+ * @param index 点击的索引
+ */
+void FuturesQuotesPage::onRowDoubleClicked(const QModelIndex &index)
+{
+    if (!index.isValid()) return;
+
+    QModelIndex sourceIndex = d->m_proxyModel->mapToSource(index);
+    auto item = d->m_model->itemAt(sourceIndex.row());
+    if (!item) return;
+
+    LOG_INFO(QString("Double clicked contract: %1, navigating to KLine page")
+                 .arg(item->contractName));
+    
+    // 构建导航参数
+    QVariantMap params;
+    params["instrumentId"] = item->contractName;
+    params["instrumentName"] = item->contractName; // TODO: 获取合约中文名
+    params["sourcePage"] = pageId();
+    
+    // 发送导航信号
+    emit navigateToKLinePage(item->contractName, params);
 }
 
 void FuturesQuotesPage::flushPendingUpdates() const
@@ -1035,7 +1065,7 @@ void FuturesQuotesPage::setupConnections()
     Q_ASSERT(d->m_tableView && d->m_model);
 
     connect(d->m_tableView, &QTableView::clicked, this, &FuturesQuotesPage::onRowClicked);
-    connect(d->m_tableView, &QTableView::doubleClicked, this, &FuturesQuotesPage::onRowClicked);
+    connect(d->m_tableView, &QTableView::doubleClicked, this, &FuturesQuotesPage::onRowDoubleClicked);
 
     connect(d->m_flushTimer, &QTimer::timeout, this, &FuturesQuotesPage::flushPendingUpdates);
     d->m_flushTimer->start(500);

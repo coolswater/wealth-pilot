@@ -1,23 +1,31 @@
+/**
+ * @file MainWindow.h
+ * @brief 主窗口类 - 重构版本，集成新架构
+ *
+ * @details 功能：
+ * - 三栏布局（侧边栏、内容区、AI助理面板）
+ * - 集成ApplicationInitializer
+ * - 集成ServiceLocator依赖注入
+ * - 集成ThemeEngine主题系统
+ * - 性能优化：懒加载、异步初始化
+ *
+ * @author WealthPilot Team
+ * @version 2.0.0
+ */
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QStackedWidget>
+#include <QLabel>
+#include <memory>
 
+// 前向声明
+class ThemeEngine;
+class ApplicationInitializer;
 
 /**
- * @file MainWindow.h
  * @brief 主窗口类
- *
- * @details 应用主界面，采用三栏布局：
- * - 左侧：可折叠的导航侧边栏
- * - 中间：内容区域（页面堆栈）
- * - 右侧：可滑出的AI助理面板
- *
- * @note 使用QStackedWidget管理多个页面
- * @note 支持响应式布局，自动适应窗口大小
- *
- * @author WealthPilot Team
- * @version 1.0.0
  */
 class MainWindow : public QMainWindow
 {
@@ -26,42 +34,50 @@ class MainWindow : public QMainWindow
 public:
     /**
      * @brief 构造函数
-     * @param parent 父窗口
      */
-    MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
 
     /**
      * @brief 析构函数
      */
-    ~MainWindow();
+    ~MainWindow() override;
 
-    // 更新最大化按钮图标（全屏/正常状态切换时调用）
+    /**
+     * @brief 更新最大化按钮图标
+     */
     void updateMaximizeButton(bool isMaximized);
 
 protected:
     /**
      * @brief 窗口大小变化事件
-     * @param event 大小变化事件
-     *
-     * @details 重新计算各区域尺寸
      */
     void resizeEvent(QResizeEvent *event) override;
 
     /**
      * @brief 窗口关闭事件
-     * @param event 关闭事件
-     *
-     * @details 保存窗口状态，执行清理操作
      */
     void closeEvent(QCloseEvent *event) override;
 
 private slots:
-
     /**
      * @brief 侧边栏项点击处理
-     * @param id 点击的项ID
      */
-    static void onSidebarItemClicked(const QString& id);
+    void onSidebarItemClicked(const QString& id);
+
+    /**
+     * @brief 主题切换处理
+     */
+    void onThemeChanged(const QString& themeName);
+
+    /**
+     * @brief 初始化进度更新
+     */
+    void onInitializationProgress(int current, int total, const QString& currentModule);
+
+    /**
+     * @brief 初始化完成
+     */
+    void onInitializationComplete(bool success);
 
 private:
     /**
@@ -70,9 +86,9 @@ private:
     void setupUI();
 
     /**
-     * @brief 创建所有页面
+     * @brief 创建页面
      */
-    void createPages() const;
+    void createPages();
 
     /**
      * @brief 连接信号槽
@@ -81,17 +97,53 @@ private:
 
     /**
      * @brief 调整布局
-     * @details 根据当前窗口大小重新计算各区域尺寸
      */
-    void adjustLayout() const;
+    void adjustLayout();
 
-    // 懒加载页面
+    /**
+     * @brief 懒加载页面
+     */
     QWidget* getPage(const QString& pageId);
 
     /**
-     * @brief PIMPL实现结构体
+     * @brief 初始化应用
      */
+    bool initializeApplication();
+
+    /**
+     * @brief 加载设置
+     */
+    void loadSettings();
+
+    /**
+     * @brief 保存设置
+     */
+    void saveSettings();
+
+    /**
+     * @brief 应用主题
+     */
+    void applyTheme();
+
+    /**
+     * @brief 显示启动画面
+     */
+    void showSplashScreen();
+
+    /**
+     * @brief 隐藏启动画面
+     */
+    void hideSplashScreen();
+
+    // PIMPL实现
     struct Impl;
     std::unique_ptr<Impl> d;
+    
+    // 初始化状态
+    bool m_initialized;
+    
+    // 启动画面标签
+    QLabel* m_splashLabel;
 };
+
 #endif // MAINWINDOW_H

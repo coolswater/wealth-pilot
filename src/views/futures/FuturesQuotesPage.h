@@ -41,8 +41,17 @@ public:
                              double priceTick, int volumeMultiple);
     void updateConnectionStatus(const QString& text, const QString& color) const;
 
+signals:
+    /**
+     * @brief 导航到K线详情页信号
+     * @param instrumentId 合约代码
+     * @param params 导航参数
+     */
+    void navigateToKLinePage(const QString& instrumentId, const QVariantMap& params);
+
 private slots:
     void onRowClicked(const QModelIndex &index) const;
+    void onRowDoubleClicked(const QModelIndex &index);
     void onCtpBatchMarketData(const QList<CTP::MarketData>& dataList);
     bool updateContractActivity(const QString& contractId, const CTP::MarketData& data, qint64 currentTime);
     void updateMainContractByVolume(const QString& contractId, int volume) const;

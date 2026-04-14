@@ -55,10 +55,10 @@ void PageNavigatorManager::initialize(QStackedWidget *container) {
  * - 不同设备使用不同策略（如手机用WeakCache，PC用StrongCache）
  * - 运行时动态调整（如内存不足时降级为NoCache）
  */
-void PageNavigatorManager::registerCachePolicy(const QString &pageId, CachePolicy policy) {
+void PageNavigatorManager::registerCachePolicy(const QString &pageId, PageCachePolicy policy) {
     m_cachePolicies[pageId] = policy;
     // 强缓存策略立即后台预加载（热启动优化，用户感知零延迟）
-    if (policy == CachePolicy::StrongCache) {
+    if (policy == PageCachePolicy::StrongCache) {
         preloadPage(pageId);
     }
 }
@@ -176,13 +176,13 @@ std::shared_ptr<BasePage> PageNavigatorManager::getOrCreatePage(const QString &p
     }
 
     // ----- 按策略缓存 -----
-    CachePolicy policy = m_cachePolicies.value(pageId, CachePolicy::WeakCache);
+    PageCachePolicy policy = m_cachePolicies.value(pageId, PageCachePolicy::WeakCache);
 
-    if (policy == CachePolicy::StrongCache) {
+    if (policy == PageCachePolicy::StrongCache) {
         // 强缓存：保持 shared_ptr，阻止任何回收，直到显式 clearCache
         m_strongCache[pageId] = page;
         emit cacheStatusChanged(pageId, true);
-    } else if (policy == CachePolicy::WeakCache) {
+    } else if (policy == PageCachePolicy::WeakCache) {
         // 弱缓存：不阻止Qt对象树回收，但保留复用可能
         m_weakCache[pageId] = page;
     }
@@ -255,7 +255,7 @@ void PageNavigatorManager::deactivateCurrentPage() {
     m_currentPage->onPageDeactivated();
 
     // NoCache策略：立即释放资源（适用于内存敏感型页面）
-    if (m_cachePolicies.value(m_currentPage->pageId()) == CachePolicy::NoCache) {
+    if (m_cachePolicies.value(m_currentPage->pageId()) == PageCachePolicy::NoCache) {
         QWidget *widget = dynamic_cast<QWidget*>(m_currentPage.get());
         if (widget) {
             m_container->removeWidget(widget);  // 从UI容器移除（但不delete，智能指针管理）
@@ -292,7 +292,7 @@ void PageNavigatorManager::preloadPage(const QString &pageId) {
     if (page) {
         LOG_INFO(QString("PageNavigatorManager Preloaded page: %1 (cached in %2 cache)")
                      .arg(pageId)
-                     .arg(m_cachePolicies.value(pageId) == CachePolicy::StrongCache ? "strong" : "weak"));
+                     .arg(m_cachePolicies.value(pageId) == PageCachePolicy::StrongCache ? "strong" : "weak"));
     }
 }
 

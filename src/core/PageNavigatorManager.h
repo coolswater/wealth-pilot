@@ -15,7 +15,7 @@
  * - WeakCache: 默认策略，平衡内存占用和响应速度，允许系统在内存紧张时自动回收
  * - StrongCache: 适用于高频核心页面（如首页Dashboard），常驻内存确保零延迟切换
  */
-enum class CachePolicy {
+enum class PageCachePolicy {
     NoCache,        ///< 不缓存，每次切换重新创建（内存敏感型页面）
     WeakCache,      ///< 弱引用缓存（可被垃圾回收，但复用率高）
     StrongCache     ///< 强引用缓存（常驻内存，适用于首页等高频页面）
@@ -69,7 +69,7 @@ public:
      * @details 策略与页面注册分离设计，允许运行时动态调整策略（如根据设备内存状况切换）
      * @note 对于 StrongCache 策略，会立即触发 preloadPage() 后台预加载
      */
-    void registerCachePolicy(const QString &pageId, CachePolicy policy);
+    void registerCachePolicy(const QString &pageId, PageCachePolicy policy);
 
     /**
      * @brief 导航到指定页面（核心接口）
@@ -235,7 +235,7 @@ private:
     // m_weakCache: QMap<QString, weak_ptr> → 允许 Qt 对象树自动回收，但保留复用可能
     QMap<QString, std::weak_ptr<BasePage>> m_weakCache;      ///< 弱引用缓存池（LRU淘汰由Qt对象树触发）
     QMap<QString, std::shared_ptr<BasePage>> m_strongCache;  ///< 强引用缓存池（手动控制生命周期）
-    QMap<QString, CachePolicy> m_cachePolicies;              ///< 页面ID→缓存策略映射表
+    QMap<QString, PageCachePolicy> m_cachePolicies;              ///< 页面ID→缓存策略映射表
 
     QList<HistoryEntry> m_historyStack;  ///< 导航历史栈（支持返回操作）
     static constexpr int MaxHistorySize = 50;  ///< 历史栈最大深度（防止无限内存增长）
