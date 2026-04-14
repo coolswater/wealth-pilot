@@ -573,7 +573,7 @@ void FuturesQuotesPage::onCtpBatchMarketData(const QList<CTP::MarketData>& dataL
     qint64 currentTime = QDateTime::currentMSecsSinceEpoch();
 
     for (const auto& ctpData : dataList) {
-        QString contractId = ctpData.instrumentId;
+        QString contractId = ctpData.InstrumentID;
 
         bool isActive = updateContractActivity(contractId, ctpData, currentTime);
 
@@ -585,12 +585,14 @@ void FuturesQuotesPage::onCtpBatchMarketData(const QList<CTP::MarketData>& dataL
         FuturesQuoteItem item;
         item.contractName = contractId;
         item.lastPrice = ctpData.lastPrice;
-        item.bidPrice = ctpData.bidPrice1;
-        item.askPrice = ctpData.askPrice1;
-        item.bidVolume = ctpData.bidVolume1;
-        item.askVolume = ctpData.askVolume1;
-        item.volume = ctpData.volume;
-        item.openInterest = static_cast<int>(ctpData.openInterest);
+        item.bidPrice = ctpData.BidPrice1;
+        item.askPrice = ctpData.AskPrice1;
+        item.bidVolume = ctpData.BidVolume1;
+        item.askVolume = ctpData.AskVolume1;
+        item.volume = ctpData.Volume;
+        item.openPrice = ctpData.OpenPrice;
+        item.highPrice = ctpData.HighestPrice;
+        item.openInterest = static_cast<int>(ctpData.OpenInterest);
         item.preSettlementPrice = ctpData.preSettlementPrice;
         item.change = ctpData.lastPrice - ctpData.preSettlementPrice;
         item.changePercent = (ctpData.preSettlementPrice > 0) ?
@@ -605,7 +607,7 @@ void FuturesQuotesPage::onCtpBatchMarketData(const QList<CTP::MarketData>& dataL
 
         // 【修改】活跃度状态：0=不活跃, 1=活跃, 2=高流动性
         int activityLevel = 0;
-        if (ctpData.volume > 100 && ctpData.openInterest > 500) {
+        if (ctpData.Volume > 100 && ctpData.OpenInterest > 500) {
             activityLevel = 2; // 高流动性
         } else if (isActive) {
             activityLevel = 1; // 活跃
@@ -636,17 +638,17 @@ bool FuturesQuotesPage::updateContractActivity(const QString& contractId,
 
     auto& activity = d->m_activityMap[contractId];
     activity.lastUpdateTime = currentTime;
-    activity.totalVolume = data.volume;
-    activity.openInterest = static_cast<int>(data.openInterest);
+    activity.totalVolume = data.Volume;
+    activity.openInterest = static_cast<int>(data.OpenInterest);
     activity.updateCount++;
 
-    bool hasVolume = data.volume > 0;
-    bool hasOpenInterest = data.openInterest > ActivityConfig::MIN_OPEN_INTEREST;
-    bool hasBidAsk = data.bidVolume1 > 0 && data.askVolume1 > 0;
+    bool hasVolume = data.Volume > 0;
+    bool hasOpenInterest = data.OpenInterest > ActivityConfig::MIN_OPEN_INTEREST;
+    bool hasBidAsk = data.BidVolume1 > 0 && data.AskVolume1 > 0;
 
     activity.isActive = hasVolume || hasOpenInterest || hasBidAsk;
 
-    updateMainContractByVolume(contractId, data.volume);
+    updateMainContractByVolume(contractId, data.Volume);
 
     return activity.isActive;
 }
@@ -690,14 +692,14 @@ bool FuturesQuotesPage::shouldDisplayContract(const QString& contractId, const C
             return true;
 
         case 1: { // ShowActiveOnly
-            bool hasVolume = data.volume > 0;
-            bool hasOI = data.openInterest > ActivityConfig::MIN_OPEN_INTEREST;
-            bool hasLiquidity = data.bidVolume1 > 0 && data.askVolume1 > 0;
+            bool hasVolume = data.Volume > 0;
+            bool hasOI = data.OpenInterest > ActivityConfig::MIN_OPEN_INTEREST;
+            bool hasLiquidity = data.BidVolume1 > 0 && data.AskVolume1 > 0;
             bool result = hasVolume || hasOI || hasLiquidity;
             if (!result) {
                 LOG_DEBUG(QString("Contract %1 filtered out (inactive): volume=%2, OI=%3, bid=%4, ask=%5")
-                          .arg(contractId).arg(data.volume).arg(data.openInterest)
-                          .arg(data.bidVolume1).arg(data.askVolume1));
+                          .arg(contractId).arg(data.Volume).arg(data.OpenInterest)
+                          .arg(data.BidVolume1).arg(data.AskVolume1));
             }
             return result || !hasAnyContract;
         }
@@ -712,10 +714,10 @@ bool FuturesQuotesPage::shouldDisplayContract(const QString& contractId, const C
         }
 
         case 3: { // ShowHighLiquidity
-            bool result = data.volume > 100 && data.openInterest > 500;
+            bool result = data.Volume > 100 && data.OpenInterest > 500;
             if (!result) {
                 LOG_DEBUG(QString("Contract %1 filtered out (low liquidity): volume=%2, OI=%3")
-                          .arg(contractId).arg(data.volume).arg(data.openInterest));
+                          .arg(contractId).arg(data.Volume).arg(data.OpenInterest));
             }
             return result || !hasAnyContract;
         }
@@ -730,28 +732,28 @@ void FuturesQuotesPage::onCtpSingleMarketData(const CTP::MarketData& data)
     if (!d->m_isVisible.load()) return;
 
     qint64 currentTime = QDateTime::currentMSecsSinceEpoch();
-    bool isActive = updateContractActivity(data.instrumentId, data, currentTime);
+    bool isActive = updateContractActivity(data.InstrumentID, data, currentTime);
 
-    if (!shouldDisplayContract(data.instrumentId, data)) {
+    if (!shouldDisplayContract(data.InstrumentID, data)) {
         return;
     }
 
     FuturesQuoteItem item;
-    item.contractName = data.instrumentId;
+    item.contractName = data.InstrumentID;
     item.lastPrice = data.lastPrice;
-    item.bidPrice = data.bidPrice1;
-    item.askPrice = data.askPrice1;
-    item.bidVolume = data.bidVolume1;
-    item.askVolume = data.askVolume1;
-    item.volume = data.volume;
-    item.openInterest = static_cast<int>(data.openInterest);
+    item.bidPrice = data.BidPrice1;
+    item.askPrice = data.AskPrice1;
+    item.bidVolume = data.BidVolume1;
+    item.askVolume = data.AskVolume1;
+    item.volume = data.Volume;
+    item.openInterest = static_cast<int>(data.OpenInterest);
     item.preSettlementPrice = data.preSettlementPrice;
     item.change = data.lastPrice - data.preSettlementPrice;
     item.changePercent = (data.preSettlementPrice > 0) ?
                              ((data.lastPrice - data.preSettlementPrice) / data.preSettlementPrice * 100) : 0.0;
 
     int activityLevel = 0;
-    if (data.volume > 100 && data.openInterest > 500) {
+    if (data.Volume > 100 && data.OpenInterest > 500) {
         activityLevel = 2;
     } else if (isActive) {
         activityLevel = 1;
@@ -999,11 +1001,9 @@ void FuturesQuotesPage::setupUI()
     d->m_tableView->horizontalHeader()->setDefaultAlignment(Qt::AlignCenter);
     d->m_tableView->setItemDelegate(new FuturesQuoteDelegate(this));
 
-    d->m_tableView->setColumnWidth(0, 80);
-    d->m_tableView->setColumnWidth(1, 100);
+    d->m_tableView->setColumnWidth(0, 50);
+    d->m_tableView->setColumnWidth(1, 80);
     d->m_tableView->setColumnWidth(2, 80);
-    d->m_tableView->setColumnWidth(9, 80);
-    d->m_tableView->setColumnWidth(10, 80);
 
     mainLayout->addWidget(d->m_tableView);
 

@@ -157,9 +157,9 @@ void MainWindow::createPages() const
     registry->registerPage<FuturesQuotesPage>(QStringLiteral("FuturesQuotesPage"));
     d->sidebar->addItem("FuturesQuotesPage", "期货");
 
-    // 数字货币
-    registry->registerPage<FuturesQuotesPage>(QStringLiteral("FuturesQuotesPage"));
-    d->sidebar->addItem("FuturesQuotesPage", "比特币");
+    // OKX
+    // registry->registerPage<OKXQuotesPage>(QStringLiteral("OKXQuotesPage"));
+    // d->sidebar->addItem("OKXQuotesPage", "OKX");
 
     // TODO: 外汇
     // TODO: 基金

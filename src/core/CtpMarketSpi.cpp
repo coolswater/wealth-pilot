@@ -238,23 +238,26 @@ MarketData CtpMarketSpi::convertDepthMarketData(
     const CThostFtdcDepthMarketDataField& field) {
 
     MarketData data;
-    data.instrumentId = QString::fromLocal8Bit(field.InstrumentID);
+    data.InstrumentID = QString::fromLocal8Bit(field.InstrumentID);
 
     // 解析时间（格式：HH:MM:SS.mmm）
     QString timeStr = QString("%1.%2")
                           .arg(QString::fromLocal8Bit(field.UpdateTime))
                           .arg(field.UpdateMillisec, 3, 10, QChar('0'));
 
-    data.updateTime = QDateTime::currentDateTime();
-    data.updateTime.setTime(QTime::fromString(timeStr, "hh:mm:ss.zzz"));
+    data.UpdateTime = QDateTime::currentDateTime();
+    data.UpdateTime.setTime(QTime::fromString(timeStr, "hh:mm:ss.zzz"));
 
     data.lastPrice = field.LastPrice;
-    data.bidPrice1 = field.BidPrice1;
-    data.bidVolume1 = field.BidVolume1;
-    data.askPrice1 = field.AskPrice1;
-    data.askVolume1 = field.AskVolume1;
-    data.volume = field.Volume;
-    data.openInterest = field.OpenInterest;
+    data.BidPrice1 = field.BidPrice1;
+    data.BidVolume1 = field.BidVolume1;
+    data.AskPrice1 = field.AskPrice1;
+    data.AskVolume1 = field.AskVolume1;
+    data.OpenPrice = field.OpenPrice;
+    data.HighestPrice = field.HighestPrice;
+    data.LowestPrice = field.LowestPrice;
+    data.Volume = field.Volume;
+    data.OpenInterest = field.OpenInterest;
     data.preSettlementPrice = field.PreSettlementPrice;
 
     return data;

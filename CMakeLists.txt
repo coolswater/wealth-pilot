@@ -51,6 +51,8 @@ set(CORE_SOURCES
     src/core/CtpTradingSpi.cpp
     src/core/QuoteDataManager.cpp
     src/core/QuoteDataManager.h
+    src/core/FavoritesManager.cpp
+    src/core/FavoritesManager.h
 )
 
 # Models 数据模型
@@ -119,6 +121,10 @@ set(WIDGET_SOURCES
     src/views/widgets/NetworkIndicator.h
     src/views/widgets/TreeMapWidget.cpp
     src/views/widgets/TreeMapWidget.h
+    src/views/widgets/AddSymbolDialog.cpp
+    src/views/widgets/AddSymbolDialog.h
+    src/views/widgets/DividerWidget.h
+    src/views/widgets/DividerWidget.cpp
 )
 
 # Views 视图
@@ -127,8 +133,6 @@ set(VIEW_SOURCES
     src/views/mainWindow/MainWindow.h
     src/views/dashboard/DashboardPage.h
     src/views/dashboard/DashboardPage.cpp
-    src/views/widgets/DividerWidget.h
-    src/views/widgets/DividerWidget.cpp
     src/views/watchList/WatchListPage.h
     src/views/watchList/WatchListPage.cpp
     src/views/signalCenter/SignalCenterPage.h

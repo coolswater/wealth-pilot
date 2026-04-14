@@ -34,16 +34,29 @@ using Volume = int;
  * @brief 行情数据结构（Qt友好封装）
  */
 struct MarketData {
-    InstrumentID instrumentId;          // 合约代码
-    QDateTime updateTime;               // 更新时间
+    QDateTime TradingDay;               // 交易日
+    QString ExchangeID;                 // 交易所代码
+    InstrumentID InstrumentID;          // 合约代码
+    QDateTime UpdateTime;               // 更新时间
     Price lastPrice{0.0};              // 最新价
-    Price bidPrice1{0.0};              // 买一价
-    Volume bidVolume1{0};              // 买一量
-    Price askPrice1{0.0};              // 卖一价
-    Volume askVolume1{0};              // 卖一量
-    Volume volume{0};                  // 成交量
-    Price openInterest{0.0};           // 持仓量
+    Price BidPrice1{0.0};              // 买一价
+    Volume BidVolume1{0};              // 买一量
+    Price AskPrice1{0.0};              // 卖一价
+    Volume AskVolume1{0};              // 卖一量
+    Volume Volume{0};                  // 成交量
+    Price OpenInterest{0.0};           // 持仓量
     Price preSettlementPrice{0.0};     // 昨结算
+    Price PreClosePrice{0.0};           // 昨收盘价
+    Price PreOpenInterest{0.0};         // 昨持仓量
+    Price OpenPrice{0.0};               // 开盘价
+    Price HighestPrice{0.0};            // 最高价
+    Price LowestPrice{0.0};            // 最低价
+    Price Turnover{0.0};                // 成交额
+    Price ClosePrice{0.0};              // 收盘价
+    Price SettlementPrice{0.0};         // 结算价
+    Price UpperLimitPrice{0.0};         // 涨停板价
+    Price LowerLimitPrice{0.0};         // 跌停板价
+    Price AveragePrice{0.0};         // 当日均价
 };
 
 /**

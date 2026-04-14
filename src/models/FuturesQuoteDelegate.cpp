@@ -30,11 +30,15 @@ void FuturesQuoteDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
 
         // 红涨绿跌配色方案（中国期货市场惯例）
         switch (index.column()) {
-        case 2:  // 最新价
-        case 9:  // 涨跌
-        case 10: // 涨幅%
-        case 17: // 速涨
-        case 18: // 现涨
+        case 3:  // 最新价
+        case 4:  // 涨跌
+        case 5: // 涨幅%
+        case 7: // 买价
+        case 8: // 卖价
+        case 14: // 开盘价
+        case 15: // 最高价
+        case 16: // 最低价
+        case 18: // 速涨
             if (item.change > 0) {
                 textColor = QColor(255, 50, 50);  // 鲜红色 - 上涨
             } else if (item.change < 0) {
