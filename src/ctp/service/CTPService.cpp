@@ -47,8 +47,16 @@ void CTPService::setMarketFrontAddress(const QString& frontAddr) {
     d->marketFront = frontAddr;
 }
 
+QString CTPService::marketFront() const {
+    return d->marketFront;
+}
+
 void CTPService::setTradingFrontAddress(const QString& frontAddr) {
     d->tradingFront = frontAddr;
+}
+
+QString CTPService::tradingFront() const {
+    return d->tradingFront;
 }
 
 void CTPService::setCredentials(const QString& brokerId, const QString& userId,

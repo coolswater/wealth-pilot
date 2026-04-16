@@ -184,7 +184,13 @@ void FuturesQuotesPage::onPageActivated(const QVariantMap &params)
     if (!d->m_isCtpConnected.load()) {
         LOG_WARNING("CTP not connected, attempting reconnection...");
         if (d->m_CTPService) {
-            d->m_CTPService->setupConnections();
+            // Check if front addresses are set
+            if (d->m_CTPService->marketFront().isEmpty() || d->m_CTPService->tradingFront().isEmpty()) {
+                LOG_INFO("CTP front addresses not set, initializing...");
+                initializePage();
+            } else {
+                d->m_CTPService->setupConnections();
+            }
         }
     }
 

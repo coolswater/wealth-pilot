@@ -148,10 +148,20 @@ public:
     void setMarketFrontAddress(const QString& frontAddr);
 
     /**
+     * @brief 获取行情前置地址
+     */
+    QString marketFront() const;
+
+    /**
      * @brief 设置交易前置地址
      * @param frontAddr 交易前置地址，如 "tcp://180.168.146.187:10101"
      */
     void setTradingFrontAddress(const QString& frontAddr);
+
+    /**
+     * @brief 获取交易前置地址
+     */
+    QString tradingFront() const;
 
     /**
      * @brief 设置认证信息
