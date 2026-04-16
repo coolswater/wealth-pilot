@@ -4,6 +4,7 @@
 /////////////////////////////////////////////////////////////////////////
 
 #include "CTPService.h"
+#include "../core/CTPConfigManager.h"
 #include "utils/Logger.h"
 #include <QtCore/QThread>
 #include <QtCore/QDebug>
@@ -239,6 +240,88 @@ void CTPService::confirmSettlement() {
     if (!d->tradingSpi) return;
     d->tradingSpi->confirmSettlement();
     LOG_INFO("Settlement confirmation requested");
+}
+
+// ========== 配置管理器集成 ==========
+
+bool CTPService::loadConfigAndConnect(const QString& brokerId)
+{
+    auto* configMgr = CTPConfigManager::instance();
+    
+    // 获取服务商配置
+    QString targetBrokerId = brokerId.isEmpty() ? configMgr->currentBrokerId() : brokerId;
+    auto config = configMgr->getBroker(targetBrokerId);
+    
+    if (!config) {
+        LOG_ERROR(QString("Broker config not found: %1").arg(targetBrokerId));
+        return false;
+    }
+    
+    if (!config->isValid()) {
+        LOG_ERROR(QString("Invalid broker config: %1").arg(targetBrokerId));
+        return false;
+    }
+    
+    // 获取用户凭证
+    QString userId = configMgr->getUserId(targetBrokerId);
+    QString password = configMgr->getPassword(targetBrokerId);
+    
+    if (userId.isEmpty() || password.isEmpty()) {
+        LOG_ERROR(QString("User credentials not set for broker: %1").arg(targetBrokerId));
+        return false;
+    }
+    
+    // 设置配置
+    d->marketFront = config->getFirstMarketFront();
+    d->tradingFront = config->getFirstTradingFront();
+    d->brokerId = config->brokerId;
+    d->userId = userId;
+    d->password = password;
+    
+    // 设置认证信息（如果需要）
+    if (config->requireAuth) {
+        d->appId = config->defaultAppId;
+        d->authCode = config->defaultAuthCode;
+    } else {
+        d->appId.clear();
+        d->authCode.clear();
+    }
+    
+    LOG_INFO(QString("Loading CTP config: broker=%1, name=%2, marketFront=%3, tradingFront=%4")
+        .arg(config->brokerId, config->name, d->marketFront, d->tradingFront));
+    
+    // 设置当前服务商
+    configMgr->setCurrentBroker(targetBrokerId);
+    
+    // 连接
+    setupConnections();
+    
+    return true;
+}
+
+bool CTPService::switchBroker(const QString& brokerId)
+{
+    LOG_INFO(QString("Switching broker to: %1").arg(brokerId));
+    
+    // 先断开当前连接
+    disconnect();
+    
+    // 等待一段时间确保断开完成
+    QTimer::singleShot(500, this, [this, brokerId]() {
+        loadConfigAndConnect(brokerId);
+    });
+    
+    return true;
+}
+
+std::optional<CTPBrokerConfig> CTPService::currentBrokerConfig() const
+{
+    return CTPConfigManager::instance()->currentBroker();
+}
+
+QString CTPService::currentBrokerId() const
+{
+    return CTPConfigManager::instance()->currentBrokerId();
 }
 
 } // namespace CTP

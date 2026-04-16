@@ -14,6 +14,7 @@
 #include <memory>
 #include <functional>
 #include <optional>
+#include "../core/CTPConfigManager.h"
 
 // 前向声明CTP结构体（避免暴露头文件细节）
 struct CThostFtdcDepthMarketDataField;
@@ -163,6 +164,34 @@ public:
     void setCredentials(const QString& brokerId, const QString& userId,
                         const QString& password, const QString& appId = "",
                         const QString& authCode = "");
+
+    /////////////////////////////////////////////////////////////////////////
+    /// 配置管理器集成
+    /////////////////////////////////////////////////////////////////////////
+
+    /**
+     * @brief 从配置管理器加载配置并连接
+     * @param brokerId 服务商ID，为空则使用当前选中的服务商
+     * @return 是否成功加载配置
+     */
+    bool loadConfigAndConnect(const QString& brokerId = QString());
+
+    /**
+     * @brief 切换服务商并重新连接
+     * @param brokerId 新的服务商ID
+     * @return 是否成功切换
+     */
+    bool switchBroker(const QString& brokerId);
+
+    /**
+     * @brief 获取当前服务商配置
+     */
+    std::optional<CTPBrokerConfig> currentBrokerConfig() const;
+
+    /**
+     * @brief 获取当前服务商ID
+     */
+    QString currentBrokerId() const;
 
     /////////////////////////////////////////////////////////////////////////
     /// 连接管理

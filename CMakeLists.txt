@@ -70,6 +70,8 @@ set(CORE_SOURCES
         src/core/AsyncTaskManager.cpp
         src/core/PageNavigator.h
         src/core/PageNavigator.cpp
+        src/core/CTPConfigManager.h
+        src/core/CTPConfigManager.cpp
 )
 
 # Models 数据模型
@@ -196,6 +198,8 @@ set(VIEW_SOURCES
         src/views/stock/StockQuotesPage.cpp
         src/views/settings/SettingsPage.h
         src/views/settings/SettingsPage.cpp
+        src/views/settings/CTPBrokerDialog.h
+        src/views/settings/CTPBrokerDialog.cpp
         src/views/warning/WarningPage.h
         src/views/warning/WarningPage.cpp
         src/views/aboutus/AboutUSPage.h
