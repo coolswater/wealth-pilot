@@ -660,6 +660,7 @@ void FuturesQuotesPage::updateMainContractByVolume(const QString& contractId, in
     auto [productCode, expiryDate, isStandard] = parseContractCode(contractId);
     if (!isStandard) return;
 
+    // 统一锁顺序：m_mainContractMutex -> m_instrumentsMutex
     QMutexLocker mainLocker(&d->m_mainContractMutex);
     QMutexLocker instLocker(&d->m_instrumentsMutex);
 

@@ -1,6 +1,23 @@
 /**
  * @file Singleton.h
  * @brief 线程安全的单例模板基类
+ * @author WealthPilot Team
+ * @version 2.0.0
+ * 
+ * @details 使用 CRTP 模式实现单例，所有单例类继承此模板
+ * 统一返回指针，避免引用/指针混用问题
+ * 
+ * @example
+ * @code
+ * class MyService : public Singleton<MyService> {
+ *     friend class Singleton<MyService>;
+ * private:
+ *     MyService() = default;
+ * };
+ * 
+ * // 使用
+ * MyService* service = MyService::instance();
+ * service->doSomething();
  * @endcode
  */
 

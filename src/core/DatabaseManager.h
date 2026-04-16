@@ -1,16 +1,17 @@
 /**
  * @file DatabaseManager.h
  * @brief 数据库管理器 - 高性能SQLite数据库管理
- *
+ * @author WealthPilot Team
+ * @version 2.0.0
+ * 
  * @details 功能：
  * - 连接池管理
  * - 批量操作优化
  * - 事务支持
  * - 异步查询
  * - 性能监控
- *
- * @author WealthPilot Team
- * @version 2.0.0
+ * 
+ * @thread_safe 所有公共方法都是线程安全的
  */
 #ifndef DATABASEMANAGER_H
 #define DATABASEMANAGER_H

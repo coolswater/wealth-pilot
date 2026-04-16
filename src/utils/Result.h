@@ -1,47 +1,43 @@
 /**
  * @file Result.h
  * @brief 结果类型 - 统一的错误处理机制
- *
+ * @author WealthPilot Team
+ * @version 2.0.0
+ * 
  * @details 灵感来自 Rust 的 Result<T, E> 类型
  * 用于函数返回值，明确区分成功和失败
- *
+ * 
  * @example
  * @code
  * Result<Quote> result = DataService::fetchQuote("SH600000");
  * if (result.isOk()) {
  *     Quote quote = result.unwrap();
  * } else {
- *     qWarning() << result.error() << result.message();
+ *     qWarning() << result.error().message;
  * }
  * @endcode
  */
 
-#ifndef RESULT_H
-#define RESULT_H
+#ifndef WEALTHPILOT_UTILS_RESULT_H
+#define WEALTHPILOT_UTILS_RESULT_H
 
+#include "core/ErrorCode.h"
 #include <QString>
 #include <QVariant>
 #include <optional>
 #include <type_traits>
 
-/**
- * @brief 错误信息结构
- */
-struct Error {
-    QString code;       ///< 错误码 (如 "NET_001", "AUTH_002")
-    QString message;    ///< 错误描述
-    QVariant detail;    ///< 附加信息（可选）
-
-    Error() = default;
-    Error(const QString& c, const QString& msg, const QVariant& d = {})
-        : code(c), message(msg), detail(d) {}
-
-    bool isNull() const { return code.isEmpty(); }
-};
+namespace WealthPilot {
 
 /**
  * @brief 结果类型模板
  * @tparam T 成功时的值类型
+ * 
+ * @details 使用方式：
+ * - Result<T>::ok(value) 创建成功结果
+ * - Result<T>::err(code, message) 创建错误结果
+ * - isOk() / isError() 检查结果状态
+ * - unwrap() / unwrapOr() 获取值
  */
 template<typename T>
 class Result
@@ -70,27 +66,18 @@ public:
     }
 
     /**
-     * @brief 创建失败结果
+     * @brief 创建错误结果
      */
-    static Result<T> err(const QString& code, const QString& message) {
+    static Result<T> err(ErrorCode code, const QString& message = {}, 
+                         const QString& detail = {}, const QVariant& context = {}) {
         Result<T> r;
-        r.m_error = Error{code, message};
+        r.m_error = Error(code, message, detail, context);
         r.m_ok = false;
         return r;
     }
 
     /**
-     * @brief 创建失败结果（带附加信息）
-     */
-    static Result<T> err(const QString& code, const QString& message, const QVariant& detail) {
-        Result<T> r;
-        r.m_error = Error{code, message, detail};
-        r.m_ok = false;
-        return r;
-    }
-
-    /**
-     * @brief 从 Error 创建失败结果
+     * @brief 从 Error 创建错误结果
      */
     static Result<T> fromError(const Error& error) {
         Result<T> r;
@@ -99,84 +86,115 @@ public:
         return r;
     }
 
-    // ========== 查询方法 ==========
+    // ========== 状态检查 ==========
 
+    /**
+     * @brief 是否成功
+     */
     bool isOk() const { return m_ok; }
-    bool isErr() const { return !m_ok; }
+
+    /**
+     * @brief 是否失败
+     */
+    bool isError() const { return !m_ok; }
+
+    /**
+     * @brief bool 转换（成功为 true）
+     */
     explicit operator bool() const { return m_ok; }
 
     // ========== 值获取 ==========
 
     /**
-     * @brief 获取值（需确保 isOk()）
+     * @brief 获取值（成功时）
      * @warning 如果是错误结果，行为未定义
      */
-    const T& unwrap() const {
-        Q_ASSERT(m_ok && "Called unwrap on an error result");
-        return *m_value;
-    }
-
-    T& unwrap() {
-        Q_ASSERT(m_ok && "Called unwrap on an error result");
-        return *m_value;
+    const T& unwrap() const& {
+        return m_value.value();
     }
 
     /**
-     * @brief 获取值，失败返回默认值
+     * @brief 获取值（成功时，移动语义）
+     */
+    T&& unwrap() && {
+        return std::move(m_value.value());
+    }
+
+    /**
+     * @brief 获取值或默认值
      */
     T unwrapOr(const T& defaultValue) const {
-        return m_ok ? *m_value : defaultValue;
+        return m_ok ? m_value.value() : defaultValue;
     }
 
     /**
-     * @brief 安全获取值指针
+     * @brief 获取值或通过函数计算默认值
      */
-    const T* operator->() const { return m_ok ? &(*m_value) : nullptr; }
-    T* operator->() { return m_ok ? &(*m_value) : nullptr; }
+    template<typename F>
+    T unwrapOrElse(F&& f) const {
+        return m_ok ? m_value.value() : f();
+    }
+
+    /**
+     * @brief 获取值指针（可能为空）
+     */
+    const T* operator->() const {
+        return m_ok ? &m_value.value() : nullptr;
+    }
+
+    /**
+     * @brief 获取值引用（可能抛异常）
+     * @throws 如果是错误结果
+     */
+    const T& expect(const QString& message) const {
+        if (!m_ok) {
+            throw std::runtime_error(message.toStdString());
+        }
+        return m_value.value();
+    }
 
     // ========== 错误获取 ==========
 
-    const Error& error() const {
-        Q_ASSERT(!m_ok && "Called error on an ok result");
+    /**
+     * @brief 获取错误信息
+     */
+    const Error& error() const& {
         return m_error;
     }
 
-    const QString& errorCode() const { return m_error.code; }
-    const QString& errorMessage() const { return m_error.message; }
+    /**
+     * @brief 获取错误码
+     */
+    ErrorCode errorCode() const {
+        return m_error.code;
+    }
 
-    // ========== 链式操作 ==========
+    /**
+     * @brief 获取错误消息
+     */
+    QString errorMessage() const {
+        return m_error.message;
+    }
+
+    // ========== 转换 ==========
 
     /**
      * @brief 映射成功值
-     * @tparam U 新类型
-     * @param f 映射函数 T -> U
      */
-    template<typename U, typename F>
-    Result<U> map(F&& f) const {
+    template<typename U>
+    Result<U> map(std::function<U(const T&)> f) const {
         if (m_ok) {
-            return Result<U>::ok(f(*m_value));
+            return Result<U>::ok(f(m_value.value()));
         }
         return Result<U>::fromError(m_error);
     }
 
     /**
-     * @brief 成功时执行操作
+     * @brief 映射错误
      */
-    template<typename F>
-    Result<T>& inspect(F&& f) {
-        if (m_ok) {
-            f(*m_value);
-        }
-        return *this;
-    }
-
-    /**
-     * @brief 失败时执行操作
-     */
-    template<typename F>
-    Result<T>& inspectErr(F&& f) {
+    Result<T> mapError(std::function<Error(const Error&)> f) const {
         if (!m_ok) {
-            f(m_error);
+            return Result<T>::fromError(f(m_error));
         }
         return *this;
     }
@@ -191,6 +209,9 @@ private:
 
 // ========== 特化：void 类型 ==========
 
+/**
+ * @brief void 类型的 Result（只关心成功/失败）
+ */
 template<>
 class Result<void>
 {
@@ -201,55 +222,65 @@ public:
         return r;
     }
 
-    static Result<void> err(const QString& code, const QString& message) {
+    static Result<void> err(ErrorCode code, const QString& message = {},
+                            const QString& detail = {}, const QVariant& context = {}) {
         Result<void> r;
-        r.m_error = Error{code, message};
+        r.m_error = Error(code, message, detail, context);
+        r.m_ok = false;
+        return r;
+    }
+
+    static Result<void> fromError(const Error& error) {
+        Result<void> r;
+        r.m_error = error;
         r.m_ok = false;
         return r;
     }
 
     bool isOk() const { return m_ok; }
-    bool isErr() const { return !m_ok; }
+    bool isError() const { return !m_ok; }
     explicit operator bool() const { return m_ok; }
 
-    const Error& error() const { return m_error; }
-    const QString& errorCode() const { return m_error.code; }
-    const QString& errorMessage() const { return m_error.message; }
+    const Error& error() const& { return m_error; }
+    ErrorCode errorCode() const { return m_error.code; }
+    QString errorMessage() const { return m_error.message; }
 
 private:
     Error m_error;
     bool m_ok = false;
 };
 
-// ========== 错误码定义 ==========
+// ========== 便捷宏 ==========
 
-namespace ErrorCode {
-    // 网络错误
-    constexpr auto NET_TIMEOUT      = "NET_001";
-    constexpr auto NET_CONNECTION   = "NET_002";
-    constexpr auto NET_PARSE        = "NET_003";
-    constexpr auto NET_SSL          = "NET_004";
+/**
+ * @brief 尝试执行表达式，如果失败则提前返回错误
+ */
+#define TRY(expr) \
+    ({ \
+        auto _result = (expr); \
+        if (_result.isError()) { \
+            return _result; \
+        } \
+        _result.unwrap(); \
+    })
 
-    // 数据错误
-    constexpr auto DATA_NOT_FOUND   = "DATA_001";
-    constexpr auto DATA_INVALID     = "DATA_002";
-    constexpr auto DATA_PARSE       = "DATA_003";
+/**
+ * @brief 尝试执行表达式，如果失败则返回默认值
+ */
+#define TRY_OR(expr, defaultVal) \
+    ({ \
+        auto _result = (expr); \
+        if (_result.isError()) { \
+            return defaultVal; \
+        } \
+        _result.unwrap(); \
+    })
 
-    // 业务错误
-    constexpr auto BIZ_AUTH         = "BIZ_001";
-    constexpr auto BIZ_PERMISSION   = "BIZ_002";
-    constexpr auto BIZ_LIMIT        = "BIZ_003";
+} // namespace WealthPilot
 
-    // CTP 错误
-    constexpr auto CTP_CONNECT      = "CTP_001";
-    constexpr auto CTP_LOGIN        = "CTP_002";
-    constexpr auto CTP_ORDER        = "CTP_003";
-    constexpr auto CTP_MARKET       = "CTP_004";
+// 向后兼容：导出到全局命名空间
+using WealthPilot::Result;
+using WealthPilot::Error;
+using WealthPilot::ErrorCode;
 
-    // AI 错误
-    constexpr auto AI_SERVICE       = "AI_001";
-    constexpr auto AI_PARSE         = "AI_002";
-    constexpr auto AI_LIMIT         = "AI_003";
-}
-
-#endif // RESULT_H
+#endif // WEALTHPILOT_UTILS_RESULT_H

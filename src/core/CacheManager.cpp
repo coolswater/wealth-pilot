@@ -1,6 +1,8 @@
 /**
  * @file CacheManager.cpp
  * @brief 缓存管理器实现 - 高性能多级缓存系统
+ * @author WealthPilot Team
+ * @version 2.0.0
  */
 
 #include "CacheManager.h"

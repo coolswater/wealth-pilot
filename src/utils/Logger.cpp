@@ -1,51 +1,58 @@
 /**
  * @file Logger.cpp
- * @brief 日志管理器实现 - 优化版本
- *
- * 优化内容：
- * - 添加空指针保护，防止未初始化时崩溃
- * - 添加线程安全检查
- * - 优化文件写入性能
- * - 添加日志级别过滤
+ * @brief 日志管理器实现
+ * @author WealthPilot Team
+ * @version 2.0.0
  */
+
 #include "Logger.h"
 #include <QDebug>
 #include <QDateTime>
 #include <QDir>
-#include <QTextStream>
-#include <QRegularExpression>
-#include <QFileInfo>
+#include <QMutexLocker>
 
-Logger* Logger::s_instance = nullptr;
+// ========== PIMPL 实现 ==========
+
+struct Logger::Impl {
+    Level level = Level::Info;
+    std::unique_ptr<QFile> logFile;
+    std::unique_ptr<QTextStream> stream;
+    mutable QMutex mutex;
+};
+
+// ========== 构造和析构 ==========
 
 Logger::Logger()
-    : m_level(Info)
+    : d(std::make_unique<Impl>())
 {
 }
 
 Logger::~Logger()
 {
-    if (m_stream) {
-        m_stream->flush();
+    if (d->stream) {
+        d->stream->flush();
     }
 }
+
+// ========== 单例访问 ==========
 
 Logger* Logger::instance()
 {
-    if (!s_instance) {
-        s_instance = new Logger();
-    }
-    return s_instance;
+    static Logger instance;
+    return &instance;
 }
+
+// ========== 公共方法 ==========
 
 void Logger::init(const QString& logFile)
 {
-    QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&d->mutex);
 
-    if (m_logFile) {
-        m_logFile->close();
-        m_logFile.reset();
-        m_stream.reset();
+    // 关闭现有文件
+    if (d->logFile) {
+        d->logFile->close();
+        d->logFile.reset();
+        d->stream.reset();
     }
 
     if (!logFile.isEmpty()) {
@@ -56,31 +63,30 @@ void Logger::init(const QString& logFile)
             dir.mkpath(".");
         }
 
-        m_logFile = std::make_unique<QFile>(logFile);
-        if (m_logFile->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
-            m_stream = std::make_unique<QTextStream>(m_logFile.get());
-            m_stream->setEncoding(QStringConverter::Utf8);
-            *m_stream << QString("\n=== Log started at %1 ===\n")
+        d->logFile = std::make_unique<QFile>(logFile);
+        if (d->logFile->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+            d->stream = std::make_unique<QTextStream>(d->logFile.get());
+            d->stream->setEncoding(QStringConverter::Utf8);
+            *d->stream << QString("\n=== Log started at %1 ===\n")
                              .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
-            *m_stream << Qt::endl; // 将 Qt::endl 单独放在一个语句中
-            m_stream->flush();
+            d->stream->flush();
         } else {
             qWarning() << "Failed to open log file:" << logFile;
-            m_logFile.reset();
+            d->logFile.reset();
         }
     }
 }
 
 void Logger::setLevel(Level level)
 {
-    QMutexLocker locker(&m_mutex);
-    m_level = level;
+    QMutexLocker locker(&d->mutex);
+    d->level = level;
 }
 
 void Logger::log(Level level, const QString& message)
 {
     // 检查日志级别
-    if (level < m_level) {
+    if (level < d->level) {
         return;
     }
 
@@ -89,139 +95,66 @@ void Logger::log(Level level, const QString& message)
     QString formatted = QString("[%1] [%2] %3").arg(timestamp, levelStr, message);
 
     // 输出到控制台
-    writeToConsole(formatted);
+    {
+        QMutexLocker locker(&d->mutex);
+        switch (level) {
+            case Level::Debug:
+                qDebug().noquote() << formatted;
+                break;
+            case Level::Info:
+                qInfo().noquote() << formatted;
+                break;
+            case Level::Warning:
+                qWarning().noquote() << formatted;
+                break;
+            case Level::Error:
+                qCritical().noquote() << formatted;
+                break;
+        }
+    }
 
     // 输出到文件
-    writeToFile(formatted);
+    if (d->stream) {
+        QMutexLocker locker(&d->mutex);
+        *d->stream << formatted << Qt::endl;
+        d->stream->flush();
+    }
 }
 
 void Logger::debug(const QString& message)
 {
-    // 空指针保护：如果未初始化，使用qDebug输出
-    if (!m_stream) {
-        qDebug() << "[DEBUG]" << message;
-        return;
-    }
-    log(Debug, message);
+    log(Level::Debug, message);
 }
 
 void Logger::info(const QString& message)
 {
-    if (!m_stream) {
-        qInfo() << "[INFO]" << message;
-        return;
-    }
-    log(Info, message);
+    log(Level::Info, message);
 }
 
 void Logger::warning(const QString& message)
 {
-    if (!m_stream) {
-        qWarning() << "[WARNING]" << message;
-        return;
-    }
-    log(Warning, message);
+    log(Level::Warning, message);
 }
 
 void Logger::error(const QString& message)
 {
-    if (!m_stream) {
-        qCritical() << "[ERROR]" << message;
-        return;
-    }
-    log(Error, message);
+    log(Level::Error, message);
 }
 
-QString Logger::levelToString(Level level)
+// ========== 私有方法 ==========
+
+QString Logger::levelToString(Level level) const
 {
     switch (level) {
-    case Debug:   return "DEBUG";
-    case Info:    return "INFO";
-    case Warning: return "WARN";
-    case Error:   return "ERROR";
-    default:      return "UNKNOWN";
+        case Level::Debug:   return "DEBUG";
+        case Level::Info:    return "INFO";
+        case Level::Warning: return "WARN";
+        case Level::Error:   return "ERROR";
+        default:             return "UNKNOWN";
     }
 }
 
-void Logger::writeToFile(const QString& message)
+QString Logger::currentTime() const
 {
-    QMutexLocker locker(&m_mutex);
-
-    if (m_stream) {
-        // 添加到缓冲区
-        m_logBuffer.append(message + "\n");
-
-        // 当缓冲区达到一定大小或时间间隔时写入文件
-        static int lineCount = 0;
-        static qint64 lastFlushTime = QDateTime::currentMSecsSinceEpoch();
-
-        if (++lineCount >= 10 || 
-            QDateTime::currentMSecsSinceEpoch() - lastFlushTime > 5000) { // 5秒或10行
-            
-            // 检查日志文件大小，超过10MB则轮转
-            if (m_logFile && m_logFile->size() > 10 * 1024 * 1024) {
-                rotateLogFile();
-            }
-
-            // 写入缓冲区内容
-            const QStringList& bufferRef = m_logBuffer;  // 创建 const 引用
-            for (const QString& line : bufferRef) {
-                *m_stream << line;
-            }
-            m_stream->flush();
-            
-            m_logBuffer.clear();
-            lineCount = 0;
-            lastFlushTime = QDateTime::currentMSecsSinceEpoch();
-        }
-    }
-}
-
-void Logger::rotateLogFile()
-{
-    // 注意：调用方已经持有 m_mutex，这里不要再加锁
-
-    if (!m_logFile) return;
-
-    // 保存旧文件名
-    QString oldFileName = m_logFile->fileName();
-
-    // 关闭当前文件
-    if (m_stream) {
-        m_stream->flush();
-        m_stream.reset();
-    }
-    m_logFile->close();
-
-    // 创建新文件名（添加时间戳）- 注意要加 "."
-    QFileInfo fileInfo(oldFileName);
-    QString newPath = fileInfo.absolutePath() + "/" +
-                     fileInfo.baseName() + "_" +
-                     QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss") +
-                     "." + fileInfo.suffix();  // 修复：添加点号
-
-    // 重命名旧文件
-    if (QFile::rename(oldFileName, newPath)) {
-        qDebug() << "Log rotated to:" << newPath;
-    } else {
-        qWarning() << "Failed to rotate log file";
-    }
-
-    // 重新打开新文件（使用原文件名）
-    m_logFile.reset(new QFile(oldFileName));
-    if (m_logFile->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
-        m_stream = std::make_unique<QTextStream>(m_logFile.get());
-        m_stream->setEncoding(QStringConverter::Utf8);
-        *m_stream << QString("\n=== Log continued at %1 ===\n")
-                         .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
-        m_stream->flush();
-    } else {
-        qCritical() << "Failed to reopen log file:" << oldFileName;
-        m_logFile.reset();
-    }
-}
-
-void Logger::writeToConsole(const QString& message)
-{
-    qDebug().noquote() << message;
+    return QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
 }

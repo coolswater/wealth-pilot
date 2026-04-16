@@ -21,7 +21,8 @@ QMap<Environment, QString> EnvironmentConfig::s_envNames = {
 };
 
 EnvironmentConfig::EnvironmentConfig()
-    : m_currentEnv(Environment::Development)
+    : QObject(nullptr)
+    , m_currentEnv(Environment::Development)
     , m_settings(new QSettings(
         QSettings::IniFormat,
         QSettings::UserScope,
@@ -89,8 +90,8 @@ void EnvironmentConfig::setCurrentEnvironment(Environment env)
     updateCache();
     
     LOG_INFO(QString("Environment changed to: %1").arg(environmentName(env)));
-    
-    // Note: environmentChanged signal removed - EnvironmentConfig is not a QObject
+
+    emit environmentChanged(env);
 }
 
 QString EnvironmentConfig::environmentName(Environment env) const
@@ -98,10 +99,15 @@ QString EnvironmentConfig::environmentName(Environment env) const
     return s_envNames.value(env, "unknown");
 }
 
-const EnvironmentSettings& EnvironmentConfig::currentSettings() const
+const EnvironmentSettings* EnvironmentConfig::currentSettings() const
 {
     QMutexLocker locker(&m_mutex);
-    return m_environments[m_currentEnv];
+    auto it = m_environments.find(m_currentEnv);
+    if (it != m_environments.end()) {
+        return &it.value();
+    }
+    static const EnvironmentSettings empty;
+    return &empty;
 }
 
 EnvironmentSettings EnvironmentConfig::getSettings(Environment env) const
@@ -157,8 +163,8 @@ void EnvironmentConfig::setValue(const QString& key, const QVariant& value)
     m_configCache[key] = value;
     
     LOG_DEBUG(QString("Config set: %1 = %2").arg(key, value.toString()));
-    
-    // Note: configUpdated signal removed - EnvironmentConfig is not a QObject
+
+    emit configUpdated(key);
 }
 
 void EnvironmentConfig::reload()

@@ -17,17 +17,17 @@
 #include <QUuid>
 
 const QString AIService::DEFAULT_SYSTEM_PROMPT = R"(
-你是一个专业的金融投资助理，名叫 WealthPilot AI。
+你是一个专业的金融投资助理，名�?WealthPilot AI�?
 你的职责是：
-1. 分析用户的投资组合，提供专业的投资建议
-2. 解读市场行情和财经新闻
+1. 分析用户的投资组合，提供专业的投资建�?
+2. 解读市场行情和财经新�?
 3. 回答用户关于投资、理财的问题
-4. 提供风险提示和投资教育
+4. 提供风险提示和投资教�?
 
 请注意：
 - 回答要专业、准确、有依据
 - 对于不确定的信息，要明确告知
-- 不要提供具体的买卖建议，只提供分析和参考
+- 不要提供具体的买卖建议，只提供分析和参�?
 - 使用简洁明了的语言
 )";
 
@@ -49,8 +49,8 @@ AIAnalysis AIAnalysis::fromJson(const QJsonObject& json)
 
 AIService::AIService()
     : m_maxHistorySize(10)
-    , m_requestCacheTimeout(60000) // 1分钟缓存
     , m_cacheEnabled(true)
+    , m_requestCacheTimeout(60000) // 1分钟缓存
 {
 }
 
@@ -133,11 +133,11 @@ void AIService::setSystemPrompt(const QString& prompt)
 void AIService::chat(const QString& message, std::function<void(Result<QString>)> callback)
 {
     if (m_config.provider == AIProvider::None || m_config.apiKey.isEmpty()) {
-        callback(Result<QString>::err(ErrorCode::AI_SERVICE, "AI service not configured"));
+        callback(Result<QString>::err(ErrorCode::AiError, "AI service not configured"));
         return;
     }
 
-    // 检查缓存
+    // 检查缓�?
     if (m_cacheEnabled) {
         QString cacheKey = generateCacheKey(message);
         QVariant cached = getCachedResponse(cacheKey);
@@ -173,7 +173,7 @@ void AIService::chat(const QString& message, std::function<void(Result<QString>)
 Result<QString> AIService::chatSync(const QString& message, int timeoutMs)
 {
     QString resultValue;
-    QString errorCode;
+    ErrorCode errorCode = ErrorCode::Success;
     QString errorMessage;
     bool success = false;
     QEventLoop loop;
@@ -198,7 +198,7 @@ Result<QString> AIService::chatSync(const QString& message, int timeoutMs)
     loop.exec();
 
     if (!timer.isActive()) {
-        return Result<QString>::err(ErrorCode::NET_TIMEOUT, "AI request timeout");
+        return Result<QString>::err(ErrorCode::NetworkTimeout, "AI request timeout");
     }
 
     if (success) {
@@ -299,7 +299,7 @@ void AIService::analyzePortfolio(const QJsonObject& positions,
         .arg(QString::fromUtf8(QJsonDocument(positions).toJson()));
 
     chat(prompt, [callback](Result<QString> result) {
-        if (result.isErr()) {
+        if (result.isError()) {
             callback(Result<AIAnalysis>::fromError(result.error()));
             return;
         }
@@ -314,12 +314,12 @@ void AIService::analyzePortfolio(const QJsonObject& positions,
 void AIService::analyzeStock(const QString& code, const QJsonObject& data,
                               std::function<void(Result<AIAnalysis>)> callback)
 {
-    QString prompt = QString("请分析股票 %1 的以下数据：\n\n%2\n\n请提供：\n1. 技术分析\n2. 基本面分析\n3. 投资建议")
+    QString prompt = QString("请分析股�?%1 的以下数据：\n\n%2\n\n请提供：\n1. 技术分析\n2. 基本面分析\n3. 投资建议")
         .arg(code)
         .arg(QString::fromUtf8(QJsonDocument(data).toJson()));
 
     chat(prompt, [callback](Result<QString> result) {
-        if (result.isErr()) {
+        if (result.isError()) {
             callback(Result<AIAnalysis>::fromError(result.error()));
             return;
         }
@@ -338,7 +338,7 @@ void AIService::analyzeMarketSentiment(const QJsonObject& marketData,
         .arg(QString::fromUtf8(QJsonDocument(marketData).toJson()));
 
     chat(prompt, [callback](Result<QString> result) {
-        if (result.isErr()) {
+        if (result.isError()) {
             callback(Result<AIAnalysis>::fromError(result.error()));
             return;
         }
@@ -459,7 +459,7 @@ void AIService::sendRequest(const QJsonObject& request,
 
     NetworkManager::instance()->postAsync(url, data,
         [this, callback](Result<QByteArray> result) {
-            if (result.isErr()) {
+            if (result.isError()) {
                 callback(Result<QString>::err(result.errorCode(), result.errorMessage()));
                 return;
             }
@@ -467,7 +467,7 @@ void AIService::sendRequest(const QJsonObject& request,
             QString content = parseResponse(result.unwrap());
 
             if (content.isEmpty()) {
-                callback(Result<QString>::err(ErrorCode::AI_PARSE, "Failed to parse response"));
+                callback(Result<QString>::err(ErrorCode::AiParseError, "Failed to parse response"));
                 return;
             }
 

@@ -467,17 +467,18 @@ MarketData CTPPlugin::getCachedMarketData(const QString& instrumentId) const
 void CTPPlugin::loadEnvironmentConfig()
 {
     // 从EnvironmentConfig加载CTP配置
-    auto settings = EnvironmentConfig::instance()->currentSettings();
+    auto* settings = EnvironmentConfig::instance()->currentSettings();
     
-    // 如果配置中没有设置，使用环境配置
+    if (!settings) return;
+    
     if (!m_config.contains("brokerId")) {
-        m_config["brokerId"] = settings.ctpBrokerId;
+        m_config["brokerId"] = settings->ctpBrokerId;
     }
     if (!m_config.contains("marketFront")) {
-        m_config["marketFront"] = settings.ctpMarketFront;
+        m_config["marketFront"] = settings->ctpMarketFront;
     }
     if (!m_config.contains("tradeFront")) {
-        m_config["tradeFront"] = settings.ctpTradeFront;
+        m_config["tradeFront"] = settings->ctpTradeFront;
     }
     
     LOG_DEBUG("CTP environment config loaded");

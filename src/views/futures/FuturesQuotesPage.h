@@ -2,10 +2,10 @@
  * @file FuturesQuotesPage.h
  * @brief 期货行情页面 - CTP实时行情
  *
- * 功能：
+ * 功能�?
  * - 显示期货合约行情列表
- * - 连接Simnow行情服务器
- * - 自动查询并订阅所有合约
+ * - 连接Simnow行情服务�?
+ * - 自动查询并订阅所有合�?
  * - 显示实时价格变动
  */
 #pragma once

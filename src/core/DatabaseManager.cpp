@@ -1,14 +1,6 @@
 /**
  * @file DatabaseManager.cpp
  * @brief 数据库管理器实现 - 高性能SQLite数据库管理
- *
- * @details 实现功能：
- * - 连接池管理：减少连接创建开销
- * - 批量操作优化：提高数据插入效率
- * - 事务支持：保证数据一致性
- * - 异步查询：不阻塞UI线程
- * - 性能监控：跟踪查询性能
- *
  * @author WealthPilot Team
  * @version 2.0.0
  */
@@ -118,16 +110,28 @@ QSqlDatabase ConnectionPool::getConnection()
         }
     }
     
-    // 等待可用连接
-    locker.unlock();
-    m_condition.wait(&m_mutex, m_config.connectionTimeout);
-    locker.relock();
+    // 等待可用连接 - 使用正确的条件变量模式
+    while (m_availableConnections.isEmpty() && m_usedConnections.size() >= m_config.maxConnections) {
+        if (!m_condition.wait(&m_mutex, m_config.connectionTimeout)) {
+            // 超时
+            LOG_ERROR("Failed to get database connection: timeout");
+            return QSqlDatabase();
+        }
+    }
     
-    // 再次尝试获取
+    // 再次尝试获取（可能已有可用连接或可以创建新连接）
     if (!m_availableConnections.isEmpty()) {
         QSqlDatabase conn = m_availableConnections.dequeue();
         m_usedConnections[conn.connectionName()] = conn;
         return conn;
+    }
+    
+    if (m_usedConnections.size() < m_config.maxConnections) {
+        QSqlDatabase conn = createConnection();
+        if (conn.isOpen()) {
+            m_usedConnections[conn.connectionName()] = conn;
+            return conn;
+        }
     }
     
     // 返回无效连接
@@ -183,22 +187,27 @@ QSqlDatabase ConnectionPool::createConnection()
         return db;
     }
     
-    // 应用优化设置
+    // 应用优化设置 - 使用 QSqlQuery::exec() 替代已弃用的 db.exec()
+    QSqlQuery pragmaQuery(db);
+    auto execPragma = [&pragmaQuery](const QString& sql) {
+        pragmaQuery.exec(sql);
+    };
+    
     if (m_config.enableWAL) {
-        db.exec("PRAGMA journal_mode=WAL");
+        execPragma("PRAGMA journal_mode=WAL");
     }
     
-    db.exec(QString("PRAGMA cache_size=%1").arg(m_config.cacheSize));
-    db.exec(QString("PRAGMA page_size=%1").arg(m_config.pageSize));
+    execPragma(QString("PRAGMA cache_size=%1").arg(m_config.cacheSize));
+    execPragma(QString("PRAGMA page_size=%1").arg(m_config.pageSize));
     
     if (m_config.enableForeignKeys) {
-        db.exec("PRAGMA foreign_keys=ON");
+        execPragma("PRAGMA foreign_keys=ON");
     }
     
     // 性能优化设置
-    db.exec("PRAGMA synchronous=NORMAL");
-    db.exec("PRAGMA temp_store=MEMORY");
-    db.exec("PRAGMA locking_mode=NORMAL");
+    execPragma("PRAGMA synchronous=NORMAL");
+    execPragma("PRAGMA temp_store=MEMORY");
+    execPragma("PRAGMA locking_mode=NORMAL");
     
     LOG_DEBUG(QString("Connection created: %1").arg(connName));
     
@@ -730,14 +739,15 @@ void DatabaseManager::optimize()
     QSqlDatabase db = m_connectionPool->getConnection();
     
     if (db.isOpen()) {
+        QSqlQuery query(db);
         // 分析数据库
-        db.exec("ANALYZE");
+        query.exec("ANALYZE");
         
         // 清理碎片
-        db.exec("VACUUM");
+        query.exec("VACUUM");
         
         // 重建索引
-        db.exec("REINDEX");
+        query.exec("REINDEX");
         
         LOG_INFO("Database optimized");
     }
@@ -906,13 +916,14 @@ void DatabaseManager::applyOptimizations()
     QSqlDatabase db = m_connectionPool->getConnection();
     
     if (db.isOpen()) {
+        QSqlQuery query(db);
         // 性能优化PRAGMA
-        db.exec("PRAGMA journal_mode = WAL");
-        db.exec("PRAGMA synchronous = NORMAL");
-        db.exec("PRAGMA cache_size = -10240"); // 10MB
-        db.exec("PRAGMA temp_store = MEMORY");
-        db.exec("PRAGMA mmap_size = 268435456"); // 256MB
-        db.exec("PRAGMA page_size = 4096");
+        query.exec("PRAGMA journal_mode = WAL");
+        query.exec("PRAGMA synchronous = NORMAL");
+        query.exec("PRAGMA cache_size = -10240"); // 10MB
+        query.exec("PRAGMA temp_store = MEMORY");
+        query.exec("PRAGMA mmap_size = 268435456"); // 256MB
+        query.exec("PRAGMA page_size = 4096");
         
         LOG_DEBUG("Database optimizations applied");
     }

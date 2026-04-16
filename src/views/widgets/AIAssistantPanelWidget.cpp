@@ -432,7 +432,7 @@ void AIAssistantPanelWidget::addMessage(const QString& text, bool isUser) const
     d->messagesLayout->insertWidget(d->messagesLayout->count() - 1, bubble);
 
     // 滚动到底部
-    QTimer::singleShot(100, [this]() {
+    QTimer::singleShot(100, this, [this]() {
         d->scrollArea->verticalScrollBar()->setValue(
             d->scrollArea->verticalScrollBar()->maximum()
         );
@@ -468,7 +468,7 @@ void AIAssistantPanelWidget::addTypingIndicator() const
     d->messagesLayout->insertWidget(d->messagesLayout->count() - 1, d->typingIndicator);
 
     // 滚动到底部
-    QTimer::singleShot(100, [this]() {
+    QTimer::singleShot(100, this, [this]() {
         d->scrollArea->verticalScrollBar()->setValue(
             d->scrollArea->verticalScrollBar()->maximum()
         );

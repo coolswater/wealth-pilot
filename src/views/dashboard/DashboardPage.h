@@ -10,7 +10,7 @@
 #include "core/QuoteDataManager.h"
 #include "views/widgets/TreeMapWidget.h"
 
-// 如果你的项目有 BasePage，取消注释下面这行并确保 BasePage 继承自 QWidget
+// 如果你的项目�?BasePage，取消注释下面这行并确保 BasePage 继承�?QWidget
 // #include "core/BasePage.h"
 
 class QComboBox;
@@ -19,8 +19,8 @@ class QPushButton;
 class QLabel;
 
 /**
- * @brief 行情仪表盘页面
- * 如果项目使用 PageFactoryRegistry 要求继承 BasePage，则改为：
+ * @brief 行情仪表盘页�?
+ * 如果项目使用 PageFactoryRegistry 要求继承 BasePage，则改为�?
  * class DashboardPage : public BasePage
  */
 class DashboardPage : public BasePage
@@ -75,7 +75,7 @@ private:
     void prevReviewFrame() const;
     void toggleAutoPlay() const;
 
-    struct Impl; // 前置声明实现类
+    struct Impl; // 前置声明实现�?
     std::unique_ptr<Impl> d; // Pimpl指针，减少头文件依赖
 };
 

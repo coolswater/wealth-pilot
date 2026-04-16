@@ -1,16 +1,17 @@
 /**
  * @file ServiceLocator.h
  * @brief 服务定位器 - 高性能依赖注入容器
- *
+ * @author WealthPilot Team
+ * @version 2.0.0
+ * 
  * @details 功能：
  * - 服务注册和解析
  * - 生命周期管理（单例、瞬态）
  * - 延迟初始化
  * - 线程安全
  * - 性能优化：使用快速查找表
- *
- * @author WealthPilot Team
- * @version 2.0.0
+ * 
+ * @thread_safe 所有公共方法都是线程安全的
  */
 #ifndef SERVICELOCATOR_H
 #define SERVICELOCATOR_H
@@ -37,7 +38,7 @@ enum class ServiceLifetime {
  * @brief 服务描述符
  */
 struct ServiceDescriptor {
-    std::type_index type = std::type_index(typeid(void));  // 服务类型（默认void）
+    std::type_index type = std::type_index(typeid(void));  // 服务类型
     ServiceLifetime lifetime = ServiceLifetime::Singleton; // 生命周期
     std::function<QObject*()> factory;                      // 工厂函数
     QObject* instance = nullptr;                            // 单例实例
@@ -46,6 +47,7 @@ struct ServiceDescriptor {
 
 /**
  * @brief 服务定位器 - 高性能DI容器
+ * @thread_safe 所有公共方法都是线程安全的
  */
 class ServiceLocator : public QObject
 {

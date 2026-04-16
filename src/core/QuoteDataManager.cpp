@@ -8,6 +8,7 @@
 #include <QDateTime>
 #include <QTimer>
 #include <QDebug>
+#include <iterator>
 
 /**
  * @brief 构造函数
@@ -497,7 +498,7 @@ void QuoteDataManager::onUpdateTimer()
         {
             // 随机选择一个项目更新
             int index = rng->bounded(m_itemMap.size());
-            auto it = m_itemMap.begin() + index;
+            auto it = std::next(m_itemMap.begin(), index);
             StockQuoteItem& item = it.value();
 
             // 小幅随机波动

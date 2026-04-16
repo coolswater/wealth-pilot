@@ -1,12 +1,16 @@
 /**
  * @file Logger.h
  * @brief 日志管理器
- *
+ * @author WealthPilot Team
+ * @version 2.0.0
+ * 
  * @details 线程安全的日志系统，支持：
  * - 多级别日志 (Debug/Info/Warning/Error)
  * - 文件输出
  * - 控制台输出
  * - 日志级别过滤
+ * 
+ * @thread_safe 所有公共方法都是线程安全的
  */
 
 #ifndef LOGGER_H
@@ -20,6 +24,7 @@
 
 /**
  * @brief 日志管理器
+ * @thread_safe 所有公共方法都是线程安全的
  */
 class Logger
 {
@@ -81,36 +86,22 @@ public:
 private:
     Logger();
     ~Logger();
-
-    // 禁用拷贝
+    
+    // 禁止拷贝
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
 
-    QString levelToString(Level level);
-    void writeToFile(const QString& message);
-    void writeToConsole(const QString& message);
-    void rotateLogFile();
+    QString levelToString(Level level) const;
+    QString currentTime() const;
 
-    std::unique_ptr<QFile> m_logFile;
-    std::unique_ptr<QTextStream> m_stream;
-    Level m_level = Info;
-    QMutex m_mutex;
-    QStringList m_logBuffer; // 日志缓冲区
-
-    static Logger* s_instance;
+    struct Impl;
+    std::unique_ptr<Impl> d;
 };
 
-// ========== 便捷宏 ==========
-
-#define LOG_DEBUG(msg) Logger::instance()->debug(msg)
-#define LOG_INFO(msg) Logger::instance()->info(msg)
+// 便捷宏定义
+#define LOG_DEBUG(msg)   Logger::instance()->debug(msg)
+#define LOG_INFO(msg)    Logger::instance()->info(msg)
 #define LOG_WARNING(msg) Logger::instance()->warning(msg)
-#define LOG_ERROR(msg) Logger::instance()->error(msg)
-
-// 带格式化的日志宏
-#define LOG_DEBUG_FMT(fmt, ...) LOG_DEBUG(QString(fmt).arg(__VA_ARGS__))
-#define LOG_INFO_FMT(fmt, ...) LOG_INFO(QString(fmt).arg(__VA_ARGS__))
-#define LOG_WARNING_FMT(fmt, ...) LOG_WARNING(QString(fmt).arg(__VA_ARGS__))
-#define LOG_ERROR_FMT(fmt, ...) LOG_ERROR(QString(fmt).arg(__VA_ARGS__))
+#define LOG_ERROR(msg)   Logger::instance()->error(msg)
 
 #endif // LOGGER_H

@@ -1,16 +1,17 @@
 /**
  * @file CacheManager.h
  * @brief 缓存管理器 - 多级高性能缓存系统
- *
+ * @author WealthPilot Team
+ * @version 2.0.0
+ * 
  * @details 功能：
  * - 三级缓存：L1（内存）-> L2（磁盘）-> L3（数据库）
  * - 缓存策略：LRU、LFU、TTL
  * - 自动过期清理
  * - 线程安全
  * - 性能优化：预分配内存、批量操作
- *
- * @author WealthPilot Team
- * @version 2.0.0
+ * 
+ * @thread_safe 所有公共方法都是线程安全的
  */
 #ifndef CACHEMANAGER_H
 #define CACHEMANAGER_H
@@ -72,6 +73,7 @@ struct CacheStats {
 
 /**
  * @brief 缓存管理器 - 高性能多级缓存系统
+ * @thread_safe 所有公共方法都是线程安全的
  */
 class CacheManager : public QObject, public Singleton<CacheManager>
 {

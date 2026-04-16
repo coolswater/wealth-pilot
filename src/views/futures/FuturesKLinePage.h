@@ -1,12 +1,9 @@
 /**
  * @file FuturesKLinePage.h
- * @brief 期货K线详情页 - 高性能K线图和技术分析
- *
- * @details 功能：
- * - 实时K线图表（支持多周期）
+ * @brief 期货K线详情页 - 高性能K线图和技术分�? *
+ * @details 功能�? * - 实时K线图表（支持多周期）
  * - 技术指标分析（MA、MACD、RSI、KDJ等）
- * - 成交量分析
- * - 实时行情数据
+ * - 成交量分�? * - 实时行情数据
  * - 交易操作面板
  * - 智能分析建议
  *
@@ -33,8 +30,7 @@ class TradingPanel;
 class RealtimeQuoteWidget;
 
 /**
- * @brief K线周期枚举
- */
+ * @brief K线周期枚�? */
 enum class KLinePeriod {
     Minute1,        // 1分钟
     Minute5,        // 5分钟
@@ -56,9 +52,7 @@ class FuturesKLinePage : public BasePage
 
 public:
     /**
-     * @brief 构造函数
-     * @param parent 父控件
-     */
+     * @brief 构造函�?     * @param parent 父控�?     */
     explicit FuturesKLinePage(QWidget *parent = nullptr);
     
     /**
@@ -72,8 +66,7 @@ public:
     QString pageId() const override { return "FuturesKLine"; }
 
     /**
-     * @brief 初始化页面
-     */
+     * @brief 初始化页�?     */
     void initializePage() override;
 
     /**
@@ -88,8 +81,7 @@ public:
     QString instrument() const;
 
     /**
-     * @brief 设置K线周期
-     */
+     * @brief 设置K线周�?     */
     void setPeriod(KLinePeriod period);
 
     /**
@@ -98,8 +90,7 @@ public:
     void refresh();
 
     /**
-     * @brief 页面激活（重写）
-     */
+     * @brief 页面激活（重写�?     */
     void onPageActivated(const QVariantMap& params) override;
 
 signals:
@@ -129,13 +120,11 @@ private slots:
     void onPeriodChanged(int index);
 
     /**
-     * @brief 技术指标切换
-     */
+     * @brief 技术指标切�?     */
     void onIndicatorToggled(const QString& indicator, bool enabled);
 
     /**
-     * @brief K线数据更新
-     */
+     * @brief K线数据更�?     */
     void onKLineDataReceived(const QVector<KLineData>& data);
 
     /**
@@ -160,13 +149,11 @@ private slots:
 
 private:
     /**
-     * @brief 创建顶部工具栏
-     */
+     * @brief 创建顶部工具�?     */
     QWidget* createToolbar();
 
     /**
-     * @brief 创建K线图表区域
-     */
+     * @brief 创建K线图表区�?     */
     QWidget* createChartArea();
 
     /**
@@ -180,13 +167,11 @@ private:
     QWidget* createBottomPanel();
 
     /**
-     * @brief 加载K线数据
-     */
+     * @brief 加载K线数�?     */
     void loadKLineData();
 
     /**
-     * @brief 计算技术指标
-     */
+     * @brief 计算技术指�?     */
     void calculateIndicators();
 
     /**
@@ -200,8 +185,7 @@ private:
     QString periodText(KLinePeriod period) const;
 
     /**
-     * @brief 获取周期分钟数
-     */
+     * @brief 获取周期分钟�?     */
     int periodMinutes(KLinePeriod period) const;
 
     // PIMPL实现
@@ -210,8 +194,7 @@ private:
 };
 
 /**
- * @brief 技术指标面板
- */
+ * @brief 技术指标面�? */
 class TechnicalIndicatorPanel : public QWidget
 {
     Q_OBJECT

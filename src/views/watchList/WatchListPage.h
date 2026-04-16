@@ -7,7 +7,7 @@
 #include <memory>
 
 /**
- * @brief 自选页面
+ * @brief 自选页�?
  * @details 采用强缓存策略（StrongCache），作为首页常驻内存避免重复创建
  */
 class WatchListPage : public BasePage {
@@ -24,7 +24,7 @@ private:
     void setupAnimations();   // 动画效果配置
     void connectSignals();    // 内部信号连接
 
-    struct Impl;  // 前置声明实现类
+    struct Impl;  // 前置声明实现�?
     std::unique_ptr<Impl> d;  // Pimpl指针，减少头文件依赖
 };
 

@@ -121,7 +121,7 @@ void StatusBarWidget::initConnections()
             );
         });
 
-    connect(d->networkIndicator, &NetworkIndicator::connectionLost, [&]() {
+    connect(d->networkIndicator, &NetworkIndicator::connectionLost, this, [this]() {
         d->latencyLabel->setText("连接断开");
         d->latencyLabel->setStyleSheet("QLabel { color: #ff3b30; font-size: 12px; font-weight: bold; }");
     });

@@ -458,7 +458,7 @@ void DashboardPage::onRefreshClicked() const
 
     // 显示刷新提示
     d->m_refreshBtn->setText("🔄 刷新中...");
-    QTimer::singleShot(500, [this]()
+    QTimer::singleShot(500, this, [this]()
     {
         d->m_refreshBtn->setText("🔄 刷新");
     });

@@ -222,30 +222,30 @@ void SettingsPage::createNotificationSection()
     d->priceAlertCheck = new QCheckBox("价格预警通知", content);
     d->priceAlertCheck->setChecked(true);
     d->priceAlertCheck->setStyleSheet(checkStyle);
-    connect(d->priceAlertCheck, &QCheckBox::stateChanged, this, &SettingsPage::onNotificationChanged);
+    connect(d->priceAlertCheck, &QCheckBox::checkStateChanged, this, &SettingsPage::onNotificationChanged);
     layout->addWidget(d->priceAlertCheck);
 
     d->riskAlertCheck = new QCheckBox("风险预警通知", content);
     d->riskAlertCheck->setChecked(true);
     d->riskAlertCheck->setStyleSheet(checkStyle);
-    connect(d->riskAlertCheck, &QCheckBox::stateChanged, this, &SettingsPage::onNotificationChanged);
+    connect(d->riskAlertCheck, &QCheckBox::checkStateChanged, this, &SettingsPage::onNotificationChanged);
     layout->addWidget(d->riskAlertCheck);
 
     d->tradeNotifyCheck = new QCheckBox("交易完成通知", content);
     d->tradeNotifyCheck->setChecked(true);
     d->tradeNotifyCheck->setStyleSheet(checkStyle);
-    connect(d->tradeNotifyCheck, &QCheckBox::stateChanged, this, &SettingsPage::onNotificationChanged);
+    connect(d->tradeNotifyCheck, &QCheckBox::checkStateChanged, this, &SettingsPage::onNotificationChanged);
     layout->addWidget(d->tradeNotifyCheck);
 
     d->systemNotifyCheck = new QCheckBox("系统公告通知", content);
     d->systemNotifyCheck->setStyleSheet(checkStyle);
-    connect(d->systemNotifyCheck, &QCheckBox::stateChanged, this, &SettingsPage::onNotificationChanged);
+    connect(d->systemNotifyCheck, &QCheckBox::checkStateChanged, this, &SettingsPage::onNotificationChanged);
     layout->addWidget(d->systemNotifyCheck);
 
     d->dailySummaryCheck = new QCheckBox("每日市场总结", content);
     d->dailySummaryCheck->setChecked(true);
     d->dailySummaryCheck->setStyleSheet(checkStyle);
-    connect(d->dailySummaryCheck, &QCheckBox::stateChanged, this, &SettingsPage::onNotificationChanged);
+    connect(d->dailySummaryCheck, &QCheckBox::checkStateChanged, this, &SettingsPage::onNotificationChanged);
     layout->addWidget(d->dailySummaryCheck);
 
     card->setContent(content);

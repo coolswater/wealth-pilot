@@ -14,7 +14,7 @@
 #include <QUrl>
 #include <QElapsedTimer>
 #include <QMutexLocker>
-#include <QtConcurrent>
+#include <QThreadPool>
 #include <QEventLoop>
 
 namespace AI {
@@ -318,8 +318,8 @@ void AIPlugin::sendMessageAsync(const QString& message, const QJsonObject& conte
 {
     LOG_DEBUG("Sending async message");
     
-    // 使用QtConcurrent异步执行
-    QtConcurrent::run([this, message, context]() {
+    // 使用QtConcurrent异步执行 - 使用 QThreadPool::start 避免忽略返回值警告
+    QThreadPool::globalInstance()->start([this, message, context]() {
         QString response = sendMessage(message, context);
         emit messageReceived(response);
     });
@@ -635,16 +635,18 @@ void AIPlugin::cacheResponse(const QString& cacheKey, const QString& response)
 
 void AIPlugin::loadEnvironmentConfig()
 {
-    auto settings = EnvironmentConfig::instance()->currentSettings();
+    auto* settings = EnvironmentConfig::instance()->currentSettings();
+    
+    if (!settings) return;
     
     if (!m_config.contains("provider")) {
-        m_config["provider"] = settings.aiProvider;
+        m_config["provider"] = settings->aiProvider;
     }
     if (!m_config.contains("model")) {
-        m_config["model"] = settings.aiModel;
+        m_config["model"] = settings->aiModel;
     }
     
-    d->model = settings.aiModel;
+    d->model = settings->aiModel;
     
     LOG_DEBUG("AI environment config loaded");
 }

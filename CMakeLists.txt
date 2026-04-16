@@ -36,6 +36,7 @@ set(CORE_SOURCES
         src/core/ThemeManager.h
         src/core/ThemeManager.cpp
         src/core/Singleton.h
+        src/core/ErrorCode.h
         src/core/ConfigManager.h
         src/core/ConfigManager.cpp
         src/core/BasePage.h

@@ -253,17 +253,27 @@ QString AsyncTaskManager::submitTask(const QString& taskId,
 {
     QMutexLocker locker(&m_mutex);
     
-    AsyncTask<T>* task = new AsyncTask<T>(taskId, func, priority);
-    if (callback) {
-        task->setCallback(callback);
-    }
-    
-    connect(task, &AsyncTask<T>::completed, this, [this, taskId]() {
+    // 包装回调函数，加入统计和状态更新
+    auto wrappedCallback = [this, taskId, callback](const TaskResult<T>& result) {
         QMutexLocker locker(&m_mutex);
-        m_completedTasks++;
-        m_taskStates[taskId] = TaskState::Completed;
-        emit taskCompleted(taskId);
-    });
+        if (result.success) {
+            m_completedTasks++;
+            m_taskStates[taskId] = TaskState::Completed;
+            locker.unlock();
+            emit taskCompleted(taskId);
+        } else {
+            m_failedTasks++;
+            m_taskStates[taskId] = TaskState::Failed;
+            locker.unlock();
+            emit taskFailed(taskId, result.error);
+        }
+        if (callback) {
+            callback(result);
+        }
+    };
+    
+    AsyncTask<T>* task = new AsyncTask<T>(taskId, func, priority);
+    task->setCallback(wrappedCallback);
     
     m_tasks[taskId] = task;
     m_taskStates[taskId] = TaskState::Pending;

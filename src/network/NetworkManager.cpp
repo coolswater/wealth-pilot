@@ -170,7 +170,7 @@ void NetworkManager::getAsync(const QString& url,
         reply->deleteLater();
 
         if (reply->error() != QNetworkReply::NoError) {
-            callback(Result<QByteArray>::err(ErrorCode::NET_CONNECTION, reply->errorString()));
+            callback(Result<QByteArray>::err(ErrorCode::NetworkDisconnected, reply->errorString()));
             return;
         }
 
@@ -205,7 +205,7 @@ void NetworkManager::postAsync(const QString& url, const QByteArray& data,
         reply->deleteLater();
 
         if (reply->error() != QNetworkReply::NoError) {
-            callback(Result<QByteArray>::err(ErrorCode::NET_CONNECTION, reply->errorString()));
+            callback(Result<QByteArray>::err(ErrorCode::NetworkDisconnected, reply->errorString()));
             return;
         }
 
@@ -450,7 +450,7 @@ void NetworkManager::retryRequest(const NetworkRequest& request)
     }
 
     // 延迟重试
-    QTimer::singleShot(1000 * request.retryCount, [this, request]() {
+    QTimer::singleShot(1000 * request.retryCount, this, [this, request]() {
         sendRequest(request);
     });
 }

@@ -16,6 +16,7 @@
 #define ENVIRONMENTCONFIG_H
 
 #include "Singleton.h"
+#include <QObject>
 #include <QString>
 #include <QVariant>
 #include <QMap>
@@ -44,18 +45,21 @@ struct EnvironmentSettings {
     QString ctpBrokerId;               // CTP经纪商代码
     QString aiProvider;                 // AI服务提供商
     QString aiModel;                    // AI模型
-    int requestTimeout;                 // 请求超时（毫秒）
-    int retryCount;                     // 重试次数
-    bool enableDebugLog;               // 是否启用调试日志
-    bool enableCache;                  // 是否启用缓存
-    int cacheExpireTime;               // 缓存过期时间（秒）
+    int requestTimeout = 30000;         // 请求超时（毫秒）
+    int retryCount = 3;                 // 重试次数
+    bool enableDebugLog = true;         // 是否启用调试日志
+    bool enableCache = true;            // 是否启用缓存
+    int cacheExpireTime = 300;          // 缓存过期时间（秒）
+    
+    EnvironmentSettings() = default;
 };
 
 /**
  * @brief 多环境配置管理器
  */
-class EnvironmentConfig : public Singleton<EnvironmentConfig>
+class EnvironmentConfig : public QObject, public Singleton<EnvironmentConfig>
 {
+    Q_OBJECT
     friend class Singleton<EnvironmentConfig>;
 
 public:
@@ -82,7 +86,7 @@ public:
     /**
      * @brief 获取当前环境配置
      */
-    const EnvironmentSettings& currentSettings() const;
+    const EnvironmentSettings* currentSettings() const;
 
     /**
      * @brief 获取指定环境配置

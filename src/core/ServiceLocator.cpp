@@ -1,6 +1,8 @@
 /**
  * @file ServiceLocator.cpp
- * @brief 服务定位器实现 - 高性能依赖注入容器
+ * @brief 服务定位器实现
+ * @author WealthPilot Team
+ * @version 2.0.0
  */
 
 #include "ServiceLocator.h"

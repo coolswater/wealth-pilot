@@ -8,7 +8,7 @@
 #include <memory>
 #include <unordered_map>
 
-using PageFactory = std::function<std::shared_ptr<BasePage>(QWidget*)>;
+using PageFactory = std::function<std::shared_ptr<BasePage>(QWidget*)>;;;
 
 struct FactoryMeta {
     PageFactory creator;

@@ -8,8 +8,9 @@
 class QLabel;
 class QLineEdit;
 class QPushButton;
+
 /**
- * @brief 仪表板页面 - 应用主入口页面
+ * @brief 仪表板页�?- 应用主入口页�?
  * @details 采用强缓存策略（StrongCache），作为首页常驻内存避免重复创建
  */
 class PortfolioPage : public BasePage {
@@ -24,7 +25,7 @@ public:
     // 刷新数据
     void refreshData();
 
-    // 设置模拟数据（演示用）
+    // 设置模拟数据（演示用�?
     void setupDemoData() const;
 
 protected:
@@ -38,7 +39,7 @@ private slots:
     void updateRealTimeData() const;
 
 private:
-    struct Impl;  // 前置声明实现类
+    struct Impl;  // 前置声明实现�?
     std::unique_ptr<Impl> d;  // Pimpl指针，减少头文件依赖
 
     void setupUI();           // UI构建
