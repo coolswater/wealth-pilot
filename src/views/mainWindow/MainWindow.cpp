@@ -17,6 +17,8 @@
 #include "../dashboard/DashboardPage.h"
 #include "../stock/StockQuotesPage.h"
 #include "../futures/FuturesQuotesPage.h"
+#include "../futures/FuturesKLinePage.h"
+#include "../../core/base/BasePage.h"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -63,6 +65,17 @@ MainWindow::MainWindow(QWidget *parent)
     , m_initialized(false)
     , m_splashLabel(nullptr)
 {
+
+    setWindowTitle("WealthPilot - 财富领航AI助手");
+    setMinimumSize(1280, 800);
+    resize(1600, 900);
+
+    // 设置窗口无边框属性（关键标志）
+    setWindowFlags(Qt::Window | Qt::FramelessWindowHint |
+        Qt::WindowMinimizeButtonHint |
+        Qt::WindowMaximizeButtonHint |
+        Qt::WindowCloseButtonHint);
+
     QElapsedTimer timer;
     timer.start();
     
@@ -79,6 +92,9 @@ MainWindow::MainWindow(QWidget *parent)
     
     // Create pages
     createPages();
+    
+    // Connect signals
+    connectSignals();
     
     // Load settings
     loadSettings();
@@ -142,7 +158,16 @@ void MainWindow::onSidebarItemClicked(const QString& id)
     // Get page
     QWidget* page = getPage(id);
     if (page) {
+        d->contentStack->setCurrentWidget(page);
         d->currentPageId = id;
+        
+        // Call onPageActivated if it's a BasePage
+        auto* basePage = qobject_cast<BasePage*>(page);
+        if (basePage) {
+            basePage->onPageActivated();
+        }
+        
+        LOG_DEBUG(QString("Switched to page: %1").arg(id));
     }
 }
 
@@ -173,6 +198,24 @@ void MainWindow::onInitializationComplete(bool success)
     }
 }
 
+void MainWindow::onNavigateToKLinePage(const QString& instrumentId, const QVariantMap& params)
+{
+    LOG_INFO(QString("Navigating to KLine page for: %1").arg(instrumentId));
+    
+    // Get or create KLine page
+    QWidget* klinePage = getPage("FuturesKLine");
+    if (klinePage) {
+        // Set instrument
+        auto* kline = qobject_cast<FuturesKLinePage*>(klinePage);
+        if (kline) {
+            kline->setInstrument(instrumentId);
+        }
+        // Switch to KLine page
+        d->contentStack->setCurrentWidget(klinePage);
+        d->currentPageId = "FuturesKLine";
+    }
+}
+
 void MainWindow::setupUI()
 {
     // Create central widget
@@ -199,17 +242,17 @@ void MainWindow::setupUI()
     // Sidebar
     d->sidebar = new SidebarWidget(this);
     d->sidebar->setObjectName("sidebar");
-    d->sidebar->setFixedWidth(200);
+    d->sidebar->setFixedWidth(80);
     
-    d->sidebar->addItem("dashboard", "Dashboard");
-    d->sidebar->addItem("stock", "Stock");
-    d->sidebar->addItem("futures", "Futures");
-    d->sidebar->addItem("portfolio", "Portfolio");
-    d->sidebar->addItem("watchlist", "Watchlist");
-    d->sidebar->addItem("signal", "Signal");
-    d->sidebar->addItem("news", "News");
-    d->sidebar->addItem("settings", "Settings");
-    d->sidebar->addItem("about", "About");
+    d->sidebar->addItem("dashboard", "全局");
+    d->sidebar->addItem("stock", "股票");
+    d->sidebar->addItem("futures", "期货");
+    d->sidebar->addItem("portfolio", "持仓");
+    d->sidebar->addItem("watchlist", "自选");
+    d->sidebar->addItem("signal", "信号");
+    d->sidebar->addItem("news", "资讯");
+    d->sidebar->addItem("settings", "设置");
+    d->sidebar->addItem("about", "关于");
     
     d->mainLayout->addWidget(d->sidebar);
     
@@ -229,12 +272,6 @@ void MainWindow::setupUI()
     d->statusBar->setObjectName("statusBar");
     d->statusBar->setFixedHeight(30);
     d->rootLayout->addWidget(d->statusBar);
-    
-    // Frameless window
-    setMinimumSize(1200, 800);
-    resize(1400, 900);
-    
-    // Frameless window
 }
 
 void MainWindow::createPages()
@@ -268,6 +305,9 @@ void MainWindow::connectSignals()
     connect(&ApplicationInitializer::instance(), &ApplicationInitializer::initializationComplete,
             this, &MainWindow::onInitializationComplete);
     
+    // Connect SidebarWidget signals
+    connect(d->sidebar, &SidebarWidget::itemClicked,
+            this, &MainWindow::onSidebarItemClicked);
     
     // Connect ThemeEngine signals
     connect(&ThemeEngine::instance(), &ThemeEngine::themeChanged,
@@ -310,9 +350,14 @@ QWidget* MainWindow::getPage(const QString& pageId)
     } else if (pageId == "stock") {
         page = new StockQuotesPage(this);
     } else if (pageId == "futures") {
-        page = new FuturesQuotesPage(this);
+        auto* quotesPage = new FuturesQuotesPage(this);
+        page = quotesPage;
+        // Connect navigation signal to KLine page
+        connect(quotesPage, &FuturesQuotesPage::navigateToKLinePage,
+                this, &MainWindow::onNavigateToKLinePage);
+    } else if (pageId == "FuturesKLine") {
+        page = new FuturesKLinePage(this);
     }
-    // ... other pages
     
     if (page) {
         d->pageCache[pageId] = page;

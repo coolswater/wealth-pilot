@@ -79,6 +79,11 @@ private slots:
      */
     void onInitializationComplete(bool success);
 
+    /**
+     * @brief 导航到K线页面
+     */
+    void onNavigateToKLinePage(const QString& instrumentId, const QVariantMap& params);
+
 private:
     /**
      * @brief 构建UI布局
