@@ -1,6 +1,6 @@
-/////////////////////////////////////////////////////////////////////////
+﻿/////////////////////////////////////////////////////////////////////////
 ///@file CtpTradingSpi.h
-///@brief 交易SPI实现 - 订单管理与回报处�?
+///@brief 交易SPI实现 - 处理交易回报和事件
 /////////////////////////////////////////////////////////////////////////
 
 #ifndef CTPTRADINGSPI_H
@@ -13,7 +13,7 @@
 #include "../service/CTPService.h"
 #include "external/ctp/ThostFtdcTraderApi.h"
 
-// 关键：前向声明CTP结构体，避免头文件污�?
+// 关键前向声明CTP结构体（避免头文件污染）
 struct CThostFtdcInvestorPositionField;
 struct CThostFtdcRspInfoField;
 struct CThostFtdcInputOrderField;
@@ -21,7 +21,7 @@ struct CThostFtdcInputOrderField;
 namespace CTP {
 
 /**
- * @brief 交易SPI�?- 处理订单、成交、持仓查�?
+ * @brief 交易SPI类 - 处理交易回报、成交、持仓等
  */
 class CtpTradingSpi : public QObject, public CThostFtdcTraderSpi {
     Q_OBJECT
@@ -34,14 +34,14 @@ public:
     void init();
     void release();
 
-    // 交易请求
+    // 认证登录
     void authenticate(const QString& brokerId, const QString& userId,
                       const QString& appId, const QString& authCode);
     void login(const QString& brokerId, const QString& userId,
                const QString& password);
     void logout();
 
-    // 订单操作
+    // 交易操作
     std::optional<OrderRef> insertOrder(const OrderInfo& order);
     void cancelOrder(const OrderRef& orderRef);
 
@@ -50,10 +50,10 @@ public:
     void queryPositions(const QString& instrument = QString());
     void queryOrders();
     void queryTrades();
-    void queryInstruments(const QString& exchangeId = QString());  // 查询合约
-    void confirmSettlement();  // 确认结算�?
+    void queryInstruments(const QString& exchangeId = QString());  ///< 查询合约
+    void confirmSettlement();  ///< 确认结算单
 
-    // CTP SPI回调（仅列出关键回调，完整实现见cpp�?
+    // CTP SPI回调（仅列出关键回调，其余在cpp中实现）
     void OnFrontConnected() override;
     void OnFrontDisconnected(int nReason) override;
     void OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthenticateField,
@@ -70,8 +70,9 @@ public:
                                   CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
     void OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument,
                             CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
+    void OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, 
+                                    CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
-    void OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 signals:
     void connected();
     void disconnected(int reason);
@@ -85,14 +86,14 @@ signals:
     void instrumentQueried(const QString& instrumentId, const QString& exchangeId,
                            const QString& instrumentName, double priceTick, int volumeMultiple);
     void instrumentQueryFinished(int totalCount);
-    void settlementConfirmed(bool success, const QString& msg);  // 结算单确认结�?
+    void settlementConfirmed(bool success, const QString& msg);  ///< 结算单确认结果
     void error(int requestId, int errorId, const QString& msg);
 
 private:
     class Impl;
     std::unique_ptr<Impl> d;
 
-    // 辅助函数
+    // 转换函数
     static OrderInfo convertOrderField(const CThostFtdcOrderField& field);
     static TradeInfo convertTradeField(const CThostFtdcTradeField& field);
     static OrderStatus convertOrderStatus(char status);
@@ -100,8 +101,6 @@ private:
     static OffsetFlag convertOffsetFlag(char flag);
 };
 
-} // namespace Ctp
+} // namespace CTP
 
 #endif
-
-

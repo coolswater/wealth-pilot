@@ -1,13 +1,13 @@
-/**
+﻿/**
  * @file EnvironmentConfig.h
- * @brief 多环境配置管理器 - 支持开发/测试/生产环境切换
+ * @brief 环境配置管理器 - 支持开发/测试/生产环境切换
  *
- * @details 功能：
- * - 多环境配置管理
- * - 环境切换和验证
+ * @details 主要功能：
+ * - 环境配置管理
+ * - 环境切换与验证
  * - 配置继承和覆盖
  * - 热更新支持
- * - 性能优化：配置缓存
+ * - 环境优化与用户配置
  *
  * @author WealthPilot Team
  * @version 2.0.0
@@ -28,34 +28,34 @@
  * @brief 环境类型
  */
 enum class Environment {
-    Development,    // 开发环境
-    Testing,        // 测试环境
-    Staging,        // 预发布环境
-    Production      // 生产环境
+    Development,    ///< 开发环境
+    Testing,        ///< 测试环境
+    Staging,        ///< 预发布环境
+    Production      ///< 生产环境
 };
 
 /**
- * @brief 环境配置
+ * @brief 环境配置结构
  */
 struct EnvironmentSettings {
-    QString name;                       // 环境名称
-    QString apiUrl;                     // API基础URL
-    QString ctpMarketFront;            // CTP行情前置地址
-    QString ctpTradeFront;             // CTP交易前置地址
-    QString ctpBrokerId;               // CTP经纪商代码
-    QString aiProvider;                 // AI服务提供商
-    QString aiModel;                    // AI模型
-    int requestTimeout = 30000;         // 请求超时（毫秒）
-    int retryCount = 3;                 // 重试次数
-    bool enableDebugLog = true;         // 是否启用调试日志
-    bool enableCache = true;            // 是否启用缓存
-    int cacheExpireTime = 300;          // 缓存过期时间（秒）
+    QString name;                       ///< 环境名称
+    QString apiUrl;                     ///< API服务URL
+    QString ctpMarketFront;            ///< CTP行情前置地址
+    QString ctpTradeFront;             ///< CTP交易前置地址
+    QString ctpBrokerId;               ///< CTP经纪商代码
+    QString aiProvider;                 ///< AI服务提供商
+    QString aiModel;                    ///< AI模型
+    int requestTimeout = 30000;         ///< 请求超时（毫秒）
+    int retryCount = 3;                 ///< 重试次数
+    bool enableDebugLog = true;         ///< 是否启用调试日志
+    bool enableCache = true;            ///< 是否启用缓存
+    int cacheExpireTime = 300;          ///< 缓存过期时间（秒）
     
     EnvironmentSettings() = default;
 };
 
 /**
- * @brief 多环境配置管理器
+ * @brief 环境配置管理器
  */
 class EnvironmentConfig : public QObject, public Singleton<EnvironmentConfig>
 {
@@ -70,6 +70,8 @@ public:
 
     /**
      * @brief 设置当前环境
+     * @param env 目标环境
+     * @return 是否切换成功
      */
     bool setEnvironment(Environment env);
 
@@ -125,7 +127,7 @@ public:
 
 signals:
     /**
-     * @brief 环境变更信号
+     * @brief 环境切换信号
      */
     void environmentChanged(Environment newEnv);
 
@@ -142,13 +144,13 @@ private:
     void updateCache();
     void saveSettings();
 
-    Environment m_currentEnv;
-    QMap<Environment, EnvironmentSettings> m_environments;
-    std::unique_ptr<QSettings> m_settings;
-    QMap<QString, QVariant> m_configCache;
-    mutable QMutex m_mutex;
+    Environment m_currentEnv;                              ///< 当前环境
+    QMap<Environment, EnvironmentSettings> m_environments; ///< 所有环境配置
+    std::unique_ptr<QSettings> m_settings;                 ///< QSettings实例
+    QMap<QString, QVariant> m_configCache;                 ///< 配置缓存
+    mutable QMutex m_mutex;                                ///< 线程安全锁
     
-    static QMap<Environment, QString> s_envNames;
+    static QMap<Environment, QString> s_envNames;          ///< 环境名称映射
 };
 
 #endif // ENVIRONMENTCONFIG_H

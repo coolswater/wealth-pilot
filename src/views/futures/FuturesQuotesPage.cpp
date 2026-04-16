@@ -80,7 +80,7 @@ public:
     // UI components
     QTableView *m_tableView = nullptr;
     FuturesQuoteModel *m_model = nullptr;
-    ActiveContractProxyModel *m_proxyModel = nullptr;  // 【修改】使用自定义代理模型
+    ActiveContractProxyModel *m_proxyModel = nullptr;  // 【Modify】使用自定义代理模型
     QLabel *m_statusLabel = nullptr;
     QLineEdit *m_contractInput = nullptr;
     QLineEdit *m_filterInput = nullptr;
@@ -90,7 +90,7 @@ public:
     // CTP client
     std::unique_ptr<CTP::CTPService> m_CTPService;
 
-    // 状态控�?
+    // Implementation
     std::atomic<bool> m_isCtpConnected{false};
     std::atomic<bool> m_isProcessing{false};
     std::atomic<int> m_tickCount{0};
@@ -100,7 +100,7 @@ public:
     QVector<FuturesQuoteItem> m_pendingUpdates;
     QMutex m_pendingMutex;
 
-    // 已订阅合约列�?
+    // Implementation
     QSet<QString> m_subscribedContracts;
     QMutex m_contractMutex;
 
@@ -118,7 +118,7 @@ public:
     QMap<QString, InstrumentInfo> m_instruments;
     QMutex m_instrumentsMutex;
 
-    // 活跃度跟�?
+    // Implementation
     struct ContractActivity {
         qint64 lastUpdateTime = 0;
         int totalVolume = 0;
@@ -139,7 +139,7 @@ public:
     QTimer *m_flushTimer = nullptr;
     std::atomic<int> m_quoteSequence{0};
 
-    // 页面可见性控�?
+    // Implementation
     std::atomic<bool> m_isVisible{true};
 };
 
@@ -152,12 +152,12 @@ FuturesQuotesPage::FuturesQuotesPage(QWidget* parent)
     // 【新增】初始化示例数据
     initializeSampleData();
 
-    // 【修改】使用自定义代理模型
+    // 【Modify】使用自定义代理模型
     d->m_proxyModel = new ActiveContractProxyModel(this);
     d->m_proxyModel->setSourceModel(d->m_model);
     d->m_proxyModel->setFilterKeyColumn(0);
     d->m_proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
-    d->m_proxyModel->setFilterRole(Qt::DisplayRole); // 默认按显示文本过�?
+    // Implementation
 
     d->m_CTPService = std::make_unique<CTP::CTPService>(this);
     d->m_flushTimer = new QTimer(this);
@@ -223,11 +223,11 @@ void FuturesQuotesPage::initializePage()
         );
 
     d->m_CTPService->setCredentials(brokerId, userId, password, appId, authCode);
-    // simnow�?�?
+    // simnow
     // d->m_CTPService->setMarketFrontAddress("tcp://182.254.243.31:30011");
     // d->m_CTPService->setTradingFrontAddress("tcp://182.254.243.31:30001");
 
-    // simnow�?�?7*24小时
+    // simnow 7*24小时
     d->m_CTPService->setMarketFrontAddress("tcp://182.254.243.31:40011");
     d->m_CTPService->setTradingFrontAddress("tcp://182.254.243.31:40001");
 
@@ -257,7 +257,7 @@ void FuturesQuotesPage::setupCtpConnections()
             [this](const bool success, const QString& msg) {
                 if (success) {
                     LOG_INFO("Market login successful");
-                    updateConnectionStatus("行情登录成功", "#4CAF50");
+                    updateConnectionStatus("行情登录Success", "#4CAF50");
                 } else {
                     LOG_ERROR(QString("Market login failed: %1").arg(msg));
                 }
@@ -269,14 +269,14 @@ void FuturesQuotesPage::setupCtpConnections()
                     LOG_INFO("Trading login successful, confirming settlement...");
 
                     if (d->m_statusLabel) {
-                        d->m_statusLabel->setText("交易登录成功，正在Confirm结算单...");
+                        d->m_statusLabel->setText("交易登录Success，正在Confirm结算单...");
                     }
 
                     d->m_CTPService->confirmSettlement();
                 } else {
                     LOG_ERROR(QString("Trading login failed: %1").arg(msg));
-                    QMessageBox::warning(this, "交易登录失败",
-                                         QString("CTP交易登录失败: %1").arg(msg));
+                    QMessageBox::warning(this, "交易登录Failed",
+                                         QString("CTP交易登录Failed: %1").arg(msg));
                 }
             });
 
@@ -286,7 +286,7 @@ void FuturesQuotesPage::setupCtpConnections()
                     LOG_INFO("Settlement confirmed, querying instruments...");
 
                     if (d->m_statusLabel) {
-                        d->m_statusLabel->setText("结算单已Confirm，正在查询合�?..");
+    // Implementation
                     }
 
                     QTimer::singleShot(500, this, [this]() {
@@ -372,7 +372,7 @@ void FuturesQuotesPage::onInstrumentQueried(const QString& instrumentId, const Q
 
         int count = d->m_instrumentCount.fetch_add(1) + 1;
         if (count % 100 == 0 && d->m_statusLabel) {
-            d->m_statusLabel->setText(QString("已查�?%1 个有效合�?..").arg(count));
+    // Implementation
         }
     } else {
         if (isExpired) {
@@ -384,7 +384,7 @@ void FuturesQuotesPage::onInstrumentQueried(const QString& instrumentId, const Q
                       .arg(instrumentId).arg(expiryDate.toString("yyyy-MM")));
         }
         if (!isStandard) {
-            LOG_DEBUG(QString("过滤非标准合�? %1").arg(instrumentId));
+    // Implementation
         }
     }
 }
@@ -589,12 +589,12 @@ void FuturesQuotesPage::onCtpBatchMarketData(const QList<CTP::MarketData>& dataL
             }
         }
 
-        // 【修改】活跃度状态：0=不活�? 1=活跃, 2=高流动�?
+    // Implementation
         int activityLevel = 0;
         if (ctpData.Volume > 100 && ctpData.OpenInterest > 500) {
-            activityLevel = 2; // 高流动�?
+    // Implementation
         } else if (isActive) {
-            activityLevel = 1; // 活跃
+            activityLevel = 1; // Active
         }
         item.activityStatus = activityLevel;
 
@@ -653,13 +653,13 @@ void FuturesQuotesPage::updateMainContractByVolume(const QString& contractId, in
     }
 
     if (volume > MIN_DAILY_VOLUME && !currentMain.isEmpty()) {
-        // 简化处理：实际应该比较一段时间内的累计成交量
+        // 简化处理：实际应该比较一段时间内的累计Volume
     }
 }
 
 bool FuturesQuotesPage::shouldDisplayContract(const QString& contractId, const CTP::MarketData& data) const
 {
-    // 【修改】添加后备逻辑：如果没有任何合约，显示所有数�?
+    // Implementation
     bool hasAnyContract = false;
     {
         QMutexLocker locker(&d->m_instrumentsMutex);
@@ -671,7 +671,7 @@ bool FuturesQuotesPage::shouldDisplayContract(const QString& contractId, const C
         return true;
     }
 
-    // 【修改】直接从代理模型获取当前过滤模式，避免atomic的语法问�?
+    // Implementation
     switch (int filterMode = d->m_proxyModel->filterMode()) {
         case 0: // ShowAll
             return true;
@@ -755,7 +755,7 @@ void FuturesQuotesPage::updateMainContracts()
 {
     identifyMainContracts();
 
-    // 【修改】如果当前是仅显示主力模式，刷新代理模型
+    // 【Modify】如果当前是仅显示主力模式，刷新代理模型
     if (d->m_proxyModel->filterMode() == 2) {
         QMetaObject::invokeMethod(this, [this]() {
             d->m_proxyModel->invalidate(); // 使用 invalidate() 替代
@@ -763,7 +763,7 @@ void FuturesQuotesPage::updateMainContracts()
     }
 }
 
-// 【新增】设置活跃度过滤模式的公有接�?
+    // Implementation
 void FuturesQuotesPage::setFilterMode(const int mode) const
 {
     if (mode >= 0 && mode <= 3) {
@@ -859,12 +859,12 @@ void FuturesQuotesPage::onRowClicked(const QModelIndex &index) const
                  .arg(item->lastPrice));
     
     // 【新增】双击跳转到K线详情页
-    // 单击只选中，双击跳�?
+    // Implementation
 }
 
 /**
  * @brief 双击行跳转到K线详情页
- * @param index 点击的索�?
+    // Implementation
  */
 void FuturesQuotesPage::onRowDoubleClicked(const QModelIndex &index)
 {
@@ -883,7 +883,7 @@ void FuturesQuotesPage::onRowDoubleClicked(const QModelIndex &index)
     params["instrumentName"] = item->contractName; // TODO: Get contract name
     params["sourcePage"] = pageId();
     
-    // 发送导航信�?
+    // Implementation
     emit navigateToKLinePage(item->contractName, params);
 }
 
@@ -964,7 +964,7 @@ void FuturesQuotesPage::setupUI()
     refreshBtn->setProperty("ghost", true);
 
     d->m_contractInput = new QLineEdit();
-    d->m_contractInput->setPlaceholderText("输入合约代码 (�? rb2505)");
+    // Implementation
     d->m_contractInput->setMaximumWidth(150);
 
     d->m_subscribeBtn = new QPushButton("订阅");
@@ -982,7 +982,7 @@ void FuturesQuotesPage::setupUI()
     auto *filterLabel = new QLabel("筛选：");
     filterLabel->setProperty("secondary", true);
     d->m_filterInput = new QLineEdit();
-    d->m_filterInput->setPlaceholderText("输入合约代码筛�?..");
+    // Implementation
     d->m_filterInput->setMaximumWidth(120);
 
     toolbarLayout->addWidget(refreshBtn);
@@ -1036,7 +1036,7 @@ void FuturesQuotesPage::setupUI()
         d->m_proxyModel->setFilterFixedString(text.toUpper());
     });
 
-    // 【修改】使用公有方法设置过滤模�?
+    // Implementation
     connect(d->m_activityFilter, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, [this](int index) {
                 const int mode = d->m_activityFilter->currentData().toInt();
@@ -1063,21 +1063,21 @@ void FuturesQuotesPage::initializeSampleData() const
 {
     LOG_INFO("Initializing sample data for FuturesQuotesPage");
 
-    // 创建一些示例期货合约数�?
+    // Implementation
     QVector<FuturesQuoteItem> sampleData;
     
     // 示例合约数据
     QVector<std::tuple<QString, double, double, int, int, double, double>> sampleContracts = {
         {"cu2504", 71230, 71250, 150, 200, 71000, 71500},  // 沪铜
-        {"rb2505", 4320, 4325, 80, 100, 4300, 4350},      // 螺纹�?
+    // Implementation
         {"au2506", 580, 582, 30, 40, 575, 585},          // 沪金
         {"ag2505", 7800, 7820, 50, 60, 7750, 7850},       // 沪银
-        {"zn2505", 23800, 23850, 120, 150, 23700, 23900}, // �?
-        {"ni2505", 158000, 158500, 5, 8, 157000, 159000},// �?
-        {"sn2505", 228000, 228500, 3, 5, 227000, 229000},// �?
-        {"al2505", 20400, 20450, 100, 120, 20300, 20500},// �?
-        {"pb2505", 20800, 20850, 40, 50, 20700, 20900},  // �?
-        {"zcecf2505", 6800, 6820, 200, 250, 6750, 6850}  // 玉米淀�?
+    // Implementation
+    // Implementation
+    // Implementation
+    // Implementation
+    // Implementation
+    // Implementation
     };
 
     for (const auto& contract : sampleContracts) {
@@ -1092,13 +1092,13 @@ void FuturesQuotesPage::initializeSampleData() const
         item.openInterest = openInterest;
         item.bidPrice = bidPrice;
         item.askPrice = askPrice;
-        item.isMainContract = true;  // 标记为活跃合�?
-        item.activityStatus = 2;     // High Liquidity状�?
+    // Implementation
+    // Implementation
 
         sampleData.append(item);
     }
 
-    // 将示例数据添加到模型�?
+    // Implementation
     if (d->m_model) {
         d->m_model->setQuotes(sampleData);
         LOG_INFO(QString("Added %1 sample contracts to model").arg(sampleData.size()));

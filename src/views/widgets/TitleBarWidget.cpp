@@ -1,4 +1,4 @@
-// TitleBarWidget.cpp
+﻿// TitleBarWidget.cpp
 #include "SvgIconWidget.h"
 #include "ThemeToggleButton.h"
 #include "TitleBarWidget.h"
@@ -22,7 +22,7 @@ struct TitleBarWidget::Impl {
     ThemeToggleButton *m_themeButton = nullptr;
 
     // 拖动相关变量
-    QPoint m_dragStartPos;           // 拖动起始鼠标位置（全局坐标�?
+    QPoint m_dragStartPos;           // 拖动起始鼠标位置（全局坐标�?
     QPoint m_dragStartWindowPos;     // 拖动起始窗口位置
     bool m_isDragging = false;       // 是否正在拖动
     bool m_isMaximized = false;      // 当前是否最大化/全屏
@@ -36,18 +36,18 @@ TitleBarWidget::TitleBarWidget(QWidget *parent)
 {
     d->m_mainWindow = parent;
 
-    // 设置固定高度（标准标题栏高度36-40像素�?
+    // 设置固定高度（标准标题栏高度36-40像素
     setFixedHeight(40);
 
-    // 重要：启用鼠标跟踪，否则mouseMoveEvent在按住按钮时才触�?
+    // 重要：启用鼠标跟踪，否则mouseMoveEvent在按住按钮时才触发
     setMouseTracking(true);
 
-    // 初始化UI和连�?
+    // 初始化UI和连接信号
     setupUI();
     initConnections();
     applyThemeStyle();  // 应用初始主题样式
 
-    // 监听父窗口状态变�?
+    // 监听父窗口状态变化
     if (d->m_mainWindow) {
         d->m_mainWindow->installEventFilter(this);
     }
@@ -59,7 +59,7 @@ void TitleBarWidget::setupUI()
 {
     // 主布局 - 水平排列
     auto *layout = new QHBoxLayout(this);
-    layout->setContentsMargins(12, 0, 12, 0);  // 左右边距12，上�?
+    layout->setContentsMargins(12, 0, 12, 0);  // 左右边距12，上�?
     layout->setSpacing(5);
     layout->setAlignment(Qt::AlignVCenter);
 
@@ -81,12 +81,12 @@ void TitleBarWidget::setupUI()
 
     // 创建主题切换按钮
     d->m_themeButton = new ThemeToggleButton(this);
-    d->m_themeButton->setButtonSize(QSize(100, 30));  // 自定义尺�?
+    d->m_themeButton->setButtonSize(QSize(100, 30));  // 自定义尺�?
     d->m_themeButton->setIconSize(16);
 
     layout->addWidget(d->m_themeButton);
 
-    // 添加小间距分�?
+    // 添加小间距分隔
     layout->addSpacing(12);
 
     // 最小化按钮
@@ -135,7 +135,7 @@ void TitleBarWidget::initConnections()
     connect(d->m_closeBtn, &QPushButton::clicked,
             this, &TitleBarWidget::onCloseClicked);
 
-    // 连接主题管理器的信号到主窗口�?
+    // 连接主题管理器的信号到主窗口
     connect(d->m_themeButton, &ThemeToggleButton::themeSwitchRequested,
             [](ThemeManager::ThemeType type) {
                 qDebug() << "User requested theme change to:" << static_cast<int>(type);
@@ -202,7 +202,7 @@ void TitleBarWidget::mouseMoveEvent(QMouseEvent *event)
             d->m_isMaximized = false;
             updateMaximizeButton(false);
 
-            // 重新计算位置，使鼠标位于标题栏中心附�?
+            // 重新计算位置，使鼠标位于标题栏中心
             int newX = event->globalPosition().toPoint().x() - d->m_mainWindow->width() / 2;
             int newY = event->globalPosition().toPoint().y() - 10;
             d->m_dragStartWindowPos = QPoint(newX, newY);
@@ -247,13 +247,13 @@ bool TitleBarWidget::eventFilter(QObject *watched, QEvent *event)
     return QWidget::eventFilter(watched, event);
 }
 
-// 槽函数实�?
+// 槽函数实现
 void TitleBarWidget::onThemeChanged()
 {
     // 重新应用样式以匹配新主题
     applyThemeStyle();
 
-    // 如果ThemeToggleButton存在，它也会自动响应，但我们需要确保一致�?
+    // 如果ThemeToggleButton存在，它也会自动响应，但我们需要确保一致�?
     // 实际切换逻辑在ThemeToggleButton中处理，这里只更新标题栏样式
 }
 

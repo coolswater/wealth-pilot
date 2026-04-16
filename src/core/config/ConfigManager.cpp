@@ -1,6 +1,6 @@
-/**
+﻿/**
  * @file ConfigManager.cpp
- * @brief 配置管理器实�?
+ * @brief 配置管理器实现
  */
 
 #include "ConfigManager.h"
@@ -51,6 +51,7 @@ bool ConfigManager::initialize(const QString& orgName, const QString& appName)
             );
     }
 
+    // 预加载常用配置到缓存
     static const QStringList preloadKeys = {
         ConfigKeys::Theme,
         ConfigKeys::Language,
@@ -74,12 +75,15 @@ QVariant ConfigManager::get(const QString& key, const QVariant& defaultValue)
 {
     QMutexLocker locker(&m_mutex);
 
+    // 先查缓存
     if (m_cache.contains(key)) {
         return m_cache[key];
     }
 
+    // 从设置读取
     QVariant value = m_settings->value(key, defaultValue);
 
+    // 缓存有效值
     if (value.isValid()) {
         m_cache[key] = value;
     }
@@ -204,6 +208,7 @@ QString ConfigManager::encrypt(const QString& plainText)
     DATA_BLOB outputBlob;
     ZeroMemory(&outputBlob, sizeof(outputBlob));
 
+    // 使用 Windows DPAPI 加密
     if (CryptProtectData(&inputBlob, nullptr, nullptr, nullptr, nullptr, 0, &outputBlob)) {
         QByteArray result(reinterpret_cast<char*>(outputBlob.pbData), outputBlob.cbData);
         LocalFree(outputBlob.pbData);
@@ -213,6 +218,7 @@ QString ConfigManager::encrypt(const QString& plainText)
     LOG_ERROR("CryptProtectData failed");
     return QString();
 #else
+    // 非Windows平台的简单实现（生产环境应使用更安全的方式）
     LOG_WARNING("Secure storage not fully implemented on non-Windows platform");
     return plainText.toUtf8().toBase64();
 #endif
@@ -229,6 +235,7 @@ QString ConfigManager::decrypt(const QString& cipherText)
     DATA_BLOB outputBlob;
     ZeroMemory(&outputBlob, sizeof(outputBlob));
 
+    // 使用 Windows DPAPI 解密
     if (CryptUnprotectData(&inputBlob, nullptr, nullptr, nullptr, nullptr, 0, &outputBlob)) {
         QString result = QString::fromUtf8(reinterpret_cast<char*>(outputBlob.pbData), outputBlob.cbData);
         LocalFree(outputBlob.pbData);
@@ -248,6 +255,7 @@ bool ConfigManager::exportToFile(const QString& filePath, bool includeSecure)
 
     QJsonObject root;
 
+    // 导出普通配置
     m_settings->beginGroup(QString());
     for (const QString& key : m_settings->allKeys()) {
         if (key.startsWith("__secure__")) continue;
@@ -255,6 +263,7 @@ bool ConfigManager::exportToFile(const QString& filePath, bool includeSecure)
     }
     m_settings->endGroup();
 
+    // 可选：导出安全配置
     if (includeSecure) {
         m_settings->beginGroup("__secure__");
         QJsonObject secureObj;
@@ -299,6 +308,7 @@ bool ConfigManager::importFromFile(const QString& filePath)
     QJsonObject root = doc.object();
     for (auto it = root.begin(); it != root.end(); ++it) {
         if (it.key() == "__secure__") {
+            // 导入安全配置
             m_settings->beginGroup("__secure__");
             QJsonObject secureObj = it.value().toObject();
             for (auto sit = secureObj.begin(); sit != secureObj.end(); ++sit) {

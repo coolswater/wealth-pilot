@@ -1,4 +1,4 @@
-#ifndef DASHBOARDPAGE_H
+﻿#ifndef DASHBOARDPAGE_H
 #define DASHBOARDPAGE_H
 
 #include <QWidget>
@@ -10,18 +10,16 @@
 #include "market/QuoteDataManager.h"
 #include "views/widgets/TreeMapWidget.h"
 
-// 如果你的项目�?BasePage，取消注释下面这行并确保 BasePage 继承�?QWidget
-// #include "core/base/BasePage.h"
-
 class QComboBox;
 class QLineEdit;
 class QPushButton;
 class QLabel;
 
 /**
- * @brief 行情仪表盘页�?
- * 如果项目使用 PageFactoryRegistry 要求继承 BasePage，则改为�?
- * class DashboardPage : public BasePage
+ * @brief 仪表盘页面类
+ * 
+ * 使用 PageFactoryRegistry 需要继承 BasePage
+ * 展示市场全景图，包括板块涨跌幅、个股表现等
  */
 class DashboardPage : public BasePage
 {
@@ -31,16 +29,22 @@ public:
     explicit DashboardPage(QWidget* parent = nullptr);
     ~DashboardPage() override;
 
+    /**
+     * @brief 获取页面ID
+     */
     [[nodiscard]] QString pageId() const override;
+    
+    /**
+     * @brief 初始化页面
+     */
     void initializePage() override;
 
-
     // 公共接口
-    void refreshData() const; // 手动刷新
-    void setMarket(const QString& market) const; // 设置当前市场
-    void setFullScreen(bool fullscreen) const; // 全屏模式切换
+    void refreshData() const;           ///< 手动刷新
+    void setMarket(const QString& market) const;  ///< 设置当前市场
+    void setFullScreen(bool fullscreen) const;    ///< 全屏模式切换
 
-    // 处理键盘导航（供 TreeMapWidget 回调或外部调用）
+    // 键盘导航接口（供外部调用）
     void handleKeyNavigation(int key);
 
 protected:
@@ -62,21 +66,21 @@ private slots:
     void showHelp();
 
 private:
-    void initUI();
-    void initToolBar();
-    void initStatusBar();
-    void connectSignals();
-    void initData();
-    void loadMarketData(const QString& market) const;
-    void updateIndustryCombo(const QVector<StockQuoteItem>& items) const;
+    void initUI();          ///< 初始化UI
+    void initToolBar();     ///< 初始化工具栏
+    void initStatusBar();   ///< 初始化状态栏
+    void connectSignals();  ///< 连接信号槽
+    void initData();        ///< 初始化数据
+    void loadMarketData(const QString& market) const;       ///< 加载市场数据
+    void updateIndustryCombo(const QVector<StockQuoteItem>& items) const;  ///< 更新行业下拉框
 
     // 复盘控制
-    void nextReviewFrame() const;
-    void prevReviewFrame() const;
-    void toggleAutoPlay() const;
+    void nextReviewFrame() const;   ///< 下一帧
+    void prevReviewFrame() const;   ///< 上一帧
+    void toggleAutoPlay() const;    ///< 切换自动播放
 
-    struct Impl; // 前置声明实现�?
-    std::unique_ptr<Impl> d; // Pimpl指针，减少头文件依赖
+    struct Impl;                    ///< 前向声明实现结构体
+    std::unique_ptr<Impl> d;        ///< Pimpl指针，隐藏实现细节
 };
 
 #endif // DASHBOARDPAGE_H

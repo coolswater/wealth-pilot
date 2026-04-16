@@ -1,4 +1,4 @@
-#ifndef BASEPAGE_H
+﻿#ifndef BASEPAGE_H
 #define BASEPAGE_H
 
 #include <QWidget>
@@ -7,14 +7,14 @@
 
 /**
  * @class BasePage
- * @brief 所有页面的抽象基类（接口规范）
+ * @brief 所有页面的基类（接口规范）
  * @details 设计原则：
- * 1. 延迟初始化：构造函数只做轻量设置，UI构建延迟到 initializePage()
- * 2. 生命周期感知：通过 onPageActivated/onPageDeactivated 管理可见性状态
- * 3. 完全解耦：页面不直接依赖导航器，通过信号 requestNavigation 发起跳转
- * 4. Pimpl支持：派生类应使用 d-pointer 模式隐藏实现细节（编译防火墙）
+ * 1. 延迟初始化：构造函数只做基础设置，UI构建延迟到 initializePage()
+ * 2. 状态感知：通过 onPageActivated/onPageDeactivated 感知可见状态
+ * 3. 安全导航：页面不直接创建其他页面，通过信号 requestNavigation 请求跳转
+ * 4. Pimpl支持：子类应使用 d-pointer 模式隐藏实现细节（非强制但建议）
  *
- * @note 所有虚函数都有默认空实现（除纯虚函数外），减少派生类样板代码
+ * @note 所有虚函数都有默认空实现（除纯虚函数外），子类按需重写即可
  */
 class BasePage : public QWidget {
     Q_OBJECT
@@ -24,78 +24,78 @@ public:
 
     /**
      * @brief 页面唯一标识符（纯虚函数，必须实现）
-     * @return 页面ID字符串，必须全局唯一（建议格式："module/feature"，如"settings/account"）
-     * @warning 必须与 PageFactoryRegistry::registerPage() 中使用的ID完全一致，否则导航失败
+     * @return 页面ID字符串，建议全局唯一，推荐格式："module/feature"，如"settings/account"
+     * @warning 必须与 PageFactoryRegistry::registerPage() 使用的ID完全一致，否则导航失败
      */
     virtual QString pageId() const = 0;
 
     /**
-     * @brief 页面友好名称（用于UI显示，如标签页标题、面包屑导航）
-     * @return 显示名称，默认实现返回 pageId()（建议派生类覆写提供本地化名称）
+     * @brief 页面友好名称，用于UI显示（如标签页标题、面包屑导航等）
+     * @return 显示名称，默认实现返回 pageId()，子类可重写提供本地化名称
      */
     virtual QString pageName() const { return pageId(); }
 
     /**
      * @brief 页面初始化钩子（纯虚函数，必须实现）
-     * @details 调用时机：页面首次被创建时（由 PageNavigatorManager::getOrCreatePage 触发）
-     * 应完成所有UI构建和静态配置（如布局、样式、信号连接），但不应加载远程数据
-     * @note 会被多次调用防护（isInitialized() 检查），但派生类实现仍应避免重复初始化
+     * @details 调用时机：页面首次被创建时，由 PageNavigatorManager::getOrCreatePage 调用
+     * 应在此处：创建UI组件、建立布局、连接信号、初始化模型等
+     * @note 可能被多次调用（有 isInitialized() 检查），但实现应保证不重复初始化
      */
     virtual void initializePage() = 0;
 
     /**
-     * @brief 页面激活回调（每次显示时触发）
-     * @param params 上游页面传递的参数（如用户ID、筛选条件、编辑模式标志等）
-     * @details 调用时机：页面从后台切换到前台时（navigateTo 或返回操作）
+     * @brief 页面激活回调：每次显示时触发
+     * @param params 从其他页面传递的参数（如用户ID、可选项、编辑模式标志等）
+     * @details 调用时机：页面从后台切换到前台时（navigateTo 或返回操作触发）
      * 适合执行：
-     * - 加载动态数据（网络请求、数据库查询）
-     * - 根据参数刷新UI（如显示指定用户资料）
-     * - 恢复上次离开时的状态（滚动位置、输入内容）
+     * - 加载动态数据（如刷新列表、查询数据库等）
+     * - 根据参数刷新UI（如显示指定用户信息）
+     * - 恢复上次离开时的状态（如滚动位置、表单数据）
      *
-     * @note 参数通过 QVariantMap 传递，支持任意Qt可拷贝类型（QString, int, bool, 自定义结构体等）
-     * 使用前先检查 contains：if (params.contains("userId")) { int id = params["userId"].toInt(); }
+     * @note 参数通过 QVariantMap 传递，支持任何Qt可序列化类型（QString, int, bool, 自定义结构等）
+     * 使用前建议检查 contains：if (params.contains("userId")) { int id = params["userId"].toInt(); }
      */
     virtual void onPageActivated(const QVariantMap &params = {}) {}
 
     /**
-     * @brief 页面失活回调（每次隐藏时触发）
-     * @details 调用时机：页面从前台切换到后台时（导航到其他页或返回）
+     * @brief 页面失活回调：每次隐藏时触发
+     * @details 调用时机：页面从前台切换到后台时（导航到其他页面或返回）
      * 适合执行：
-     * - 保存临时状态（未提交的表单数据、滚动位置）
-     * - 停止后台任务（定时器、网络轮询、动画）
-     * - 释放重量级资源（大图缓存、临时文件）
+     * - 保存临时状态（未提交的表单数据、滚动位置等）
+     * - 停止后台任务（定时器、轮询查询、动画等）
+     * - 释放不必要的资源（图片缓存、临时文件等）
      *
-     * @note 不保证一定被调用（如应用强制退出），关键数据应实时保存
+     * @note 此方法保证一定会调用，子类应实时保存关键数据
      */
     virtual void onPageDeactivated() {}
 
     /**
      * @brief 是否允许多实例
-     * @return false（默认）：单例模式，全局唯一实例，适合设置页、首页
-     *          true：每次导航创建新实例，适合详情页（如不同商品详情并行打开）
-     * @warning 多实例模式需谨慎使用，会增加内存占用，且历史栈管理更复杂（需通过参数区分实例）
+     * @return false（默认）：单例模式，全局唯一实例，适合大多数页面（如设置页）
+     *          true：每次导航创建新实例，适合多标签页（如不同产品详情页并排打开）
+     * @warning 多实例模式谨慎使用，可能导致内存占用过高，历史栈管理复杂，通常不建议使用
      */
     virtual bool allowMultiInstance() const { return false; }
 
-    // ==================== 初始化状态管理（供框架调用） ====================
+    // ==================== 初始化状态（供框架调用） ====================
 
     /** @brief 检查是否已完成初始化 */
     bool isInitialized() const { return m_initialized; }
 
-    /** @brief 设置初始化标记（由 PageNavigatorManager 在 initializePage 后调用） */
+    /** @brief 设置初始化标志（由 PageNavigatorManager 的 initializePage 调用） */
     void setInitialized(bool init) { m_initialized = init; }
 
 signals:
     /**
-     * @brief 页面请求导航信号（实现与导航器的零耦合通信）
-     * @param targetPageId 目标页面ID（必须已在工厂注册）
-     * @param params 向下一个页面传递的参数（支持任意键值对）
-     * @param replaceCurrent 是否替换当前历史记录（默认false）
-     * @details 页面内部通过 emit requestNavigation("target", params) 发起跳转
-     * 由 PageNavigatorManager 接收并执行，页面无需包含导航器头文件（解耦关键）
+     * @brief 页面请求导航信号（实现与导航系统解耦通信）
+     * @param targetPageId 目标页面的ID（必须已在工厂注册）
+     * @param params 想要传递给下一页面的参数，支持任意键值对
+     * @param replaceCurrent 是否替换当前历史记录（默认false，即压栈）
+     * @details 页面内部通过 emit requestNavigation("target", params) 请求跳转
+     * 由 PageNavigatorManager 接收并执行，页面本身不持有导航器引用，完全解耦
      *
      * 典型使用场景：
-     * - 列表页点击详情：emit requestNavigation("productDetail", {{"id", productId}});
+     * - 列表页打开详情：emit requestNavigation("productDetail", {{"id", productId}});
      * - 登录成功替换登录页：emit requestNavigation("dashboard", {}, true);
      */
     void requestNavigation(const QString &targetPageId,
@@ -103,14 +103,14 @@ signals:
                            bool replaceCurrent = false);
 
     /**
-     * @brief 页面状态变更通知（用于调试和状态栏显示）
-     * @param status 状态描述（如"loading", "error", "initialized"）
-     * @details 可选实现，外部可连接此信号显示加载状态（如标题栏转圈、日志记录）
+     * @brief 页面状态变更通知，用于调试和状态可视化显示
+     * @param status 状态名称，如 "loading", "error", "initialized"
+     * @details 可选实现，外部监听者可由此信号显示加载状态（如进度条、转圈动画、日志记录等）
      */
     void pageStatusChanged(const QString &status);
 
 private:
-    bool m_initialized = false;  ///< 初始化标记（防止重复初始化）
+    bool m_initialized = false;  ///< 初始化标志，防止重复初始化
 };
 
 #endif // BASEPAGE_H

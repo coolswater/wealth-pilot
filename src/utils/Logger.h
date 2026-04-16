@@ -1,14 +1,14 @@
-/**
+﻿/**
  * @file Logger.h
  * @brief 日志管理器
  * @author WealthPilot Team
  * @version 2.0.0
  * 
  * @details 线程安全的日志系统，支持：
- * - 多级别日志 (Debug/Info/Warning/Error)
+ * - 分级日志 (Debug/Info/Warning/Error)
  * - 文件输出
  * - 控制台输出
- * - 日志级别过滤
+ * - 日志文件轮转
  * 
  * @thread_safe 所有公共方法都是线程安全的
  */
@@ -23,7 +23,7 @@
 #include <memory>
 
 /**
- * @brief 日志管理器
+ * @brief 日志管理器类
  * @thread_safe 所有公共方法都是线程安全的
  */
 class Logger
@@ -87,7 +87,7 @@ private:
     Logger();
     ~Logger();
     
-    // 禁止拷贝
+    // 禁止复制
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
 

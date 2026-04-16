@@ -1,17 +1,17 @@
-#ifndef PORTFOLIOPAGE_H
+﻿#ifndef PORTFOLIOPAGE_H
 #define PORTFOLIOPAGE_H
 
 #include <core/base/BasePage.h>
 #include <memory>
 
-// 前向声明减少编译依赖
+// 前向声明，减少头文件依赖
 class QLabel;
 class QLineEdit;
 class QPushButton;
 
 /**
- * @brief 仪表板页�?- 应用主入口页�?
- * @details 采用强缓存策略（StrongCache），作为首页常驻内存避免重复创建
+ * @brief 投资组合页面 - 应配置为强缓存页面
+ * @details 建议强引用缓存（StrongCache），因为主页常驻内存，避免重复创建
  */
 class PortfolioPage : public BasePage {
     Q_OBJECT
@@ -25,7 +25,7 @@ public:
     // 刷新数据
     void refreshData();
 
-    // 设置模拟数据（演示用�?
+    // 设置演示模式数据（用于演示）
     void setupDemoData() const;
 
 protected:
@@ -39,18 +39,16 @@ private slots:
     void updateRealTimeData() const;
 
 private:
-    struct Impl;  // 前置声明实现�?
-    std::unique_ptr<Impl> d;  // Pimpl指针，减少头文件依赖
+    struct Impl;                   ///< 前向声明实现结构体
+    std::unique_ptr<Impl> d;       ///< Pimpl指针，隐藏实现细节
 
-    void setupUI();           // UI构建
-    void createHeader();
-    void createCardsSection();
-    void createChartsSection();
-    void setupAnimations();   // 动画效果配置
-    void connectSignals();    // 内部信号连接
-    // 数据更新（异步）
-    void fetchDataAsync();
+    void setupUI();                ///< UI构建
+    void createHeader();           ///< 创建头部
+    void createCardsSection();     ///< 创建卡片区域
+    void createChartsSection();    ///< 创建图表区域
+    void setupAnimations();        ///< 动画效果设置
+    void connectSignals();         ///< 内部信号槽连接
+    void fetchDataAsync();         ///< 数据更新（异步）
 };
 
-#endif // DASHBOARDPAGE_H
-
+#endif // PORTFOLIOPAGE_H

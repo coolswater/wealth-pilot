@@ -1,10 +1,12 @@
-/**
+﻿/**
  * @file Result.h
- * @brief 结果类型 - 统一的错误处理机�? * @author WealthPilot Team
+ * @brief 结果类型 - 统一的错误处理机制
+ * @author WealthPilot Team
  * @version 2.0.0
  * 
- * @details 灵感来自 Rust �?Result<T, E> 类型
- * 用于函数返回值，明确区分成功和失�? * 
+ * @details 参考 Rust 的 Result<T, E> 设计
+ * 用于函数返回值，明确区分成功和失败
+ * 
  * @example
  * @code
  * Result<Quote> result = DataService::fetchQuote("SH600000");
@@ -29,15 +31,19 @@ namespace WealthPilot {
 
 /**
  * @brief 结果类型模板
- * @tparam T 成功时的值类�? * 
- * @details 使用方式�? * - Result<T>::ok(value) 创建成功结果
+ * @tparam T 成功时的值类型
+ * 
+ * @details 使用方式：
+ * - Result<T>::ok(value) 创建成功结果
  * - Result<T>::err(code, message) 创建错误结果
- * - isOk() / isError() 检查结果状�? * - unwrap() / unwrapOr() 获取�? */
+ * - isOk() / isError() 检查状态
+ * - unwrap() / unwrapOr() 获取值
+ */
 template<typename T>
 class Result
 {
 public:
-    // ========== 构造方�?==========
+    // ========== 构造方法 ==========
 
     /**
      * @brief 创建成功结果
@@ -71,7 +77,7 @@ public:
     }
 
     /**
-     * @brief �?Error 创建错误结果
+     * @brief 从 Error 创建错误结果
      */
     static Result<T> fromError(const Error& error) {
         Result<T> r;
@@ -80,7 +86,7 @@ public:
         return r;
     }
 
-    // ========== 状态检�?==========
+    // ========== 状态检查 ==========
 
     /**
      * @brief 是否成功
@@ -93,46 +99,53 @@ public:
     bool isError() const { return !m_ok; }
 
     /**
-     * @brief bool 转换（成功为 true�?     */
+     * @brief bool 转换（成功为 true）
+     */
     explicit operator bool() const { return m_ok; }
 
-    // ========== 值获�?==========
+    // ========== 值访问 ==========
 
     /**
      * @brief 获取值（成功时）
-     * @warning 如果是错误结果，行为未定�?     */
+     * @warning 如果是错误结果，行为未定义
+     */
     const T& unwrap() const& {
         return m_value.value();
     }
 
     /**
-     * @brief 获取值（成功时，移动语义�?     */
+     * @brief 获取值（成功时，移动语义）
+     */
     T&& unwrap() && {
         return std::move(m_value.value());
     }
 
     /**
-     * @brief 获取值或默认�?     */
+     * @brief 获取值或默认值
+     */
     T unwrapOr(const T& defaultValue) const {
         return m_ok ? m_value.value() : defaultValue;
     }
 
     /**
-     * @brief 获取值或通过函数计算默认�?     */
+     * @brief 获取值（通过函数提供默认值）
+     */
     template<typename F>
     T unwrapOrElse(F&& f) const {
         return m_ok ? m_value.value() : f();
     }
 
     /**
-     * @brief 获取值指针（可能为空�?     */
+     * @brief 获取值指针（失败为空）
+     */
     const T* operator->() const {
         return m_ok ? &m_value.value() : nullptr;
     }
 
     /**
-     * @brief 获取值引用（可能抛异常）
-     * @throws 如果是错误结�?     */
+     * @brief 获取值引用（失败抛异常）
+     * @throws 如果是错误结果
+     */
     const T& expect(const QString& message) const {
         if (!m_ok) {
             throw std::runtime_error(message.toStdString());
@@ -140,7 +153,7 @@ public:
         return m_value.value();
     }
 
-    // ========== 错误获取 ==========
+    // ========== 错误访问 ==========
 
     /**
      * @brief 获取错误信息
@@ -150,7 +163,8 @@ public:
     }
 
     /**
-     * @brief 获取错误�?     */
+     * @brief 获取错误码
+     */
     ErrorCode errorCode() const {
         return m_error.code;
     }
@@ -165,7 +179,8 @@ public:
     // ========== 转换 ==========
 
     /**
-     * @brief 映射成功�?     */
+     * @brief 映射成功值
+     */
     template<typename U>
     Result<U> map(std::function<U(const T&)> f) const {
         if (m_ok) {
@@ -187,15 +202,16 @@ public:
 private:
     Result() = default;
 
-    std::optional<T> m_value;
-    Error m_error;
-    bool m_ok = false;
+    std::optional<T> m_value;   ///< 成功时的值
+    Error m_error;              ///< 失败时的错误
+    bool m_ok = false;          ///< 是否成功
 };
 
 // ========== 特化：void 类型 ==========
 
 /**
- * @brief void 类型�?Result（只关心成功/失败�? */
+ * @brief void 类型的 Result，只表示成功/失败
+ */
 template<>
 class Result<void>
 {
@@ -234,10 +250,11 @@ private:
     bool m_ok = false;
 };
 
-// ========== 便捷�?==========
+// ========== 宏 ==========
 
 /**
- * @brief 尝试执行表达式，如果失败则提前返回错�? */
+ * @brief 尝试执行表达式，失败则提前返回错误
+ */
 #define TRY(expr) \
     ({ \
         auto _result = (expr); \
@@ -248,7 +265,8 @@ private:
     })
 
 /**
- * @brief 尝试执行表达式，如果失败则返回默认�? */
+ * @brief 尝试执行表达式，失败则返回默认值
+ */
 #define TRY_OR(expr, defaultVal) \
     ({ \
         auto _result = (expr); \
@@ -260,7 +278,7 @@ private:
 
 } // namespace WealthPilot
 
-// 向后兼容：导出到全局命名空间
+// 便捷导入，避免全局命名空间污染
 using WealthPilot::Result;
 using WealthPilot::Error;
 using WealthPilot::ErrorCode;

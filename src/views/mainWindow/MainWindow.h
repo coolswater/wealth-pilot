@@ -1,13 +1,13 @@
-/**
+﻿/**
  * @file MainWindow.h
- * @brief 主窗口类 - 重构版本，集成新架构
+ * @brief 主窗口 - 重构版本，新架构
  *
- * @details 功能：
- * - 三栏布局（侧边栏、内容区、AI助理面板）
+ * @details 主要功能：
+ * - 整体布局：标题栏、侧边栏、内容区、AI助手面板
  * - 集成ApplicationInitializer
- * - 集成ServiceLocator依赖注入
+ * - 集成ServiceLocator服务注册
  * - 集成ThemeEngine主题系统
- * - 性能优化：懒加载、异步初始化
+ * - 性能优化：缓存、懒加载、异步初始化
  *
  * @author WealthPilot Team
  * @version 2.0.0
@@ -60,7 +60,7 @@ protected:
 
 private slots:
     /**
-     * @brief 侧边栏项点击处理
+     * @brief 侧边栏项目点击处理
      */
     void onSidebarItemClicked(const QString& id);
 
@@ -81,7 +81,7 @@ private slots:
 
 private:
     /**
-     * @brief 设置UI布局
+     * @brief 构建UI布局
      */
     void setupUI();
 
@@ -101,7 +101,7 @@ private:
     void adjustLayout();
 
     /**
-     * @brief 懒加载页面
+     * @brief 获取或创建页面
      */
     QWidget* getPage(const QString& pageId);
 

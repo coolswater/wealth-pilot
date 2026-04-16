@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file ErrorCode.h
  * @brief 统一错误码定义
  * @author WealthPilot Team
@@ -26,85 +26,85 @@ namespace WealthPilot {
  */
 enum class ErrorCode : int {
     // ========== 通用错误 1xxx ==========
-    Success = 0,
-    Unknown = 1000,
-    InvalidArgument = 1001,
-    NullPointer = 1002,
-    OperationFailed = 1003,
-    Timeout = 1004,
-    Cancelled = 1005,
-    NotInitialized = 1006,
-    AlreadyInitialized = 1007,
+    Success = 0,                    ///< 成功
+    Unknown = 1000,                 ///< 未知错误
+    InvalidArgument = 1001,         ///< 无效参数
+    NullPointer = 1002,             ///< 空指针
+    OperationFailed = 1003,         ///< 操作失败
+    Timeout = 1004,                 ///< 超时
+    Cancelled = 1005,               ///< 已取消
+    NotInitialized = 1006,          ///< 未初始化
+    AlreadyInitialized = 1007,      ///< 已初始化
     
     // ========== 网络错误 2xxx ==========
-    NetworkError = 2000,
-    NetworkTimeout = 2001,
-    NetworkDisconnected = 2002,
-    NetworkInvalidResponse = 2003,
-    NetworkServerError = 2004,
-    NetworkNotFound = 2005,
-    NetworkUnauthorized = 2006,
-    NetworkRateLimited = 2007,
+    NetworkError = 2000,            ///< 网络错误
+    NetworkTimeout = 2001,          ///< 网络超时
+    NetworkDisconnected = 2002,     ///< 网络断开
+    NetworkInvalidResponse = 2003,  ///< 无效响应
+    NetworkServerError = 2004,      ///< 服务器错误
+    NetworkNotFound = 2005,         ///< 资源未找到
+    NetworkUnauthorized = 2006,     ///< 未授权
+    NetworkRateLimited = 2007,      ///< 请求限流
     
     // ========== 数据库错误 3xxx ==========
-    DatabaseError = 3000,
-    DatabaseOpenFailed = 3001,
-    DatabaseQueryFailed = 3002,
-    DatabaseTransactionFailed = 3003,
-    DatabaseConnectionFailed = 3004,
-    DatabaseSchemaError = 3005,
-    DatabaseConstraintViolation = 3006,
+    DatabaseError = 3000,           ///< 数据库错误
+    DatabaseOpenFailed = 3001,      ///< 打开失败
+    DatabaseQueryFailed = 3002,     ///< 查询失败
+    DatabaseTransactionFailed = 3003, ///< 事务失败
+    DatabaseConnectionFailed = 3004,  ///< 连接失败
+    DatabaseSchemaError = 3005,       ///< 模式错误
+    DatabaseConstraintViolation = 3006, ///< 约束冲突
     
     // ========== CTP错误 4xxx ==========
-    CtpError = 4000,
-    CtpConnectFailed = 4001,
-    CtpLoginFailed = 4002,
-    CtpSubscribeFailed = 4003,
-    CtpOrderFailed = 4004,
-    CtpQueryFailed = 4005,
-    CtpDisconnectFailed = 4006,
-    CtpInvalidInstrument = 4007,
-    CtpNotConnected = 4008,
+    CtpError = 4000,                ///< CTP错误
+    CtpConnectFailed = 4001,        ///< 连接失败
+    CtpLoginFailed = 4002,          ///< 登录失败
+    CtpSubscribeFailed = 4003,      ///< 订阅失败
+    CtpOrderFailed = 4004,          ///< 下单失败
+    CtpQueryFailed = 4005,          ///< 查询失败
+    CtpDisconnectFailed = 4006,     ///< 断开失败
+    CtpInvalidInstrument = 4007,    ///< 无效合约
+    CtpNotConnected = 4008,         ///< 未连接
     
     // ========== AI错误 5xxx ==========
-    AiError = 5000,
-    AiRequestFailed = 5001,
-    AiParseError = 5002,
-    AiInvalidResponse = 5003,
-    AiRateLimited = 5004,
-    AiModelNotAvailable = 5005,
-    AiContextTooLong = 5006,
+    AiError = 5000,                 ///< AI错误
+    AiRequestFailed = 5001,         ///< 请求失败
+    AiParseError = 5002,            ///< 解析错误
+    AiInvalidResponse = 5003,       ///< 无效响应
+    AiRateLimited = 5004,           ///< 请求限流
+    AiModelNotAvailable = 5005,     ///< 模型不可用
+    AiContextTooLong = 5006,        ///< 上下文过长
     
     // ========== 配置错误 6xxx ==========
-    ConfigError = 6000,
-    ConfigFileNotFound = 6001,
-    ConfigParseError = 6002,
-    ConfigInvalidValue = 6003,
-    ConfigMissingKey = 6004,
+    ConfigError = 6000,             ///< 配置错误
+    ConfigFileNotFound = 6001,      ///< 文件未找到
+    ConfigParseError = 6002,        ///< 解析错误
+    ConfigInvalidValue = 6003,      ///< 无效值
+    ConfigMissingKey = 6004,        ///< 缺少键
     
     // ========== 缓存错误 7xxx ==========
-    CacheError = 7000,
-    CacheMiss = 7001,
-    CacheExpired = 7002,
-    CacheFull = 7003,
+    CacheError = 7000,              ///< 缓存错误
+    CacheMiss = 7001,               ///< 缓存未命中
+    CacheExpired = 7002,            ///< 缓存过期
+    CacheFull = 7003,               ///< 缓存已满
     
     // ========== 插件错误 8xxx ==========
-    PluginError = 8000,
-    PluginLoadFailed = 8001,
-    PluginInitializeFailed = 8002,
-    PluginNotFound = 8003,
-    PluginVersionMismatch = 8004,
-    PluginDependencyMissing = 8005
+    PluginError = 8000,             ///< 插件错误
+    PluginLoadFailed = 8001,        ///< 加载失败
+    PluginInitializeFailed = 8002,  ///< 初始化失败
+    PluginNotFound = 8003,          ///< 插件未找到
+    PluginVersionMismatch = 8004,   ///< 版本不匹配
+    PluginDependencyMissing = 8005  ///< 依赖缺失
 };
 
 /**
  * @brief 错误信息结构
  */
 struct Error {
-    ErrorCode code = ErrorCode::Success;
-    QString message;
-    QString detail;
-    QVariant context;
+    ErrorCode code = ErrorCode::Success;  ///< 错误码
+    QString message;                       ///< 错误消息
+    QString detail;                        ///< 详细信息
+    QVariant context;                      ///< 上下文数据
     
     Error() = default;
     
@@ -146,7 +146,7 @@ struct Error {
 };
 
 /**
- * @brief 获取错误码的字符串名称
+ * @brief 获取错误码字符串名称
  */
 inline QString errorCodeName(ErrorCode code) {
     switch (code) {

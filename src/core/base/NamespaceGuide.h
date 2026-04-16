@@ -1,13 +1,13 @@
-/**
+﻿/**
  * @file NamespaceGuide.h
  * @brief 命名空间使用指南
  * @author WealthPilot Team
  * @version 2.0.0
  * 
- * @details 定义项目的命名空间结构：
+ * @details 本项目命名空间结构：
  * 
- * WealthPilot/                    # 顶层命名空间
- * ├── Core/                       # 核心框架
+ * WealthPilot/                    # 顶级命名空间
+ * ├── Core/                       # 核心模块
  * │   ├── Singleton
  * │   ├── ServiceLocator
  * │   ├── BasePage
@@ -41,10 +41,10 @@
 /**
  * @brief 命名空间使用规则
  * 
- * 1. 所有代码必须在 WealthPilot 或其子命名空间中
+ * 1. 所有代码都在 WealthPilot 或其子命名空间中
  * 2. 子命名空间按模块划分
  * 3. 头文件中使用完整命名空间
- * 4. cpp 文件中可以使用 using 缩短
+ * 4. cpp 文件中可以使用 using 声明
  * 
  * @example
  * @code
@@ -55,14 +55,14 @@
  * 
  * // .cpp 文件
  * namespace WealthPilot::Core {
- *     using namespace Utils; // 使用其他子命名空间
+ *     using namespace Utils; // 使用工具类命名空间
  *     
  *     void MyService::doSomething() { ... }
  * }
  * @endcode
  */
 
-// ========== 命名空间别名 ==========
+// ========== 命名空间定义 ==========
 
 namespace WealthPilot {
     // 核心模块
@@ -87,9 +87,9 @@ namespace WealthPilot {
     namespace Plugins {}
 }
 
-// ========== 常用别名 ==========
-// 可以在 cpp 文件中使用这些别名简化代码
+// ========== 快捷别名 ==========
+// 建议在 cpp 文件中使用这些别名简化代码
 
-// namespace WP = WealthPilot;  // 在需要时使用
+// namespace WP = WealthPilot;  // 需要时使用
 
 #endif // WEALTHPILOT_CORE_NAMESPACEGUIDE_H

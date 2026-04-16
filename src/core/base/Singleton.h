@@ -1,11 +1,11 @@
-/**
+﻿/**
  * @file Singleton.h
- * @brief 线程安全的单例模板基类
+ * @brief 线程安全的单例模式模板
  * @author WealthPilot Team
  * @version 2.0.0
  * 
- * @details 使用 CRTP 模式实现单例，所有单例类继承此模板
- * 统一返回指针，避免引用/指针混用问题
+ * @details 使用 CRTP 模式实现单例，子类继承此模板
+ * 统一返回指针，避免复制/指针访问混乱
  * 
  * @example
  * @code
@@ -26,7 +26,7 @@
 
 /**
  * @brief 单例模板类
- * @tparam T 派生类类型（CRTP模式）
+ * @tparam T 单例目标类型（CRTP模式）
  */
 template<typename T>
 class Singleton
@@ -55,7 +55,7 @@ protected:
     Singleton() = default;
     ~Singleton() = default;
 
-    // 禁止拷贝和移动
+    // 禁止复制和移动
     Singleton(const Singleton&) = delete;
     Singleton& operator=(const Singleton&) = delete;
     Singleton(Singleton&&) = delete;

@@ -28,7 +28,7 @@ struct AIAssistantPanelWidget::Impl {
     QScrollArea* scrollArea = nullptr;
     QPushButton* collapseBtn = nullptr;
 
-    // 状�?
+    // 状态
     bool isCollapsed = false;
     bool isTyping = false;
     QWidget* typingIndicator = nullptr;
@@ -91,7 +91,7 @@ void AIAssistantPanelWidget::setupHeader()
     )").arg(Colors::Primary, Colors::Secondary).arg(Size::AvatarLG / 2));
     headerLayout->addWidget(avatarLabel);
 
-    // 名称和状�?
+    // 名称和状态
     auto* infoLayout = new QVBoxLayout();
     infoLayout->setSpacing(2);
 
@@ -431,7 +431,7 @@ void AIAssistantPanelWidget::addMessage(const QString& text, bool isUser) const
 
     d->messagesLayout->insertWidget(d->messagesLayout->count() - 1, bubble);
 
-    // 滚动到底�?
+    // 滚动到底
     QTimer::singleShot(100, this, [this]() {
         d->scrollArea->verticalScrollBar()->setValue(
             d->scrollArea->verticalScrollBar()->maximum()
@@ -467,7 +467,7 @@ void AIAssistantPanelWidget::addTypingIndicator() const
 
     d->messagesLayout->insertWidget(d->messagesLayout->count() - 1, d->typingIndicator);
 
-    // 滚动到底�?
+    // 滚动到底
     QTimer::singleShot(100, this, [this]() {
         d->scrollArea->verticalScrollBar()->setValue(
             d->scrollArea->verticalScrollBar()->maximum()
