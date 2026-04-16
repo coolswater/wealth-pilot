@@ -3,25 +3,23 @@
 
 #include "BaseWidget.h"
 
-
 class StatusBarWidget : public BaseWidget
 {
     Q_OBJECT
 public:
-    StatusBarWidget(QWidget *parent = nullptr);
+    explicit StatusBarWidget(QWidget *parent = nullptr);
     ~StatusBarWidget();
 
 public slots:
-    void onCTPStatusChanged() const;
-private:
-    // 初始化UI布局
-    void setupUI();
+    void setAIStatus(const QString& status);
+    void setCTPStatus(const QString& status);
+    void setLatency(const QString& latency);
+    void setVersion(const QString& version);
 
-    // 初始化信号槽连接
-    void initConnections();
-    /**
-     * @brief PIMPL实现结构体
-     */
+private:
+    void setupUI();
+    void updateTime();
+
     struct Impl;
     std::unique_ptr<Impl> d;
 };

@@ -1,11 +1,11 @@
 /**
  * @file CTPConfigManager.cpp
- * @brief CTP配置管理器实现
+ * @brief CTP Configuration Manager Implementation
  */
 
 #include "CTPConfigManager.h"
-#include "ConfigManager.h"
-#include "../utils/Logger.h"
+#include "../../core/config/ConfigManager.h"
+#include "../../utils/Logger.h"
 #include <QFile>
 #include <QDir>
 #include <QJsonDocument>
@@ -16,7 +16,7 @@
 
 namespace CTP {
 
-// ========== PIMPL实现 ==========
+// ========== PIMPL Implementation ==========
 
 struct CTPConfigManager::Impl {
     QMap<QString, CTPBrokerConfig> brokers;
@@ -29,7 +29,7 @@ struct CTPConfigManager::Impl {
     }
 };
 
-// ========== 单例实现 ==========
+// ========== Singleton Implementation ==========
 
 CTPConfigManager* CTPConfigManager::instance()
 {
@@ -49,7 +49,7 @@ CTPConfigManager::~CTPConfigManager()
     LOG_DEBUG("CTPConfigManager destroyed");
 }
 
-// ========== 初始化 ==========
+// ========== Initialization ==========
 
 bool CTPConfigManager::initialize(const QString& configPath)
 {
@@ -59,17 +59,17 @@ bool CTPConfigManager::initialize(const QString& configPath)
         d->configPath = configPath;
     }
     
-    // 确保配置目录存在
+    // Ensure config directory exists
     QFileInfo fileInfo(d->configPath);
     QDir dir = fileInfo.absoluteDir();
     if (!dir.exists()) {
         dir.mkpath(".");
     }
     
-    // 加载预设配置
+    // Load preset configs
     loadPresetBrokers();
     
-    // 尝试加载用户配置
+    // Try to load user config
     if (QFile::exists(d->configPath)) {
         QFile file(d->configPath);
         if (file.open(QIODevice::ReadOnly)) {
@@ -81,7 +81,7 @@ bool CTPConfigManager::initialize(const QString& configPath)
             if (error.error == QJsonParseError::NoError && doc.isObject()) {
                 QJsonObject root = doc.object();
                 
-                // 加载服务商配置
+                // Load broker configs
                 QJsonArray brokersArr = root["brokers"].toArray();
                 for (const auto& item : brokersArr) {
                     CTPBrokerConfig config = CTPBrokerConfig::fromJson(item.toObject());
@@ -90,7 +90,7 @@ bool CTPConfigManager::initialize(const QString& configPath)
                     }
                 }
                 
-                // 加载当前服务商
+                // Load current broker
                 d->currentBrokerId = root["currentBrokerId"].toString();
                 
                 LOG_INFO(QString("CTPConfigManager loaded %1 brokers from %2")
@@ -99,7 +99,7 @@ bool CTPConfigManager::initialize(const QString& configPath)
         }
     }
     
-    // 如果没有当前服务商，设置默认
+    // If no current broker, set default
     if (d->currentBrokerId.isEmpty() && !d->brokers.isEmpty()) {
         d->currentBrokerId = d->brokers.firstKey();
     }
@@ -113,7 +113,7 @@ bool CTPConfigManager::saveConfig()
     
     QJsonObject root;
     
-    // 保存服务商配置
+    // Save broker configs
     QJsonArray brokersArr;
     for (const auto& config : d->brokers) {
         brokersArr.append(config.toJson());
@@ -121,7 +121,7 @@ bool CTPConfigManager::saveConfig()
     root["brokers"] = brokersArr;
     root["currentBrokerId"] = d->currentBrokerId;
     
-    // 写入文件
+    // Write to file
     QFile file(d->configPath);
     if (!file.open(QIODevice::WriteOnly)) {
         LOG_ERROR(QString("Failed to open config file for writing: %1").arg(d->configPath));
@@ -141,7 +141,7 @@ bool CTPConfigManager::reloadConfig()
     return initialize(d->configPath);
 }
 
-// ========== 服务商管理 ==========
+// ========== Broker Management ==========
 
 QList<CTPBrokerConfig> CTPConfigManager::getAllBrokers() const
 {
@@ -202,7 +202,7 @@ bool CTPConfigManager::removeBroker(const QString& id)
     
     d->brokers.remove(id);
     
-    // 如果删除的是当前服务商，切换到第一个可用的
+    // If removed current broker, switch to first available
     if (d->currentBrokerId == id) {
         d->currentBrokerId = d->brokers.isEmpty() ? QString() : d->brokers.firstKey();
     }
@@ -220,7 +220,7 @@ bool CTPConfigManager::hasBroker(const QString& id) const
     return d->brokers.contains(id);
 }
 
-// ========== 当前服务商 ==========
+// ========== Current Broker ==========
 
 QString CTPConfigManager::currentBrokerId() const
 {
@@ -266,7 +266,7 @@ std::optional<CTPBrokerConfig> CTPConfigManager::currentBroker() const
     return std::nullopt;
 }
 
-// ========== 用户凭证管理 ==========
+// ========== User Credentials Management ==========
 
 void CTPConfigManager::setUserCredentials(const QString& brokerId, const QString& userId, const QString& password)
 {
@@ -321,16 +321,15 @@ void CTPConfigManager::clearUserCredentials(const QString& brokerId)
     emit brokerUpdated(brokerId);
 }
 
-// ========== 加密/解密 ==========
+// ========== Encryption/Decryption ==========
 
 QString CTPConfigManager::encryptPassword(const QString& password) const
 {
-    // 使用 ConfigManager 的安全存储功能
-    // 生成一个临时的 key，然后获取加密后的值
+    // Use ConfigManager's secure storage
     QString tempKey = QString("__temp_encrypt_%1").arg(QDateTime::currentMSecsSinceEpoch());
     ConfigManager::instance()->setSecure(tempKey, password);
     
-    // 从 settings 中获取加密后的值
+    // Get encrypted value from settings
     QSettings settings;
     settings.beginGroup("__secure__");
     QString encrypted = settings.value(tempKey).toString();
@@ -344,8 +343,7 @@ QString CTPConfigManager::decryptPassword(const QString& encrypted) const
 {
     if (encrypted.isEmpty()) return QString();
     
-    // 直接使用 ConfigManager 的解密功能
-    // 将加密值临时存储，然后读取
+    // Use ConfigManager's secure storage
     QString tempKey = QString("__temp_decrypt_%1").arg(QDateTime::currentMSecsSinceEpoch());
     QSettings settings;
     settings.beginGroup("__secure__");
@@ -361,21 +359,21 @@ QString CTPConfigManager::decryptPassword(const QString& encrypted) const
     return decrypted;
 }
 
-// ========== 预设服务商 ==========
+// ========== Preset Brokers ==========
 
 CTPBrokerConfig CTPConfigManager::getSimNow24Config()
 {
     CTPBrokerConfig config;
     config.id = "simnow_24";
-    config.name = "SimNow 7x24模拟";
+    config.name = "SimNow 7x24 Simulation";
     config.brokerId = "9999";
-    config.description = "SimNow 7x24小时模拟环境，适合开发和测试";
+    config.description = "SimNow 7x24 simulation environment for development and testing";
     config.website = "https://www.simnow.com.cn";
     config.isSimulation = true;
     config.isEnabled = true;
     config.requireAuth = false;
     
-    // 7x24环境前置地址
+    // 7x24 environment front addresses
     config.marketFronts = {
         "tcp://180.168.146.187:10131",
         "tcp://180.168.146.187:10132",
@@ -397,15 +395,15 @@ CTPBrokerConfig CTPConfigManager::getSimNowTelecomConfig()
 {
     CTPBrokerConfig config;
     config.id = "simnow_telecom";
-    config.name = "SimNow 电信模拟";
+    config.name = "SimNow Telecom Simulation";
     config.brokerId = "9999";
-    config.description = "SimNow 电信环境，交易时间与实盘一致";
+    config.description = "SimNow telecom environment, trading time matches real market";
     config.website = "https://www.simnow.com.cn";
     config.isSimulation = true;
     config.isEnabled = true;
     config.requireAuth = false;
     
-    // 电信环境前置地址
+    // Telecom environment front addresses
     config.marketFronts = {
         "tcp://218.202.237.33:10212",
         "tcp://218.202.237.33:10213"
@@ -423,15 +421,15 @@ CTPBrokerConfig CTPConfigManager::getSimNowMobileConfig()
 {
     CTPBrokerConfig config;
     config.id = "simnow_mobile";
-    config.name = "SimNow 移动模拟";
+    config.name = "SimNow Mobile Simulation";
     config.brokerId = "9999";
-    config.description = "SimNow 移动环境，交易时间与实盘一致";
+    config.description = "SimNow mobile environment, trading time matches real market";
     config.website = "https://www.simnow.com.cn";
     config.isSimulation = true;
     config.isEnabled = true;
     config.requireAuth = false;
     
-    // 移动环境前置地址
+    // Mobile environment front addresses
     config.marketFronts = {
         "tcp://218.202.237.33:10222",
         "tcp://218.202.237.33:10223"
@@ -447,62 +445,61 @@ CTPBrokerConfig CTPConfigManager::getSimNowMobileConfig()
 
 void CTPConfigManager::loadPresetBrokers()
 {
-    // 添加预设服务商（不覆盖已有配置）
+    // Add preset brokers (don't overwrite existing)
     auto addPreset = [this](const CTPBrokerConfig& config) {
         if (!d->brokers.contains(config.id)) {
             d->brokers[config.id] = config;
         }
     };
     
-    // SimNow 环境
+    // SimNow environments
     addPreset(getSimNow24Config());
     addPreset(getSimNowTelecomConfig());
     addPreset(getSimNowMobileConfig());
     
-    // 常用期货公司预设（需要用户自行填写账号密码）
-    // 国泰君安
+    // Common futures companies (users need to fill in credentials)
+    // Guotai Junan
     CTPBrokerConfig gtja;
     gtja.id = "gtja";
-    gtja.name = "国泰君安期货";
-    gtja.brokerId = "1001";  // 示例，实际需要查询
-    gtja.description = "国泰君安期货有限公司";
+    gtja.name = "Guotai Junan Futures";
+    gtja.brokerId = "1001";  // Example, actual needs to be verified
+    gtja.description = "Guotai Junan Futures Co., Ltd.";
     gtja.website = "https://www.gtjaqh.com";
     gtja.isSimulation = false;
-    gtja.isEnabled = false;  // 默认禁用，需要用户配置
+    gtja.isEnabled = false;  // Disabled by default, needs user config
     gtja.requireAuth = true;
-    // 用户需要自行填写前置地址
     d->brokers[gtja.id] = gtja;
     
-    // 银河期货
+    // Yinhe Futures
     CTPBrokerConfig yh;
     yh.id = "yh";
-    yh.name = "银河期货";
-    yh.brokerId = "1002";  // 示例，实际需要查询
-    yh.description = "银河期货有限公司";
+    yh.name = "Yinhe Futures";
+    yh.brokerId = "1002";  // Example, actual needs to be verified
+    yh.description = "Yinhe Futures Co., Ltd.";
     yh.website = "https://www.yhqh.com.cn";
     yh.isSimulation = false;
     yh.isEnabled = false;
     yh.requireAuth = true;
     d->brokers[yh.id] = yh;
     
-    // 中信期货
+    // CITIC Futures
     CTPBrokerConfig zx;
     zx.id = "zx";
-    zx.name = "中信期货";
-    zx.brokerId = "1003";  // 示例，实际需要查询
-    zx.description = "中信期货有限公司";
+    zx.name = "CITIC Futures";
+    zx.brokerId = "1003";  // Example, actual needs to be verified
+    zx.description = "CITIC Futures Co., Ltd.";
     zx.website = "https://www.citicsf.com";
     zx.isSimulation = false;
     zx.isEnabled = false;
     zx.requireAuth = true;
     d->brokers[zx.id] = zx;
     
-    // 永安期货
+    // Yongan Futures
     CTPBrokerConfig ya;
     ya.id = "ya";
-    ya.name = "永安期货";
-    ya.brokerId = "1004";  // 示例，实际需要查询
-    ya.description = "永安期货股份有限公司";
+    ya.name = "Yongan Futures";
+    ya.brokerId = "1004";  // Example, actual needs to be verified
+    ya.description = "Yongan Futures Co., Ltd.";
     ya.website = "https://www.yafco.com";
     ya.isSimulation = false;
     ya.isEnabled = false;
@@ -521,7 +518,7 @@ void CTPConfigManager::resetToDefaults()
     
     loadPresetBrokers();
     
-    // 设置默认当前服务商
+    // Set default current broker
     if (!d->brokers.isEmpty()) {
         d->currentBrokerId = "simnow_24";
     }

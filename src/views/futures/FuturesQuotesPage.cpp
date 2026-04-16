@@ -1,21 +1,19 @@
-/**
+﻿/**
  * @file FuturesQuotesPage.cpp
- * @brief 期货行情页面 - CTP实时行情对接实现（含活跃合约过滤）
- * @note 关键特性：
- *   1. 自动查询所有合约并订阅
- *   2. 零拷贝优化：CTP数据直接转换为FuturesQuoteItem
- *   3. 连接状态管理：自动重连、合约订阅、断线恢复
- *   4. 线程安全：所有CTP回调通过QueuedConnection切换到UI线程
- *   5. 【新增】智能合约过滤：自动过滤过期合约、不活跃合约
- *   6. 【新增】主力合约识别与优先显示
+ * @brief Futures Quotes Page - CTP real-time quotes implementation with Active Contracts filter
+ * @note Key features:
+ *   1. Auto query and subscribe all contracts
+ *   2. Zero-copy optimization: CTP data directly converted to FuturesQuoteItem
+ *   3. Connection Status management: auto reconnect, contract subscription, disconnect recovery
+ *   4. Thread safe: all CTP callbacks switch to UI thread via QueuedConnection
+ *   5. Smart contract filter: auto filter expired contracts
+ *   6. Main Contracts identification and priority display
  */
 
 #include "FuturesQuotesPage.h"
 #include "utils/Logger.h"
 #include "models/FuturesQuoteModel.h"
 #include "models/FuturesQuoteDelegate.h"
-// 暂时注释掉
-// #include "../../core/PageNavigator.h"  // 添加导航参数定义
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -27,88 +25,72 @@
 #include <QTimer>
 #include <QSortFilterProxyModel>
 #include <QComboBox>
+#include <QMenu>
+#include <QAction>
+#include <QHeaderView>
+#include <QApplication>
+#include <QStyle>
 #include <QDate>
-#include <QRegularExpression>
-#include <QDateTime>
 
-#include <atomic>
-#include <optional>
+#include <ctp/service/CTPService.h>
 
-// C++17 结构化绑定辅助
-using CtpConfig = std::tuple<QString, QString, QString, QString, QString>;
+// Activity thresholds
+namespace {
+    constexpr int MIN_VOLUME = 10;
+    constexpr int MIN_OPEN_INTEREST = 50;
+    constexpr int MIN_DAILY_VOLUME = 100;
+    constexpr int EXPIRY_MONTHS_AHEAD = 3;
 
-// 【新增】活跃度配置常量
-namespace ActivityConfig {
-    constexpr int MIN_VOLUME = 10;           // 最小成交量阈值
-    constexpr int MIN_OPEN_INTEREST = 50;    // 最小持仓量阈值
-    constexpr int MIN_DAILY_VOLUME = 100;    // 最小日成交量（用于判断主力）
-    constexpr int EXPIRY_MONTHS_AHEAD = 3;   // 显示未来N个月的合约
-    constexpr int MAX_DISPLAY_CONTRACTS = 100; // 最大显示合约数
-}
+    // Active contract proxy model with activity filter
+    // Active contract proxy model with activity filter
+    class ActiveContractProxyModel : public QSortFilterProxyModel {
+    public:
+        explicit ActiveContractProxyModel(QObject* parent = nullptr)
+            : QSortFilterProxyModel(parent), m_filterMode(1) {}
 
-// 【新增】自定义代理模型类，支持活跃度过滤
-class ActivityFilterProxyModel : public QSortFilterProxyModel {
-public:
-    explicit ActivityFilterProxyModel(QObject* parent = nullptr)
-        : QSortFilterProxyModel(parent), m_filterMode(1) {}
-
-    // 设置过滤模式
-    void setActivityFilterMode(int mode) {
-        if (m_filterMode != mode) {
+        void setFilterMode(int mode) {
             m_filterMode = mode;
-            invalidate(); // 使用 invalidate() 替代 invalidateFilter()
-        }
-    }
-
-    int activityFilterMode() const { return m_filterMode; }
-
-protected:
-    // 【新增】重写过滤判断，支持活跃度过滤
-    bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override {
-        // 先执行默认的文本过滤
-        if (!QSortFilterProxyModel::filterAcceptsRow(sourceRow, sourceParent)) {
-            return false;
+            invalidateFilter();
         }
 
-        // 获取活跃度状态（假设存储在 Qt::UserRole + 1 角色中）
-        QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
-        int activityStatus = sourceModel()->data(index, Qt::UserRole + 1).toInt();
-        bool isMainContract = sourceModel()->data(index, Qt::UserRole + 2).toBool();
+        int filterMode() const { return m_filterMode; }
 
-        switch (m_filterMode) {
-            case 0: // ShowAll
-                return true;
-            case 1: // ShowActiveOnly
-                return activityStatus > 0; // 活跃状态
-            case 2: // ShowMainOnly
-                return isMainContract;
-            case 3: // ShowHighLiquidity
-                return activityStatus >= 2; // 高流动性状态
-            default:
-                return true;
+    protected:
+        bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override {
+            if (m_filterMode == 0) return true;
+
+            QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
+            int activityStatus = sourceModel()->data(index, Qt::UserRole + 1).toInt();
+
+            switch (m_filterMode) {
+                case 1: return activityStatus > 0;
+                case 2: return activityStatus >= 2;
+                case 3: return activityStatus == 1;
+                default: return true;
+            }
         }
-    }
 
-private:
-    int m_filterMode; // 0:全部, 1:仅活跃, 2:仅主力, 3:高流动性
-};
+    private:
+        int m_filterMode;  // 0: All, 1: Active, 2: High Liquidity, 3: Low Liquidity
+    };
+}
 
 class FuturesQuotesPage::Impl {
 public:
-    // UI 组件
+    // UI components
     QTableView *m_tableView = nullptr;
     FuturesQuoteModel *m_model = nullptr;
-    ActivityFilterProxyModel *m_proxyModel = nullptr;  // 【修改】使用自定义代理模型
+    ActiveContractProxyModel *m_proxyModel = nullptr;  // 【修改】使用自定义代理模型
     QLabel *m_statusLabel = nullptr;
     QLineEdit *m_contractInput = nullptr;
     QLineEdit *m_filterInput = nullptr;
     QPushButton *m_subscribeBtn = nullptr;
     QComboBox *m_activityFilter = nullptr;
 
-    // CTP客户端（C++17智能指针管理）
+    // CTP client
     std::unique_ptr<CTP::CTPService> m_CTPService;
 
-    // 状态控制
+    // 状态控�?
     std::atomic<bool> m_isCtpConnected{false};
     std::atomic<bool> m_isProcessing{false};
     std::atomic<int> m_tickCount{0};
@@ -118,11 +100,11 @@ public:
     QVector<FuturesQuoteItem> m_pendingUpdates;
     QMutex m_pendingMutex;
 
-    // 已订阅合约列表
+    // 已订阅合约列�?
     QSet<QString> m_subscribedContracts;
     QMutex m_contractMutex;
 
-    // 合约信息缓存
+    // Contract info cache
     struct InstrumentInfo {
         QString instrumentId;
         QString exchangeId;
@@ -136,7 +118,7 @@ public:
     QMap<QString, InstrumentInfo> m_instruments;
     QMutex m_instrumentsMutex;
 
-    // 活跃度跟踪
+    // 活跃度跟�?
     struct ContractActivity {
         qint64 lastUpdateTime = 0;
         int totalVolume = 0;
@@ -149,7 +131,7 @@ public:
     QMap<QString, ContractActivity> m_activityMap;
     QMutex m_activityMutex;
 
-    // 品种主力合约映射
+    // 品种Main Contracts映射
     QMap<QString, QString> m_mainContracts;
     QMutex m_mainContractMutex;
 
@@ -157,7 +139,7 @@ public:
     QTimer *m_flushTimer = nullptr;
     std::atomic<int> m_quoteSequence{0};
 
-    // 页面可见性控制
+    // 页面可见性控�?
     std::atomic<bool> m_isVisible{true};
 };
 
@@ -171,11 +153,11 @@ FuturesQuotesPage::FuturesQuotesPage(QWidget* parent)
     initializeSampleData();
 
     // 【修改】使用自定义代理模型
-    d->m_proxyModel = new ActivityFilterProxyModel(this);
+    d->m_proxyModel = new ActiveContractProxyModel(this);
     d->m_proxyModel->setSourceModel(d->m_model);
     d->m_proxyModel->setFilterKeyColumn(0);
     d->m_proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
-    d->m_proxyModel->setFilterRole(Qt::DisplayRole); // 默认按显示文本过滤
+    d->m_proxyModel->setFilterRole(Qt::DisplayRole); // 默认按显示文本过�?
 
     d->m_CTPService = std::make_unique<CTP::CTPService>(this);
     d->m_flushTimer = new QTimer(this);
@@ -241,11 +223,11 @@ void FuturesQuotesPage::initializePage()
         );
 
     d->m_CTPService->setCredentials(brokerId, userId, password, appId, authCode);
-    // simnow第1套
+    // simnow�?�?
     // d->m_CTPService->setMarketFrontAddress("tcp://182.254.243.31:30011");
     // d->m_CTPService->setTradingFrontAddress("tcp://182.254.243.31:30001");
 
-    // simnow第2套 7*24小时
+    // simnow�?�?7*24小时
     d->m_CTPService->setMarketFrontAddress("tcp://182.254.243.31:40011");
     d->m_CTPService->setTradingFrontAddress("tcp://182.254.243.31:40001");
 
@@ -260,8 +242,8 @@ void FuturesQuotesPage::setupCtpConnections()
 {
     connect(d->m_CTPService.get(), &CTP::CTPService::marketConnected, this, [this]() {
         d->m_isCtpConnected.store(true);
-        updateConnectionStatus("行情已连接", "#4CAF50");
-        LOG_INFO("CTP Market connected, waiting for login...");
+
+        updateConnectionStatus("Quotes Connected", "#4CAF50");
     });
 
     connect(d->m_CTPService.get(), &CTP::CTPService::marketDisconnected, this,
@@ -287,7 +269,7 @@ void FuturesQuotesPage::setupCtpConnections()
                     LOG_INFO("Trading login successful, confirming settlement...");
 
                     if (d->m_statusLabel) {
-                        d->m_statusLabel->setText("交易登录成功，正在确认结算单...");
+                        d->m_statusLabel->setText("交易登录成功，正在Confirm结算单...");
                     }
 
                     d->m_CTPService->confirmSettlement();
@@ -304,7 +286,7 @@ void FuturesQuotesPage::setupCtpConnections()
                     LOG_INFO("Settlement confirmed, querying instruments...");
 
                     if (d->m_statusLabel) {
-                        d->m_statusLabel->setText("结算单已确认，正在查询合约...");
+                        d->m_statusLabel->setText("结算单已Confirm，正在查询合�?..");
                     }
 
                     QTimer::singleShot(500, this, [this]() {
@@ -352,7 +334,7 @@ void FuturesQuotesPage::onInstrumentQueried(const QString& instrumentId, const Q
     QDate currentDate = QDate::currentDate();
     bool isExpired = expiryDate.isValid() && expiryDate < currentDate;
     bool isTooFar = expiryDate.isValid() &&
-                    expiryDate > currentDate.addMonths(ActivityConfig::EXPIRY_MONTHS_AHEAD);
+                    expiryDate > currentDate.addMonths(EXPIRY_MONTHS_AHEAD);
 
     if (!isExpired && !isTooFar && isStandard) {
         Impl::InstrumentInfo info;
@@ -390,7 +372,7 @@ void FuturesQuotesPage::onInstrumentQueried(const QString& instrumentId, const Q
 
         int count = d->m_instrumentCount.fetch_add(1) + 1;
         if (count % 100 == 0 && d->m_statusLabel) {
-            d->m_statusLabel->setText(QString("已查询 %1 个有效合约...").arg(count));
+            d->m_statusLabel->setText(QString("已查�?%1 个有效合�?..").arg(count));
         }
     } else {
         if (isExpired) {
@@ -402,7 +384,7 @@ void FuturesQuotesPage::onInstrumentQueried(const QString& instrumentId, const Q
                       .arg(instrumentId).arg(expiryDate.toString("yyyy-MM")));
         }
         if (!isStandard) {
-            LOG_DEBUG(QString("过滤非标准合约: %1").arg(instrumentId));
+            LOG_DEBUG(QString("过滤非标准合�? %1").arg(instrumentId));
         }
     }
 }
@@ -420,7 +402,7 @@ void FuturesQuotesPage::onInstrumentQueryFinished(int totalCount)
              .arg(totalCount).arg(instrumentCount).arg(subscribedCount));
 
     if (d->m_statusLabel) {
-        d->m_statusLabel->setText(QString("查询完成，共 %1 个有效合约，订阅 %2 个")
+        d->m_statusLabel->setText(QString("Query complete, %1 valid contracts, subscribed %2")
                                   .arg(instrumentCount).arg(subscribedCount));
     }
 
@@ -486,7 +468,7 @@ void FuturesQuotesPage::identifyMainContracts() const
         if (!mainContract.isEmpty()) {
             d->m_mainContracts[product] = mainContract;
             d->m_instruments[mainContract].isMainContract = true;
-            LOG_INFO(QString("主力合约识别: %1 -> %2").arg(product).arg(mainContract));
+            LOG_INFO(QString("Main Contracts detected: %1 -> %2").arg(product).arg(mainContract));
         }
     }
 }
@@ -524,7 +506,7 @@ void FuturesQuotesPage::subscribeContractsByPriority()
         }
     }
 
-    int subscribeCount = qMin(priorityContracts.size(), ActivityConfig::MAX_DISPLAY_CONTRACTS);
+    int subscribeCount = qMin(priorityContracts.size(), 100);
     QList<QString> toSubscribe = priorityContracts.mid(0, subscribeCount);
 
     LOG_INFO(QString("Priority subscription: %1 main contracts, %2 total contracts, subscribing %3")
@@ -607,10 +589,10 @@ void FuturesQuotesPage::onCtpBatchMarketData(const QList<CTP::MarketData>& dataL
             }
         }
 
-        // 【修改】活跃度状态：0=不活跃, 1=活跃, 2=高流动性
+        // 【修改】活跃度状态：0=不活�? 1=活跃, 2=高流动�?
         int activityLevel = 0;
         if (ctpData.Volume > 100 && ctpData.OpenInterest > 500) {
-            activityLevel = 2; // 高流动性
+            activityLevel = 2; // 高流动�?
         } else if (isActive) {
             activityLevel = 1; // 活跃
         }
@@ -645,7 +627,7 @@ bool FuturesQuotesPage::updateContractActivity(const QString& contractId,
     activity.updateCount++;
 
     bool hasVolume = data.Volume > 0;
-    bool hasOpenInterest = data.OpenInterest > ActivityConfig::MIN_OPEN_INTEREST;
+    bool hasOpenInterest = data.OpenInterest > MIN_OPEN_INTEREST;
     bool hasBidAsk = data.BidVolume1 > 0 && data.AskVolume1 > 0;
 
     activity.isActive = hasVolume || hasOpenInterest || hasBidAsk;
@@ -670,14 +652,14 @@ void FuturesQuotesPage::updateMainContractByVolume(const QString& contractId, in
         return;
     }
 
-    if (volume > ActivityConfig::MIN_DAILY_VOLUME && !currentMain.isEmpty()) {
+    if (volume > MIN_DAILY_VOLUME && !currentMain.isEmpty()) {
         // 简化处理：实际应该比较一段时间内的累计成交量
     }
 }
 
 bool FuturesQuotesPage::shouldDisplayContract(const QString& contractId, const CTP::MarketData& data) const
 {
-    // 【修改】添加后备逻辑：如果没有任何合约，显示所有数据
+    // 【修改】添加后备逻辑：如果没有任何合约，显示所有数�?
     bool hasAnyContract = false;
     {
         QMutexLocker locker(&d->m_instrumentsMutex);
@@ -689,14 +671,14 @@ bool FuturesQuotesPage::shouldDisplayContract(const QString& contractId, const C
         return true;
     }
 
-    // 【修改】直接从代理模型获取当前过滤模式，避免atomic的语法问题
-    switch (int filterMode = d->m_proxyModel->activityFilterMode()) {
+    // 【修改】直接从代理模型获取当前过滤模式，避免atomic的语法问�?
+    switch (int filterMode = d->m_proxyModel->filterMode()) {
         case 0: // ShowAll
             return true;
 
         case 1: { // ShowActiveOnly
             bool hasVolume = data.Volume > 0;
-            bool hasOI = data.OpenInterest > ActivityConfig::MIN_OPEN_INTEREST;
+            bool hasOI = data.OpenInterest > MIN_OPEN_INTEREST;
             bool hasLiquidity = data.BidVolume1 > 0 && data.AskVolume1 > 0;
             bool result = hasVolume || hasOI || hasLiquidity;
             if (!result) {
@@ -774,18 +756,18 @@ void FuturesQuotesPage::updateMainContracts()
     identifyMainContracts();
 
     // 【修改】如果当前是仅显示主力模式，刷新代理模型
-    if (d->m_proxyModel->activityFilterMode() == 2) {
+    if (d->m_proxyModel->filterMode() == 2) {
         QMetaObject::invokeMethod(this, [this]() {
             d->m_proxyModel->invalidate(); // 使用 invalidate() 替代
         }, Qt::QueuedConnection);
     }
 }
 
-// 【新增】设置活跃度过滤模式的公有接口
-void FuturesQuotesPage::setActivityFilterMode(const int mode) const
+// 【新增】设置活跃度过滤模式的公有接�?
+void FuturesQuotesPage::setFilterMode(const int mode) const
 {
     if (mode >= 0 && mode <= 3) {
-        d->m_proxyModel->setActivityFilterMode(mode);
+        d->m_proxyModel->setFilterMode(mode);
         LOG_INFO(QString("Activity filter mode changed to: %1").arg(mode));
     }
 }
@@ -794,14 +776,14 @@ void FuturesQuotesPage::onSubscribeContract()
 {
     QString contract = d->m_contractInput->text().trimmed().toUpper();
     if (contract.isEmpty()) {
-        QMessageBox::warning(this, "输入错误", "请输入合约代码（如：rb2505）");
+        QMessageBox::warning(this, "Error", "Please enter contract code (e.g. rb2505)");
         return;
     }
 
     auto [product, expiry, isValid] = parseContractCode(contract);
     if (isValid && expiry.isValid() && expiry < QDate::currentDate()) {
-        QMessageBox::warning(this, "过期合约",
-                             QString("合约 %1 已过期（到期日：%2）")
+        QMessageBox::warning(this, "Expired Contract",
+                             QString("Contract %1 expired (expiry: %2)")
                              .arg(contract).arg(expiry.toString("yyyy-MM-dd")));
         return;
     }
@@ -814,8 +796,8 @@ void FuturesQuotesPage::onSubscribeContract()
     if (d->m_isCtpConnected.load()) {
         subscribeContracts({contract});
     } else {
-        QMessageBox::information(this, "提示",
-                                 QString("合约 %1 已加入订阅列表，连接成功后自动订阅").arg(contract));
+        QMessageBox::information(this, "Info",
+                                 QString("Contract %1 added to subscription list").arg(contract));
     }
 
     d->m_contractInput->clear();
@@ -841,7 +823,7 @@ void FuturesQuotesPage::subscribeContracts(const QList<QString>& contracts) cons
         }
 
         d->m_statusLabel->setText(
-            QString("已订阅 %1 个合约 | 活跃 %2 个 | 接收 %3 笔行情")
+            QString("Subscribed %1 contracts | Active %2 | Received %3 ticks")
                 .arg(contracts.size())
                 .arg(activeCount)
                 .arg(d->m_tickCount.load())
@@ -877,12 +859,12 @@ void FuturesQuotesPage::onRowClicked(const QModelIndex &index) const
                  .arg(item->lastPrice));
     
     // 【新增】双击跳转到K线详情页
-    // 单击只选中，双击跳转
+    // 单击只选中，双击跳�?
 }
 
 /**
  * @brief 双击行跳转到K线详情页
- * @param index 点击的索引
+ * @param index 点击的索�?
  */
 void FuturesQuotesPage::onRowDoubleClicked(const QModelIndex &index)
 {
@@ -898,10 +880,10 @@ void FuturesQuotesPage::onRowDoubleClicked(const QModelIndex &index)
     // 构建导航参数
     QVariantMap params;
     params["instrumentId"] = item->contractName;
-    params["instrumentName"] = item->contractName; // TODO: 获取合约中文名
+    params["instrumentName"] = item->contractName; // TODO: Get contract name
     params["sourcePage"] = pageId();
     
-    // 发送导航信号
+    // 发送导航信�?
     emit navigateToKLinePage(item->contractName, params);
 }
 
@@ -953,8 +935,9 @@ void FuturesQuotesPage::flushPendingUpdates() const
             mainCount = d->m_mainContracts.size();
         }
 
+
         d->m_statusLabel->setText(
-            QString("连接正常 | 累计 %1 笔 | 活跃 %2 | 主力 %3 | 订阅 %4 个")
+            QString("Connected | Total %1 | Active %2 | Main %3 | Subscribed %4")
                 .arg(seq)
                 .arg(activeCount)
                 .arg(mainCount)
@@ -981,7 +964,7 @@ void FuturesQuotesPage::setupUI()
     refreshBtn->setProperty("ghost", true);
 
     d->m_contractInput = new QLineEdit();
-    d->m_contractInput->setPlaceholderText("输入合约代码 (如: rb2505)");
+    d->m_contractInput->setPlaceholderText("输入合约代码 (�? rb2505)");
     d->m_contractInput->setMaximumWidth(150);
 
     d->m_subscribeBtn = new QPushButton("订阅");
@@ -989,17 +972,17 @@ void FuturesQuotesPage::setupUI()
     d->m_subscribeBtn->setProperty("primary", true);
 
     d->m_activityFilter = new QComboBox(this);
-    d->m_activityFilter->addItem("显示全部", 0);
-    d->m_activityFilter->addItem("仅活跃合约", 1);
-    d->m_activityFilter->addItem("仅主力合约", 2);
-    d->m_activityFilter->addItem("高流动性", 3);
+    d->m_activityFilter->addItem("Show All", 0);
+    d->m_activityFilter->addItem("Active Only", 1);
+    d->m_activityFilter->addItem("High Liquidity", 2);
+    d->m_activityFilter->addItem("Low Liquidity", 3);
     d->m_activityFilter->setCurrentIndex(1);
     d->m_activityFilter->setMaximumWidth(120);
 
     auto *filterLabel = new QLabel("筛选：");
     filterLabel->setProperty("secondary", true);
     d->m_filterInput = new QLineEdit();
-    d->m_filterInput->setPlaceholderText("输入合约代码筛选...");
+    d->m_filterInput->setPlaceholderText("输入合约代码筛�?..");
     d->m_filterInput->setMaximumWidth(120);
 
     toolbarLayout->addWidget(refreshBtn);
@@ -1053,11 +1036,11 @@ void FuturesQuotesPage::setupUI()
         d->m_proxyModel->setFilterFixedString(text.toUpper());
     });
 
-    // 【修改】使用公有方法设置过滤模式
+    // 【修改】使用公有方法设置过滤模�?
     connect(d->m_activityFilter, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, [this](int index) {
                 const int mode = d->m_activityFilter->currentData().toInt();
-                setActivityFilterMode(mode);
+                setFilterMode(mode);
             });
 }
 
@@ -1080,21 +1063,21 @@ void FuturesQuotesPage::initializeSampleData() const
 {
     LOG_INFO("Initializing sample data for FuturesQuotesPage");
 
-    // 创建一些示例期货合约数据
+    // 创建一些示例期货合约数�?
     QVector<FuturesQuoteItem> sampleData;
     
     // 示例合约数据
     QVector<std::tuple<QString, double, double, int, int, double, double>> sampleContracts = {
         {"cu2504", 71230, 71250, 150, 200, 71000, 71500},  // 沪铜
-        {"rb2505", 4320, 4325, 80, 100, 4300, 4350},      // 螺纹钢
+        {"rb2505", 4320, 4325, 80, 100, 4300, 4350},      // 螺纹�?
         {"au2506", 580, 582, 30, 40, 575, 585},          // 沪金
         {"ag2505", 7800, 7820, 50, 60, 7750, 7850},       // 沪银
-        {"zn2505", 23800, 23850, 120, 150, 23700, 23900}, // 锌
-        {"ni2505", 158000, 158500, 5, 8, 157000, 159000},// 镍
-        {"sn2505", 228000, 228500, 3, 5, 227000, 229000},// 锡
-        {"al2505", 20400, 20450, 100, 120, 20300, 20500},// 铝
-        {"pb2505", 20800, 20850, 40, 50, 20700, 20900},  // 铅
-        {"zcecf2505", 6800, 6820, 200, 250, 6750, 6850}  // 玉米淀粉
+        {"zn2505", 23800, 23850, 120, 150, 23700, 23900}, // �?
+        {"ni2505", 158000, 158500, 5, 8, 157000, 159000},// �?
+        {"sn2505", 228000, 228500, 3, 5, 227000, 229000},// �?
+        {"al2505", 20400, 20450, 100, 120, 20300, 20500},// �?
+        {"pb2505", 20800, 20850, 40, 50, 20700, 20900},  // �?
+        {"zcecf2505", 6800, 6820, 200, 250, 6750, 6850}  // 玉米淀�?
     };
 
     for (const auto& contract : sampleContracts) {
@@ -1109,15 +1092,23 @@ void FuturesQuotesPage::initializeSampleData() const
         item.openInterest = openInterest;
         item.bidPrice = bidPrice;
         item.askPrice = askPrice;
-        item.isMainContract = true;  // 标记为活跃合约
-        item.activityStatus = 2;     // 高流动性状态
+        item.isMainContract = true;  // 标记为活跃合�?
+        item.activityStatus = 2;     // High Liquidity状�?
 
         sampleData.append(item);
     }
 
-    // 将示例数据添加到模型中
+    // 将示例数据添加到模型�?
     if (d->m_model) {
         d->m_model->setQuotes(sampleData);
         LOG_INFO(QString("Added %1 sample contracts to model").arg(sampleData.size()));
+    }
+}
+
+void FuturesQuotesPage::setActivityFilterMode(int mode) const
+{
+    // Set activity filter mode
+    if (d->m_proxyModel) {
+        d->m_proxyModel->setFilterMode(mode);
     }
 }

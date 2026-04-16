@@ -8,7 +8,7 @@
 
 #include <memory>
 
-#include <core/BasePage.h>
+#include <core/base/BasePage.h>
 
 class QComboBox;
 class QSlider;

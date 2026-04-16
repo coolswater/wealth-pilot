@@ -15,11 +15,11 @@
 #ifndef AIPLUGIN_H
 #define AIPLUGIN_H
 
-#include "../plugins/IAIPlugin.h"
-#include "../core/ServiceLocator.h"
-#include "../core/EnvironmentConfig.h"
+#include "../../plugins/IAIPlugin.h"
+#include "../../core/di/ServiceLocator.h"
+#include "../../core/config/EnvironmentConfig.h"
+#include "../../core/cache/CacheManager.h"
 #include <QTimer>
-#include "../core/CacheManager.h"
 #include <QNetworkAccessManager>
 #include <QQueue>
 #include <memory>

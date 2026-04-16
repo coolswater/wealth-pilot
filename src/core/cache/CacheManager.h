@@ -1,22 +1,22 @@
 /**
  * @file CacheManager.h
- * @brief 缓存管理器 - 多级高性能缓存系统
+ * @brief Cache Manager - Multi-level high-performance caching system
  * @author WealthPilot Team
  * @version 2.0.0
  * 
- * @details 功能：
- * - 三级缓存：L1（内存）-> L2（磁盘）-> L3（数据库）
- * - 缓存策略：LRU、LFU、TTL
- * - 自动过期清理
- * - 线程安全
- * - 性能优化：预分配内存、批量操作
+ * @details Features:
+ * - Three-level cache: L1 (Memory) -> L2 (Disk) -> L3 (Database)
+ * - Cache policies: LRU, LFU, TTL
+ * - Automatic expiration cleanup
+ * - Thread safe
+ * - Performance optimization: pre-allocated memory, batch operations
  * 
- * @thread_safe 所有公共方法都是线程安全的
+ * @thread_safe All public methods are thread-safe
  */
 #ifndef CACHEMANAGER_H
 #define CACHEMANAGER_H
 
-#include "Singleton.h"
+#include "../base/Singleton.h"
 #include <QObject>
 #include <QHash>
 #include <QMap>
@@ -27,53 +27,53 @@
 #include <memory>
 
 /**
- * @brief 缓存级别
+ * @brief Cache level
  */
 enum class CacheLevel {
-    L1_Memory,      // 内存缓存（最快）
-    L2_Disk,        // 磁盘缓存（较快）
-    L3_Database     // 数据库缓存（较慢）
+    L1_Memory,      // Memory cache (fastest)
+    L2_Disk,        // Disk cache (fast)
+    L3_Database     // Database cache (slower)
 };
 
 /**
- * @brief 缓存策略
+ * @brief Cache policy
  */
 enum class CachePolicy {
-    LRU,            // 最近最少使用
-    LFU,            // 最不经常使用
-    TTL,            // 时间过期
-    FIFO           // 先进先出
+    LRU,            // Least Recently Used
+    LFU,            // Least Frequently Used
+    TTL,            // Time To Live
+    FIFO            // First In First Out
 };
 
 /**
- * @brief 缓存项
+ * @brief Cache item
  */
 struct CacheItem {
-    QVariant value;             // 缓存值
-    QDateTime createTime;       // 创建时间
-    QDateTime expireTime;       // 过期时间
-    int hitCount;               // 命中次数
-    int size;                   // 数据大小（字节）
-    CacheLevel level;           // 缓存级别
+    QVariant value;             // Cached value
+    QDateTime createTime;       // Creation time
+    QDateTime expireTime;       // Expiration time
+    int hitCount = 0;           // Hit count
+    int size = 0;               // Data size (bytes)
+    CacheLevel level = CacheLevel::L1_Memory;  // Cache level
 };
 
 /**
- * @brief 缓存统计
+ * @brief Cache statistics
  */
 struct CacheStats {
-    qint64 totalHits;           // 总命中次数
-    qint64 totalMisses;         // 总未命中次数
-    qint64 totalSets;           // 总设置次数
-    qint64 totalDeletes;        // 总删除次数
-    qint64 memoryUsage;         // 内存使用量（字节）
-    qint64 diskUsage;           // 磁盘使用量（字节）
-    int itemCount;              // 缓存项数量
-    double hitRate;             // 命中率
+    qint64 totalHits = 0;       // Total hits
+    qint64 totalMisses = 0;     // Total misses
+    qint64 totalSets = 0;       // Total sets
+    qint64 totalDeletes = 0;    // Total deletes
+    qint64 memoryUsage = 0;     // Memory usage (bytes)
+    qint64 diskUsage = 0;       // Disk usage (bytes)
+    int itemCount = 0;          // Item count
+    double hitRate = 0.0;       // Hit rate
 };
 
 /**
- * @brief 缓存管理器 - 高性能多级缓存系统
- * @thread_safe 所有公共方法都是线程安全的
+ * @brief Cache Manager - High-performance multi-level caching system
+ * @thread_safe All public methods are thread-safe
  */
 class CacheManager : public QObject, public Singleton<CacheManager>
 {
@@ -82,13 +82,13 @@ class CacheManager : public QObject, public Singleton<CacheManager>
 
 public:
     /**
-     * @brief 初始化缓存管理器
+     * @brief Initialize cache manager
      */
     bool initialize(qint64 maxMemorySize = 100 * 1024 * 1024,  // 100MB
                    qint64 maxDiskSize = 1024 * 1024 * 1024);   // 1GB
 
     /**
-     * @brief 设置缓存
+     * @brief Set cache
      */
     void set(const QString& key, 
             const QVariant& value,
@@ -96,68 +96,68 @@ public:
             CacheLevel level = CacheLevel::L1_Memory);
 
     /**
-     * @brief 获取缓存
+     * @brief Get cache
      */
     QVariant get(const QString& key, const QVariant& defaultValue = QVariant());
 
     /**
-     * @brief 检查缓存是否存在
+     * @brief Check if cache exists
      */
     bool contains(const QString& key) const;
 
     /**
-     * @brief 删除缓存
+     * @brief Remove cache
      */
     void remove(const QString& key);
 
     /**
-     * @brief 清空缓存
+     * @brief Clear cache
      */
     void clear(CacheLevel level = CacheLevel::L1_Memory);
 
     /**
-     * @brief 清空所有缓存
+     * @brief Clear all caches
      */
     void clearAll();
 
     /**
-     * @brief 获取缓存统计
+     * @brief Get cache statistics
      */
     CacheStats statistics() const;
 
     /**
-     * @brief 设置缓存策略
+     * @brief Set cache policy
      */
     void setPolicy(CachePolicy policy);
 
     /**
-     * @brief 预热缓存（批量设置）
+     * @brief Warmup cache (batch set)
      */
     void warmup(const QMap<QString, QVariant>& data);
 
     /**
-     * @brief 批量获取
+     * @brief Batch get
      */
     QMap<QString, QVariant> getBatch(const QStringList& keys);
 
     /**
-     * @brief 批量设置
+     * @brief Batch set
      */
     void setBatch(const QMap<QString, QVariant>& data, int ttlSeconds = 300);
 
 signals:
     /**
-     * @brief 缓存命中信号
+     * @brief Cache hit signal
      */
     void cacheHit(const QString& key);
 
     /**
-     * @brief 缓存未命中信号
+     * @brief Cache miss signal
      */
     void cacheMiss(const QString& key);
 
     /**
-     * @brief 缓存过期信号
+     * @brief Cache expired signal
      */
     void cacheExpired(const QString& key);
 
@@ -165,27 +165,27 @@ private:
     CacheManager();
     ~CacheManager();
 
-    // L1内存缓存
+    // L1 memory cache
     QHash<QString, CacheItem> m_l1Cache;
     qint64 m_l1MaxSize;
     qint64 m_l1CurrentSize;
     
-    // L2磁盘缓存
+    // L2 disk cache
     QString m_l2CachePath;
     qint64 m_l2MaxSize;
     qint64 m_l2CurrentSize;
     
-    // 统计信息
+    // Statistics
     mutable CacheStats m_stats;
     
-    // 配置
+    // Configuration
     CachePolicy m_policy;
     mutable QMutex m_mutex;
     
-    // 定时清理
+    // Cleanup interval
     int m_cleanupInterval;
     
-    // 内部方法
+    // Internal methods
     void cleanupExpired();
     void evictIfNeeded(CacheLevel level);
     QString serialize(const QVariant& value) const;
@@ -194,6 +194,7 @@ private:
     CacheItem readFromDisk(const QString& key) const;
     void updateStats(bool hit);
     void scheduleCleanup();
+    int estimateSize(const QVariant& value) const;
 };
 
 #endif // CACHEMANAGER_H

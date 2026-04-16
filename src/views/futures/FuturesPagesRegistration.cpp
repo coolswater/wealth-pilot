@@ -2,18 +2,14 @@
  * @file FuturesPagesRegistration.cpp
  * @brief 期货页面注册 - 将期货相关页面注册到页面工厂
  *
- * @details 注册页面：
- * - 期货K线详情页
- * - 期货行情列表页
- * - 期货交易下单页
- * - 期货持仓查询页
- *
+ * @details 注册页面�? * - 期货K线详情页
+ * - 期货行情列表�? * - 期货交易下单�? * - 期货持仓查询�? *
  * @author WealthPilot Team
  * @version 2.0.0
  */
 
 #include "FuturesKLinePage.h"
-#include "core/PageFactoryRegistry.h"
+#include "core/navigation/PageFactoryRegistry.h"
 #include "utils/Logger.h"
 
 namespace WealthPilot {

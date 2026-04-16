@@ -6,12 +6,12 @@
 #include <QApplication>
 #include <QKeyEvent>
 
-#include "core/BasePage.h"
-#include "core/QuoteDataManager.h"
+#include "core/base/BasePage.h"
+#include "market/QuoteDataManager.h"
 #include "views/widgets/TreeMapWidget.h"
 
 // 如果你的项目�?BasePage，取消注释下面这行并确保 BasePage 继承�?QWidget
-// #include "core/BasePage.h"
+// #include "core/base/BasePage.h"
 
 class QComboBox;
 class QLineEdit;

@@ -1,5 +1,5 @@
 #include "BaseWidget.h"
-#include "../../core/AnimationManager.h"
+#include "../../ui/animation/AnimationManager.h"
 #include "../../utils/Logger.h"
 
 #include <QPainter>
@@ -10,26 +10,26 @@
  * @file BaseWidget.cpp
  * @brief 基础控件实现
  *
- * @details 提供动画属性的实现和常用动画效果
- * 所有变换通过QPainter在paintEvent中应用
+ * @details 提供动画属性的实现和常用动画效�?
+ * 所有变换通过QPainter在paintEvent中应�?
  */
 
 /**
  * @struct BaseWidget::Impl
- * @brief PIMPL实现结构体
+ * @brief PIMPL实现结构�?
  */
 struct BaseWidget::Impl {
-    qreal scale = 1.0;           ///< 当前缩放值
+    qreal scale = 1.0;           ///< 当前缩放�?
     qreal rotation = 0.0;        ///< 当前旋转角度
-    qreal opacity = 1.0;         ///< 当前透明度
+    qreal opacity = 1.0;         ///< 当前透明�?
     QPropertyAnimation* pulseAnimation = nullptr;  ///< 脉冲动画对象
-    QGraphicsOpacityEffect* opacityEffect = nullptr;  ///< 透明度效果对象
+    QGraphicsOpacityEffect* opacityEffect = nullptr;  ///< 透明度效果对�?
 };
 
 /**
- * @brief 构造函数
+ * @brief 构造函�?
  *
- * @details 初始化PIMPL对象，启用鼠标跟踪
+ * @details 初始化PIMPL对象，启用鼠标跟�?
  */
 BaseWidget::BaseWidget(QWidget *parent)
     : QWidget(parent)
@@ -42,12 +42,12 @@ BaseWidget::BaseWidget(QWidget *parent)
 /**
  * @brief 析构函数
  *
- * @details 确保脉冲动画停止，避免悬空指针
+ * @details 确保脉冲动画停止，避免悬空指�?
  */
 BaseWidget::~BaseWidget() = default;
 
 /**
- * @brief 获取缩放值
+ * @brief 获取缩放�?
  */
 qreal BaseWidget::scale() const
 {
@@ -55,8 +55,8 @@ qreal BaseWidget::scale() const
 }
 
 /**
- * @brief 设置缩放值
- * @param scale 新的缩放值
+ * @brief 设置缩放�?
+ * @param scale 新的缩放�?
  *
  * @details 更新缩放值并触发重绘
  */
@@ -95,7 +95,7 @@ void BaseWidget::setRotation(qreal rotation)
 }
 
 /**
- * @brief 获取透明度
+ * @brief 获取透明�?
  */
 qreal BaseWidget::opacity() const
 {
@@ -103,8 +103,8 @@ qreal BaseWidget::opacity() const
 }
 
 /**
- * @brief 设置透明度
- * @param opacity 新的透明度
+ * @brief 设置透明�?
+ * @param opacity 新的透明�?
  *
  * @details 延迟创建QGraphicsOpacityEffect，避免不必要的开销
  */
@@ -117,7 +117,7 @@ void BaseWidget::setOpacity(qreal opacity)
     d->opacity = opacity;
     emit opacityChanged(opacity);
 
-    // 延迟创建透明度效果
+    // 延迟创建透明度效�?
     if (!d->opacityEffect) {
         d->opacityEffect = new QGraphicsOpacityEffect(this);
         setGraphicsEffect(d->opacityEffect);
@@ -166,7 +166,7 @@ void BaseWidget::scaleIn(int duration)
 }
 
 /**
- * @brief 缩放退出动画
+ * @brief 缩放退出动�?
  */
 void BaseWidget::scaleOut(int duration)
 {
@@ -177,7 +177,7 @@ void BaseWidget::scaleOut(int duration)
  * @brief 脉冲动画
  * @param duration 单次脉冲周期
  *
- * @details 创建呼吸效果动画，从1.0到1.05再回到1.0
+ * @details 创建呼吸效果动画，从1.0�?.05再回�?.0
  */
 void BaseWidget::pulse(int duration)
 {
@@ -187,7 +187,7 @@ void BaseWidget::pulse(int duration)
     d->pulseAnimation = new QPropertyAnimation(this, "scale", this);
     d->pulseAnimation->setDuration(duration);
     d->pulseAnimation->setStartValue(1.0);
-    d->pulseAnimation->setKeyValueAt(0.5, 1.05);  // 中点最大
+    d->pulseAnimation->setKeyValueAt(0.5, 1.05);  // 中点最�?
     d->pulseAnimation->setEndValue(1.0);
     d->pulseAnimation->setLoopCount(-1);  // 无限循环
     d->pulseAnimation->setEasingCurve(QEasingCurve::InOutSine);
@@ -224,7 +224,7 @@ void BaseWidget::shake(int duration)
     // 计算每步持续时间
     int stepDuration = duration / 10;
 
-    // 抖动幅度序列：大->小
+    // 抖动幅度序列：大->�?
     int offsets[] = {-10, 10, -10, 10, -5, 5, -5, 5, 0};
 
     QPoint basePos = pos();
@@ -238,7 +238,7 @@ void BaseWidget::shake(int duration)
         group->addAnimation(anim);
     }
 
-    // 动画完成后确保回到原位
+    // 动画完成后确保回到原�?
     connect(group, &QSequentialAnimationGroup::finished, this, [this, basePos]() {
         move(basePos);
     });
@@ -253,7 +253,7 @@ void BaseWidget::shake(int duration)
  * @param event 绘制事件对象
  *
  * @details 应用缩放和旋转变换后调用父类绘制
- * 使用QPainter的save/restore确保变换不影响其他绘制
+ * 使用QPainter的save/restore确保变换不影响其他绘�?
  */
 void BaseWidget::paintEvent(QPaintEvent *event)
 {

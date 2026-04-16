@@ -1,17 +1,17 @@
 /**
  * @file ConfigManager.h
- * @brief 配置管理器 - 统一管理应用配置和安全存储
+ * @brief 配置管理�?- 统一管理应用配置和安全存�?
  *
- * @details 功能：
- * - 普通配置：使用 QSettings 持久化
- * - 安全存储：使用 Windows DPAPI 加密（API密钥等敏感信息）
+ * @details 功能�?
+ * - 普通配置：使用 QSettings 持久�?
+ * - 安全存储：使�?Windows DPAPI 加密（API密钥等敏感信息）
  * - 内存缓存：提高读取性能
  */
 
 #ifndef CONFIGMANAGER_H
 #define CONFIGMANAGER_H
 
-#include "Singleton.h"
+#include "../base/Singleton.h"
 #include <QString>
 #include <QVariant>
 #include <QSettings>
@@ -39,14 +39,14 @@ constexpr auto CtpTradeFront = "ctp/trade_front";
 constexpr auto AiProvider = "ai/provider";
 constexpr auto AiModel = "ai/model";
 
-// 安全存储键（加密）
+// 安全存储键（加密�?
 constexpr auto SecureCtpUserId = "secure/ctp_user_id";
 constexpr auto SecureCtpPassword = "secure/ctp_password";
 constexpr auto SecureApiKey = "secure/api_key";
 }
 
 /**
- * @brief 配置管理器
+ * @brief 配置管理�?
  */
 class ConfigManager : public Singleton<ConfigManager>
 {
@@ -58,7 +58,7 @@ public:
      */
     bool initialize(const QString& orgName = "Hexd", const QString& appName = "WealthPilot");
 
-    // ========== 普通配置 ==========
+    // ========== 普通配�?==========
 
     QVariant get(const QString& key, const QVariant& defaultValue = QVariant());
     void set(const QString& key, const QVariant& value);

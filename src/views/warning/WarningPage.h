@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include <core/BasePage.h>
+#include <core/base/BasePage.h>
 
 class WarningPage : public BasePage
 {
@@ -20,3 +20,4 @@ private:
     std::unique_ptr<Impl> d;
 };
 #endif // ALERTSPAGE_H
+

@@ -1,10 +1,10 @@
 /**
  * @file CTPPlugin.cpp
- * @brief CTP插件完整实现
+ * @brief CTP Plugin Implementation
  */
 
 #include "CTPPlugin.h"
-#include "../core/EnvironmentConfig.h"
+#include "../core/config/EnvironmentConfig.h"
 #include "../utils/Logger.h"
 #include <QTimer>
 #include <QDateTime>
@@ -13,48 +13,48 @@
 
 namespace CTP {
 
-// ========== PIMPL实现 ==========
+// ========== PIMPL Implementation ==========
 
 class CTPPlugin::Impl {
 public:
-    // 连接状态
+    // Connection state
     bool connected = false;
     QString brokerId;
     QString userId;
     QString tradingDay;
     
-    // 行情数据缓存
+    // Market data cache
     QMap<QString, MarketData> marketDataCache;
     QMutex marketDataMutex;
     
-    // 订单管理
+    // Order management
     QMap<QString, OrderData> orders;
     QMap<QString, OrderData> trades;
     int orderRefCounter = 0;
     QMutex orderMutex;
     
-    // 账户信息
+    // Account info
     AccountData accountData;
     QList<AccountData> positions;
     QMutex accountMutex;
     
-    // 批量订阅缓冲
+    // Batch subscription buffer
     QQueue<QString> subscribeBuffer;
     QTimer* subscribeBufferTimer = nullptr;
     static const int SUBSCRIBE_BUFFER_INTERVAL = 100; // 100ms
     
-    // 辅助方法
+    // Helper methods
     QString generateOrderRef() {
         QMutexLocker locker(&orderMutex);
         return QString::number(++orderRefCounter).rightJustified(12, '0');
     }
     
     void flushSubscribeBuffer() {
-        // 批量订阅逻辑
+        // Batch subscription logic
     }
 };
 
-// ========== 构造和析构 ==========
+// ========== Constructor and Destructor ==========
 
 CTPPlugin::CTPPlugin()
     : d(std::make_unique<Impl>())
@@ -75,7 +75,7 @@ CTPPlugin::~CTPPlugin()
     LOG_DEBUG("CTPPlugin destroyed");
 }
 
-// ========== IPlugin接口实现 ==========
+// ========== IPlugin Interface Implementation ==========
 
 PluginMetaData CTPPlugin::metaData() const
 {
@@ -86,8 +86,8 @@ PluginMetaData CTPPlugin::metaData() const
     meta.author = "WealthPilot Team";
     meta.license = "MIT";
     meta.website = "https://wealthpilot.com";
-    meta.dependencies = QStringList(); // 无依赖
-    meta.priority = 10; // 高优先级
+    meta.dependencies = QStringList();
+    meta.priority = 10;
     meta.enableHotReload = true;
     return meta;
 }
@@ -102,8 +102,6 @@ bool CTPPlugin::load()
     QElapsedTimer timer;
     timer.start();
     
-    LOG_INFO("Loading CTPPlugin...");
-    
     if (m_state != PluginState::Unloaded) {
         LOG_WARNING("CTPPlugin already loaded");
         return true;
@@ -111,7 +109,7 @@ bool CTPPlugin::load()
     
     setState(PluginState::Loading);
     
-    // 初始化批量订阅缓冲定时器
+    // Initialize subscription buffer timer
     QObject::connect(m_subscribeBufferTimer, &QTimer::timeout, this, &CTPPlugin::flushSubscribeBuffer);
     
     setState(PluginState::Loaded);
@@ -125,16 +123,16 @@ bool CTPPlugin::initialize(const QJsonObject& config)
     QElapsedTimer timer;
     timer.start();
     
-    LOG_INFO("Initializing CTPPlugin...");
-    
     if (m_state != PluginState::Loaded) {
-        LOG_ERROR("CTPPlugin not loaded");
+        LOG_ERROR("CTPPlugin not loaded, cannot initialize");
         return false;
     }
     
+    setState(PluginState::Loading);
+    
     m_config = config;
     
-    // 从EnvironmentConfig加载配置
+    // Load environment config
     loadEnvironmentConfig();
     
     setState(PluginState::Initialized);
@@ -148,12 +146,15 @@ bool CTPPlugin::start()
     QElapsedTimer timer;
     timer.start();
     
-    LOG_INFO("Starting CTPPlugin...");
-    
     if (m_state != PluginState::Initialized) {
-        LOG_ERROR("CTPPlugin not initialized");
+        LOG_ERROR("CTPPlugin not initialized, cannot start");
         return false;
     }
+    
+    setState(PluginState::Loaded);
+    
+    // Start subscription buffer timer
+    m_subscribeBufferTimer->start(Impl::SUBSCRIBE_BUFFER_INTERVAL);
     
     setState(PluginState::Running);
     
@@ -163,36 +164,36 @@ bool CTPPlugin::start()
 
 void CTPPlugin::stop()
 {
-    LOG_INFO("Stopping CTPPlugin...");
-    
     if (m_state != PluginState::Running) {
         return;
     }
     
-    // 断开连接
-    disconnect();
-    
     setState(PluginState::Stopped);
     
+    // Stop subscription buffer timer
+    m_subscribeBufferTimer->stop();
+    
+    // Disconnect if connected
+    if (d->connected) {
+        disconnect();
+    }
+    
+    setState(PluginState::Loaded);
     LOG_INFO("CTPPlugin stopped");
 }
 
 void CTPPlugin::unload()
 {
-    LOG_INFO("Unloading CTPPlugin...");
-    
     if (m_state == PluginState::Running) {
         stop();
     }
     
-    // 清理资源
-    d->marketDataCache.clear();
-    d->orders.clear();
-    d->trades.clear();
-    d->positions.clear();
+    if (m_state == PluginState::Initialized) {
+        setState(PluginState::Loading);
+    }
     
+    d.reset();
     setState(PluginState::Unloaded);
-    
     LOG_INFO("CTPPlugin unloaded");
 }
 
@@ -209,7 +210,7 @@ void CTPPlugin::setConfiguration(const QJsonObject& config)
 
 bool CTPPlugin::checkDependencies() const
 {
-    // CTP插件无依赖
+    // No dependencies
     return true;
 }
 
@@ -218,63 +219,39 @@ QStringList CTPPlugin::dependencies() const
     return QStringList();
 }
 
-// ========== ICTPPlugin接口实现 ==========
+// ========== ICTPPlugin Interface Implementation ==========
 
-bool CTPPlugin::connect(const QString& brokerId,
-                       const QString& userId,
-                       const QString& password,
-                       const QString& marketFront,
+bool CTPPlugin::connect(const QString& brokerId, const QString& userId,
+                       const QString& password, const QString& marketFront,
                        const QString& tradeFront)
 {
-    QElapsedTimer timer;
-    timer.start();
+    LOG_INFO(QString("Connecting to CTP: %1:%2").arg(brokerId, userId));
     
-    LOG_INFO(QString("Connecting to CTP: broker=%1, user=%2")
-        .arg(brokerId).arg(userId));
-    
-    if (m_state != PluginState::Running) {
-        LOG_ERROR("CTPPlugin not running");
-        return false;
-    }
-    
-    // 保存连接信息
     d->brokerId = brokerId;
     d->userId = userId;
     
-    // TODO: 实际的CTP连接逻辑
-    // 这里应该调用CTP API进行连接
-    // 1. 创建MdApi和TraderApi
-    // 2. 注册SPI回调
-    // 3. 连接前置地址
-    // 4. 用户登录
-    
-    // 模拟连接成功
+    // TODO: Actual CTP connection implementation
     d->connected = true;
     d->tradingDay = QDateTime::currentDateTime().toString("yyyyMMdd");
     
-    LOG_INFO(QString("CTP connected in %1ms").arg(timer.elapsed()));
-    
     emit connected();
+    LOG_INFO("CTP connected");
     return true;
 }
 
 void CTPPlugin::disconnect()
 {
-    LOG_INFO("Disconnecting from CTP...");
-    
     if (!d->connected) {
         return;
     }
     
-    // TODO: 实际的CTP断开逻辑
-    // 1. 登出
-    // 2. 释放API
+    LOG_INFO("Disconnecting from CTP");
     
+    // TODO: Actual CTP disconnection implementation
     d->connected = false;
     
-    LOG_INFO("CTP disconnected");
-    
     emit disconnected();
+    LOG_INFO("CTP disconnected");
 }
 
 bool CTPPlugin::isConnected() const
@@ -285,20 +262,15 @@ bool CTPPlugin::isConnected() const
 bool CTPPlugin::subscribeMarketData(const QStringList& instruments)
 {
     if (!d->connected) {
-        LOG_ERROR("CTP not connected");
+        LOG_ERROR("Not connected to CTP");
         return false;
     }
     
     LOG_INFO(QString("Subscribing market data: %1 instruments").arg(instruments.size()));
     
-    // 使用批量订阅缓冲（性能优化）
+    // Add to buffer for batch subscription
     for (const QString& instrument : instruments) {
         d->subscribeBuffer.enqueue(instrument);
-    }
-    
-    // 启动缓冲定时器
-    if (!m_subscribeBufferTimer->isActive()) {
-        m_subscribeBufferTimer->start(Impl::SUBSCRIBE_BUFFER_INTERVAL);
     }
     
     return true;
@@ -306,98 +278,45 @@ bool CTPPlugin::subscribeMarketData(const QStringList& instruments)
 
 void CTPPlugin::unsubscribeMarketData(const QStringList& instruments)
 {
-    if (!d->connected) {
-        return;
-    }
-    
     LOG_INFO(QString("Unsubscribing market data: %1 instruments").arg(instruments.size()));
-    
-    // TODO: 实际的取消订阅逻辑
-    // 调用MdApi->UnsubscribeMarketData
+    // TODO: Actual unsubscription implementation
 }
 
-::MarketData CTPPlugin::getMarketData(const QString& instrumentId) const
+MarketData CTPPlugin::getMarketData(const QString& instrumentId) const
 {
-    // 先从内存缓存获取
-    {
-        QMutexLocker locker(&d->marketDataMutex);
-        if (d->marketDataCache.contains(instrumentId)) {
-            return d->marketDataCache[instrumentId];
-        }
-    }
-    
-    // 再从CacheManager获取（集成缓存系统）
-    QString cacheKey = QString("market_data_%1").arg(instrumentId);
-    QVariant cached = CacheManager::instance()->get(cacheKey);
-    if (cached.isValid()) {
-        return cached.value<MarketData>();
-    }
-    
-    return MarketData();
+    QMutexLocker locker(&d->marketDataMutex);
+    return d->marketDataCache.value(instrumentId);
 }
 
-QMap<QString, ::MarketData> CTPPlugin::getAllMarketData() const
+QMap<QString, MarketData> CTPPlugin::getAllMarketData() const
 {
     QMutexLocker locker(&d->marketDataMutex);
     return d->marketDataCache;
 }
 
-QString CTPPlugin::sendOrder(const QString& instrumentId,
-                            const QString& direction,
-                            const QString& offsetFlag,
-                            double price,
-                            int volume)
+QString CTPPlugin::sendOrder(const QString& instrumentId, const QString& direction,
+                            const QString& offsetFlag, double price, int volume)
 {
     if (!d->connected) {
-        LOG_ERROR("CTP not connected");
+        LOG_ERROR("Not connected to CTP");
         return QString();
     }
     
-    LOG_INFO(QString("Sending order: %1 %2 %3 @ %4 vol=%5")
-        .arg(instrumentId).arg(direction).arg(offsetFlag).arg(price).arg(volume));
+    QString orderId = d->generateOrderRef();
     
-    // 生成订单引用
-    QString orderRef = d->generateOrderRef();
+    LOG_INFO(QString("Sending order: %1 %2 %3 @ %4 x %5")
+        .arg(instrumentId, direction, offsetFlag)
+        .arg(price).arg(volume));
     
-    // 创建订单数据
-    OrderData order;
-    order.orderId = orderRef;
-    order.instrumentId = instrumentId;
-    order.direction = direction;
-    order.offsetFlag = offsetFlag;
-    order.price = price;
-    order.volume = volume;
-    order.volumeTraded = 0;
-    order.status = "Pending";
-    order.insertTime = QDateTime::currentDateTime();
+    // TODO: Actual order submission implementation
     
-    // 缓存订单
-    {
-        QMutexLocker locker(&d->orderMutex);
-        d->orders[orderRef] = order;
-    }
-    
-    // TODO: 实际的下单逻辑
-    // 调用TraderApi->ReqOrderInsert
-    
-    LOG_INFO(QString("Order sent: %1").arg(orderRef));
-    
-    emit orderUpdated(order);
-    return orderRef;
+    return orderId;
 }
 
 bool CTPPlugin::cancelOrder(const QString& orderId)
 {
-    if (!d->connected) {
-        LOG_ERROR("CTP not connected");
-        return false;
-    }
-    
-    LOG_INFO(QString("Cancelling order: %1").arg(orderId));
-    
-    // TODO: 实际的撤单逻辑
-    // 调用TraderApi->ReqOrderAction
-    
+    LOG_INFO(QString("Canceling order: %1").arg(orderId));
+    // TODO: Actual order cancellation implementation
     return true;
 }
 
@@ -425,63 +344,70 @@ QList<AccountData> CTPPlugin::queryPositions()
     return d->positions;
 }
 
-// ========== 私有方法 ==========
+// ========== Private Methods ==========
 
 void CTPPlugin::flushSubscribeBuffer()
 {
     if (d->subscribeBuffer.isEmpty()) {
-        m_subscribeBufferTimer->stop();
         return;
     }
     
-    // 批量处理订阅
     QStringList instruments;
     while (!d->subscribeBuffer.isEmpty() && instruments.size() < 100) {
         instruments.append(d->subscribeBuffer.dequeue());
     }
     
-    LOG_DEBUG(QString("Flushing subscribe buffer: %1 instruments").arg(instruments.size()));
-    
-    // TODO: 实际的批量订阅逻辑
-    // 调用MdApi->SubscribeMarketData
+    if (!instruments.isEmpty()) {
+        LOG_DEBUG(QString("Flushing subscription buffer: %1 instruments").arg(instruments.size()));
+        // TODO: Actual batch subscription implementation
+    }
 }
 
 void CTPPlugin::updateMarketDataCache(const QString& instrumentId, const MarketData& data)
 {
-    // 更新内存缓存
-    {
-        QMutexLocker locker(&d->marketDataMutex);
-        d->marketDataCache[instrumentId] = data;
-    }
+    QMutexLocker locker(&d->marketDataMutex);
+    d->marketDataCache[instrumentId] = data;
     
-    // 更新CacheManager（集成缓存系统）
-    QString cacheKey = QString("market_data_%1").arg(instrumentId);
-    CacheManager::instance()->set(cacheKey, QVariant::fromValue(data), 60, CacheLevel::L1_Memory);
+    // Also update CacheManager
+    CacheManager::instance()->set(
+        QString("market_%1").arg(instrumentId),
+        QVariant::fromValue(data),
+        60  // 60 seconds TTL
+    );
 }
 
 MarketData CTPPlugin::getCachedMarketData(const QString& instrumentId) const
 {
-    return getMarketData(instrumentId);
+    // Try CacheManager first
+    QVariant cached = CacheManager::instance()->get(
+        QString("market_%1").arg(instrumentId)
+    );
+    
+    if (cached.isValid()) {
+        return cached.value<MarketData>();
+    }
+    
+    // Fall back to local cache
+    QMutexLocker locker(&d->marketDataMutex);
+    return d->marketDataCache.value(instrumentId);
 }
 
 void CTPPlugin::loadEnvironmentConfig()
 {
-    // 从EnvironmentConfig加载CTP配置
-    auto* settings = EnvironmentConfig::instance()->currentSettings();
-    
-    if (!settings) return;
-    
-    if (!m_config.contains("brokerId")) {
-        m_config["brokerId"] = settings->ctpBrokerId;
+    auto settings = EnvironmentConfig::instance()->currentSettings();
+    if (settings) {
+        if (!m_config.contains("brokerId")) {
+            m_config["brokerId"] = settings->ctpBrokerId;
+        }
+        if (!m_config.contains("marketFront")) {
+            m_config["marketFront"] = settings->ctpMarketFront;
+        }
+        if (!m_config.contains("tradeFront")) {
+            m_config["tradeFront"] = settings->ctpTradeFront;
+        }
+        
+        LOG_DEBUG("CTP environment config loaded");
     }
-    if (!m_config.contains("marketFront")) {
-        m_config["marketFront"] = settings->ctpMarketFront;
-    }
-    if (!m_config.contains("tradeFront")) {
-        m_config["tradeFront"] = settings->ctpTradeFront;
-    }
-    
-    LOG_DEBUG("CTP environment config loaded");
 }
 
 void CTPPlugin::setState(PluginState newState)

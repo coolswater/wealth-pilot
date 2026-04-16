@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include <core/BasePage.h>
+#include <core/base/BasePage.h>
 
 class StockQuotesPage: public BasePage
 {
@@ -24,3 +24,4 @@ private:
 };
 
 #endif // STOCKQUOTES_H
+

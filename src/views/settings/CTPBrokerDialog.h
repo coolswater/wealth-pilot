@@ -1,13 +1,13 @@
 /**
  * @file CTPBrokerDialog.h
- * @brief CTP服务商配置对话框
+ * @brief CTP Broker Configuration Dialog
  *
- * @details 功能：
- * - 显示所有可用服务商
- * - 添加/编辑/删除服务商
- * - 设置用户凭证
- * - 切换当前服务商
- * - 测试连接
+ * @details Features:
+ * - Display all available brokers
+ * - Add/Edit/Delete brokers
+ * - Set user credentials
+ * - Switch current broker
+ * - Test connection
  *
  * @author WealthPilot Team
  * @version 2.0.0
@@ -24,12 +24,12 @@
 #include <QTableWidget>
 #include <QGroupBox>
 #include <memory>
-#include "../../core/CTPConfigManager.h"
+#include "../../ctp/config/CTPConfigManager.h"
 
 namespace CTP {
 
 /**
- * @brief CTP服务商配置对话框
+ * @brief CTP Broker Configuration Dialog
  */
 class CTPBrokerDialog : public QDialog {
     Q_OBJECT
@@ -38,37 +38,19 @@ public:
     explicit CTPBrokerDialog(QWidget* parent = nullptr);
     ~CTPBrokerDialog() override;
 
-    /**
-     * @brief 获取选中的服务商ID
-     */
-    QString selectedBrokerId() const;
-
-signals:
-    /**
-     * @brief 服务商配置已更改
-     */
-    void brokerConfigChanged(const QString& brokerId);
-
-    /**
-     * @brief 请求切换服务商
-     */
-    void switchBrokerRequested(const QString& brokerId);
-
 private slots:
-    void onBrokerSelected(int index);
+    void onBrokerChanged(int index);
     void onAddBroker();
     void onEditBroker();
     void onDeleteBroker();
     void onTestConnection();
     void onSaveCredentials();
-    void onSwitchBroker();
-    void onResetToDefaults();
+    void onAccept();
 
 private:
     void setupUI();
     void loadBrokers();
-    void updateBrokerDetails(const CTPBrokerConfig& config);
-    void clearBrokerDetails();
+    void updateBrokerList();
     void saveCurrentBroker();
 
     struct Impl;
@@ -76,7 +58,7 @@ private:
 };
 
 /**
- * @brief 添加/编辑服务商对话框
+ * @brief Add/Edit Broker Dialog
  */
 class CTPBrokerEditDialog : public QDialog {
     Q_OBJECT
@@ -87,7 +69,7 @@ public:
     ~CTPBrokerEditDialog() override;
 
     /**
-     * @brief 获取配置
+     * @brief Get configuration
      */
     CTPBrokerConfig getBrokerConfig() const;
 

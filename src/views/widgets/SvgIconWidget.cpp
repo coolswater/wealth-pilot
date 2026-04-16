@@ -1,6 +1,6 @@
 #include "SvgIconWidget.h"
 #include "SvgIconEngine.h"
-#include "src/core/ThemeManager.h"
+#include "src/ui/ThemeManager.h"
 
 QIcon SvgIconWidget::icon(const QString& path, const QColor& color)
 {
@@ -28,3 +28,4 @@ void SvgIconWidget::clearCache()
 {
     SvgIconEngine::clearCache();
 }
+

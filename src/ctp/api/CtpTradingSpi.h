@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////
 ///@file CtpTradingSpi.h
-///@brief 交易SPI实现 - 订单管理与回报处理
+///@brief 交易SPI实现 - 订单管理与回报处�?
 /////////////////////////////////////////////////////////////////////////
 
 #ifndef CTPTRADINGSPI_H
@@ -10,10 +10,10 @@
 #include <QtCore/QMutex>
 #include <QtCore/QHash>
 #include <QtCore/QDateTime>
-#include <services/CTPService.h>
+#include "../service/CTPService.h"
 #include "external/ctp/ThostFtdcTraderApi.h"
 
-// 关键：前向声明CTP结构体，避免头文件污染
+// 关键：前向声明CTP结构体，避免头文件污�?
 struct CThostFtdcInvestorPositionField;
 struct CThostFtdcRspInfoField;
 struct CThostFtdcInputOrderField;
@@ -21,7 +21,7 @@ struct CThostFtdcInputOrderField;
 namespace CTP {
 
 /**
- * @brief 交易SPI类 - 处理订单、成交、持仓查询
+ * @brief 交易SPI�?- 处理订单、成交、持仓查�?
  */
 class CtpTradingSpi : public QObject, public CThostFtdcTraderSpi {
     Q_OBJECT
@@ -51,9 +51,9 @@ public:
     void queryOrders();
     void queryTrades();
     void queryInstruments(const QString& exchangeId = QString());  // 查询合约
-    void confirmSettlement();  // 确认结算单
+    void confirmSettlement();  // 确认结算�?
 
-    // CTP SPI回调（仅列出关键回调，完整实现见cpp）
+    // CTP SPI回调（仅列出关键回调，完整实现见cpp�?
     void OnFrontConnected() override;
     void OnFrontDisconnected(int nReason) override;
     void OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthenticateField,
@@ -85,7 +85,7 @@ signals:
     void instrumentQueried(const QString& instrumentId, const QString& exchangeId,
                            const QString& instrumentName, double priceTick, int volumeMultiple);
     void instrumentQueryFinished(int totalCount);
-    void settlementConfirmed(bool success, const QString& msg);  // 结算单确认结果
+    void settlementConfirmed(bool success, const QString& msg);  // 结算单确认结�?
     void error(int requestId, int errorId, const QString& msg);
 
 private:
@@ -103,3 +103,5 @@ private:
 } // namespace Ctp
 
 #endif
+
+

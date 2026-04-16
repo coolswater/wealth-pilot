@@ -1,5 +1,10 @@
+/**
+ * @file StatusBarWidget.cpp
+ * @brief Status Bar Widget Implementation
+ */
+
 #include "StatusBarWidget.h"
-#include "core/Tokens.h"
+#include "core/config/Tokens.h"
 
 #include <QDateTime>
 #include <QHBoxLayout>
@@ -7,7 +12,7 @@
 #include <QStatusBar>
 #include <QTimer>
 
-#include <services/CTPService.h>
+#include <ctp/service/CTPService.h>
 
 #include "AIAssistantPanelWidget.h"
 #include "NetworkIndicator.h"
@@ -15,7 +20,6 @@
 
 
 struct StatusBarWidget::Impl {
-    // UI组件
     QHBoxLayout * layout = nullptr;
     QLabel * aiStatusLabel = nullptr;
     QLabel * ctpStatusLabel = nullptr;
@@ -34,114 +38,88 @@ StatusBarWidget::StatusBarWidget(QWidget *parent)
     : BaseWidget(parent)
     , d(std::make_unique<Impl>())
 {
-    setFixedHeight(30);
     setupUI();
-    initConnections();
 }
 
-StatusBarWidget::~StatusBarWidget() = default;
+StatusBarWidget::~StatusBarWidget()
+{
+    if (d->timer) {
+        d->timer->stop();
+    }
+}
 
 void StatusBarWidget::setupUI()
 {
     d->layout = new QHBoxLayout(this);
     d->layout->setContentsMargins(10, 0, 10, 0);
-    d->layout->addSpacing(2);
+    d->layout->setSpacing(15);
 
-    // 版本
-    d->versionLabel = new QLabel("@copyright: v1.0.0", this);
+    // Version label
+    d->versionLabel = new QLabel("v2.0.0", this);
     d->versionLabel->setObjectName("versionLabel");
     d->layout->addWidget(d->versionLabel);
 
     d->layout->addStretch(1);
 
-    // AI 状态
-    d->aiStatusLabel = new QLabel("AI: 就绪", this);
+    // AI status
+    d->aiStatusLabel = new QLabel("AI: Ready", this);
     d->aiStatusLabel->setObjectName("aiStatus");
     d->layout->addWidget(d->aiStatusLabel);
 
-    // CTP 状态
-    d->ctpStatusLabel = new QLabel("CTP: 未连接", this);
+    // CTP status
+    d->ctpStatusLabel = new QLabel("CTP: Disconnected", this);
     d->ctpStatusLabel->setObjectName("ctpStatus");
     d->layout->addWidget(d->ctpStatusLabel);
 
-    // 网络指示器
-    d->networkIndicator = new NetworkIndicator(this
-        );
-    d->networkIndicator->setCheckInterval(3000);  // 3秒检测一次
+    // Network indicator
+    d->networkIndicator = new NetworkIndicator(this);
+    d->networkIndicator->setCheckInterval(3000);
     d->networkIndicator->startMonitoring();
-    d->networkIndicator->setIndicatorSize(20, 13);  // 更小 20x14
+    d->networkIndicator->setIndicatorSize(20, 13);
 
-    // 自定义颜色
     d->networkIndicator->setColorScheme(NetworkIndicator::ExcellentSignal, QColor(0, 255, 0));
     d->layout->addWidget(d->networkIndicator);
 
-    // 添加网络延迟标签
-    d->latencyLabel = new QLabel("检测中...");
+    // Latency label
+    d->latencyLabel = new QLabel("Checking...");
     d->latencyLabel->setStyleSheet("QLabel { color: #888; font-size: 12px; }");
     d->layout->addWidget(d->latencyLabel);
 
-    // 时间显示
+    // Time display
     d->timeLabel = new QLabel(this);
     d->timeLabel->setObjectName("timeLabel");
     d->layout->addWidget(d->timeLabel);
 
+    // Timer for time update
     d->timer = new QTimer(this);
-    // 立即显示
-    d->timeLabel->setText(QDateTime::currentDateTime().toString("MM/dd HH:mm:ss"));
-    // 启动定时器，每秒更新一次
+    QObject::connect(d->timer, &QTimer::timeout, this, &StatusBarWidget::updateTime);
     d->timer->start(1000);
+
+    updateTime();
 }
 
-void StatusBarWidget::initConnections()
+void StatusBarWidget::updateTime()
 {
-    connect(d->timer, &QTimer::timeout, this, [this]() {
-        QDateTime currentTime = QDateTime::currentDateTime();
-        d->timeLabel->setText(currentTime.toString("MM/dd HH:mm:ss"));
-    });
-    // // CTP 状态
-    // connect(CTPService::instance(), &CTPService::marketConnected,
-    //         this, &StatusBarWidget::onCTPStatusChanged);
-    // connect(CTPService::instance(), &CTPService::marketDisconnected,
-    //         this, &StatusBarWidget::onCTPStatusChanged);
-
-    // AI 面板信号
-    connect(d->aiPanel, &AIAssistantPanelWidget::messageSent,
-            this, [](const QString& message) {
-                LOG_DEBUG(QString("AI message: %1").arg(message));
-    });
-
-    // 监听信号
-    connect(d->networkIndicator, &NetworkIndicator::latencyChanged,
-        [&](int ms) {
-            d->latencyLabel->setText(QString("延迟: %1ms").arg(ms));
-            d->latencyLabel->setStyleSheet(
-                ms < 100 ? "QLabel { color: #00ff88; font-size: 12px; font-weight: bold; }" :
-                ms < 300 ? "QLabel { color: #ffcc00; font-size: 12px; }" :
-                          "QLabel { color: #ff3b30; font-size: 12px; font-weight: bold; }"
-            );
-        });
-
-    connect(d->networkIndicator, &NetworkIndicator::connectionLost, this, [this]() {
-        d->latencyLabel->setText("连接断开");
-        d->latencyLabel->setStyleSheet("QLabel { color: #ff3b30; font-size: 12px; font-weight: bold; }");
-    });
+    QDateTime now = QDateTime::currentDateTime();
+    d->timeLabel->setText(now.toString("yyyy-MM-dd hh:mm:ss"));
 }
 
-void StatusBarWidget::onCTPStatusChanged() const
+void StatusBarWidget::setAIStatus(const QString& status)
 {
-    if (!d->ctpStatusLabel) return;
+    d->aiStatusLabel->setText(QString("AI: %1").arg(status));
+}
 
-    // bool marketConnected = CTPService::instance()->isMarketConnected();
-    // bool tradeConnected = CTPService::instance()->isTradeConnected();
+void StatusBarWidget::setCTPStatus(const QString& status)
+{
+    d->ctpStatusLabel->setText(QString("CTP: %1").arg(status));
+}
 
-    // if (marketConnected && tradeConnected) {
-    //     d->ctpStatusLabel->setText("CTP: 已连接");
-    //     d->ctpStatusLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::Success));
-    // } else if (marketConnected) {
-    //     d->ctpStatusLabel->setText("CTP: 行情已连接");
-    //     d->ctpStatusLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::Warning));
-    // } else {
-    //     d->ctpStatusLabel->setText("CTP: 未连接");
-    //     d->ctpStatusLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::Danger));
-    // }
+void StatusBarWidget::setLatency(const QString& latency)
+{
+    d->latencyLabel->setText(latency);
+}
+
+void StatusBarWidget::setVersion(const QString& version)
+{
+    d->versionLabel->setText(version);
 }

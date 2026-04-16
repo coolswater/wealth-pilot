@@ -1,10 +1,10 @@
 /**
  * @file CTPBrokerDialog.cpp
- * @brief CTP服务商配置对话框实现
+ * @brief CTP Broker Configuration Dialog Implementation
  */
 
 #include "CTPBrokerDialog.h"
-#include "../../core/CTPConfigManager.h"
+#include "../../ctp/config/CTPConfigManager.h"
 #include "../../utils/Logger.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -25,14 +25,12 @@ namespace CTP {
 // ========== CTPBrokerDialog::Impl ==========
 
 struct CTPBrokerDialog::Impl {
-    // 服务商列表
     QComboBox* brokerCombo = nullptr;
     QPushButton* addButton = nullptr;
     QPushButton* editButton = nullptr;
     QPushButton* deleteButton = nullptr;
     QPushButton* resetButton = nullptr;
     
-    // 详情显示
     QLabel* nameLabel = nullptr;
     QLabel* brokerIdLabel = nullptr;
     QLabel* descriptionLabel = nullptr;
@@ -41,13 +39,11 @@ struct CTPBrokerDialog::Impl {
     QTableWidget* marketFrontTable = nullptr;
     QTableWidget* tradingFrontTable = nullptr;
     
-    // 用户凭证
     QLineEdit* userIdEdit = nullptr;
     QLineEdit* passwordEdit = nullptr;
     QCheckBox* rememberCheck = nullptr;
     QPushButton* saveCredentialsButton = nullptr;
     
-    // 操作按钮
     QPushButton* testButton = nullptr;
     QPushButton* switchButton = nullptr;
     QPushButton* closeButton = nullptr;
@@ -69,147 +65,121 @@ CTPBrokerDialog::~CTPBrokerDialog() = default;
 
 void CTPBrokerDialog::setupUI()
 {
-    setWindowTitle("CTP 服务商配置");
+    setWindowTitle("CTP Broker Configuration");
     setMinimumSize(700, 600);
     
     auto* mainLayout = new QVBoxLayout(this);
     
-    // 服务商选择区域
-    auto* brokerGroup = new QGroupBox("服务商选择", this);
+    // Broker selection
+    auto* brokerGroup = new QGroupBox("Broker Selection", this);
     auto* brokerLayout = new QHBoxLayout(brokerGroup);
     
     d->brokerCombo = new QComboBox(this);
     d->brokerCombo->setMinimumWidth(300);
-    connect(d->brokerCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &CTPBrokerDialog::onBrokerSelected);
+    QObject::connect(d->brokerCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &CTPBrokerDialog::onBrokerChanged);
     
-    d->addButton = new QPushButton("添加", this);
-    d->editButton = new QPushButton("编辑", this);
-    d->deleteButton = new QPushButton("删除", this);
-    d->resetButton = new QPushButton("重置默认", this);
+    d->addButton = new QPushButton("Add", this);
+    d->editButton = new QPushButton("Edit", this);
+    d->deleteButton = new QPushButton("Delete", this);
+    d->resetButton = new QPushButton("Reset Defaults", this);
     
-    connect(d->addButton, &QPushButton::clicked, this, &CTPBrokerDialog::onAddBroker);
-    connect(d->editButton, &QPushButton::clicked, this, &CTPBrokerDialog::onEditBroker);
-    connect(d->deleteButton, &QPushButton::clicked, this, &CTPBrokerDialog::onDeleteBroker);
-    connect(d->resetButton, &QPushButton::clicked, this, &CTPBrokerDialog::onResetToDefaults);
+    QObject::connect(d->addButton, &QPushButton::clicked, this, &CTPBrokerDialog::onAddBroker);
+    QObject::connect(d->editButton, &QPushButton::clicked, this, &CTPBrokerDialog::onEditBroker);
+    QObject::connect(d->deleteButton, &QPushButton::clicked, this, &CTPBrokerDialog::onDeleteBroker);
+    QObject::connect(d->resetButton, &QPushButton::clicked, this, &CTPBrokerDialog::onTestConnection);
     
-    brokerLayout->addWidget(new QLabel("服务商:", this));
+    brokerLayout->addWidget(new QLabel("Broker:", this));
     brokerLayout->addWidget(d->brokerCombo);
     brokerLayout->addWidget(d->addButton);
     brokerLayout->addWidget(d->editButton);
     brokerLayout->addWidget(d->deleteButton);
     brokerLayout->addWidget(d->resetButton);
-    brokerLayout->addStretch();
     
     mainLayout->addWidget(brokerGroup);
     
-    // 服务商详情区域
-    auto* detailGroup = new QGroupBox("服务商详情", this);
+    // Details
+    auto* detailGroup = new QGroupBox("Broker Details", this);
     auto* detailLayout = new QGridLayout(detailGroup);
     
-    int row = 0;
-    detailLayout->addWidget(new QLabel("名称:", this), row, 0);
     d->nameLabel = new QLabel(this);
-    detailLayout->addWidget(d->nameLabel, row, 1);
-    
-    row++;
-    detailLayout->addWidget(new QLabel("经纪商代码:", this), row, 0);
     d->brokerIdLabel = new QLabel(this);
-    detailLayout->addWidget(d->brokerIdLabel, row, 1);
-    
-    row++;
-    detailLayout->addWidget(new QLabel("描述:", this), row, 0);
     d->descriptionLabel = new QLabel(this);
-    d->descriptionLabel->setWordWrap(true);
-    detailLayout->addWidget(d->descriptionLabel, row, 1);
-    
-    row++;
-    detailLayout->addWidget(new QLabel("官网:", this), row, 0);
     d->websiteLabel = new QLabel(this);
-    d->websiteLabel->setOpenExternalLinks(true);
-    detailLayout->addWidget(d->websiteLabel, row, 1);
-    
-    row++;
-    detailLayout->addWidget(new QLabel("环境:", this), row, 0);
     d->envLabel = new QLabel(this);
-    detailLayout->addWidget(d->envLabel, row, 1);
+    
+    detailLayout->addWidget(new QLabel("Name:", this), 0, 0);
+    detailLayout->addWidget(d->nameLabel, 0, 1);
+    detailLayout->addWidget(new QLabel("Broker ID:", this), 1, 0);
+    detailLayout->addWidget(d->brokerIdLabel, 1, 1);
+    detailLayout->addWidget(new QLabel("Description:", this), 2, 0);
+    detailLayout->addWidget(d->descriptionLabel, 2, 1);
+    detailLayout->addWidget(new QLabel("Website:", this), 3, 0);
+    detailLayout->addWidget(d->websiteLabel, 3, 1);
+    detailLayout->addWidget(new QLabel("Environment:", this), 4, 0);
+    detailLayout->addWidget(d->envLabel, 4, 1);
     
     mainLayout->addWidget(detailGroup);
     
-    // 前置地址区域
-    auto* frontGroup = new QGroupBox("前置地址", this);
-    auto* frontLayout = new QHBoxLayout(frontGroup);
+    // Front addresses
+    auto* frontGroup = new QGroupBox("Front Addresses", this);
+    auto* frontLayout = new QVBoxLayout(frontGroup);
     
-    // 行情前置
-    auto* marketLayout = new QVBoxLayout();
-    marketLayout->addWidget(new QLabel("行情前置:", this));
     d->marketFrontTable = new QTableWidget(this);
     d->marketFrontTable->setColumnCount(1);
-    d->marketFrontTable->setHorizontalHeaderLabels({"地址"});
+    d->marketFrontTable->setHorizontalHeaderLabels(QStringList() << "Market Front");
     d->marketFrontTable->horizontalHeader()->setStretchLastSection(true);
-    d->marketFrontTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-    d->marketFrontTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    marketLayout->addWidget(d->marketFrontTable);
+    d->marketFrontTable->setMaximumHeight(100);
     
-    // 交易前置
-    auto* tradingLayout = new QVBoxLayout();
-    tradingLayout->addWidget(new QLabel("交易前置:", this));
     d->tradingFrontTable = new QTableWidget(this);
     d->tradingFrontTable->setColumnCount(1);
-    d->tradingFrontTable->setHorizontalHeaderLabels({"地址"});
+    d->tradingFrontTable->setHorizontalHeaderLabels(QStringList() << "Trading Front");
     d->tradingFrontTable->horizontalHeader()->setStretchLastSection(true);
-    d->tradingFrontTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-    d->tradingFrontTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    tradingLayout->addWidget(d->tradingFrontTable);
+    d->tradingFrontTable->setMaximumHeight(100);
     
-    frontLayout->addLayout(marketLayout);
-    frontLayout->addLayout(tradingLayout);
+    frontLayout->addWidget(new QLabel("Market Fronts:", this));
+    frontLayout->addWidget(d->marketFrontTable);
+    frontLayout->addWidget(new QLabel("Trading Fronts:", this));
+    frontLayout->addWidget(d->tradingFrontTable);
     
     mainLayout->addWidget(frontGroup);
     
-    // 用户凭证区域
-    auto* credGroup = new QGroupBox("用户凭证", this);
+    // User credentials
+    auto* credGroup = new QGroupBox("User Credentials", this);
     auto* credLayout = new QGridLayout(credGroup);
     
-    row = 0;
-    credLayout->addWidget(new QLabel("用户ID:", this), row, 0);
     d->userIdEdit = new QLineEdit(this);
-    d->userIdEdit->setPlaceholderText("请输入用户ID");
-    credLayout->addWidget(d->userIdEdit, row, 1);
-    
-    row++;
-    credLayout->addWidget(new QLabel("密码:", this), row, 0);
+    d->userIdEdit->setPlaceholderText("User ID");
     d->passwordEdit = new QLineEdit(this);
     d->passwordEdit->setEchoMode(QLineEdit::Password);
-    d->passwordEdit->setPlaceholderText("请输入密码");
-    credLayout->addWidget(d->passwordEdit, row, 1);
+    d->passwordEdit->setPlaceholderText("Password");
+    d->rememberCheck = new QCheckBox("Remember Password", this);
+    d->saveCredentialsButton = new QPushButton("Save Credentials", this);
     
-    row++;
-    d->rememberCheck = new QCheckBox("记住密码（加密存储）", this);
-    d->rememberCheck->setChecked(true);
-    credLayout->addWidget(d->rememberCheck, row, 0, 1, 2);
+    QObject::connect(d->saveCredentialsButton, &QPushButton::clicked, this, &CTPBrokerDialog::onSaveCredentials);
     
-    row++;
-    d->saveCredentialsButton = new QPushButton("保存凭证", this);
-    connect(d->saveCredentialsButton, &QPushButton::clicked, this, &CTPBrokerDialog::onSaveCredentials);
-    credLayout->addWidget(d->saveCredentialsButton, row, 0, 1, 2);
+    credLayout->addWidget(new QLabel("User ID:", this), 0, 0);
+    credLayout->addWidget(d->userIdEdit, 0, 1);
+    credLayout->addWidget(new QLabel("Password:", this), 1, 0);
+    credLayout->addWidget(d->passwordEdit, 1, 1);
+    credLayout->addWidget(d->rememberCheck, 2, 0, 1, 2);
+    credLayout->addWidget(d->saveCredentialsButton, 3, 0, 1, 2);
     
     mainLayout->addWidget(credGroup);
     
-    // 操作按钮区域
+    // Buttons
     auto* buttonLayout = new QHBoxLayout();
-    buttonLayout->addStretch();
+    d->testButton = new QPushButton("Test Connection", this);
+    d->switchButton = new QPushButton("Switch Broker", this);
+    d->closeButton = new QPushButton("Close", this);
     
-    d->testButton = new QPushButton("测试连接", this);
-    d->switchButton = new QPushButton("切换到此服务商", this);
-    d->closeButton = new QPushButton("关闭", this);
-    
-    connect(d->testButton, &QPushButton::clicked, this, &CTPBrokerDialog::onTestConnection);
-    connect(d->switchButton, &QPushButton::clicked, this, &CTPBrokerDialog::onSwitchBroker);
-    connect(d->closeButton, &QPushButton::clicked, this, &QDialog::accept);
+    QObject::connect(d->testButton, &QPushButton::clicked, this, &CTPBrokerDialog::onTestConnection);
+    QObject::connect(d->switchButton, &QPushButton::clicked, this, &CTPBrokerDialog::onAccept);
+    QObject::connect(d->closeButton, &QPushButton::clicked, this, &QDialog::reject);
     
     buttonLayout->addWidget(d->testButton);
     buttonLayout->addWidget(d->switchButton);
+    buttonLayout->addStretch();
     buttonLayout->addWidget(d->closeButton);
     
     mainLayout->addLayout(buttonLayout);
@@ -217,156 +187,99 @@ void CTPBrokerDialog::setupUI()
 
 void CTPBrokerDialog::loadBrokers()
 {
+    auto* configManager = CTP::CTPConfigManager::instance();
+    auto brokers = configManager->getAllBrokers();
+    
     d->brokerCombo->clear();
-    
-    auto brokers = CTPConfigManager::instance()->getEnabledBrokers();
-    QString currentId = CTPConfigManager::instance()->currentBrokerId();
-    
     for (const auto& broker : brokers) {
-        QString displayText = QString("%1 (%2)").arg(broker.name, broker.isSimulation ? "模拟" : "实盘");
+        QString displayText = QString("%1 (%2)").arg(broker.name, broker.brokerId);
         d->brokerCombo->addItem(displayText, broker.id);
-        
-        if (broker.id == currentId) {
-            d->brokerCombo->setCurrentIndex(d->brokerCombo->count() - 1);
-        }
+    }
+    
+    if (!brokers.isEmpty()) {
+        onBrokerChanged(0);
     }
 }
 
-void CTPBrokerDialog::onBrokerSelected(int index)
+void CTPBrokerDialog::onBrokerChanged(int index)
 {
-    if (index < 0) {
-        clearBrokerDetails();
-        return;
-    }
+    if (index < 0) return;
     
+    auto* configManager = CTP::CTPConfigManager::instance();
     QString brokerId = d->brokerCombo->itemData(index).toString();
+    auto brokerOpt = configManager->getBroker(brokerId);
+    
+    if (!brokerOpt.has_value()) return;
+    
+    auto broker = brokerOpt.value();
     d->currentBrokerId = brokerId;
+    d->nameLabel->setText(broker.name);
+    d->brokerIdLabel->setText(broker.brokerId);
+    d->descriptionLabel->setText(broker.description);
+    d->websiteLabel->setText(broker.website);
+    d->envLabel->setText(broker.isSimulation ? "Simulation" : "Production");
     
-    auto config = CTPConfigManager::instance()->getBroker(brokerId);
-    if (config) {
-        updateBrokerDetails(*config);
-        
-        // 加载用户凭证
-        QString userId = CTPConfigManager::instance()->getUserId(brokerId);
-        QString password = CTPConfigManager::instance()->getPassword(brokerId);
-        
-        d->userIdEdit->setText(userId);
-        d->passwordEdit->setText(password);
-    }
-}
-
-void CTPBrokerDialog::updateBrokerDetails(const CTPBrokerConfig& config)
-{
-    d->nameLabel->setText(config.name);
-    d->brokerIdLabel->setText(config.brokerId);
-    d->descriptionLabel->setText(config.description);
-    d->websiteLabel->setText(QString("<a href=\"%1\">%1</a>").arg(config.website));
-    d->envLabel->setText(config.isSimulation ? "模拟环境" : "生产环境");
-    d->envLabel->setStyleSheet(config.isSimulation ? "color: green;" : "color: red;");
-    
-    // 更新行情前置表
-    d->marketFrontTable->setRowCount(config.marketFronts.size());
-    for (int i = 0; i < config.marketFronts.size(); ++i) {
-        d->marketFrontTable->setItem(i, 0, new QTableWidgetItem(config.marketFronts[i]));
+    // Market fronts
+    d->marketFrontTable->setRowCount(broker.marketFronts.size());
+    for (int i = 0; i < broker.marketFronts.size(); i++) {
+        d->marketFrontTable->setItem(i, 0, new QTableWidgetItem(broker.marketFronts[i]));
     }
     
-    // 更新交易前置表
-    d->tradingFrontTable->setRowCount(config.tradingFronts.size());
-    for (int i = 0; i < config.tradingFronts.size(); ++i) {
-        d->tradingFrontTable->setItem(i, 0, new QTableWidgetItem(config.tradingFronts[i]));
+    // Trading fronts
+    d->tradingFrontTable->setRowCount(broker.tradingFronts.size());
+    for (int i = 0; i < broker.tradingFronts.size(); i++) {
+        d->tradingFrontTable->setItem(i, 0, new QTableWidgetItem(broker.tradingFronts[i]));
     }
-}
-
-void CTPBrokerDialog::clearBrokerDetails()
-{
-    d->nameLabel->clear();
-    d->brokerIdLabel->clear();
-    d->descriptionLabel->clear();
-    d->websiteLabel->clear();
-    d->envLabel->clear();
-    d->marketFrontTable->setRowCount(0);
-    d->tradingFrontTable->setRowCount(0);
-    d->userIdEdit->clear();
-    d->passwordEdit->clear();
+    
+    // Load credentials
+    d->userIdEdit->setText(configManager->getUserId(brokerId));
+    d->passwordEdit->setText(configManager->getPassword(brokerId));
 }
 
 void CTPBrokerDialog::onAddBroker()
 {
     CTPBrokerEditDialog dialog(this);
     if (dialog.exec() == QDialog::Accepted) {
-        CTPBrokerConfig config = dialog.getBrokerConfig();
-        CTPConfigManager::instance()->setBroker(config);
+        auto config = dialog.getBrokerConfig();
+        CTP::CTPConfigManager::instance()->setBroker(config);
         loadBrokers();
-        
-        emit brokerConfigChanged(config.id);
     }
 }
 
 void CTPBrokerDialog::onEditBroker()
 {
-    if (d->currentBrokerId.isEmpty()) {
-        QMessageBox::warning(this, "提示", "请先选择一个服务商");
-        return;
-    }
+    if (d->currentBrokerId.isEmpty()) return;
     
-    auto config = CTPConfigManager::instance()->getBroker(d->currentBrokerId);
-    if (!config) return;
+    auto* configManager = CTP::CTPConfigManager::instance();
+    auto brokerOpt = configManager->getBroker(d->currentBrokerId);
     
-    CTPBrokerEditDialog dialog(*config, this);
+    if (!brokerOpt.has_value()) return;
+    
+    CTPBrokerEditDialog dialog(brokerOpt.value(), this);
     if (dialog.exec() == QDialog::Accepted) {
-        CTPBrokerConfig newConfig = dialog.getBrokerConfig();
-        CTPConfigManager::instance()->setBroker(newConfig);
+        auto config = dialog.getBrokerConfig();
+        configManager->setBroker(config);
         loadBrokers();
-        
-        emit brokerConfigChanged(newConfig.id);
     }
 }
 
 void CTPBrokerDialog::onDeleteBroker()
 {
-    if (d->currentBrokerId.isEmpty()) {
-        QMessageBox::warning(this, "提示", "请先选择一个服务商");
-        return;
-    }
+    if (d->currentBrokerId.isEmpty()) return;
     
-    auto config = CTPConfigManager::instance()->getBroker(d->currentBrokerId);
-    if (!config) return;
-    
-    // SimNow 预设不允许删除
-    if (d->currentBrokerId.startsWith("simnow_")) {
-        QMessageBox::warning(this, "提示", "SimNow 预设服务商不能删除，只能禁用");
-        return;
-    }
-    
-    auto reply = QMessageBox::question(this, "确认删除",
-        QString("确定要删除服务商 \"%1\" 吗？").arg(config->name));
+    auto reply = QMessageBox::question(this, "Confirm Delete",
+            "Are you sure you want to delete this broker?",
+            QMessageBox::Yes | QMessageBox::No);
     
     if (reply == QMessageBox::Yes) {
-        CTPConfigManager::instance()->removeBroker(d->currentBrokerId);
+        CTP::CTPConfigManager::instance()->removeBroker(d->currentBrokerId);
         loadBrokers();
     }
 }
 
 void CTPBrokerDialog::onTestConnection()
 {
-    if (d->currentBrokerId.isEmpty()) {
-        QMessageBox::warning(this, "提示", "请先选择一个服务商");
-        return;
-    }
-    
-    if (d->userIdEdit->text().isEmpty() || d->passwordEdit->text().isEmpty()) {
-        QMessageBox::warning(this, "提示", "请输入用户ID和密码");
-        return;
-    }
-    
-    // 保存凭证
-    onSaveCredentials();
-    
-    // 发送切换请求（由外部处理实际连接）
-    emit switchBrokerRequested(d->currentBrokerId);
-    
-    QMessageBox::information(this, "测试连接", 
-        "正在尝试连接，请查看日志和状态栏了解连接结果。");
+    QMessageBox::information(this, "Test Connection", "Connection test not implemented yet.");
 }
 
 void CTPBrokerDialog::onSaveCredentials()
@@ -376,53 +289,14 @@ void CTPBrokerDialog::onSaveCredentials()
     QString userId = d->userIdEdit->text();
     QString password = d->passwordEdit->text();
     
-    if (d->rememberCheck->isChecked()) {
-        CTPConfigManager::instance()->setUserCredentials(d->currentBrokerId, userId, password);
-    } else {
-        CTPConfigManager::instance()->clearUserCredentials(d->currentBrokerId);
-    }
-    
-    QMessageBox::information(this, "保存成功", "用户凭证已保存");
+    CTP::CTPConfigManager::instance()->setUserCredentials(d->currentBrokerId, userId, password);
+    QMessageBox::information(this, "Success", "Credentials saved successfully.");
 }
 
-void CTPBrokerDialog::onSwitchBroker()
+void CTPBrokerDialog::onAccept()
 {
-    if (d->currentBrokerId.isEmpty()) {
-        QMessageBox::warning(this, "提示", "请先选择一个服务商");
-        return;
-    }
-    
-    if (d->userIdEdit->text().isEmpty() || d->passwordEdit->text().isEmpty()) {
-        QMessageBox::warning(this, "提示", "请输入用户ID和密码");
-        return;
-    }
-    
-    // 保存凭证
     onSaveCredentials();
-    
-    // 设置为当前服务商
-    CTPConfigManager::instance()->setCurrentBroker(d->currentBrokerId);
-    
-    // 发送切换请求
-    emit switchBrokerRequested(d->currentBrokerId);
-    
     accept();
-}
-
-void CTPBrokerDialog::onResetToDefaults()
-{
-    auto reply = QMessageBox::question(this, "确认重置",
-        "确定要重置为默认配置吗？这将清除所有自定义服务商。");
-    
-    if (reply == QMessageBox::Yes) {
-        CTPConfigManager::instance()->resetToDefaults();
-        loadBrokers();
-    }
-}
-
-QString CTPBrokerDialog::selectedBrokerId() const
-{
-    return d->currentBrokerId;
 }
 
 // ========== CTPBrokerEditDialog::Impl ==========
@@ -434,21 +308,14 @@ struct CTPBrokerEditDialog::Impl {
     QLineEdit* descriptionEdit = nullptr;
     QLineEdit* websiteEdit = nullptr;
     QCheckBox* simulationCheck = nullptr;
-    QCheckBox* enabledCheck = nullptr;
-    QCheckBox* requireAuthCheck = nullptr;
-    QLineEdit* appIdEdit = nullptr;
-    QLineEdit* authCodeEdit = nullptr;
     QTableWidget* marketFrontTable = nullptr;
     QTableWidget* tradingFrontTable = nullptr;
     QPushButton* addMarketButton = nullptr;
     QPushButton* removeMarketButton = nullptr;
     QPushButton* addTradingButton = nullptr;
     QPushButton* removeTradingButton = nullptr;
-    
     bool isEditMode = false;
 };
-
-// ========== CTPBrokerEditDialog ==========
 
 CTPBrokerEditDialog::CTPBrokerEditDialog(QWidget* parent)
     : QDialog(parent)
@@ -471,124 +338,81 @@ CTPBrokerEditDialog::~CTPBrokerEditDialog() = default;
 
 void CTPBrokerEditDialog::setupUI()
 {
-    setWindowTitle(d->isEditMode ? "编辑服务商" : "添加服务商");
-    setMinimumSize(600, 500);
+    setWindowTitle(d->isEditMode ? "Edit Broker" : "Add Broker");
+    setMinimumSize(500, 400);
     
     auto* mainLayout = new QVBoxLayout(this);
     
-    // 基本信息
-    auto* basicGroup = new QGroupBox("基本信息", this);
-    auto* basicLayout = new QGridLayout(basicGroup);
+    // Basic info
+    auto* infoGroup = new QGroupBox("Basic Info", this);
+    auto* infoLayout = new QGridLayout(infoGroup);
     
-    int row = 0;
-    basicLayout->addWidget(new QLabel("ID:", this), row, 0);
     d->idEdit = new QLineEdit(this);
-    d->idEdit->setPlaceholderText("唯一标识，如 my_broker");
-    if (d->isEditMode) d->idEdit->setReadOnly(true);
-    basicLayout->addWidget(d->idEdit, row, 1);
-    
-    row++;
-    basicLayout->addWidget(new QLabel("名称:", this), row, 0);
     d->nameEdit = new QLineEdit(this);
-    d->nameEdit->setPlaceholderText("显示名称，如 我的期货公司");
-    basicLayout->addWidget(d->nameEdit, row, 1);
-    
-    row++;
-    basicLayout->addWidget(new QLabel("经纪商代码:", this), row, 0);
     d->brokerIdEdit = new QLineEdit(this);
-    d->brokerIdEdit->setPlaceholderText("如 9999");
-    basicLayout->addWidget(d->brokerIdEdit, row, 1);
-    
-    row++;
-    basicLayout->addWidget(new QLabel("描述:", this), row, 0);
     d->descriptionEdit = new QLineEdit(this);
-    basicLayout->addWidget(d->descriptionEdit, row, 1);
-    
-    row++;
-    basicLayout->addWidget(new QLabel("官网:", this), row, 0);
     d->websiteEdit = new QLineEdit(this);
-    basicLayout->addWidget(d->websiteEdit, row, 1);
+    d->simulationCheck = new QCheckBox("Simulation", this);
     
-    row++;
-    d->simulationCheck = new QCheckBox("模拟环境", this);
-    d->simulationCheck->setChecked(true);
-    basicLayout->addWidget(d->simulationCheck, row, 0, 1, 2);
+    infoLayout->addWidget(new QLabel("ID:", this), 0, 0);
+    infoLayout->addWidget(d->idEdit, 0, 1);
+    infoLayout->addWidget(new QLabel("Name:", this), 1, 0);
+    infoLayout->addWidget(d->nameEdit, 1, 1);
+    infoLayout->addWidget(new QLabel("Broker ID:", this), 2, 0);
+    infoLayout->addWidget(d->brokerIdEdit, 2, 1);
+    infoLayout->addWidget(new QLabel("Description:", this), 3, 0);
+    infoLayout->addWidget(d->descriptionEdit, 3, 1);
+    infoLayout->addWidget(new QLabel("Website:", this), 4, 0);
+    infoLayout->addWidget(d->websiteEdit, 4, 1);
+    infoLayout->addWidget(d->simulationCheck, 5, 0, 1, 2);
     
-    row++;
-    d->enabledCheck = new QCheckBox("启用", this);
-    d->enabledCheck->setChecked(true);
-    basicLayout->addWidget(d->enabledCheck, row, 0, 1, 2);
+    mainLayout->addWidget(infoGroup);
     
-    mainLayout->addWidget(basicGroup);
+    // Front addresses
+    auto* frontGroup = new QGroupBox("Front Addresses", this);
+    auto* frontLayout = new QVBoxLayout(frontGroup);
     
-    // 认证信息
-    auto* authGroup = new QGroupBox("认证信息（CTP 6.6.1+）", this);
-    auto* authLayout = new QGridLayout(authGroup);
-    
-    row = 0;
-    d->requireAuthCheck = new QCheckBox("需要认证", this);
-    authLayout->addWidget(d->requireAuthCheck, row, 0, 1, 2);
-    
-    row++;
-    authLayout->addWidget(new QLabel("AppID:", this), row, 0);
-    d->appIdEdit = new QLineEdit(this);
-    authLayout->addWidget(d->appIdEdit, row, 1);
-    
-    row++;
-    authLayout->addWidget(new QLabel("AuthCode:", this), row, 0);
-    d->authCodeEdit = new QLineEdit(this);
-    authLayout->addWidget(d->authCodeEdit, row, 1);
-    
-    mainLayout->addWidget(authGroup);
-    
-    // 前置地址
-    auto* frontGroup = new QGroupBox("前置地址", this);
-    auto* frontLayout = new QHBoxLayout(frontGroup);
-    
-    // 行情前置
-    auto* marketLayout = new QVBoxLayout();
-    auto* marketBtnLayout = new QHBoxLayout();
-    d->addMarketButton = new QPushButton("添加", this);
-    d->removeMarketButton = new QPushButton("删除", this);
-    connect(d->addMarketButton, &QPushButton::clicked, this, &CTPBrokerEditDialog::onAddMarketFront);
-    connect(d->removeMarketButton, &QPushButton::clicked, this, &CTPBrokerEditDialog::onRemoveMarketFront);
-    marketBtnLayout->addWidget(d->addMarketButton);
-    marketBtnLayout->addWidget(d->removeMarketButton);
-    marketLayout->addLayout(marketBtnLayout);
-    
+    // Market fronts
+    auto* marketLayout = new QHBoxLayout();
     d->marketFrontTable = new QTableWidget(this);
     d->marketFrontTable->setColumnCount(1);
-    d->marketFrontTable->setHorizontalHeaderLabels({"行情前置地址"});
+    d->marketFrontTable->setHorizontalHeaderLabels(QStringList() << "Market Front");
     d->marketFrontTable->horizontalHeader()->setStretchLastSection(true);
+    d->addMarketButton = new QPushButton("Add", this);
+    d->removeMarketButton = new QPushButton("Remove", this);
+    
+    QObject::connect(d->addMarketButton, &QPushButton::clicked, this, &CTPBrokerEditDialog::onAddMarketFront);
+    QObject::connect(d->removeMarketButton, &QPushButton::clicked, this, &CTPBrokerEditDialog::onRemoveMarketFront);
+    
     marketLayout->addWidget(d->marketFrontTable);
+    marketLayout->addWidget(d->addMarketButton);
+    marketLayout->addWidget(d->removeMarketButton);
     
-    // 交易前置
-    auto* tradingLayout = new QVBoxLayout();
-    auto* tradingBtnLayout = new QHBoxLayout();
-    d->addTradingButton = new QPushButton("添加", this);
-    d->removeTradingButton = new QPushButton("删除", this);
-    connect(d->addTradingButton, &QPushButton::clicked, this, &CTPBrokerEditDialog::onAddTradingFront);
-    connect(d->removeTradingButton, &QPushButton::clicked, this, &CTPBrokerEditDialog::onRemoveTradingFront);
-    tradingBtnLayout->addWidget(d->addTradingButton);
-    tradingBtnLayout->addWidget(d->removeTradingButton);
-    tradingLayout->addLayout(tradingBtnLayout);
-    
+    // Trading fronts
+    auto* tradingLayout = new QHBoxLayout();
     d->tradingFrontTable = new QTableWidget(this);
     d->tradingFrontTable->setColumnCount(1);
-    d->tradingFrontTable->setHorizontalHeaderLabels({"交易前置地址"});
+    d->tradingFrontTable->setHorizontalHeaderLabels(QStringList() << "Trading Front");
     d->tradingFrontTable->horizontalHeader()->setStretchLastSection(true);
+    d->addTradingButton = new QPushButton("Add", this);
+    d->removeTradingButton = new QPushButton("Remove", this);
+    
+    QObject::connect(d->addTradingButton, &QPushButton::clicked, this, &CTPBrokerEditDialog::onAddTradingFront);
+    QObject::connect(d->removeTradingButton, &QPushButton::clicked, this, &CTPBrokerEditDialog::onRemoveTradingFront);
+    
     tradingLayout->addWidget(d->tradingFrontTable);
+    tradingLayout->addWidget(d->addTradingButton);
+    tradingLayout->addWidget(d->removeTradingButton);
     
     frontLayout->addLayout(marketLayout);
     frontLayout->addLayout(tradingLayout);
     
     mainLayout->addWidget(frontGroup);
     
-    // 按钮
-    auto* buttonBox = new QDialogButtonBox(
-        QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-    connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
-    connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    // Buttons
+    auto* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
+    QObject::connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
+    QObject::connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
     
     mainLayout->addWidget(buttonBox);
 }
@@ -601,19 +425,14 @@ void CTPBrokerEditDialog::loadConfig(const CTPBrokerConfig& config)
     d->descriptionEdit->setText(config.description);
     d->websiteEdit->setText(config.website);
     d->simulationCheck->setChecked(config.isSimulation);
-    d->enabledCheck->setChecked(config.isEnabled);
-    d->requireAuthCheck->setChecked(config.requireAuth);
-    d->appIdEdit->setText(config.defaultAppId);
-    d->authCodeEdit->setText(config.defaultAuthCode);
     
-    // 加载前置地址
     d->marketFrontTable->setRowCount(config.marketFronts.size());
-    for (int i = 0; i < config.marketFronts.size(); ++i) {
+    for (int i = 0; i < config.marketFronts.size(); i++) {
         d->marketFrontTable->setItem(i, 0, new QTableWidgetItem(config.marketFronts[i]));
     }
     
     d->tradingFrontTable->setRowCount(config.tradingFronts.size());
-    for (int i = 0; i < config.tradingFronts.size(); ++i) {
+    for (int i = 0; i < config.tradingFronts.size(); i++) {
         d->tradingFrontTable->setItem(i, 0, new QTableWidgetItem(config.tradingFronts[i]));
     }
 }
@@ -627,22 +446,17 @@ CTPBrokerConfig CTPBrokerEditDialog::getBrokerConfig() const
     config.description = d->descriptionEdit->text();
     config.website = d->websiteEdit->text();
     config.isSimulation = d->simulationCheck->isChecked();
-    config.isEnabled = d->enabledCheck->isChecked();
-    config.requireAuth = d->requireAuthCheck->isChecked();
-    config.defaultAppId = d->appIdEdit->text();
-    config.defaultAuthCode = d->authCodeEdit->text();
     
-    // 收集前置地址
-    for (int i = 0; i < d->marketFrontTable->rowCount(); ++i) {
+    for (int i = 0; i < d->marketFrontTable->rowCount(); i++) {
         auto* item = d->marketFrontTable->item(i, 0);
-        if (item && !item->text().isEmpty()) {
+        if (item) {
             config.marketFronts.append(item->text());
         }
     }
     
-    for (int i = 0; i < d->tradingFrontTable->rowCount(); ++i) {
+    for (int i = 0; i < d->tradingFrontTable->rowCount(); i++) {
         auto* item = d->tradingFrontTable->item(i, 0);
-        if (item && !item->text().isEmpty()) {
+        if (item) {
             config.tradingFronts.append(item->text());
         }
     }

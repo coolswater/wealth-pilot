@@ -1,19 +1,14 @@
-/**
+﻿/**
  * @file FuturesQuotesPage.h
- * @brief 期货行情页面 - CTP实时行情
- *
- * 功能�?
- * - 显示期货合约行情列表
- * - 连接Simnow行情服务�?
- * - 自动查询并订阅所有合�?
- * - 显示实时价格变动
+ * @brief Futures Quotes Page - CTP real-time quotes
  */
+
 #pragma once
 
 #include <QTableView>
 #include <memory>
-#include <core/BasePage.h>
-#include <services/CTPService.h>
+#include <core/base/BasePage.h>
+#include <ctp/service/CTPService.h>
 #include <QTimer>
 
 QT_BEGIN_NAMESPACE
@@ -42,11 +37,6 @@ public:
     void updateConnectionStatus(const QString& text, const QString& color) const;
 
 signals:
-    /**
-     * @brief 导航到K线详情页信号
-     * @param instrumentId 合约代码
-     * @param params 导航参数
-     */
     void navigateToKLinePage(const QString& instrumentId, const QVariantMap& params);
 
 private slots:
@@ -68,9 +58,10 @@ private slots:
     void setActivityFilterMode(int mode) const;
 
 private:
+    void setFilterMode(int mode) const;
     void setupUI();
     void setupConnections();
-    void initializeSampleData() const;  // 【新增】初始化示例数据
+    void initializeSampleData() const;
 
     class Impl;
     std::unique_ptr<Impl> d;

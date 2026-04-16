@@ -1,10 +1,10 @@
 /**
  * @file ConfigManager.cpp
- * @brief 配置管理器实现
+ * @brief 配置管理器实�?
  */
 
 #include "ConfigManager.h"
-#include "../utils/Logger.h"
+#include "../../utils/Logger.h"
 
 #include <QFile>
 #include <QJsonDocument>

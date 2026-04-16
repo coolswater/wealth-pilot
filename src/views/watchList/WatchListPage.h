@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-#include <core/BasePage.h>
+#include <core/base/BasePage.h>
 #include <memory>
 
 /**
@@ -29,3 +29,4 @@ private:
 };
 
 #endif // WATCHLISTPAGE_H
+

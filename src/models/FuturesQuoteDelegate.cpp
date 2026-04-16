@@ -3,14 +3,14 @@
 #include <QStyleOptionViewItem>
 #include <QModelIndex>
 #include "FuturesQuoteItem.h"
-#include "core/Tokens.h"
+#include "core/config/Tokens.h"
 
 FuturesQuoteDelegate::FuturesQuoteDelegate(QObject *parent) : QStyledItemDelegate(parent) {}
 
 void FuturesQuoteDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
                           const QModelIndex &index) const
 {
-    // 保存画家状态
+    // 保存画家状�?
     painter->save();
 
     // 获取数据
@@ -24,7 +24,7 @@ void FuturesQuoteDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
         font.setBold(true);  // 行情数字加粗
         painter->setFont(font);
 
-        // 根据列决定颜色
+        // 根据列决定颜�?
         QColor textColor;
         QString text = index.data(Qt::DisplayRole).toString();
 
@@ -40,11 +40,11 @@ void FuturesQuoteDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
         case 16: // 最低价
         case 18: // 速涨
             if (item.change > 0) {
-                textColor = QColor(255, 50, 50);  // 鲜红色 - 上涨
+                textColor = QColor(255, 50, 50);  // 鲜红�?- 上涨
             } else if (item.change < 0) {
-                textColor = QColor(50, 205, 50);  // 鲜绿色 - 下跌
+                textColor = QColor(50, 205, 50);  // 鲜绿�?- 下跌
             } else {
-                textColor = QColor(200, 200, 200);  // 灰白色 - 平盘
+                textColor = QColor(200, 200, 200);  // 灰白�?- 平盘
             }
             break;
         case 24: // 资金流向
@@ -57,14 +57,14 @@ void FuturesQuoteDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
             }
             break;
         default:
-            textColor = QColor(200, 200, 200);  // 默认灰白色
+            textColor = QColor(200, 200, 200);  // 默认灰白�?
         }
 
         // 绘制背景
         if (option.state & QStyle::State_Selected) {
             painter->fillRect(option.rect, QColor(40, 60, 100));  // 深蓝色选中背景
         } else {
-            // 斑马纹背景
+            // 斑马纹背�?
             if (index.row() % 2 == 0)
                 painter->fillRect(option.rect, QColor(36, 41, 55));
             else
@@ -79,7 +79,7 @@ void FuturesQuoteDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
         Qt::Alignment align = index.data(Qt::TextAlignmentRole).value<Qt::Alignment>();
         painter->drawText(textRect, align | Qt::AlignVCenter, text);
 
-        // 绘制网格线
+        // 绘制网格�?
         painter->setPen(QColor(50, 50, 50));
         painter->drawLine(option.rect.bottomLeft(), option.rect.bottomRight());
 

@@ -1,11 +1,11 @@
 /**
  * @file NetworkManager.cpp
- * @brief 网络管理器实现
+ * @brief 网络管理器实�?
  */
 
 #include "NetworkManager.h"
 #include "../utils/Logger.h"
-#include "../core/ConfigManager.h"
+#include "../core/config/ConfigManager.h"
 
 #include <QNetworkInformation>
 #include <QTimer>
@@ -29,7 +29,7 @@ bool NetworkManager::initialize()
 {
     if (m_initialized) return m_initialized;
 
-    // 连接 HTTP 管理器信号
+    // 连接 HTTP 管理器信�?
     connect(m_httpManager.get(), &QNetworkAccessManager::finished,
             this, &NetworkManager::onNetworkReplyFinished);
 
@@ -41,7 +41,7 @@ bool NetworkManager::initialize()
     connect(m_webSocket.get(), &QWebSocket::textMessageReceived,
             this, &NetworkManager::onWebSocketMessage);
 
-    // 监控网络状态 (Qt 6.1+)
+    // 监控网络状�?(Qt 6.1+)
     if (QNetworkInformation::loadDefaultBackend()) {
         QNetworkInformation* netInfo = QNetworkInformation::instance();
         if (netInfo) {
@@ -81,7 +81,7 @@ void NetworkManager::shutdown()
         m_webSocket->close();
     }
 
-    // 取消所有活跃请求
+    // 取消所有活跃请�?
     QMutexLocker locker(&m_mutex);
     for (auto it = m_activeRequests.begin(); it != m_activeRequests.end(); ++it) {
         if (it.key()) {
@@ -154,7 +154,7 @@ void NetworkManager::getAsync(const QString& url,
                                std::function<void(Result<QByteArray>)> callback,
                                const QMap<QString, QString>& headers)
 {
-    // 检查缓存
+    // 检查缓�?
     if (m_cacheEnabled) {
         QString cacheKey = QString("GET_%1").arg(url);
         QVariant cached = getCachedResponse(cacheKey);
@@ -189,7 +189,7 @@ void NetworkManager::postAsync(const QString& url, const QByteArray& data,
                                 std::function<void(Result<QByteArray>)> callback,
                                 const QMap<QString, QString>& headers)
 {
-    // 检查缓存
+    // 检查缓�?
     if (m_cacheEnabled) {
         QString cacheKey = QString("POST_%1_%2").arg(url, QString::fromUtf8(data.toBase64()));
         QVariant cached = getCachedResponse(cacheKey);
@@ -251,7 +251,7 @@ void NetworkManager::sendWebSocketMessage(const QString& message)
     }
 }
 
-// ==================== 网络状态 ====================
+// ==================== 网络状�?====================
 
 bool NetworkManager::isOnline() const
 {
@@ -265,7 +265,7 @@ void NetworkManager::setOnline(bool online)
         emit networkStateChanged(online);
 
         if (online) {
-            // 恢复在线时处理队列
+            // 恢复在线时处理队�?
             QTimer::singleShot(100, this, &NetworkManager::processQueue);
         }
     }
@@ -283,7 +283,7 @@ void NetworkManager::setMaxRetries(int retries)
     m_maxRetries = retries;
 }
 
-// ==================== 私有槽函数 ====================
+// ==================== 私有槽函�?====================
 
 void NetworkManager::onNetworkReplyFinished(QNetworkReply* reply)
 {
@@ -295,7 +295,7 @@ void NetworkManager::onNetworkReplyFinished(QNetworkReply* reply)
 
     NetworkRequest request = m_activeRequests.take(reply);
 
-    // 检查错误
+    // 检查错�?
     if (reply->error() != QNetworkReply::NoError) {
         LOG_WARNING(QString("Request failed: %1 - %2").arg(request.url, reply->errorString()));
 
@@ -414,7 +414,7 @@ QNetworkReply* NetworkManager::sendRequest(const NetworkRequest& request)
 {
     QNetworkRequest netRequest(QUrl(request.url));
 
-    // 设置请求头
+    // 设置请求�?
     for (auto it = request.headers.begin(); it != request.headers.end(); ++it) {
         netRequest.setRawHeader(it.key().toUtf8(), it.value().toUtf8());
     }

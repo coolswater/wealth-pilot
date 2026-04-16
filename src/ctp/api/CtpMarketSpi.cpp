@@ -3,21 +3,21 @@
 ///@brief 行情SPI实现 - PIMPL细节
 /////////////////////////////////////////////////////////////////////////
 #include "external/ctp/ThostFtdcMdApi.h"
-#include "services/CTPService.h"
+#include "../service/CTPService.h"
 #include "CtpDataBuffer.h"
 #include "CtpMarketSpi.h"
 #include "CtpApiLoader.h"  // 动态加载器
-#include "utils/Logger.h"
+#include "../../utils/Logger.h"
 
 #include <QtCore/QString>
 #include <QtCore/QDateTime>
 #include <QtCore/QDebug>
 #include <QtCore/QMutexLocker>
-#include <QScopedPointer>       // 关键：替换 <memory>
+#include <QScopedPointer>       // 关键：替�?<memory>
 
 namespace CTP {
 
-// PIMPL 实现 - 使用 QScopedPointer 避免不完整类型问题
+// PIMPL 实现 - 使用 QScopedPointer 避免不完整类型问�?
 class CtpMarketSpi::Impl {
 public:
     CThostFtdcMdApi* api{nullptr};
@@ -34,7 +34,7 @@ CtpMarketSpi::CtpMarketSpi(QObject *parent)
     : QObject(parent)
     , d(new Impl) {
 
-    // 创建缓冲（16ms刷新，约60fps，降低UI更新频率）
+    // 创建缓冲�?6ms刷新，约60fps，降低UI更新频率�?
     d->buffer = new BatchBuffer<MarketData>(200, 16, this);
 
     // 在构造函数或初始化函数中设置回调
@@ -57,7 +57,7 @@ void CtpMarketSpi::createApi(const QString& flowPath, bool isUdp, bool isMultica
 
     LOG_INFO(QString("CtpMarketSpi::createApi() called, flowPath= %1").arg(flowPath));
 
-    // 使用动态加载器创建 API（解决 MinGW 与 MSVC 兼容性问题）
+    // 使用动态加载器创建 API（解�?MinGW �?MSVC 兼容性问题）
     QByteArray path = flowPath.toLocal8Bit();
     d->api = CtpApiLoader::instance().createMdApi(
         path.constData(), isUdp, isMulticast, true);  // true=生产模式
@@ -109,7 +109,7 @@ void CtpMarketSpi::login(const QString& brokerId, const QString& userId,
 
     CThostFtdcReqUserLoginField req{};
 
-    // C++17 安全字符串拷贝
+    // C++17 安全字符串拷�?
     strncpy(req.BrokerID, brokerId.toLocal8Bit().constData(),
             sizeof(req.BrokerID) - 1);
     strncpy(req.UserID, userId.toLocal8Bit().constData(),
@@ -218,7 +218,7 @@ void CtpMarketSpi::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDepthMa
 
     auto data = convertDepthMarketData(*pDepthMarketData);
 
-    // 使用批量缓冲或直接发射
+    // 使用批量缓冲或直接发�?
     if (d->buffer && d->useBuffer) {
         d->buffer->push(std::move(data));  // C++17 move语义
     } else {
@@ -240,7 +240,7 @@ MarketData CtpMarketSpi::convertDepthMarketData(
     MarketData data;
     data.InstrumentID = QString::fromLocal8Bit(field.InstrumentID);
 
-    // 解析时间（格式：HH:MM:SS.mmm）
+    // 解析时间（格式：HH:MM:SS.mmm�?
     QString timeStr = QString("%1.%2")
                           .arg(QString::fromLocal8Bit(field.UpdateTime))
                           .arg(field.UpdateMillisec, 3, 10, QChar('0'));

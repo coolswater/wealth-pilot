@@ -1,12 +1,12 @@
 /**
  * @file CacheManager.cpp
- * @brief 缓存管理器实现 - 高性能多级缓存系统
+ * @brief Cache Manager Implementation - High-performance multi-level caching system
  * @author WealthPilot Team
  * @version 2.0.0
  */
 
 #include "CacheManager.h"
-#include "../utils/Logger.h"
+#include "../../utils/Logger.h"
 #include <QFile>
 #include <QDir>
 #include <QDataStream>
@@ -22,7 +22,6 @@ CacheManager::CacheManager()
     , m_policy(CachePolicy::LRU)
     , m_cleanupInterval(60)
 {
-    m_stats = {0, 0, 0, 0, 0, 0, 0, 0.0};
 }
 
 CacheManager::~CacheManager()
@@ -32,31 +31,22 @@ CacheManager::~CacheManager()
 
 bool CacheManager::initialize(qint64 maxMemorySize, qint64 maxDiskSize)
 {
-    QElapsedTimer timer;
-    timer.start();
+    QMutexLocker locker(&m_mutex);
     
     m_l1MaxSize = maxMemorySize;
     m_l2MaxSize = maxDiskSize;
     
-    // 初始化L2磁盘缓存目录
-    QString cachePath = QCoreApplication::applicationDirPath() + "/cache";
-    QDir dir(cachePath);
+    // Setup L2 cache path
+    m_l2CachePath = QCoreApplication::applicationDirPath() + "/cache";
+    QDir dir(m_l2CachePath);
     if (!dir.exists()) {
         dir.mkpath(".");
     }
-    m_l2CachePath = cachePath;
     
-    // 计算当前磁盘缓存大小
-    m_l2CurrentSize = 0;
-    for (const QFileInfo& info : dir.entryInfoList(QDir::Files)) {
-        m_l2CurrentSize += info.size();
-    }
-    
-    // 启动定时清理
+    // Schedule periodic cleanup
     scheduleCleanup();
     
-    LOG_INFO(QString("CacheManager initialized in %1ms, L1: %2MB, L2: %3MB")
-        .arg(timer.elapsed())
+    LOG_INFO(QString("CacheManager initialized (L1: %1MB, L2: %2MB)")
         .arg(maxMemorySize / 1024 / 1024)
         .arg(maxDiskSize / 1024 / 1024));
     
@@ -67,118 +57,80 @@ void CacheManager::set(const QString& key, const QVariant& value, int ttlSeconds
 {
     QMutexLocker locker(&m_mutex);
     
-    QElapsedTimer timer;
-    timer.start();
-    
-    // 创建缓存项
     CacheItem item;
     item.value = value;
     item.createTime = QDateTime::currentDateTime();
-    item.expireTime = item.createTime.addSecs(ttlSeconds);
+    item.expireTime = QDateTime::currentDateTime().addSecs(ttlSeconds);
     item.hitCount = 0;
-    item.size = serialize(value).size();
+    item.size = estimateSize(value);
     item.level = level;
     
-    // L1内存缓存
     if (level == CacheLevel::L1_Memory) {
-        // 检查是否需要淘汰
-        if (m_l1CurrentSize + item.size > m_l1MaxSize) {
-            evictIfNeeded(CacheLevel::L1_Memory);
-        }
+        // Evict if needed
+        evictIfNeeded(level);
         
-        // 如果已存在，先删除
+        // Remove old if exists
         if (m_l1Cache.contains(key)) {
             m_l1CurrentSize -= m_l1Cache[key].size;
         }
         
         m_l1Cache[key] = item;
         m_l1CurrentSize += item.size;
-    }
-    
-    // L2磁盘缓存
-    if (level == CacheLevel::L2_Disk) {
+    } else if (level == CacheLevel::L2_Disk) {
         writeToDisk(key, item);
     }
     
-    m_stats.totalSets++;
-    
-    LOG_DEBUG(QString("Cache set: %1, size: %2, time: %3ms")
-        .arg(key).arg(item.size).arg(timer.elapsed()));
+    ++m_stats.totalSets;
+    LOG_DEBUG(QString("Cache set: %1 (size: %2, ttl: %3s)")
+        .arg(key).arg(item.size).arg(ttlSeconds));
 }
 
 QVariant CacheManager::get(const QString& key, const QVariant& defaultValue)
 {
     QMutexLocker locker(&m_mutex);
     
-    // 先查L1
+    // Check L1 cache
     if (m_l1Cache.contains(key)) {
         CacheItem& item = m_l1Cache[key];
         
-        // 检查是否过期
+        // Check expiration
         if (item.expireTime.isValid() && QDateTime::currentDateTime() > item.expireTime) {
-            m_l1Cache.remove(key);
             m_l1CurrentSize -= item.size;
-            m_stats.totalMisses++;
-            updateStats(false);
-            
-            locker.unlock();
+            m_l1Cache.remove(key);
             emit cacheExpired(key);
-            
+            updateStats(false);
             return defaultValue;
         }
         
-        // 命中
-        item.hitCount++;
-        m_stats.totalHits++;
+        ++item.hitCount;
         updateStats(true);
-        
-        locker.unlock();
         emit cacheHit(key);
-        
         return item.value;
     }
     
-    // 再查L2
-    if (QFile::exists(m_l2CachePath + "/" + key + ".cache")) {
-        CacheItem item = readFromDisk(key);
-        
-        if (item.value.isValid()) {
-            // 检查是否过期
-            if (item.expireTime.isValid() && QDateTime::currentDateTime() > item.expireTime) {
-                QFile::remove(m_l2CachePath + "/" + key + ".cache");
-                m_stats.totalMisses++;
-                updateStats(false);
-                
-                locker.unlock();
-                emit cacheExpired(key);
-                
-                return defaultValue;
-            }
-            
-            // 提升到L1
-            item.level = CacheLevel::L1_Memory;
-            if (m_l1CurrentSize + item.size <= m_l1MaxSize) {
-                m_l1Cache[key] = item;
-                m_l1CurrentSize += item.size;
-            }
-            
-            m_stats.totalHits++;
-            updateStats(true);
-            
-            locker.unlock();
-            emit cacheHit(key);
-            
-            return item.value;
+    // Check L2 cache
+    CacheItem diskItem = readFromDisk(key);
+    if (diskItem.value.isValid()) {
+        // Check expiration
+        if (diskItem.expireTime.isValid() && QDateTime::currentDateTime() > diskItem.expireTime) {
+            QFile::remove(m_l2CachePath + "/" + key + ".cache");
+            emit cacheExpired(key);
+            updateStats(false);
+            return defaultValue;
         }
+        
+        // Promote to L1
+        set(key, diskItem.value, 
+            QDateTime::currentDateTime().secsTo(diskItem.expireTime),
+            CacheLevel::L1_Memory);
+        
+        updateStats(true);
+        emit cacheHit(key);
+        return diskItem.value;
     }
     
-    // 未命中
-    m_stats.totalMisses++;
     updateStats(false);
-    
-    locker.unlock();
     emit cacheMiss(key);
-    
     return defaultValue;
 }
 
@@ -186,16 +138,16 @@ bool CacheManager::contains(const QString& key) const
 {
     QMutexLocker locker(&m_mutex);
     
+    // Check L1
     if (m_l1Cache.contains(key)) {
         const CacheItem& item = m_l1Cache[key];
-        // 检查是否过期
         if (item.expireTime.isValid() && QDateTime::currentDateTime() > item.expireTime) {
             return false;
         }
         return true;
     }
     
-    // 检查L2
+    // Check L2
     QString filePath = m_l2CachePath + "/" + key + ".cache";
     if (QFile::exists(filePath)) {
         CacheItem item = readFromDisk(key);
@@ -212,20 +164,19 @@ void CacheManager::remove(const QString& key)
 {
     QMutexLocker locker(&m_mutex);
     
-    // 从L1删除
+    // Remove from L1
     if (m_l1Cache.contains(key)) {
         m_l1CurrentSize -= m_l1Cache[key].size;
         m_l1Cache.remove(key);
     }
     
-    // 从L2删除
+    // Remove from L2
     QString filePath = m_l2CachePath + "/" + key + ".cache";
     if (QFile::exists(filePath)) {
         QFile::remove(filePath);
     }
     
-    m_stats.totalDeletes++;
-    
+    ++m_stats.totalDeletes;
     LOG_DEBUG(QString("Cache removed: %1").arg(key));
 }
 
@@ -238,29 +189,20 @@ void CacheManager::clear(CacheLevel level)
         m_l1CurrentSize = 0;
     } else if (level == CacheLevel::L2_Disk) {
         QDir dir(m_l2CachePath);
-        for (const QFileInfo& info : dir.entryInfoList(QDir::Files)) {
-            QFile::remove(info.absoluteFilePath());
+        QStringList files = dir.entryList(QStringList() << "*.cache");
+        for (const QString& file : files) {
+            QFile::remove(m_l2CachePath + "/" + file);
         }
         m_l2CurrentSize = 0;
     }
     
-    LOG_INFO(QString("Cache cleared: level %1").arg(static_cast<int>(level)));
+    LOG_INFO(QString("Cache cleared (level: %1)").arg(static_cast<int>(level)));
 }
 
 void CacheManager::clearAll()
 {
-    QMutexLocker locker(&m_mutex);
-    
-    m_l1Cache.clear();
-    m_l1CurrentSize = 0;
-    
-    QDir dir(m_l2CachePath);
-    for (const QFileInfo& info : dir.entryInfoList(QDir::Files)) {
-        QFile::remove(info.absoluteFilePath());
-    }
-    m_l2CurrentSize = 0;
-    
-    LOG_INFO("All cache cleared");
+    clear(CacheLevel::L1_Memory);
+    clear(CacheLevel::L2_Disk);
 }
 
 CacheStats CacheManager::statistics() const
@@ -273,7 +215,7 @@ CacheStats CacheManager::statistics() const
     stats.itemCount = m_l1Cache.size();
     
     qint64 total = stats.totalHits + stats.totalMisses;
-    stats.hitRate = total > 0 ? (double)stats.totalHits / total : 0.0;
+    stats.hitRate = total > 0 ? static_cast<double>(stats.totalHits) / total : 0.0;
     
     return stats;
 }
@@ -282,32 +224,23 @@ void CacheManager::setPolicy(CachePolicy policy)
 {
     QMutexLocker locker(&m_mutex);
     m_policy = policy;
+    LOG_INFO(QString("Cache policy changed to: %1").arg(static_cast<int>(policy)));
 }
 
 void CacheManager::warmup(const QMap<QString, QVariant>& data)
 {
-    QElapsedTimer timer;
-    timer.start();
-    
     for (auto it = data.begin(); it != data.end(); ++it) {
-        set(it.key(), it.value(), 3600, CacheLevel::L1_Memory);  // 1小时
+        set(it.key(), it.value(), 3600, CacheLevel::L1_Memory);
     }
-    
-    LOG_INFO(QString("Cache warmed up: %1 items in %2ms")
-        .arg(data.size()).arg(timer.elapsed()));
+    LOG_INFO(QString("Cache warmed up with %1 items").arg(data.size()));
 }
 
 QMap<QString, QVariant> CacheManager::getBatch(const QStringList& keys)
 {
     QMap<QString, QVariant> result;
-    
     for (const QString& key : keys) {
-        QVariant value = get(key);
-        if (value.isValid()) {
-            result[key] = value;
-        }
+        result[key] = get(key);
     }
-    
     return result;
 }
 
@@ -323,78 +256,82 @@ void CacheManager::cleanupExpired()
     QMutexLocker locker(&m_mutex);
     
     QDateTime now = QDateTime::currentDateTime();
-    int expiredCount = 0;
     
-    // 清理L1
-    QStringList keysToRemove;
+    // Cleanup L1
+    QStringList expiredKeys;
     for (auto it = m_l1Cache.begin(); it != m_l1Cache.end(); ++it) {
-        if (it.value().expireTime.isValid() && now > it.value().expireTime) {
-            keysToRemove.append(it.key());
+        if (it->expireTime.isValid() && now > it->expireTime) {
+            expiredKeys.append(it.key());
         }
     }
     
-    for (const QString& key : keysToRemove) {
+    for (const QString& key : expiredKeys) {
         m_l1CurrentSize -= m_l1Cache[key].size;
         m_l1Cache.remove(key);
-        expiredCount++;
+        emit cacheExpired(key);
     }
     
-    // 清理L2
+    // Cleanup L2
     QDir dir(m_l2CachePath);
-    for (const QFileInfo& info : dir.entryInfoList(QDir::Files)) {
-        QString key = info.baseName();
+    QStringList files = dir.entryList(QStringList() << "*.cache");
+    for (const QString& file : files) {
+        QString key = file.left(file.length() - 6);  // Remove ".cache"
         CacheItem item = readFromDisk(key);
         if (item.expireTime.isValid() && now > item.expireTime) {
-            QFile::remove(info.absoluteFilePath());
-            expiredCount++;
+            QFile::remove(m_l2CachePath + "/" + file);
+            emit cacheExpired(key);
         }
     }
     
-    if (expiredCount > 0) {
-        LOG_DEBUG(QString("Cleaned up %1 expired cache items").arg(expiredCount));
+    if (!expiredKeys.isEmpty()) {
+        LOG_DEBUG(QString("Cleaned up %1 expired cache items").arg(expiredKeys.size()));
     }
 }
 
 void CacheManager::evictIfNeeded(CacheLevel level)
 {
-    if (level == CacheLevel::L1_Memory) {
-        while (m_l1CurrentSize > m_l1MaxSize * 0.9 && !m_l1Cache.isEmpty()) {
-            // 根据策略选择淘汰项
-            QString keyToEvict;
-            
-            switch (m_policy) {
-                case CachePolicy::LRU: {
-                    // 找到最久未使用的
-                    QDateTime oldest = QDateTime::currentDateTime();
-                    for (auto it = m_l1Cache.begin(); it != m_l1Cache.end(); ++it) {
-                        if (it.value().createTime < oldest) {
-                            oldest = it.value().createTime;
-                            keyToEvict = it.key();
-                        }
-                    }
-                    break;
+    if (level != CacheLevel::L1_Memory) {
+        return;
+    }
+    
+    while (m_l1CurrentSize > m_l1MaxSize && !m_l1Cache.isEmpty()) {
+        QString keyToEvict;
+        
+        if (m_policy == CachePolicy::LRU) {
+            // Find oldest by create time
+            QDateTime oldest = QDateTime::currentDateTime();
+            for (auto it = m_l1Cache.begin(); it != m_l1Cache.end(); ++it) {
+                if (it->createTime < oldest) {
+                    oldest = it->createTime;
+                    keyToEvict = it.key();
                 }
-                case CachePolicy::LFU: {
-                    // 找到最少使用的
-                    int minHits = INT_MAX;
-                    for (auto it = m_l1Cache.begin(); it != m_l1Cache.end(); ++it) {
-                        if (it.value().hitCount < minHits) {
-                            minHits = it.value().hitCount;
-                            keyToEvict = it.key();
-                        }
-                    }
-                    break;
+            }
+        } else if (m_policy == CachePolicy::LFU) {
+            // Find lowest hit count
+            int minHits = INT_MAX;
+            for (auto it = m_l1Cache.begin(); it != m_l1Cache.end(); ++it) {
+                if (it->hitCount < minHits) {
+                    minHits = it->hitCount;
+                    keyToEvict = it.key();
                 }
-                default:
-                    // 默认删除第一个
-                    keyToEvict = m_l1Cache.begin().key();
-                    break;
             }
-            
-            if (!keyToEvict.isEmpty()) {
-                m_l1CurrentSize -= m_l1Cache[keyToEvict].size;
-                m_l1Cache.remove(keyToEvict);
+        } else if (m_policy == CachePolicy::FIFO) {
+            // Find oldest by create time (same as LRU for simplicity)
+            QDateTime oldest = QDateTime::currentDateTime();
+            for (auto it = m_l1Cache.begin(); it != m_l1Cache.end(); ++it) {
+                if (it->createTime < oldest) {
+                    oldest = it->createTime;
+                    keyToEvict = it.key();
+                }
             }
+        }
+        
+        if (!keyToEvict.isEmpty()) {
+            m_l1CurrentSize -= m_l1Cache[keyToEvict].size;
+            m_l1Cache.remove(keyToEvict);
+            LOG_DEBUG(QString("Evicted cache item: %1").arg(keyToEvict));
+        } else {
+            break;
         }
     }
 }
@@ -427,37 +364,37 @@ bool CacheManager::writeToDisk(const QString& key, const CacheItem& item)
     }
     
     QDataStream stream(&file);
-    stream << item.value << item.createTime << item.expireTime << item.hitCount << item.size;
+    stream << item.value << item.createTime << item.expireTime << item.hitCount;
     file.close();
-    
-    m_l2CurrentSize += item.size;
     
     return true;
 }
 
 CacheItem CacheManager::readFromDisk(const QString& key) const
 {
+    CacheItem item;
     QString filePath = m_l2CachePath + "/" + key + ".cache";
     QFile file(filePath);
     
-    CacheItem item;
     if (!file.open(QIODevice::ReadOnly)) {
         return item;
     }
     
     QDataStream stream(&file);
-    stream >> item.value >> item.createTime >> item.expireTime >> item.hitCount >> item.size;
+    stream >> item.value >> item.createTime >> item.expireTime >> item.hitCount;
     file.close();
     
     item.level = CacheLevel::L2_Disk;
-    
     return item;
 }
 
 void CacheManager::updateStats(bool hit)
 {
-    qint64 total = m_stats.totalHits + m_stats.totalMisses;
-    m_stats.hitRate = total > 0 ? (double)m_stats.totalHits / total : 0.0;
+    if (hit) {
+        ++m_stats.totalHits;
+    } else {
+        ++m_stats.totalMisses;
+    }
 }
 
 void CacheManager::scheduleCleanup()
@@ -466,4 +403,17 @@ void CacheManager::scheduleCleanup()
         cleanupExpired();
         scheduleCleanup();
     });
+}
+
+int CacheManager::estimateSize(const QVariant& value) const
+{
+    // Rough estimate of memory size
+    if (value.typeId() == QMetaType::QString) {
+        return value.toString().size() * 2;  // UTF-16
+    } else if (value.typeId() == QMetaType::QByteArray) {
+        return value.toByteArray().size();
+    } else if (value.typeId() == QMetaType::Int || value.typeId() == QMetaType::Double) {
+        return 8;
+    }
+    return 64;  // Default estimate
 }

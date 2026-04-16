@@ -1,7 +1,7 @@
 #ifndef PORTFOLIOPAGE_H
 #define PORTFOLIOPAGE_H
 
-#include <core/BasePage.h>
+#include <core/base/BasePage.h>
 #include <memory>
 
 // 前向声明减少编译依赖
@@ -53,3 +53,4 @@ private:
 };
 
 #endif // DASHBOARDPAGE_H
+

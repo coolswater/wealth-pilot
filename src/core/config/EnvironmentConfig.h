@@ -15,7 +15,7 @@
 #ifndef ENVIRONMENTCONFIG_H
 #define ENVIRONMENTCONFIG_H
 
-#include "Singleton.h"
+#include "../base/Singleton.h"
 #include <QObject>
 #include <QString>
 #include <QVariant>
@@ -64,11 +64,6 @@ class EnvironmentConfig : public QObject, public Singleton<EnvironmentConfig>
 
 public:
     /**
-     * @brief 初始化环境配置
-     */
-    bool initialize();
-
-    /**
      * @brief 获取当前环境
      */
     Environment currentEnvironment() const;
@@ -76,12 +71,7 @@ public:
     /**
      * @brief 设置当前环境
      */
-    void setCurrentEnvironment(Environment env);
-
-    /**
-     * @brief 获取环境名称
-     */
-    QString environmentName(Environment env) const;
+    bool setEnvironment(Environment env);
 
     /**
      * @brief 获取当前环境配置
@@ -91,7 +81,7 @@ public:
     /**
      * @brief 获取指定环境配置
      */
-    EnvironmentSettings getSettings(Environment env) const;
+    std::optional<EnvironmentSettings> getSettings(Environment env) const;
 
     /**
      * @brief 设置环境配置
@@ -99,14 +89,14 @@ public:
     void setSettings(Environment env, const EnvironmentSettings& settings);
 
     /**
-     * @brief 获取配置值（高性能访问）
+     * @brief 获取配置值
      */
-    QVariant getValue(const QString& key, const QVariant& defaultValue = QVariant()) const;
+    QVariant get(const QString& key, const QVariant& defaultValue = QVariant()) const;
 
     /**
      * @brief 设置配置值
      */
-    void setValue(const QString& key, const QVariant& value);
+    void set(const QString& key, const QVariant& value);
 
     /**
      * @brief 重新加载配置
@@ -114,18 +104,28 @@ public:
     void reload();
 
     /**
-     * @brief 导出当前环境配置
+     * @brief 导出配置
      */
     bool exportConfig(const QString& filePath);
 
     /**
-     * @brief 导入环境配置
+     * @brief 导入配置
      */
     bool importConfig(const QString& filePath);
 
+    /**
+     * @brief 获取环境名称
+     */
+    static QString environmentName(Environment env);
+
+    /**
+     * @brief 从名称解析环境
+     */
+    static Environment environmentFromName(const QString& name);
+
 signals:
     /**
-     * @brief 环境切换信号
+     * @brief 环境变更信号
      */
     void environmentChanged(Environment newEnv);
 
@@ -138,27 +138,16 @@ private:
     EnvironmentConfig();
     ~EnvironmentConfig();
 
-    // 加载环境配置
     void loadEnvironments();
-    
-    // 保存环境配置
-    void saveEnvironments();
-    
-    // 更新缓存
     void updateCache();
-    
-    // 验证配置
-    bool validateSettings(const EnvironmentSettings& settings) const;
+    void saveSettings();
 
     Environment m_currentEnv;
     QMap<Environment, EnvironmentSettings> m_environments;
+    std::unique_ptr<QSettings> m_settings;
+    QMap<QString, QVariant> m_configCache;
     mutable QMutex m_mutex;
     
-    // 性能优化：配置缓存
-    QMap<QString, QVariant> m_configCache;
-    mutable QSettings* m_settings;
-    
-    // 性能优化：环境名称映射
     static QMap<Environment, QString> s_envNames;
 };
 

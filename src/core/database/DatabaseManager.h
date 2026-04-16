@@ -1,22 +1,22 @@
 /**
  * @file DatabaseManager.h
- * @brief 数据库管理器 - 高性能SQLite数据库管理
+ * @brief Database Manager - High-performance SQLite database management
  * @author WealthPilot Team
  * @version 2.0.0
  * 
- * @details 功能：
- * - 连接池管理
- * - 批量操作优化
- * - 事务支持
- * - 异步查询
- * - 性能监控
+ * @details Features:
+ * - Connection pool management
+ * - Batch operation optimization
+ * - Transaction support
+ * - Async queries
+ * - Performance monitoring
  * 
- * @thread_safe 所有公共方法都是线程安全的
+ * @thread_safe All public methods are thread-safe
  */
 #ifndef DATABASEMANAGER_H
 #define DATABASEMANAGER_H
 
-#include "Singleton.h"
+#include "../base/Singleton.h"
 #include <QObject>
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -30,36 +30,36 @@
 #include <memory>
 
 /**
- * @brief 数据库配置
+ * @brief Database configuration
  */
 struct DatabaseConfig {
-    QString databaseName;       // 数据库名称
-    QString hostName;          // 主机名
-    int port;                  // 端口
-    QString userName;          // 用户名
-    QString password;          // 密码
-    int maxConnections;        // 最大连接数
-    int minConnections;        // 最小连接数
-    int connectionTimeout;     // 连接超时（毫秒）
-    bool enableWAL;            // 启用WAL模式
-    int cacheSize;             // 缓存大小（KB）
-    int pageSize;              // 页面大小（字节）
-    bool enableForeignKeys;    // 启用外键约束
+    QString databaseName = "wealthpilot.db";  // Database name
+    QString hostName;                          // Host name
+    int port = 0;                              // Port
+    QString userName;                          // Username
+    QString password;                          // Password
+    int maxConnections = 10;                   // Max connections
+    int minConnections = 2;                    // Min connections
+    int connectionTimeout = 30000;             // Connection timeout (ms)
+    bool enableWAL = true;                     // Enable WAL mode
+    int cacheSize = 4096;                      // Cache size (KB)
+    int pageSize = 4096;                       // Page size (bytes)
+    bool enableForeignKeys = true;             // Enable foreign keys
 };
 
 /**
- * @brief 查询结果
+ * @brief Query result
  */
 struct QueryResult {
-    bool success;                              // 是否成功
-    QSqlError error;                          // 错误信息
-    QVector<QMap<QString, QVariant>> rows;    // 查询结果
-    int affectedRows;                         // 影响的行数
-    qint64 executionTime;                     // 执行时间（微秒）
+    bool success = false;                      // Success flag
+    QSqlError error;                           // Error info
+    QVector<QMap<QString, QVariant>> rows;     // Query results
+    int affectedRows = 0;                      // Affected rows
+    qint64 executionTime = 0;                  // Execution time (microseconds)
 };
 
 /**
- * @brief 数据库连接池
+ * @brief Database connection pool
  */
 class ConnectionPool : public QObject
 {
@@ -85,11 +85,11 @@ private:
     QMap<QString, QSqlDatabase> m_usedConnections;
     mutable QMutex m_mutex;
     QWaitCondition m_condition;
-    int m_connectionCounter;
+    int m_connectionCounter = 0;
 };
 
 /**
- * @brief 异步查询线程
+ * @brief Async query thread
  */
 class AsyncQueryThread : public QThread
 {
@@ -112,7 +112,7 @@ private:
         QString queryId;
         QString sql;
         QMap<QString, QVariant> params;
-        bool isBatch;
+        bool isBatch = false;
         QVector<QMap<QString, QVariant>> batchData;
     };
     
@@ -120,11 +120,11 @@ private:
     QQueue<QueryTask> m_taskQueue;
     mutable QMutex m_mutex;
     QWaitCondition m_condition;
-    bool m_running;
+    bool m_running = false;
 };
 
 /**
- * @brief 数据库管理器
+ * @brief Database Manager
  */
 class DatabaseManager : public QObject, public Singleton<DatabaseManager>
 {
@@ -133,73 +133,73 @@ class DatabaseManager : public QObject, public Singleton<DatabaseManager>
 
 public:
     /**
-     * @brief 初始化数据库管理器
+     * @brief Initialize database manager
      */
     bool initialize(const DatabaseConfig& config = DatabaseConfig());
 
     /**
-     * @brief 执行查询（同步）
+     * @brief Execute query (synchronous)
      */
     QueryResult executeQuery(const QString& sql, const QMap<QString, QVariant>& params = QMap<QString, QVariant>());
 
     /**
-     * @brief 执行查询（异步）
+     * @brief Execute query (asynchronous)
      */
     QString executeQueryAsync(const QString& sql, const QMap<QString, QVariant>& params = QMap<QString, QVariant>());
 
     /**
-     * @brief 执行批量操作
+     * @brief Execute batch operation
      */
     QueryResult executeBatch(const QString& sql, const QVector<QMap<QString, QVariant>>& batchData);
 
     /**
-     * @brief 执行事务
+     * @brief Execute transaction
      */
     bool executeTransaction(const std::function<bool()>& operations);
 
     /**
-     * @brief 执行预处理语句
+     * @brief Execute prepared statement
      */
     QueryResult executePreparedStatement(const QString& statementId, const QMap<QString, QVariant>& params);
 
     /**
-     * @brief 注册预处理语句
+     * @brief Register prepared statement
      */
     void registerPreparedStatement(const QString& statementId, const QString& sql);
 
     /**
-     * @brief 获取表信息
+     * @brief Get table info
      */
     QVector<QMap<QString, QVariant>> getTableInfo(const QString& tableName);
 
     /**
-     * @brief 优化数据库
+     * @brief Optimize database
      */
     void optimize();
 
     /**
-     * @brief 获取数据库统计信息
+     * @brief Get database statistics
      */
     QMap<QString, QVariant> statistics() const;
 
     /**
-     * @brief 备份数据库
+     * @brief Backup database
      */
     bool backup(const QString& backupPath);
 
     /**
-     * @brief 恢复数据库
+     * @brief Restore database
      */
     bool restore(const QString& backupPath);
 
 signals:
     /**
-     * @brief 异步查询完成信号
+     * @brief Async query completed signal
      */
     void asyncQueryCompleted(const QString& queryId, const QueryResult& result);
 
     /**
-     * @brief 错误信号
+     * @brief Error signal
      */
     void errorOccurred(const QString& error);
 
@@ -207,10 +207,10 @@ private:
     DatabaseManager();
     ~DatabaseManager();
 
-    // 创建表结构
+    // Create table structure
     void createTables();
     
-    // 优化设置
+    // Apply optimizations
     void applyOptimizations();
 
     std::unique_ptr<ConnectionPool> m_connectionPool;
@@ -218,10 +218,10 @@ private:
     QMap<QString, QString> m_preparedStatements;
     mutable QMutex m_mutex;
     
-    // 统计信息
-    qint64 m_totalQueries;
-    qint64 m_totalTime;
-    qint64 m_failedQueries;
+    // Statistics
+    qint64 m_totalQueries = 0;
+    qint64 m_totalTime = 0;
+    qint64 m_failedQueries = 0;
 };
 
 #endif // DATABASEMANAGER_H

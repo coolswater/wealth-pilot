@@ -2,10 +2,8 @@
  * @file FuturesPageIntegration.cpp
  * @brief 期货页面集成实现 - 将行情列表页和K线详情页集成
  *
- * @details 实现功能：
- * - 页面跳转管理
- * - 参数传递
- * - 实时行情订阅
+ * @details 实现功能�? * - 页面跳转管理
+ * - 参数传�? * - 实时行情订阅
  * - CTP连接共享
  *
  * @author WealthPilot Team
@@ -15,8 +13,8 @@
 #include "FuturesPageIntegration.h"
 #include "FuturesQuotesPage.h"
 #include "FuturesKLinePage.h"
-#include "core/PageNavigator.h"
-#include "core/ServiceLocator.h"
+#include "core/navigation/PageNavigator.h"
+#include "core/di/ServiceLocator.h"
 #include "plugins/ICTPPlugin.h"
 #include "utils/Logger.h"
 #include <QStackedWidget>
@@ -42,8 +40,7 @@ FuturesPageIntegration& FuturesPageIntegration::instance()
 }
 
 /**
- * @brief 构造函数
- */
+ * @brief 构造函�? */
 FuturesPageIntegration::FuturesPageIntegration()
     : d(std::make_unique<Impl>())
 {
@@ -59,8 +56,7 @@ FuturesPageIntegration::~FuturesPageIntegration()
 }
 
 /**
- * @brief 初始化集成
- * @param stackedWidget 页面容器
+ * @brief 初始化集�? * @param stackedWidget 页面容器
  */
 void FuturesPageIntegration::initialize(QStackedWidget* stackedWidget)
 {
@@ -73,8 +69,7 @@ void FuturesPageIntegration::initialize(QStackedWidget* stackedWidget)
     d->quotesPage = new FuturesQuotesPage(d->stackedWidget);
     d->klinePage = new FuturesKLinePage(d->stackedWidget);
     
-    // 添加到容器
-    d->stackedWidget->addWidget(d->quotesPage);
+    // 添加到容�?    d->stackedWidget->addWidget(d->quotesPage);
     d->stackedWidget->addWidget(d->klinePage);
     
     // 注册页面到导航器
@@ -89,8 +84,7 @@ void FuturesPageIntegration::initialize(QStackedWidget* stackedWidget)
     // 设置连接
     setupConnections();
     
-    // 默认显示行情列表页
-    showQuotesPage();
+    // 默认显示行情列表�?    showQuotesPage();
     
     LOG_INFO("FuturesPageIntegration initialized");
 }
@@ -112,8 +106,7 @@ void FuturesPageIntegration::setupConnections()
 }
 
 /**
- * @brief 显示行情列表页
- */
+ * @brief 显示行情列表�? */
 void FuturesPageIntegration::showQuotesPage()
 {
     if (!d->stackedWidget || !d->quotesPage) {
@@ -159,8 +152,7 @@ void FuturesPageIntegration::showKLinePage(const QString& instrumentId)
 }
 
 /**
- * @brief 返回行情列表页
- */
+ * @brief 返回行情列表�? */
 void FuturesPageIntegration::goBack()
 {
     if (d->navigator->canGoBack()) {
@@ -170,8 +162,7 @@ void FuturesPageIntegration::goBack()
 }
 
 /**
- * @brief 获取行情列表页
- */
+ * @brief 获取行情列表�? */
 FuturesQuotesPage* FuturesPageIntegration::quotesPage() const
 {
     return d->quotesPage;
@@ -193,11 +184,9 @@ void FuturesPageIntegration::onNavigateToKLinePage(const QString& instrumentId,
 {
     LOG_INFO(QString("Navigating to KLine page for: %1").arg(instrumentId));
     
-    // 使用导航器进行跳转
-    d->navigator->navigateTo("FuturesKLinePage", params);
+    // 使用导航器进行跳�?    d->navigator->navigateTo("FuturesKLinePage", params);
     
-    // 显示K线页面
-    showKLinePage(instrumentId);
+    // 显示K线页�?    showKLinePage(instrumentId);
 }
 
 /**

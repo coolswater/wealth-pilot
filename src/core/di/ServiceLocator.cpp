@@ -6,7 +6,7 @@
  */
 
 #include "ServiceLocator.h"
-#include "../utils/Logger.h"
+#include "../../utils/Logger.h"
 #include <QElapsedTimer>
 
 ServiceLocator& ServiceLocator::instance()

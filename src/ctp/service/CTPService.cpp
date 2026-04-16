@@ -4,14 +4,14 @@
 /////////////////////////////////////////////////////////////////////////
 
 #include "CTPService.h"
-#include "../core/CTPConfigManager.h"
-#include "utils/Logger.h"
+#include "../config/CTPConfigManager.h"
+#include "../../utils/Logger.h"
 #include <QtCore/QThread>
 #include <QtCore/QDebug>
 #include <QtCore/QDir>
 #include <QtCore/QCoreApplication>
-#include <core/CtpMarketSpi.h>
-#include <core/CtpTradingSpi.h>
+#include "../api/CtpMarketSpi.h"
+#include "../api/CtpTradingSpi.h"
 #include <QTimer>
 
 namespace CTP {
@@ -65,10 +65,10 @@ void CTPService::setupConnections() {
     LOG_INFO("CTPService::setupConnections() called");
 
     // 创建线程和SPI
-    // 注意：CTP API 内部有自己的线程，不需要 moveToThread
-    // CTP 的回调会在 CTP 内部线程中触发，我们只需要确保信号槽连接正确
+    // 注意：CTP API 内部有自己的线程，不需�?moveToThread
+    // CTP 的回调会�?CTP 内部线程中触发，我们只需要确保信号槽连接正确
 
-    // 确保流文件目录存在（使用绝对路径）
+    // 确保流文件目录存在（使用绝对路径�?
     QString appPath = QCoreApplication::applicationDirPath();
     QString marketFlowPath = appPath + "/market_flow";
     QString tradingFlowPath = appPath + "/trading_flow";
@@ -79,9 +79,9 @@ void CTPService::setupConnections() {
     LOG_INFO(QString("Flow directories created: %1, %2").arg(marketFlowPath).arg(tradingFlowPath));
 
     // 1. 创建行情 SPI（不要移动到 QThread！）
-    d->marketSpi = new CtpMarketSpi(this);  // 设置 parent，确保生命周期
+    d->marketSpi = new CtpMarketSpi(this);  // 设置 parent，确保生命周�?
 
-    // 行情信号连接（使用 Qt::DirectConnection 确保在 CTP 线程中立即发射）
+    // 行情信号连接（使�?Qt::DirectConnection 确保�?CTP 线程中立即发射）
     connect(d->marketSpi, &CtpMarketSpi::connected, this, [this]() {
         LOG_INFO("CTPService: marketSpi::connected signal received");
         emit marketConnected();
@@ -97,10 +97,10 @@ void CTPService::setupConnections() {
     
     connect(d->marketSpi, &CtpMarketSpi::marketDataReceived,
             this, [this](const MarketData& data) {
-                // 批量缓冲：收集到列表后批量发射
+                // 批量缓冲：收集到列表后批量发�?
                 static QList<MarketData> batch;
                 batch.append(data);
-                if (batch.size() >= 50) {  // 每50条批量发射一次
+                if (batch.size() >= 50) {  // �?0条批量发射一�?
                     emit marketDataBatchReceived(batch);
                     batch.clear();
                 }
@@ -110,7 +110,7 @@ void CTPService::setupConnections() {
             [this](bool success, const QString& msg) {
                 LOG_INFO(QString("CTPService: marketSpi::loginResult success=%1 msg=%2").arg(success).arg(msg));
                 emit marketLoginFinished(success, msg);
-                emit loginFinished(success, msg);  // 兼容旧代码
+                emit loginFinished(success, msg);  // 兼容旧代�?
             }, Qt::DirectConnection);
 
     connect(d->marketSpi, &CtpMarketSpi::error, this,
@@ -121,14 +121,14 @@ void CTPService::setupConnections() {
 
     LOG_INFO("Market SPI created and signals connected");
 
-    // 直接初始化API（不需要 QMetaObject::invokeMethod）
+    // 直接初始化API（不需�?QMetaObject::invokeMethod�?
     LOG_INFO(QString("Creating market API with flow path: %1/, front: %2").arg(marketFlowPath).arg(d->marketFront));
     d->marketSpi->createApi(marketFlowPath.toLocal8Bit() + "/");
     d->marketSpi->registerFront(d->marketFront);
     d->marketSpi->init();
     LOG_INFO("Market API init() called");
 
-    // 2. 创建交易 SPI（同样不要移动到 QThread）
+    // 2. 创建交易 SPI（同样不要移动到 QThread�?
     d->tradingSpi = new CtpTradingSpi(this);
 
     connect(d->tradingSpi, &CtpTradingSpi::connected, this, &CTPService::tradingConnected, Qt::DirectConnection);
@@ -153,7 +153,7 @@ void CTPService::setupConnections() {
 
     LOG_INFO("Trader SPI created and signals connected");
 
-    // 直接初始化交易 API
+    // 直接初始化交�?API
     LOG_INFO(QString("Creating trader API with flow path: %1/, front: %2").arg(tradingFlowPath).arg(d->tradingFront));
     d->tradingSpi->createApi(tradingFlowPath.toLocal8Bit() + "/");
     d->tradingSpi->registerFront(d->tradingFront);
@@ -164,13 +164,13 @@ void CTPService::setupConnections() {
     QTimer::singleShot(2000, this, [this]() {
         LOG_INFO("Auto-login timer triggered after 2 seconds");
         
-        // 行情登录（通常无需认证）
+        // 行情登录（通常无需认证�?
         if (d->marketSpi) {
             LOG_INFO(QString("Calling marketSpi::login, brokerId: %1 userId: %2").arg(d->brokerId).arg(d->userId));
             d->marketSpi->login(d->brokerId, d->userId, d->password);
         }
 
-        // 交易登录（SimNow 7x24 环境直接登录，无需认证）
+        // 交易登录（SimNow 7x24 环境直接登录，无需认证�?
         if (d->tradingSpi) {
             LOG_INFO("Direct login to trader (SimNow 7x24 mode)...");
             d->tradingSpi->login(d->brokerId, d->userId, d->password);
@@ -242,13 +242,13 @@ void CTPService::confirmSettlement() {
     LOG_INFO("Settlement confirmation requested");
 }
 
-// ========== 配置管理器集成 ==========
+// ========== 配置管理器集�?==========
 
 bool CTPService::loadConfigAndConnect(const QString& brokerId)
 {
     auto* configMgr = CTPConfigManager::instance();
     
-    // 获取服务商配置
+    // 获取服务商配�?
     QString targetBrokerId = brokerId.isEmpty() ? configMgr->currentBrokerId() : brokerId;
     auto config = configMgr->getBroker(targetBrokerId);
     
@@ -290,7 +290,7 @@ bool CTPService::loadConfigAndConnect(const QString& brokerId)
     LOG_INFO(QString("Loading CTP config: broker=%1, name=%2, marketFront=%3, tradingFront=%4")
         .arg(config->brokerId, config->name, d->marketFront, d->tradingFront));
     
-    // 设置当前服务商
+    // 设置当前服务�?
     configMgr->setCurrentBroker(targetBrokerId);
     
     // 连接

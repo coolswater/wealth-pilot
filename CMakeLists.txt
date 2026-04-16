@@ -29,49 +29,106 @@ find_package(Qt6 REQUIRED COMPONENTS
         StateMachine
         Core5Compat
 )
+
 # ==================== 源文件分组 ====================
 
-# Core 核心
-set(CORE_SOURCES
-        src/core/ThemeManager.h
-        src/core/ThemeManager.cpp
-        src/core/Singleton.h
-        src/core/ErrorCode.h
-        src/core/ConfigManager.h
-        src/core/ConfigManager.cpp
-        src/core/BasePage.h
-        src/core/PageFactoryRegistry.h
-        src/core/PageFactoryRegistry.cpp
-        src/core/PageNavigatorManager.h
-        src/core/PageNavigatorManager.cpp
-        src/core/AnimationManager.h
-        src/core/AnimationManager.cpp
-        src/core/CtpDataBuffer.h
-        src/core/CtpApiLoader.h
-        src/core/CtpMarketSpi.h
-        src/core/CtpMarketSpi.cpp
-        src/core/CtpTradingSpi.h
-        src/core/CtpTradingSpi.cpp
-        src/core/QuoteDataManager.cpp
-        src/core/QuoteDataManager.h
-        src/core/FavoritesManager.cpp
-        src/core/FavoritesManager.h
-        src/core/ServiceLocator.h
-        src/core/ServiceLocator.cpp
-        src/core/ApplicationInitializer.h
-        src/core/ApplicationInitializer.cpp
-        src/core/CacheManager.h
-        src/core/CacheManager.cpp
-        src/core/DatabaseManager.h
-        src/core/DatabaseManager.cpp
-        src/core/EnvironmentConfig.h
-        src/core/EnvironmentConfig.cpp
-        src/core/AsyncTaskManager.h
-        src/core/AsyncTaskManager.cpp
-        src/core/PageNavigator.h
-        src/core/PageNavigator.cpp
-        src/core/CTPConfigManager.h
-        src/core/CTPConfigManager.cpp
+# App 应用层
+set(APP_SOURCES
+        src/app/ApplicationInitializer.h
+        src/app/ApplicationInitializer.cpp
+)
+
+# Core - Base 基础类
+set(CORE_BASE_SOURCES
+        src/core/base/Singleton.h
+        src/core/base/BasePage.h
+        src/core/base/ErrorCode.h
+        src/core/base/NamespaceGuide.h
+)
+
+# Core - Config 配置管理
+set(CORE_CONFIG_SOURCES
+        src/core/config/ConfigManager.h
+        src/core/config/ConfigManager.cpp
+        src/core/config/EnvironmentConfig.h
+        src/core/config/EnvironmentConfig.cpp
+        src/core/config/Tokens.h
+)
+
+# Core - Cache 缓存系统
+set(CORE_CACHE_SOURCES
+        src/core/cache/CacheManager.h
+        src/core/cache/CacheManager.cpp
+)
+
+# Core - Database 数据库
+set(CORE_DATABASE_SOURCES
+        src/core/database/DatabaseManager.h
+        src/core/database/DatabaseManager.cpp
+)
+
+# Core - Task 异步任务
+set(CORE_TASK_SOURCES
+        src/core/task/AsyncTaskManager.h
+        src/core/task/AsyncTaskManager.cpp
+)
+
+# Core - DI 依赖注入
+set(CORE_DI_SOURCES
+        src/core/di/ServiceLocator.h
+        src/core/di/ServiceLocator.cpp
+)
+
+# Core - Navigation 页面导航
+set(CORE_NAVIGATION_SOURCES
+        src/core/navigation/PageNavigator.h
+        src/core/navigation/PageNavigator.cpp
+        src/core/navigation/PageNavigatorManager.h
+        src/core/navigation/PageNavigatorManager.cpp
+        src/core/navigation/PageFactoryRegistry.h
+        src/core/navigation/PageFactoryRegistry.cpp
+)
+
+# CTP - API
+set(CTP_API_SOURCES
+        src/ctp/api/CtpApiLoader.h
+        src/ctp/api/CtpDataBuffer.h
+        src/ctp/api/CtpMarketSpi.h
+        src/ctp/api/CtpMarketSpi.cpp
+        src/ctp/api/CtpTradingSpi.h
+        src/ctp/api/CtpTradingSpi.cpp
+)
+
+# CTP - Config
+set(CTP_CONFIG_SOURCES
+        src/ctp/config/CTPConfigManager.h
+        src/ctp/config/CTPConfigManager.cpp
+)
+
+# CTP - Service
+set(CTP_SERVICE_SOURCES
+        src/ctp/service/CTPService.h
+        src/ctp/service/CTPService.cpp
+)
+
+# AI - Service
+set(AI_SERVICE_SOURCES
+        src/ai/service/AIService.h
+        src/ai/service/AIService.cpp
+)
+
+# AI - Plugin
+set(AI_PLUGIN_SOURCES
+        src/ai/plugin/AIPlugin.h
+        src/ai/plugin/AIPlugin.cpp
+)
+
+# Market 行情数据
+set(MARKET_SOURCES
+        src/market/QuoteDataManager.h
+        src/market/QuoteDataManager.cpp
+        src/market/FavoritesManager.h
+        src/market/FavoritesManager.cpp
 )
 
 # Models 数据模型
@@ -104,16 +161,32 @@ set(NETWORK_SOURCES
         src/network/NetworkCache.cpp
 )
 
-# Services 服务
-set(SERVICE_SOURCES
-        src/services/CTPService.h
-        src/services/CTPService.cpp
-        src/services/AIService.cpp
-        src/services/AIService.h
+# Plugins 插件框架
+set(PLUGIN_SOURCES
+        src/plugins/IPlugin.h
+        src/plugins/PluginLoader.h
+        src/plugins/PluginLoader.cpp
+        src/plugins/ICTPPlugin.h
+        src/plugins/IAIPlugin.h
+        src/plugins/CTPPlugin.h
+        src/plugins/CTPPlugin.cpp
 )
 
-# Controllers 控制器
-set(CONTROLLER_SOURCES
+# UI Components UI组件库
+set(UI_COMPONENT_SOURCES
+        src/ui/components/UIComponents.h
+        src/ui/components/ThemeEngine.h
+        src/ui/components/ThemeEngine.cpp
+        src/ui/components/KLineChart.h
+        src/ui/components/KLineChart.cpp
+        src/ui/ThemeManager.h
+        src/ui/ThemeManager.cpp
+)
+
+# UI Animation 动画系统
+set(UI_ANIMATION_SOURCES
+        src/ui/animation/AnimationManager.h
+        src/ui/animation/AnimationManager.cpp
 )
 
 # Widgets 控件
@@ -150,28 +223,6 @@ set(WIDGET_SOURCES
         src/views/widgets/DividerWidget.cpp
 )
 
-# UI Components UI组件库
-set(UI_COMPONENT_SOURCES
-        src/ui/components/UIComponents.h
-        src/ui/components/ThemeEngine.h
-        src/ui/components/ThemeEngine.cpp
-        src/ui/components/KLineChart.h
-        src/ui/components/KLineChart.cpp
-)
-
-# Plugins 插件
-set(PLUGIN_SOURCES
-        src/plugins/IPlugin.h
-        src/plugins/PluginLoader.h
-        src/plugins/PluginLoader.cpp
-        src/plugins/ICTPPlugin.h
-        src/plugins/IAIPlugin.h
-        src/plugins/CTPPlugin.h
-        src/plugins/CTPPlugin.cpp
-        src/plugins/AIPlugin.h
-        src/plugins/AIPlugin.cpp
-)
-
 # Views 视图
 set(VIEW_SOURCES
         src/views/mainWindow/MainWindow.cpp
@@ -188,7 +239,6 @@ set(VIEW_SOURCES
         src/views/portfolio/PortfolioPage.cpp
         src/views/futures/FuturesQuotesPage.h
         src/views/futures/FuturesQuotesPage.cpp
-        # 暂时注释掉有问题的文件
         src/views/futures/FuturesKLinePage.h
         src/views/futures/FuturesKLinePage.cpp
         src/views/futures/FuturesPageIntegration.h
@@ -206,18 +256,30 @@ set(VIEW_SOURCES
         src/views/aboutus/AboutUSPage.cpp
 )
 
-# 合并所有源文件（只包含C++源文件和头文件，不包含资源文件）
+# 合并所有源文件
 set(SOURCES
         main.cpp
-        ${CORE_SOURCES}
+        ${APP_SOURCES}
+        ${CORE_BASE_SOURCES}
+        ${CORE_CONFIG_SOURCES}
+        ${CORE_CACHE_SOURCES}
+        ${CORE_DATABASE_SOURCES}
+        ${CORE_TASK_SOURCES}
+        ${CORE_DI_SOURCES}
+        ${CORE_NAVIGATION_SOURCES}
+        ${CTP_API_SOURCES}
+        ${CTP_CONFIG_SOURCES}
+        ${CTP_SERVICE_SOURCES}
+        ${AI_SERVICE_SOURCES}
+        ${AI_PLUGIN_SOURCES}
+        ${MARKET_SOURCES}
         ${MODEL_SOURCES}
         ${UTIL_SOURCES}
         ${NETWORK_SOURCES}
-        ${SERVICE_SOURCES}
-        ${CONTROLLER_SOURCES}
-        ${WIDGET_SOURCES}
-        ${UI_COMPONENT_SOURCES}
         ${PLUGIN_SOURCES}
+        ${UI_COMPONENT_SOURCES}
+        ${UI_ANIMATION_SOURCES}
+        ${WIDGET_SOURCES}
         ${VIEW_SOURCES}
 )
 

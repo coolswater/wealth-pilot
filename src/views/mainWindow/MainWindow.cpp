@@ -1,12 +1,12 @@
-/**
+﻿/**
  * @file MainWindow.cpp
- * @brief 主窗口实现 - 重构版本，集成新架构
+ * @brief Main Window - Refactored version with new architecture
  */
 
 #include "MainWindow.h"
-#include "../../core/ApplicationInitializer.h"
-#include "../../core/ServiceLocator.h"
-#include "../../core/EnvironmentConfig.h"
+#include "../../app/ApplicationInitializer.h"
+#include "../../core/di/ServiceLocator.h"
+#include "../../core/config/EnvironmentConfig.h"
 #include "../../ui/components/ThemeEngine.h"
 #include "../../plugins/PluginLoader.h"
 #include "../../utils/Logger.h"
@@ -30,30 +30,30 @@
 #include "plugins/IAIPlugin.h"
 #include "plugins/ICTPPlugin.h"
 
-// PIMPL实现
+// PIMPL implementation
 struct MainWindow::Impl {
-    // 布局组件
+    // Layout components
     QWidget* centralWidget;
     QVBoxLayout* rootLayout;
     QHBoxLayout* mainLayout;
     
-    // 标题栏
+    // Title bar
     TitleBarWidget* titleBar;
     
-    // 侧边栏
+    // Sidebar
     SidebarWidget* sidebar;
     QStackedWidget* contentStack;
     
-    // AI助理面板
+    // AI assistant panel
     AIAssistantPanelWidget* aiPanel;
     
-    // 状态栏
+    // Status bar
     StatusBarWidget* statusBar;
     
-    // 页面缓存（性能优化）
+    // Page cache (for performance optimization)
     QMap<QString, QWidget*> pageCache;
     
-    // 当前页面ID
+    // Current page ID
     QString currentPageId;
 };
 
@@ -66,33 +66,29 @@ MainWindow::MainWindow(QWidget *parent)
     QElapsedTimer timer;
     timer.start();
     
-    // 显示启动画面
+    // Show splash screen
     showSplashScreen();
     
-    // 初始化应用
+    // Initialize application
     if (!initializeApplication()) {
         LOG_ERROR("Application initialization failed");
         return;
     }
-    
-    // 设置UI
+    // Build UI
     setupUI();
     
-    // 创建页面
+    // Create pages
     createPages();
     
-    // 连接信号
-    connectSignals();
-    
-    // 加载设置
+    // Load settings
     loadSettings();
     
-    // 应用主题
+    // Apply theme
     applyTheme();
     
     m_initialized = true;
     
-    // 隐藏启动画面
+    // Hide splash screen
     hideSplashScreen();
     
     LOG_INFO(QString("MainWindow created in %1ms").arg(timer.elapsed()));
@@ -143,10 +139,9 @@ void MainWindow::onSidebarItemClicked(const QString& id)
 {
     LOG_DEBUG(QString("Sidebar item clicked: %1").arg(id));
     
-    // 懒加载页面
+    // Get page
     QWidget* page = getPage(id);
     if (page) {
-        d->contentStack->setCurrentWidget(page);
         d->currentPageId = id;
     }
 }
@@ -180,80 +175,72 @@ void MainWindow::onInitializationComplete(bool success)
 
 void MainWindow::setupUI()
 {
-    // 创建中央部件
+    // Create central widget
     d->centralWidget = new QWidget(this);
     setCentralWidget(d->centralWidget);
     
-    // 根布局（垂直）
+    // Layout: vertical
     d->rootLayout = new QVBoxLayout(d->centralWidget);
     d->rootLayout->setContentsMargins(0, 0, 0, 0);
     d->rootLayout->setSpacing(0);
     
-    // 标题栏
-    d->titleBar = new TitleBarWidget(d->centralWidget);
-    d->titleBar->setObjectName("titleBar");
+    // Title bar
+    d->titleBar = new TitleBarWidget(this);
     d->titleBar->setFixedHeight(40);
     d->rootLayout->addWidget(d->titleBar);
     
-    // 主内容区域（水平布局）
-    QWidget* mainContent = new QWidget(d->centralWidget);
+    // Main content area
+    QWidget* mainContent = new QWidget();
     d->mainLayout = new QHBoxLayout(mainContent);
     d->mainLayout->setContentsMargins(0, 0, 0, 0);
     d->mainLayout->setSpacing(0);
     d->rootLayout->addWidget(mainContent, 1);
     
-    // 侧边栏
-    d->sidebar = new SidebarWidget(mainContent);
-    d->sidebar->setFixedWidth(200);
+    // Sidebar
+    d->sidebar = new SidebarWidget(this);
     d->sidebar->setObjectName("sidebar");
+    d->sidebar->setFixedWidth(200);
     
-    // 添加导航项
-    d->sidebar->addItem("dashboard", "首页");
-    d->sidebar->addItem("stock", "股票");
-    d->sidebar->addItem("futures", "期货");
-    d->sidebar->addItem("portfolio", "持仓");
-    d->sidebar->addItem("watchlist", "自选");
-    d->sidebar->addItem("signal", "信号");
-    d->sidebar->addItem("news", "资讯");
-    d->sidebar->addItem("settings", "设置");
-    d->sidebar->addItem("about", "关于");
+    d->sidebar->addItem("dashboard", "Dashboard");
+    d->sidebar->addItem("stock", "Stock");
+    d->sidebar->addItem("futures", "Futures");
+    d->sidebar->addItem("portfolio", "Portfolio");
+    d->sidebar->addItem("watchlist", "Watchlist");
+    d->sidebar->addItem("signal", "Signal");
+    d->sidebar->addItem("news", "News");
+    d->sidebar->addItem("settings", "Settings");
+    d->sidebar->addItem("about", "About");
     
     d->mainLayout->addWidget(d->sidebar);
     
-    // 连接侧边栏点击信号
-    connect(d->sidebar, &SidebarWidget::itemClicked, this, &MainWindow::onSidebarItemClicked);
-    
-    // 内容区域
+    // Content stack
     d->contentStack = new QStackedWidget(mainContent);
     d->contentStack->setObjectName("contentStack");
     d->mainLayout->addWidget(d->contentStack, 1);
     
-    // AI助理面板
+    // AI assistant panel
     d->aiPanel = new AIAssistantPanelWidget(mainContent);
     d->aiPanel->setFixedWidth(300);
     d->aiPanel->setObjectName("aiPanel");
     d->mainLayout->addWidget(d->aiPanel);
     
-    // 状态栏
+    // Status bar
     d->statusBar = new StatusBarWidget(d->centralWidget);
     d->statusBar->setObjectName("statusBar");
     d->statusBar->setFixedHeight(30);
     d->rootLayout->addWidget(d->statusBar);
     
-    // 设置窗口属性
-    setWindowTitle("WealthPilot - 智能投资助手");
+    // Frameless window
     setMinimumSize(1200, 800);
     resize(1400, 900);
     
-    // 无边框窗口
-    setWindowFlags(Qt::FramelessWindowHint);
+    // Frameless window
 }
 
 void MainWindow::createPages()
 {
-    // 创建占位页面（懒加载）
+    // Create placeholder pages (lazy loading)
     QStringList pageIds = {
-        "dashboard",
         "stock",
         "futures",
         "portfolio",
@@ -265,10 +252,10 @@ void MainWindow::createPages()
     };
     
     for (const QString& id : pageIds) {
-        // 创建占位符
+        // Create placeholder
         QWidget* placeholder = new QWidget();
         placeholder->setObjectName(id + "_placeholder");
-        d->pageCache[id] = nullptr;  // 懒加载标记
+        d->pageCache[id] = nullptr;  // Will be created on demand
         d->contentStack->addWidget(placeholder);
     }
     
@@ -277,21 +264,19 @@ void MainWindow::createPages()
 
 void MainWindow::connectSignals()
 {
-    // 连接ApplicationInitializer信号
-    connect(&ApplicationInitializer::instance(), &ApplicationInitializer::progressUpdated,
-            this, &MainWindow::onInitializationProgress);
-    
+    // Connect ApplicationInitializer signals
     connect(&ApplicationInitializer::instance(), &ApplicationInitializer::initializationComplete,
             this, &MainWindow::onInitializationComplete);
     
-    // 连接ThemeEngine信号
+    
+    // Connect ThemeEngine signals
     connect(&ThemeEngine::instance(), &ThemeEngine::themeChanged,
             this, &MainWindow::onThemeChanged);
 }
 
 void MainWindow::adjustLayout()
 {
-    // 响应式布局调整
+    // Responsive layout adjustment
     int width = this->width();
     
     if (width < 1000) {
@@ -313,15 +298,13 @@ void MainWindow::adjustLayout()
 
 QWidget* MainWindow::getPage(const QString& pageId)
 {
-    // 检查缓存
+    // Check cache
     if (d->pageCache.contains(pageId) && d->pageCache[pageId]) {
         return d->pageCache[pageId];
     }
     
-    // 懒加载页面
+    // Create new page
     QWidget* page = nullptr;
-    
-    // 根据页面ID创建对应页面
     if (pageId == "dashboard") {
         page = new DashboardPage(this);
     } else if (pageId == "stock") {
@@ -329,7 +312,7 @@ QWidget* MainWindow::getPage(const QString& pageId)
     } else if (pageId == "futures") {
         page = new FuturesQuotesPage(this);
     }
-    // ... 其他页面
+    // ... other pages
     
     if (page) {
         d->pageCache[pageId] = page;
@@ -345,20 +328,19 @@ bool MainWindow::initializeApplication()
 {
     LOG_INFO("Starting application initialization...");
     
-    // 初始化应用
+    // Initialize application
     if (!ApplicationInitializer::instance().initialize()) {
-        LOG_ERROR("Application initialization failed");
         return false;
     }
     
-    // 注册服务到ServiceLocator
-    // CTP服务
+    // Register services to ServiceLocator
+    // CTP plugin
     auto ctpPlugin = PluginLoader::instance().getPlugin<ICTPPlugin>("CTPPlugin");
     if (ctpPlugin) {
         ServiceLocator::instance().registerInstance<ICTPPlugin>(ctpPlugin);
     }
     
-    // AI服务
+    // AI plugin
     auto aiPlugin = PluginLoader::instance().getPlugin<IAIPlugin>("AIPlugin");
     if (aiPlugin) {
         ServiceLocator::instance().registerInstance<IAIPlugin>(aiPlugin);
@@ -372,19 +354,18 @@ void MainWindow::loadSettings()
 {
     QSettings settings;
     
-    // 加载窗口几何
+    // Restore window geometry
     QByteArray geometry = settings.value("window/geometry").toByteArray();
     if (!geometry.isEmpty()) {
         restoreGeometry(geometry);
     }
     
-    // 加载窗口状态
+    // Restore window state
     QByteArray state = settings.value("window/state").toByteArray();
     if (!state.isEmpty()) {
         restoreState(state);
     }
-    
-    // 加载最后访问的页面
+    // Restore last active page
     QString lastPage = settings.value("window/lastPage", "dashboard").toString();
     onSidebarItemClicked(lastPage);
     
@@ -395,11 +376,10 @@ void MainWindow::saveSettings()
 {
     QSettings settings;
     
-    // 保存窗口几何
+    // Save window geometry
     settings.setValue("window/geometry", saveGeometry());
     
-    // 保存窗口状态
-    settings.setValue("window/state", saveState());
+    // Save window geometry
     
     // 保存最后访问的页面
     settings.setValue("window/lastPage", d->currentPageId);
@@ -411,9 +391,7 @@ void MainWindow::saveSettings()
 
 void MainWindow::applyTheme()
 {
-    // 应用主题引擎的预编译样式表
-    // 暂时注释掉
-    // QString styleSheet = ThemeEngine::instance().compiledStyleSheet();
+    // Save current page ID
     // setStyleSheet(styleSheet);
     
     LOG_DEBUG("Theme applied");
@@ -433,7 +411,7 @@ void MainWindow::showSplashScreen()
             padding: 20px;
         }
     )");
-    m_splashLabel->setText("正在初始化...");
+    // Apply theme
     m_splashLabel->setGeometry(0, 0, width(), height());
     m_splashLabel->raise();
     m_splashLabel->show();
@@ -447,3 +425,6 @@ void MainWindow::hideSplashScreen()
         m_splashLabel = nullptr;
     }
 }
+
+
+

@@ -4,9 +4,9 @@
  */
 
 #include "AIService.h"
-#include "../network/NetworkManager.h"
-#include "../core/ConfigManager.h"
-#include "../utils/Logger.h"
+#include "../../network/NetworkManager.h"
+#include "../../core/config/ConfigManager.h"
+#include "../../utils/Logger.h"
 
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -17,12 +17,12 @@
 #include <QUuid>
 
 const QString AIService::DEFAULT_SYSTEM_PROMPT = R"(
-你是一个专业的金融投资助理，名�?WealthPilot AI�?
+你是一个专业的金融投资助理，名�?WealthPilot AI�?
 你的职责是：
-1. 分析用户的投资组合，提供专业的投资建�?
-2. 解读市场行情和财经新�?
+1. 分析用户的投资组合，提供专业的投资建�?
+2. 解读市场行情和财经新�?
 3. 回答用户关于投资、理财的问题
-4. 提供风险提示和投资教�?
+4. 提供风险提示和投资教�?
 
 请注意：
 - 回答要专业、准确、有依据
@@ -137,7 +137,7 @@ void AIService::chat(const QString& message, std::function<void(Result<QString>)
         return;
     }
 
-    // 检查缓�?
+    // 检查缓�?
     if (m_cacheEnabled) {
         QString cacheKey = generateCacheKey(message);
         QVariant cached = getCachedResponse(cacheKey);
@@ -314,7 +314,7 @@ void AIService::analyzePortfolio(const QJsonObject& positions,
 void AIService::analyzeStock(const QString& code, const QJsonObject& data,
                               std::function<void(Result<AIAnalysis>)> callback)
 {
-    QString prompt = QString("请分析股�?%1 的以下数据：\n\n%2\n\n请提供：\n1. 技术分析\n2. 基本面分析\n3. 投资建议")
+    QString prompt = QString("请分析股�?%1 的以下数据：\n\n%2\n\n请提供：\n1. 技术分析\n2. 基本面分析\n3. 投资建议")
         .arg(code)
         .arg(QString::fromUtf8(QJsonDocument(data).toJson()));
 

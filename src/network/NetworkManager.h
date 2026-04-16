@@ -1,18 +1,18 @@
 /**
  * @file NetworkManager.h
- * @brief 网络管理器 - 处理所有网络请求
+ * @brief 网络管理�?- 处理所有网络请�?
  *
- * @details 功能：
- * - HTTP 请求封装（GET/POST/PUT/DELETE）
+ * @details 功能�?
+ * - HTTP 请求封装（GET/POST/PUT/DELETE�?
  * - WebSocket 连接管理
- * - 请求队列和重试机制
- * - 网络状态监控
+ * - 请求队列和重试机�?
+ * - 网络状态监�?
  */
 
 #ifndef NETWORKMANAGER_H
 #define NETWORKMANAGER_H
 
-#include "../core/Singleton.h"
+#include "../core/base/Singleton.h"
 #include "../utils/Result.h"
 
 #include <QObject>
@@ -39,7 +39,7 @@ struct NetworkRequest {
 };
 
 /**
- * @brief 网络管理器
+ * @brief 网络管理�?
  */
 class NetworkManager : public QObject, public Singleton<NetworkManager>
 {
@@ -53,7 +53,7 @@ public:
     bool initialize();
 
     /**
-     * @brief 关闭网络管理器
+     * @brief 关闭网络管理�?
      */
     void shutdown();
 
@@ -62,8 +62,8 @@ public:
     /**
      * @brief GET 请求
      * @param url 请求URL
-     * @param headers 请求头
-     * @return QNetworkReply* 需要调用者管理生命周期
+     * @param headers 请求�?
+     * @return QNetworkReply* 需要调用者管理生命周�?
      */
     QNetworkReply* get(const QString& url, const QMap<QString, QString>& headers = {});
 
@@ -112,16 +112,16 @@ public:
     void disconnectWebSocket();
 
     /**
-     * @brief WebSocket 是否已连接
+     * @brief WebSocket 是否已连�?
      */
     bool isWebSocketConnected() const;
 
     /**
-     * @brief 发送 WebSocket 消息
+     * @brief 发�?WebSocket 消息
      */
     void sendWebSocketMessage(const QString& message);
 
-    // ========== 网络状态 ==========
+    // ========== 网络状�?==========
 
     /**
      * @brief 是否在线
@@ -129,7 +129,7 @@ public:
     bool isOnline() const;
 
     /**
-     * @brief 设置在线状态
+     * @brief 设置在线状�?
      */
     void setOnline(bool online);
 
@@ -164,7 +164,7 @@ public:
 
 signals:
     /**
-     * @brief WebSocket 已连接
+     * @brief WebSocket 已连�?
      */
     void webSocketConnected();
 
@@ -179,7 +179,7 @@ signals:
     void webSocketMessageReceived(const QString& message);
 
     /**
-     * @brief 网络状态变化
+     * @brief 网络状态变�?
      */
     void networkStateChanged(bool online);
 

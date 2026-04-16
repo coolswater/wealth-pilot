@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include <core/BasePage.h>
+#include <core/base/BasePage.h>
 
 class NewsPage : public BasePage
 {
@@ -21,3 +21,4 @@ private:
     std::unique_ptr<Impl> d;
 };
 #endif // NEWSPAGE_H
+

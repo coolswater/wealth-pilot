@@ -6,8 +6,8 @@
 #ifndef AISERVICE_H
 #define AISERVICE_H
 
-#include "../core/Singleton.h"
-#include "../utils/Result.h"
+#include "../../core/base/Singleton.h"
+#include "../../utils/Result.h"
 
 #include <QObject>
 #include <QString>

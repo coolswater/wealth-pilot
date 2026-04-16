@@ -1,11 +1,11 @@
-#include "AIAssistantPanelWidget.h"
+﻿#include "AIAssistantPanelWidget.h"
 /**
  * @file AIAssistantPanel.cpp
  * @brief AI 助理面板实现
  */
-#include "../../core/AnimationManager.h"
-#include "../../core/ThemeManager.h"
-#include "../../core/Tokens.h"
+#include "../../ui/animation/AnimationManager.h"
+#include "../../ui/ThemeManager.h"
+#include "../../core/config/Tokens.h"
 #include "../../utils/Logger.h"
 
 #include <QHBoxLayout>
@@ -17,7 +17,7 @@
 #include <QTimer>
 #include <QScrollBar>
 
-#include "services/AIService.h"
+#include "ai/service/AIService.h"
 
 using namespace Tokens;
 
@@ -28,7 +28,7 @@ struct AIAssistantPanelWidget::Impl {
     QScrollArea* scrollArea = nullptr;
     QPushButton* collapseBtn = nullptr;
 
-    // 状态
+    // 状�?
     bool isCollapsed = false;
     bool isTyping = false;
     QWidget* typingIndicator = nullptr;
@@ -91,7 +91,7 @@ void AIAssistantPanelWidget::setupHeader()
     )").arg(Colors::Primary, Colors::Secondary).arg(Size::AvatarLG / 2));
     headerLayout->addWidget(avatarLabel);
 
-    // 名称和状态
+    // 名称和状�?
     auto* infoLayout = new QVBoxLayout();
     infoLayout->setSpacing(2);
 
@@ -101,7 +101,7 @@ void AIAssistantPanelWidget::setupHeader()
         .arg(Font::Size::H3).arg(Colors::TextPrimary));
     infoLayout->addWidget(nameLabel);
 
-    auto* statusLabel = new QLabel("● 在线", this);
+    auto* statusLabel = new QLabel("�?在线", this);
     statusLabel->setStyleSheet(QString(
         "font-size: %1px; color: %2;")
         .arg(Font::Size::Small).arg(Colors::Success));
@@ -184,8 +184,8 @@ void AIAssistantPanelWidget::setupMessagesArea()
     d->scrollArea->setWidget(d->messagesContainer);
     mainLayout->addWidget(d->scrollArea, 1);
 
-    // 欢迎消息
-    addMessage("您好！我是 WealthPilot AI，您的智能投资助理。\n\n我可以帮您：\n• 分析持仓和投资组合\n• 解读市场行情和趋势\n• 提供投资建议和风险提示\n• 设置价格提醒和预警\n\n请问有什么可以帮您的？", false);
+    // Welcome message
+    addMessage("Hello! I am WealthPilot AI, your investment assistant.\\n\\nI can help you:\\n- Analyze portfolio and investment decisions\\n- Provide market insights and trends\\n- Offer investment advice and risk warnings\\n- Price alerts and forecasts\\n\\nWhat would you like to know?", false);
 }
 
 void AIAssistantPanelWidget::setupInputArea()
@@ -220,7 +220,7 @@ void AIAssistantPanelWidget::setupInputArea()
     connect(d->inputField, &QLineEdit::returnPressed, this, &AIAssistantPanelWidget::onSendClicked);
     inputLayout->addWidget(d->inputField);
 
-    auto* sendBtn = new QPushButton("➤", this);
+    auto* sendBtn = new QPushButton("Send", this);
     sendBtn->setFixedSize(Size::InputHeightLG, Size::InputHeightLG);
     sendBtn->setCursor(Qt::PointingHandCursor);
     sendBtn->setStyleSheet(QString(R"(
@@ -330,8 +330,8 @@ void AIAssistantPanelWidget::clearHistory() const
     AIService::instance()->clearHistory();
     d->conversationHistory.clear();
 
-    // 重新显示欢迎消息
-    addMessage("对话已清除。有什么我可以帮您的吗？", false);
+    // Re-display welcome message
+    addMessage("Conversation cleared. What can I help you with?", false);
 }
 
 void AIAssistantPanelWidget::setCollapsed(bool collapsed)
@@ -342,10 +342,10 @@ void AIAssistantPanelWidget::setCollapsed(bool collapsed)
 
     if (collapsed) {
         setFixedWidth(Size::AIPanelCollapsed);
-        d->collapseBtn->setText("▶");
+        d->collapseBtn->setText(">");
     } else {
         setFixedWidth(Size::AIPanelWidth);
-        d->collapseBtn->setText("◀");
+        d->collapseBtn->setText("<");
     }
 
     emit collapsedChanged(collapsed);
@@ -431,7 +431,7 @@ void AIAssistantPanelWidget::addMessage(const QString& text, bool isUser) const
 
     d->messagesLayout->insertWidget(d->messagesLayout->count() - 1, bubble);
 
-    // 滚动到底部
+    // 滚动到底�?
     QTimer::singleShot(100, this, [this]() {
         d->scrollArea->verticalScrollBar()->setValue(
             d->scrollArea->verticalScrollBar()->maximum()
@@ -450,7 +450,7 @@ void AIAssistantPanelWidget::addTypingIndicator() const
     auto* layout = new QHBoxLayout(d->typingIndicator);
     layout->setContentsMargins(0, 0, 0, 0);
 
-    auto* label = new QLabel("AI 正在思考...", d->typingIndicator);
+    auto* label = new QLabel("AI 正在思�?..", d->typingIndicator);
     label->setStyleSheet(QString(R"(
         background-color: %1;
         color: %2;
@@ -467,7 +467,7 @@ void AIAssistantPanelWidget::addTypingIndicator() const
 
     d->messagesLayout->insertWidget(d->messagesLayout->count() - 1, d->typingIndicator);
 
-    // 滚动到底部
+    // 滚动到底�?
     QTimer::singleShot(100, this, [this]() {
         d->scrollArea->verticalScrollBar()->setValue(
             d->scrollArea->verticalScrollBar()->maximum()
@@ -482,3 +482,6 @@ void AIAssistantPanelWidget::removeTypingIndicator() const
         d->typingIndicator = nullptr;
     }
 }
+
+
+

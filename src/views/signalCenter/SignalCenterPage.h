@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include <core/BasePage.h>
+#include <core/base/BasePage.h>
 
 #include <views/widgets/CardWidget.h>
 
@@ -27,3 +27,4 @@ private:
     void updateGridLayout();
 };
 #endif // SIGNALCENTERPAGE_H
+
