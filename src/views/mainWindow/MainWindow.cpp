@@ -325,7 +325,12 @@ void MainWindow::setupUI()
     // 内容重叠层
     d->contentStack = new QStackedWidget(mainContent);
     d->contentStack->setObjectName("contentStack");
+    d->contentStack->setContentsMargins(Layout::Margin::MD());
     d->mainLayout->addWidget(d->contentStack, 1);
+
+    // 分割线
+    DividerWidget *aiDivider = DividerWidget::createVertical(d->contentStack, ChartStyles::Colors::BgElevated, 1, 0);
+    d->mainLayout->addWidget(aiDivider);
 
     // AI分析面板
     d->aiPanel = new AIAssistantPanelWidget(mainContent);
