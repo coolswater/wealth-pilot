@@ -9,11 +9,13 @@
 #include "../../core/config/EnvironmentConfig.h"
 #include "../../ui/components/ThemeEngine.h"
 #include "../../ui/components/LayoutConstants.h"
+#include "../../ui/components/ChartStyles.h"
 #include "../../plugins/PluginLoader.h"
 #include "../../utils/Logger.h"
 #include "../widgets/SidebarWidget.h"
 #include "../widgets/TitleBarWidget.h"
 #include "../widgets/StatusBarWidget.h"
+#include "../widgets/DividerWidget.h"
 #include "../widgets/AIAssistantPanelWidget.h"
 #include "../dashboard/DashboardPage.h"
 #include "../stock/StockQuotesPage.h"
@@ -285,6 +287,10 @@ void MainWindow::setupUI()
     d->titleBar->setFixedHeight(Layout::Height::TitleBar);
     d->rootLayout->addWidget(d->titleBar);
 
+    // 分割线
+    DividerWidget *titleDivider = DividerWidget::createHorizontal(d->titleBar, ChartStyles::Colors::BgElevated, 1, 0);
+    d->rootLayout->addWidget(titleDivider);
+
     // 主要内容区域
     auto* mainContent = new QWidget();
     d->mainLayout = new QHBoxLayout(mainContent);
@@ -309,6 +315,10 @@ void MainWindow::setupUI()
 
     d->mainLayout->addWidget(d->sidebar);
 
+    // 分割线
+    DividerWidget *sidebarDivider = DividerWidget::createVertical(d->sidebar, ChartStyles::Colors::BgElevated, 1, 0);
+    d->mainLayout->addWidget(sidebarDivider);
+
     // 内容重叠层
     d->contentStack = new QStackedWidget(mainContent);
     d->contentStack->setObjectName("contentStack");
@@ -320,11 +330,17 @@ void MainWindow::setupUI()
     d->aiPanel->setObjectName("aiPanel");
     d->mainLayout->addWidget(d->aiPanel);
 
+    // 分割线
+    DividerWidget *statusBarDivider = DividerWidget::createHorizontal(d->contentStack, ChartStyles::Colors::BgElevated, 1, 0);
+    d->rootLayout->addWidget(statusBarDivider);
+
     // 状态栏
     d->statusBar = new StatusBarWidget(d->centralWidget);
     d->statusBar->setObjectName("statusBar");
     d->statusBar->setFixedHeight(Layout::Height::StatusBar);
     d->rootLayout->addWidget(d->statusBar);
+
+
 }
 
 /**
