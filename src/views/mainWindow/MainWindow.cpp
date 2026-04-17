@@ -8,6 +8,7 @@
 #include "../../core/di/ServiceLocator.h"
 #include "../../core/config/EnvironmentConfig.h"
 #include "../../ui/components/ThemeEngine.h"
+#include "../../ui/components/LayoutConstants.h"
 #include "../../plugins/PluginLoader.h"
 #include "../../utils/Logger.h"
 #include "../widgets/SidebarWidget.h"
@@ -67,8 +68,10 @@ MainWindow::MainWindow(QWidget *parent)
 {
 
     setWindowTitle("WealthPilot - 财富领航AI助手");
-    setMinimumSize(1280, 800);
-    resize(1600, 900);
+    
+    // 使用统一的布局常量
+    setMinimumSize(Layout::Window::MinWidth, Layout::Window::MinHeight);
+    resize(Layout::Window::DefaultWidth, Layout::Window::DefaultHeight);
 
     // 设置窗口无边框属性（关键标志）
     setWindowFlags(Qt::Window | Qt::FramelessWindowHint |
@@ -229,25 +232,25 @@ void MainWindow::setupUI()
     
     // Layout: vertical
     d->rootLayout = new QVBoxLayout(d->centralWidget);
-    d->rootLayout->setContentsMargins(0, 0, 0, 0);
-    d->rootLayout->setSpacing(0);
+    d->rootLayout->setContentsMargins(Layout::Margin::None());
+    d->rootLayout->setSpacing(Layout::Spacing::None);
     
     // Title bar
     d->titleBar = new TitleBarWidget(this);
-    d->titleBar->setFixedHeight(40);
+    d->titleBar->setFixedHeight(Layout::Height::TitleBar);
     d->rootLayout->addWidget(d->titleBar);
     
     // Main content area
     QWidget* mainContent = new QWidget();
     d->mainLayout = new QHBoxLayout(mainContent);
-    d->mainLayout->setContentsMargins(0, 0, 0, 0);
-    d->mainLayout->setSpacing(0);
+    d->mainLayout->setContentsMargins(Layout::Margin::None());
+    d->mainLayout->setSpacing(Layout::Spacing::None);
     d->rootLayout->addWidget(mainContent, 1);
     
     // Sidebar
     d->sidebar = new SidebarWidget(this);
     d->sidebar->setObjectName("sidebar");
-    d->sidebar->setFixedWidth(80);
+    d->sidebar->setFixedWidth(Layout::Width::Sidebar);
     
     d->sidebar->addItem("dashboard", "全局");
     d->sidebar->addItem("stock", "股票");
@@ -268,14 +271,14 @@ void MainWindow::setupUI()
     
     // AI assistant panel
     d->aiPanel = new AIAssistantPanelWidget(mainContent);
-    d->aiPanel->setFixedWidth(300);
+    d->aiPanel->setFixedWidth(Layout::Width::AIPanel);
     d->aiPanel->setObjectName("aiPanel");
     d->mainLayout->addWidget(d->aiPanel);
     
     // Status bar
     d->statusBar = new StatusBarWidget(d->centralWidget);
     d->statusBar->setObjectName("statusBar");
-    d->statusBar->setFixedHeight(30);
+    d->statusBar->setFixedHeight(Layout::Height::StatusBar);
     d->rootLayout->addWidget(d->statusBar);
 }
 

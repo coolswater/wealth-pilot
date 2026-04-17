@@ -4,6 +4,7 @@
  */
 
 #include "ChartToolBar.h"
+#include "ChartStyles.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QComboBox>
@@ -153,8 +154,8 @@ void ChartToolBar::onChartTypeMenuTriggered(QAction* action)
 void ChartToolBar::setupUI()
 {
     QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(10, 5, 10, 5);
-    layout->setSpacing(8);
+    layout->setContentsMargins(16, 8, 16, 8);
+    layout->setSpacing(12);
 
     // 周期选择
     setupPeriodSelector();
@@ -178,6 +179,10 @@ void ChartToolBar::setupUI()
 
     // 设置菜单
     setupMenus();
+    
+    // 应用统一样式
+    setStyleSheet(ChartStyles::StyleSheets::chartToolBarStyle());
+    setFixedHeight(ChartStyles::Sizes::ToolBarHeight);
 }
 
 void ChartToolBar::setupPeriodSelector()

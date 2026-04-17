@@ -12,6 +12,7 @@
  */
 
 #include "FuturesKLinePage.h"
+#include "ui/components/ChartStyles.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QSplitter>
@@ -224,48 +225,54 @@ void FuturesKLinePage::setupUI()
 
     // ========== 主内容区域 ==========
     d->mainSplitter = new QSplitter(Qt::Horizontal, this);
-    d->mainSplitter->setHandleWidth(1);
-    d->mainSplitter->setStyleSheet(
-        "QSplitter::handle { background-color: #374151; }"
-    );
+    d->mainSplitter->setHandleWidth(2);
+    d->mainSplitter->setStyleSheet(ChartStyles::StyleSheets::splitterStyle());
 
     // 左侧：K线图
     d->klineChart = new KLineChart(d->mainSplitter);
+    d->klineChart->setStyleSheet(ChartStyles::StyleSheets::klineChartStyle());
 
     // 右侧：盘口 + 分笔成交
     QWidget* rightPanel = new QWidget(d->mainSplitter);
+    rightPanel->setStyleSheet("background-color: #0F1419;");
     QVBoxLayout* rightLayout = new QVBoxLayout(rightPanel);
     rightLayout->setContentsMargins(0, 0, 0, 0);
     rightLayout->setSpacing(0);
 
     // 盘口组件
     d->depthWidget = new MarketDepthWidget(rightPanel);
-    d->depthWidget->setMinimumHeight(200);
-    d->depthWidget->setMaximumHeight(300);
+    d->depthWidget->setMinimumHeight(220);
+    d->depthWidget->setMaximumHeight(320);
+    d->depthWidget->setStyleSheet(ChartStyles::StyleSheets::marketDepthStyle());
     rightLayout->addWidget(d->depthWidget);
 
     // 分笔成交表
     d->tickTable = new TickTableView(rightPanel);
     d->tickTable->setMaxRows(500);
+    d->tickTable->setStyleSheet(ChartStyles::StyleSheets::tickTableStyle());
     rightLayout->addWidget(d->tickTable);
 
     // 添加到分割器
     d->mainSplitter->addWidget(d->klineChart);
     d->mainSplitter->addWidget(rightPanel);
 
-    // 设置分割比例（70% : 30%）
-    d->mainSplitter->setSizes({700, 300});
+    // 设置分割比例（使用配置的比例）
+    int totalWidth = 1000;  // 默认总宽度
+    int chartWidth = static_cast<int>(totalWidth * ChartStyles::Layout::ChartRatio);
+    int depthWidth = totalWidth - chartWidth;
+    d->mainSplitter->setSizes({chartWidth, depthWidth});
 
     mainLayout->addWidget(d->mainSplitter, 1);
 
     // ========== 状态栏 ==========
     d->statusBar = new ChartStatusBar(this);
+    d->statusBar->setStyleSheet(ChartStyles::StyleSheets::chartStatusBarStyle());
     mainLayout->addWidget(d->statusBar);
 
     // 设置整体样式
     setStyleSheet(R"(
         FuturesKLinePage {
-            background-color: #111827;
+            background-color: #0F1419;
         }
     )");
 }

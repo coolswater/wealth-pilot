@@ -181,6 +181,8 @@ set(UI_COMPONENT_SOURCES
         src/ui/components/ThemeEngine.h
         src/ui/components/ThemeEngine.cpp
         src/ui/components/ThemeColors.h
+        src/ui/components/ChartStyles.h
+        src/ui/components/LayoutConstants.h
         src/ui/components/BaseChartWidget.h
         src/ui/components/BaseChartWidget.cpp
         src/ui/components/ComponentFactory.h
