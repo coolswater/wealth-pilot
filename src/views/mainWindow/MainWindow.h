@@ -72,12 +72,12 @@ private slots:
     /**
      * @brief 初始化进度更新
      */
-    void onInitializationProgress(int current, int total, const QString& currentModule);
+    void onInitializationProgress(int current, int total, const QString& currentModule) const;
 
     /**
      * @brief 初始化完成
      */
-    void onInitializationComplete(bool success);
+    static void onInitializationComplete(bool success);
 
     /**
      * @brief 导航到K线页面
@@ -93,7 +93,7 @@ private:
     /**
      * @brief 创建页面
      */
-    void createPages();
+    void createPages() const;
 
     /**
      * @brief 连接信号槽
@@ -113,7 +113,7 @@ private:
     /**
      * @brief 初始化应用
      */
-    bool initializeApplication();
+    static bool initializeApplication();
 
     /**
      * @brief 加载设置
@@ -123,7 +123,7 @@ private:
     /**
      * @brief 保存设置
      */
-    void saveSettings();
+    void saveSettings() const;
 
     /**
      * @brief 应用主题

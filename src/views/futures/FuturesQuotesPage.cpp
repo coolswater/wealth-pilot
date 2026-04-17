@@ -50,7 +50,9 @@ namespace {
 
         void setFilterMode(int mode) {
             m_filterMode = mode;
-            invalidateFilter();
+            // 使用新的 API 替代弃用的 invalidateFilter()
+            beginFilterChange();
+            endFilterChange();
         }
 
         int filterMode() const { return m_filterMode; }
