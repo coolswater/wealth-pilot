@@ -22,23 +22,10 @@
 #include <QPainter>
 #include <QTimer>
 #include <memory>
+#include "core/types/MarketTypes.h"  // 使用统一的类型定义
 
 /**
- * @brief K线数据结构
- */
-struct KLineData {
-    QDateTime time;             // 时间
-    double open;                // 开盘价
-    double high;               // 最高价
-    double low;                // 最低价
-    double close;              // 收盘价
-    qint64 volume;             // 成交量
-    double turnover;           // 成交额
-    double openInterest;       // 持仓量
-};
-
-/**
- * @brief K线样式
+ * @brief K线样式配置
  */
 struct KLineStyle {
     QColor upColor;             // 上涨颜色

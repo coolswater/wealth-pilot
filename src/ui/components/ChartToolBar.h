@@ -19,37 +19,13 @@
 #include <QWidget>
 #include <QFrame>
 #include <memory>
+#include "core/types/MarketTypes.h"  // 使用统一的类型定义
 
 // 前向声明
 class QComboBox;
 class QToolButton;
 class QButtonGroup;
 class QLabel;
-
-/**
- * @brief K线周期枚举
- */
-enum class KLinePeriod {
-    Timeline = 0,   ///< 分时图
-    Minute1,        ///< 1分钟
-    Minute5,        ///< 5分钟
-    Minute15,       ///< 15分钟
-    Minute30,       ///< 30分钟
-    Hour1,          ///< 60分钟
-    Day1,           ///< 日线
-    Week1,          ///< 周线
-    Month1,         ///< 月线
-    Custom          ///< 自定义周期
-};
-
-/**
- * @brief 复权类型枚举
- */
-enum class AdjustmentType {
-    None = 0,       ///< 不复权
-    Front,          ///< 前复权
-    Back            ///< 后复权
-};
 
 /**
  * @brief 图表工具栏组件

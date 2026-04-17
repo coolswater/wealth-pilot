@@ -20,6 +20,7 @@
 #include <QLabel>
 #include <QGridLayout>
 #include <memory>
+#include "core/types/MarketTypes.h"  // 使用统一的类型定义
 
 // 前向声明
 struct MarketData;

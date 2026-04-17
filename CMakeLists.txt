@@ -44,6 +44,7 @@ set(CORE_BASE_SOURCES
         src/core/base/BasePage.h
         src/core/base/ErrorCode.h
         src/core/base/NamespaceGuide.h
+        src/core/types/MarketTypes.h
 )
 
 # Core - Config 配置管理
@@ -151,6 +152,8 @@ set(UTIL_SOURCES
         src/utils/Result.h
         src/utils/TechnicalIndicators.h
         src/utils/TechnicalIndicators.cpp
+        src/utils/PerformanceMonitor.h
+        src/utils/PerformanceMonitor.cpp
 )
 
 # Network 网络
@@ -177,8 +180,21 @@ set(UI_COMPONENT_SOURCES
         src/ui/components/UIComponents.h
         src/ui/components/ThemeEngine.h
         src/ui/components/ThemeEngine.cpp
+        src/ui/components/ThemeColors.h
+        src/ui/components/BaseChartWidget.h
+        src/ui/components/BaseChartWidget.cpp
+        src/ui/components/ComponentFactory.h
+        src/ui/components/ComponentFactory.cpp
         src/ui/components/KLineChart.h
         src/ui/components/KLineChart.cpp
+        src/ui/components/ChartToolBar.h
+        src/ui/components/ChartToolBar.cpp
+        src/ui/components/MarketDepthWidget.h
+        src/ui/components/MarketDepthWidget.cpp
+        src/ui/components/TickTableView.h
+        src/ui/components/TickTableView.cpp
+        src/ui/components/ChartStatusBar.h
+        src/ui/components/ChartStatusBar.cpp
         src/ui/ThemeManager.h
         src/ui/ThemeManager.cpp
 )
