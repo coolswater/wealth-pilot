@@ -16,6 +16,7 @@
 #include <QHBoxLayout>
 #include <QSplitter>
 #include <QTimer>
+#include <QResizeEvent>
 
 #include "core/navigation/PageNavigator.h"
 #include "core/di/ServiceLocator.h"
@@ -334,15 +335,19 @@ void FuturesKLinePage::subscribeMarketData()
         return;
     }
 
-    // 通过CTP服务订阅
+    // 通过CTP服务订阅（需要列表）
     if (d->ctpService) {
-        d->ctpService->subscribeMarketData(d->instrumentId);
+        QList<QString> instruments;
+        instruments.append(d->instrumentId);
+        d->ctpService->subscribeMarketData(instruments);
         LOG_INFO(QString("Subscribed to market data: %1").arg(d->instrumentId));
     }
 
-    // 通过CTP插件订阅
+    // 通过CTP插件订阅（需要列表）
     if (d->ctpPlugin) {
-        d->ctpPlugin->subscribeMarketData(d->instrumentId);
+        QStringList instruments;
+        instruments.append(d->instrumentId);
+        d->ctpPlugin->subscribeMarketData(instruments);
     }
 }
 
