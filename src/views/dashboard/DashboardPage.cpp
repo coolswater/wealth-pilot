@@ -1,851 +1,1551 @@
+/**
+ * @file DashboardPage.cpp
+ * @brief 金融行情综合看板页面实现 - 六宫格布局
+ *
+ * @details 布局结构：
+ * - 顶部：指数分时图
+ * - 中部：六宫格排行榜（沪A涨跌/沪5分钟/深A涨跌/深5分钟/板块热力图）
+ * - 底部：自选股/新闻/资金流向
+ *
+ * @details 设计规范：
+ * - 主背景：#0d1117
+ * - 卡片背景：#161b22
+ * - 涨：#ff4d4f（红），跌：#00b578（绿）
+ * - 紧凑布局，单屏最大信息量
+ */
+
 #include "DashboardPage.h"
+#include "utils/Logger.h"
+
+#include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QToolBar>
-#include <QPushButton>
+#include <QGridLayout>
 #include <QLabel>
-#include <QComboBox>
 #include <QLineEdit>
-#include <QKeyEvent>
-#include <QShortcut>
+#include <QPushButton>
+#include <QComboBox>
+#include <QTabWidget>
+#include <QSplitter>
+#include <QTableView>
+#include <QHeaderView>
 #include <QTimer>
-#include <QMessageBox>
-#include <QDebug>
+#include <QDateTime>
+#include <QRandomGenerator>
+#include <QStyledItemDelegate>
+#include <QPainter>
+#include <QScrollArea>
+#include <QFrame>
+#include <QListWidget>
+#include <QProgressBar>
 
+// ============================================================================
+// 涨跌颜色委托 - 高性能绘制
+// ============================================================================
 
-struct DashboardPage::Impl
-{
-    // UI组件 - 控制栏
-    QWidget* m_toolBar = nullptr;
-    QWidget* m_statusBar = nullptr;
-    TreeMapWidget* m_treeMap = nullptr;
+/**
+ * @brief 涨跌颜色委托
+ * @details 根据涨跌数据显示不同颜色，涨停/跌停特殊高亮
+ */
+class ChangeColorDelegate : public QStyledItemDelegate {
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
 
-    // 控件指针 - 按初始化顺序排列
-    QComboBox* m_marketCombo = nullptr;
-    QComboBox* m_industryCombo = nullptr;
-    QLineEdit* m_searchEdit = nullptr;
-    QPushButton* m_refreshBtn = nullptr;
-    QPushButton* m_reviewBtn = nullptr;
-    QPushButton* m_playBtn = nullptr;
+    void paint(QPainter* painter, const QStyleOptionViewItem& option,
+               const QModelIndex& index) const override {
+        double value = index.data(Qt::UserRole).toDouble();
+        
+        // 确定颜色
+        QColor textColor;
+        QColor bgColor;
+        
+        if (value > 9.9) {
+            // 涨停
+            textColor = QColor(DashboardColors::Up);
+            bgColor = QColor(DashboardColors::LimitUp);
+        } else if (value > 0.01) {
+            textColor = QColor(DashboardColors::Up);
+            bgColor = QColor(DashboardColors::UpBg);
+        } else if (value < -9.9) {
+            // 跌停
+            textColor = QColor(DashboardColors::Down);
+            bgColor = QColor(DashboardColors::LimitDown);
+        } else if (value < -0.01) {
+            textColor = QColor(DashboardColors::Down);
+            bgColor = QColor(DashboardColors::DownBg);
+        } else {
+            textColor = QColor(DashboardColors::Flat);
+            bgColor = Qt::transparent;
+        }
 
-    // 状态栏标签
-    QLabel* m_timeLabel = nullptr;
-    QLabel* m_upCountLabel = nullptr;
-    QLabel* m_flatCountLabel = nullptr;
-    QLabel* m_downCountLabel = nullptr;
-    QLabel* m_turnoverLabel = nullptr;
-    QLabel* m_selectedLabel = nullptr;
-    QLabel* searchLabel = nullptr;
+        // 绘制背景
+        painter->save();
+        if (option.state & QStyle::State_Selected) {
+            painter->fillRect(option.rect, QColor(DashboardColors::Primary));
+        } else if (bgColor != Qt::transparent) {
+            painter->fillRect(option.rect, bgColor);
+        } else if (option.state & QStyle::State_MouseOver) {
+            painter->fillRect(option.rect, QColor(DashboardColors::BgHover));
+        }
+        painter->restore();
 
-    // 定时器指针
-    QTimer* m_reviewTimer = nullptr;
-    QTimer* m_clockTimer = nullptr;
-
-    // 数据管理
-    QuoteDataManager* m_dataManager = nullptr;
-
-    // 状态变量 - 按初始化顺序排列
-    QString m_currentMarket = nullptr;
-    bool m_autoPlaying = false;
+        // 绘制文字
+        QStyleOptionViewItem opt = option;
+        opt.palette.setColor(QPalette::Text, textColor);
+        QStyledItemDelegate::paint(painter, opt, index);
+    }
 };
 
 /**
- * @brief 构造函数
- * 初始化仪表盘页面，创建所有UI组件和数据管理器
- * @param parent 父窗口指针
+ * @brief 资金流向进度条委托
  */
+class MoneyFlowDelegate : public QStyledItemDelegate {
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+
+    void paint(QPainter* painter, const QStyleOptionViewItem& option,
+               const QModelIndex& index) const override {
+        double value = index.data(Qt::UserRole).toDouble();
+        
+        // 确定颜色
+        QColor textColor = value >= 0 
+            ? QColor(DashboardColors::Up) 
+            : QColor(DashboardColors::Down);
+
+        // 绘制背景
+        painter->save();
+        if (option.state & QStyle::State_Selected) {
+            painter->fillRect(option.rect, QColor(DashboardColors::Primary));
+        } else if (option.state & QStyle::State_MouseOver) {
+            painter->fillRect(option.rect, QColor(DashboardColors::BgHover));
+        }
+        painter->restore();
+
+        // 绘制文字
+        QStyleOptionViewItem opt = option;
+        opt.palette.setColor(QPalette::Text, textColor);
+        QStyledItemDelegate::paint(painter, opt, index);
+    }
+};
+
+// ============================================================================
+// PIMPL 实现
+// ============================================================================
+
+struct DashboardPage::Impl {
+    // 主布局
+    QVBoxLayout* mainLayout = nullptr;
+    QSplitter* mainSplitter = nullptr;
+
+    // 头部组件
+    QLineEdit* searchEdit = nullptr;
+    QComboBox* marketCombo = nullptr;
+    QLabel* timeLabel = nullptr;
+    QLabel* statusLabel = nullptr;
+
+    // 指数面板
+    QFrame* indexPanel = nullptr;
+    QVector<QLabel*> indexNameLabels;
+    QVector<QLabel*> indexPriceLabels;
+    QVector<QLabel*> indexChangeLabels;
+    QVector<IndexData> indexData;
+
+    // 六宫格排行榜
+    QFrame* rankGridPanel = nullptr;
+    QGridLayout* rankGridLayout = nullptr;
+    
+    // 沪A涨跌榜
+    QTableView* shGainTable = nullptr;
+    StockRankModel* shGainModel = nullptr;
+    
+    // 沪5分钟涨跌榜
+    QTableView* sh5MinTable = nullptr;
+    StockRankModel* sh5MinModel = nullptr;
+    
+    // 深A涨跌榜
+    QTableView* szGainTable = nullptr;
+    StockRankModel* szGainModel = nullptr;
+    
+    // 深5分钟涨跌榜
+    QTableView* sz5MinTable = nullptr;
+    StockRankModel* sz5MinModel = nullptr;
+    
+    // 板块热力图
+    QTabWidget* sectorTabs = nullptr;
+    QTableView* sectorTable = nullptr;
+    SectorHeatmapModel* sectorModel = nullptr;
+
+    // 底部信息区
+    QSplitter* infoSplitter = nullptr;
+    
+    // 自选股
+    QWidget* watchlistContainer = nullptr;
+    QTableView* watchlistTable = nullptr;
+    WatchlistModel* watchlistModel = nullptr;
+    QComboBox* watchlistFilter = nullptr;
+    
+    // 新闻
+    QFrame* newsPanel = nullptr;
+    QListWidget* newsList = nullptr;
+    
+    // 资金流向
+    QWidget* moneyFlowContainer = nullptr;
+    QTableView* moneyFlowTable = nullptr;
+    MoneyFlowModel* moneyFlowModel = nullptr;
+    QComboBox* moneyFlowPeriod = nullptr;
+
+    // 定时器
+    QTimer* updateTimer = nullptr;
+    QTimer* clockTimer = nullptr;
+};
+
+// ============================================================================
+// StockRankModel 实现
+// ============================================================================
+
+StockRankModel::StockRankModel(QObject* parent)
+    : QAbstractTableModel(parent)
+{
+}
+
+int StockRankModel::rowCount(const QModelIndex& parent) const
+{
+    return parent.isValid() ? 0 : m_data.size();
+}
+
+int StockRankModel::columnCount(const QModelIndex& parent) const
+{
+    return parent.isValid() ? 0 : ColCount;
+}
+
+QVariant StockRankModel::data(const QModelIndex& index, int role) const
+{
+    if (!index.isValid() || index.row() >= m_data.size()) {
+        return QVariant();
+    }
+
+    const StockRankData& stock = m_data[index.row()];
+
+    if (role == Qt::DisplayRole) {
+        switch (index.column()) {
+            case ColRank:
+                return stock.rank;
+            case ColName:
+                return stock.name;
+            case ColPrice:
+                return QString::number(stock.price, 'f', 2);
+            case ColChange:
+                return QString::number(stock.changePercent, 'f', 2) + "%";
+            case ColChangeAmount:
+                return formatValue(stock.change);
+            default:
+                return QVariant();
+        }
+    }
+
+    if (role == Qt::UserRole) {
+        return stock.changePercent;
+    }
+
+    if (role == Qt::TextAlignmentRole) {
+        if (index.column() == ColName) {
+            return QVariant(Qt::AlignLeft | Qt::AlignVCenter);
+        }
+        return QVariant(Qt::AlignRight | Qt::AlignVCenter);
+    }
+
+    return QVariant();
+}
+
+QVariant StockRankModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (orientation != Qt::Horizontal || role != Qt::DisplayRole) {
+        return QVariant();
+    }
+
+    static const QStringList headers = {
+        QStringLiteral("排名"),
+        QStringLiteral("名称"),
+        QStringLiteral("现价"),
+        QStringLiteral("涨跌幅"),
+        QStringLiteral("涨跌额")
+    };
+
+    return headers.value(section);
+}
+
+void StockRankModel::setData(const QVector<StockRankData>& data)
+{
+    beginResetModel();
+    m_data = data;
+    endResetModel();
+}
+
+void StockRankModel::clear()
+{
+    beginResetModel();
+    m_data.clear();
+    endResetModel();
+}
+
+QString StockRankModel::formatValue(double value)
+{
+    if (qAbs(value) >= 10000) {
+        return QString::number(value / 10000.0, 'f', 2) + "万";
+    }
+    return QString::number(value, 'f', 2);
+}
+
+// ============================================================================
+// WatchlistModel 实现
+// ============================================================================
+
+WatchlistModel::WatchlistModel(QObject* parent)
+    : QAbstractTableModel(parent)
+{
+}
+
+int WatchlistModel::rowCount(const QModelIndex& parent) const
+{
+    return parent.isValid() ? 0 : m_data.size();
+}
+
+int WatchlistModel::columnCount(const QModelIndex& parent) const
+{
+    return parent.isValid() ? 0 : ColCount;
+}
+
+QVariant WatchlistModel::data(const QModelIndex& index, int role) const
+{
+    if (!index.isValid() || index.row() >= m_data.size()) {
+        return QVariant();
+    }
+
+    const StockRankData& stock = m_data[index.row()];
+
+    if (role == Qt::DisplayRole) {
+        switch (index.column()) {
+            case ColRank: return stock.rank;
+            case ColCode: return stock.code;
+            case ColName: return stock.name;
+            case ColPrice: return QString::number(stock.price, 'f', 2);
+            case ColChange: return QString::number(stock.changePercent, 'f', 2) + "%";
+            case ColChangeAmount: return QString::number(stock.change, 'f', 2);
+            case ColVolume: return QString::number(stock.volume / 10000.0, 'f', 0) + "万";
+            case ColAmount: return QString::number(stock.amount / 100000000.0, 'f', 2) + "亿";
+            case ColTurnover: return QString::number(stock.turnover, 'f', 2) + "%";
+            case ColPE: return stock.pe > 0 ? QString::number(stock.pe, 'f', 2) : "--";
+            default: return QVariant();
+        }
+    }
+
+    if (role == Qt::UserRole) {
+        return stock.changePercent;
+    }
+
+    if (role == Qt::TextAlignmentRole) {
+        if (index.column() == ColName || index.column() == ColCode) {
+            return QVariant(Qt::AlignLeft | Qt::AlignVCenter);
+        }
+        return QVariant(Qt::AlignRight | Qt::AlignVCenter);
+    }
+
+    return QVariant();
+}
+
+QVariant WatchlistModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (orientation != Qt::Horizontal || role != Qt::DisplayRole) {
+        return QVariant();
+    }
+
+    static const QStringList headers = {
+        QStringLiteral("序号"),
+        QStringLiteral("代码"),
+        QStringLiteral("名称"),
+        QStringLiteral("最新价"),
+        QStringLiteral("涨跌幅"),
+        QStringLiteral("涨跌额"),
+        QStringLiteral("总量"),
+        QStringLiteral("金额"),
+        QStringLiteral("换手率"),
+        QStringLiteral("市盈率")
+    };
+
+    return headers.value(section);
+}
+
+void WatchlistModel::setData(const QVector<StockRankData>& data)
+{
+    beginResetModel();
+    m_data = data;
+    endResetModel();
+}
+
+void WatchlistModel::clear()
+{
+    beginResetModel();
+    m_data.clear();
+    endResetModel();
+}
+
+// ============================================================================
+// SectorHeatmapModel 实现
+// ============================================================================
+
+SectorHeatmapModel::SectorHeatmapModel(QObject* parent)
+    : QAbstractTableModel(parent)
+{
+}
+
+int SectorHeatmapModel::rowCount(const QModelIndex& parent) const
+{
+    return parent.isValid() ? 0 : m_data.size();
+}
+
+int SectorHeatmapModel::columnCount(const QModelIndex& parent) const
+{
+    return parent.isValid() ? 0 : 4;
+}
+
+QVariant SectorHeatmapModel::data(const QModelIndex& index, int role) const
+{
+    if (!index.isValid() || index.row() >= m_data.size()) {
+        return QVariant();
+    }
+
+    const SectorData& sector = m_data[index.row()];
+
+    if (role == Qt::DisplayRole) {
+        switch (index.column()) {
+            case 0: return sector.name;
+            case 1: return QString::number(sector.changePercent, 'f', 2) + "%";
+            case 2: return QString("%1/%2").arg(sector.upCount).arg(sector.downCount);
+            case 3: return QString::number(sector.amount / 100000000.0, 'f', 0) + "亿";
+            default: return QVariant();
+        }
+    }
+
+    if (role == Qt::UserRole) {
+        return sector.changePercent;
+    }
+
+    if (role == Qt::TextAlignmentRole) {
+        return QVariant(Qt::AlignCenter);
+    }
+
+    return QVariant();
+}
+
+QVariant SectorHeatmapModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (orientation != Qt::Horizontal || role != Qt::DisplayRole) {
+        return QVariant();
+    }
+
+    static const QStringList headers = {
+        QStringLiteral("板块"),
+        QStringLiteral("涨跌幅"),
+        QStringLiteral("涨/跌"),
+        QStringLiteral("成交额")
+    };
+
+    return headers.value(section);
+}
+
+void SectorHeatmapModel::setData(const QVector<SectorData>& data)
+{
+    beginResetModel();
+    m_data = data;
+    endResetModel();
+}
+
+void SectorHeatmapModel::clear()
+{
+    beginResetModel();
+    m_data.clear();
+    endResetModel();
+}
+
+// ============================================================================
+// MoneyFlowModel 实现
+// ============================================================================
+
+MoneyFlowModel::MoneyFlowModel(QObject* parent)
+    : QAbstractTableModel(parent)
+{
+}
+
+int MoneyFlowModel::rowCount(const QModelIndex& parent) const
+{
+    return parent.isValid() ? 0 : m_data.size();
+}
+
+int MoneyFlowModel::columnCount(const QModelIndex& parent) const
+{
+    return parent.isValid() ? 0 : ColCount;
+}
+
+QVariant MoneyFlowModel::data(const QModelIndex& index, int role) const
+{
+    if (!index.isValid() || index.row() >= m_data.size()) {
+        return QVariant();
+    }
+
+    const MoneyFlowData& flow = m_data[index.row()];
+
+    if (role == Qt::DisplayRole) {
+        switch (index.column()) {
+            case ColRank: return flow.rank;
+            case ColName: return flow.name;
+            case ColNetInflow:
+                return QString::number(flow.netInflow / 100000000.0, 'f', 2) + "亿";
+            case ColNetInflowPercent:
+                return QString::number(flow.netInflowPercent, 'f', 2) + "%";
+            case ColDay3:
+                return QString::number(flow.day3Inflow / 100000000.0, 'f', 2) + "亿";
+            case ColDay5:
+                return QString::number(flow.day5Inflow / 100000000.0, 'f', 2) + "亿";
+            default: return QVariant();
+        }
+    }
+
+    if (role == Qt::UserRole) {
+        return flow.netInflow;
+    }
+
+    if (role == Qt::TextAlignmentRole) {
+        if (index.column() == ColName) {
+            return QVariant(Qt::AlignLeft | Qt::AlignVCenter);
+        }
+        return QVariant(Qt::AlignRight | Qt::AlignVCenter);
+    }
+
+    return QVariant();
+}
+
+QVariant MoneyFlowModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (orientation != Qt::Horizontal || role != Qt::DisplayRole) {
+        return QVariant();
+    }
+
+    static const QStringList headers = {
+        QStringLiteral("排名"),
+        QStringLiteral("名称"),
+        QStringLiteral("净流入"),
+        QStringLiteral("当日增仓"),
+        QStringLiteral("3日增仓"),
+        QStringLiteral("5日增仓")
+    };
+
+    return headers.value(section);
+}
+
+void MoneyFlowModel::setData(const QVector<MoneyFlowData>& data)
+{
+    beginResetModel();
+    m_data = data;
+    endResetModel();
+}
+
+void MoneyFlowModel::clear()
+{
+    beginResetModel();
+    m_data.clear();
+    endResetModel();
+}
+
+// ============================================================================
+// DashboardPage 实现
+// ============================================================================
+
 DashboardPage::DashboardPage(QWidget* parent)
     : BasePage(parent)
-      , d(std::make_unique<Impl>())
+    , d(std::make_unique<Impl>())
 {
-    // 设置对象名称，便于样式表定位
+    setupUI();
     setObjectName("DashboardPage");
 
-    // 设置黑色背景，金融软件标准暗色主题
-    setStyleSheet("background-color: #0a0a0a;");
+    // 设置背景色
+    setStyleSheet(QString("background-color: %1;").arg(DashboardColors::BgMain));
 
-    // 设置焦点策略以接收键盘事件
-    setFocusPolicy(Qt::StrongFocus);
+    // 实时更新定时器
+    d->updateTimer = new QTimer(this);
+    d->updateTimer->setInterval(3000);
+    connect(d->updateTimer, &QTimer::timeout, this, &DashboardPage::updateRealTimeData);
 
-    // 初始化UI布局
-    initUI();
-
-    // 连接信号槽
-    connectSignals();
-
-    // 初始化数据
-    initData();
+    // 时钟定时器
+    d->clockTimer = new QTimer(this);
+    d->clockTimer->setInterval(1000);
+    connect(d->clockTimer, &QTimer::timeout, this, &DashboardPage::updateTimeDisplay);
 }
 
-/**
- * @brief 析构函数
- * 清理资源，停止定时器
- */
 DashboardPage::~DashboardPage()
 {
-    if (d->m_dataManager)
-    {
-        d->m_dataManager->stopAutoUpdate();
-    }
-
-    if (d->m_reviewTimer && d->m_reviewTimer->isActive())
-    {
-        d->m_reviewTimer->stop();
-    }
-
-    if (d->m_clockTimer && d->m_clockTimer->isActive())
-    {
-        d->m_clockTimer->stop();
-    }
-}
-
-QString DashboardPage::pageId() const
-{
-    // 使用QStringLiteral避免运行时字符串分配
-    return QStringLiteral("DashboardPage");
+    if (d->updateTimer) d->updateTimer->stop();
+    if (d->clockTimer) d->clockTimer->stop();
 }
 
 void DashboardPage::initializePage()
 {
+    if (isInitialized()) return;
+
+    setupConnections();
+    loadDemoData();
+
+    setInitialized(true);
+    emit pageStatusChanged(QStringLiteral("initialized"));
+
+    LOG_DEBUG("DashboardPage initialized");
 }
 
 /**
- * @brief 初始化UI
- * 创建整体布局：顶部工具栏 + 中央热力图 + 底部状态栏
+ * @brief 初始化UI布局
  */
-void DashboardPage::initUI()
+void DashboardPage::setupUI()
 {
-    // 主布局：垂直排列
-    auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(0);
-    mainLayout->setContentsMargins(0, 0, 0, 0);
+    d->mainLayout = new QVBoxLayout(this);
+    d->mainLayout->setContentsMargins(0, 0, 0, 0);
+    d->mainLayout->setSpacing(0);
 
-    // 1. 顶部控制栏（工具栏）
-    initToolBar();
-    mainLayout->addWidget(d->m_toolBar);
+    // 1. 顶部工具栏
+    setupHeader();
 
-    // 2. 中央热力图控件
-    d->m_treeMap = new TreeMapWidget(this);
-    d->m_treeMap->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    mainLayout->addWidget(d->m_treeMap, 1); // 占据所有剩余空间
+    // 2. 主分割器
+    d->mainSplitter = new QSplitter(Qt::Vertical, this);
+    d->mainSplitter->setHandleWidth(1);
+    d->mainSplitter->setStyleSheet(
+        QString("QSplitter::handle { background-color: %1; }").arg(DashboardColors::BgBorder));
 
-    // 3. 底部信息栏（状态栏）
-    initStatusBar();
-    mainLayout->addWidget(d->m_statusBar);
+    // 3. 指数面板（顶部）
+    setupIndexPanel();
+    d->mainSplitter->addWidget(d->indexPanel);
 
-    setLayout(mainLayout);
+    // 4. 六宫格排行榜（中部60%）
+    setupRankGrid();
+    d->mainSplitter->addWidget(d->rankGridPanel);
+
+    // 5. 底部信息区（底部40%）
+    setupInfoPanel();
+    d->mainSplitter->addWidget(d->infoSplitter);
+
+    // 设置分割比例
+    d->mainSplitter->setSizes({120, 350, 280});
+
+    d->mainLayout->addWidget(d->mainSplitter, 1);
 }
 
 /**
- * @brief 初始化工具栏
- * 包含：市场选择、行业筛选、搜索框、刷新按钮、复盘控制
+ * @brief 初始化头部工具栏
  */
-void DashboardPage::initToolBar()
+void DashboardPage::setupHeader()
 {
-    d->m_toolBar = new QWidget(this);
-    d->m_toolBar->setFixedHeight(50);
-    d->m_toolBar->setStyleSheet(
-        "QWidget { background-color: #1a1a1a; border-bottom: 1px solid #333; }"
-        "QPushButton { "
-        "   background-color: #2a2a2a; color: #fff; border: 1px solid #444;"
-        "   padding: 5px 15px; border-radius: 3px; font-size: 12px;"
-        "}"
-        "QPushButton:hover { background-color: #3a3a3a; }"
-        "QPushButton:checked { background-color: #0066cc; border-color: #0088ff; }"
-        "QComboBox { "
-        "   background-color: #2a2a2a; color: #fff; border: 1px solid #444;"
-        "   padding: 5px; min-width: 100px; border-radius: 3px;"
-        "}"
-        "QComboBox::drop-down { border: none; width: 20px; }"
-        "QComboBox QAbstractItemView { background-color: #2a2a2a; color: #fff; }"
-        "QLineEdit { "
-        "   background-color: #2a2a2a; color: #fff; border: 1px solid #444;"
-        "   padding: 5px; border-radius: 3px; min-width: 150px;"
-        "}"
-        "QLabel { color: #aaa; font-size: 12px; }"
-    );
+    QFrame* header = new QFrame(this);
+    header->setFixedHeight(48);
+    header->setStyleSheet(QString("background-color: %1; border-bottom: 1px solid %2;")
+        .arg(DashboardColors::BgCard, DashboardColors::BgBorder));
 
-    auto* toolLayout = new QHBoxLayout(d->m_toolBar);
-    toolLayout->setSpacing(15);
-    toolLayout->setContentsMargins(15, 5, 15, 5);
+    QHBoxLayout* layout = new QHBoxLayout(header);
+    layout->setContentsMargins(16, 0, 16, 0);
+    layout->setSpacing(16);
 
-    // 标题标签
-    auto* titleLabel = new QLabel("行情热力图", d->m_toolBar);
-    titleLabel->setStyleSheet("font-size: 16px; font-weight: bold; color: #fff; border: none;");
-    toolLayout->addWidget(titleLabel);
+    // 页面标题
+    QLabel* titleLabel = new QLabel(QStringLiteral("行情看板"), header);
+    titleLabel->setStyleSheet(QString("font-size: 18px; font-weight: bold; color: %1;")
+        .arg(DashboardColors::TextPrimary));
+    layout->addWidget(titleLabel);
 
-    toolLayout->addSpacing(20);
+    layout->addSpacing(20);
 
-    // 市场选择下拉框
-    auto* marketLabel = new QLabel("市场:", d->m_toolBar);
-    toolLayout->addWidget(marketLabel);
+    // 市场选择
+    d->marketCombo = new QComboBox(header);
+    d->marketCombo->addItems({
+        QStringLiteral("全部A股"),
+        QStringLiteral("沪市主板"),
+        QStringLiteral("深市主板"),
+        QStringLiteral("创业板"),
+        QStringLiteral("科创板")
+    });
+    d->marketCombo->setStyleSheet(QString(R"(
+        QComboBox {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 4px;
+            padding: 4px 12px;
+            color: %3;
+            min-width: 100px;
+        }
+        QComboBox::drop-down { border: none; }
+        QComboBox QAbstractItemView {
+            background-color: %1;
+            color: %3;
+            selection-background-color: %4;
+        }
+    )").arg(DashboardColors::BgCard, DashboardColors::BgBorder, 
+            DashboardColors::TextPrimary, DashboardColors::Primary));
+    layout->addWidget(d->marketCombo);
 
-    d->m_marketCombo = new QComboBox(d->m_toolBar);
-    d->m_marketCombo->addItem("A股全图", "all");
-    d->m_marketCombo->addItem("上证主板", "sh");
-    d->m_marketCombo->addItem("深证主板", "sz");
-    d->m_marketCombo->addItem("创业板", "cyb");
-    d->m_marketCombo->addItem("科创板", "kcb");
-    d->m_marketCombo->addItem("沪深300", "hs300");
-    d->m_marketCombo->addItem("中证500", "zz500");
-    d->m_marketCombo->addItem("期货全图", "futures");
-    d->m_marketCombo->setCurrentIndex(0);
-    toolLayout->addWidget(d->m_marketCombo);
-
-    // 分隔线
-    toolLayout->addSpacing(10);
-
-    // 行业筛选（预留，实际数据动态加载）
-    auto* industryLabel = new QLabel("行业:", d->m_toolBar);
-    toolLayout->addWidget(industryLabel);
-
-    d->m_industryCombo = new QComboBox(d->m_toolBar);
-    d->m_industryCombo->addItem("全部", "");
-    // 行业列表将在数据加载后填充
-    d->m_industryCombo->setEnabled(false); // 初始禁用，等待数据
-    toolLayout->addWidget(d->m_industryCombo);
-
-    toolLayout->addSpacing(10);
+    layout->addSpacing(20);
 
     // 搜索框
-    d->searchLabel = new QLabel("搜索:", d->m_toolBar);
-    toolLayout->addWidget(d->searchLabel);
+    d->searchEdit = new QLineEdit(header);
+    d->searchEdit->setPlaceholderText(QStringLiteral("搜索股票代码/名称..."));
+    d->searchEdit->setFixedWidth(220);
+    d->searchEdit->setStyleSheet(QString(R"(
+        QLineEdit {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 4px;
+            padding: 6px 12px;
+            color: %3;
+        }
+        QLineEdit::placeholder { color: %4; }
+    )").arg(DashboardColors::BgCard, DashboardColors::BgBorder, 
+            DashboardColors::TextPrimary, DashboardColors::TextTertiary));
+    layout->addWidget(d->searchEdit);
 
-    d->m_searchEdit = new QLineEdit(d->m_toolBar);
-    d->m_searchEdit->setPlaceholderText("代码/名称...");
-    toolLayout->addWidget(d->m_searchEdit);
+    layout->addStretch();
 
-    // 弹性空间
-    toolLayout->addStretch(1);
+    // 时间显示
+    d->timeLabel = new QLabel(header);
+    d->timeLabel->setStyleSheet(QString("color: %1; font-size: 13px;")
+        .arg(DashboardColors::TextSecondary));
+    layout->addWidget(d->timeLabel);
 
-    // 操作按钮组
-    // 刷新按钮
-    d->m_refreshBtn = new QPushButton("🔄 刷新", d->m_toolBar);
-    d->m_refreshBtn->setToolTip("立即刷新数据 (F5)");
-    toolLayout->addWidget(d->m_refreshBtn);
+    layout->addSpacing(20);
 
-    // 复盘模式开关
-    d->m_reviewBtn = new QPushButton("📊 复盘", d->m_toolBar);
-    d->m_reviewBtn->setCheckable(true);
-    d->m_reviewBtn->setToolTip("开启历史复盘模式 (R)");
-    toolLayout->addWidget(d->m_reviewBtn);
+    // 状态信息
+    d->statusLabel = new QLabel(header);
+    d->statusLabel->setStyleSheet(QString("color: %1; font-size: 13px;")
+        .arg(DashboardColors::TextTertiary));
+    layout->addWidget(d->statusLabel);
 
-    // 播放/暂停按钮（复盘专用）
-    d->m_playBtn = new QPushButton("▶ 播放", d->m_toolBar);
-    d->m_playBtn->setEnabled(false); // 初始禁用，复盘模式开启后可用
-    d->m_playBtn->setToolTip("自动播放复盘 (Space)");
-    toolLayout->addWidget(d->m_playBtn);
-
-    // 帮助按钮
-    auto* helpBtn = new QPushButton("❓", d->m_toolBar);
-    helpBtn->setFixedWidth(30);
-    helpBtn->setToolTip("快捷键：←→复盘翻页 | F5刷新 | F11全屏");
-    toolLayout->addWidget(helpBtn);
-
-    connect(helpBtn, &QPushButton::clicked, this, &DashboardPage::showHelp);
+    d->mainLayout->addWidget(header);
 }
 
 /**
- * @brief 初始化状态栏
- * 显示：当前时间、涨跌统计、成交额、选中项信息
+ * @brief 初始化指数面板
  */
-void DashboardPage::initStatusBar()
+void DashboardPage::setupIndexPanel()
 {
-    d->m_statusBar = new QWidget(this);
-    d->m_statusBar->setFixedHeight(35);
-    d->m_statusBar->setStyleSheet(
-        "QWidget { background-color: #1a1a1a; border-top: 1px solid #333; }"
-        "QLabel { color: #ccc; font-size: 12px; padding: 0 10px; }"
-    );
+    d->indexPanel = new QFrame(this);
+    d->indexPanel->setStyleSheet(QString("background-color: %1;").arg(DashboardColors::BgCard));
 
-    auto* statusLayout = new QHBoxLayout(d->m_statusBar);
-    statusLayout->setSpacing(10);
-    statusLayout->setContentsMargins(15, 5, 15, 5);
+    QHBoxLayout* layout = new QHBoxLayout(d->indexPanel);
+    layout->setContentsMargins(8, 8, 8, 8);
+    layout->setSpacing(8);
 
-    // 当前时间
-    d->m_timeLabel = new QLabel("2024-01-01 09:30:00", d->m_statusBar);
-    d->m_timeLabel->setStyleSheet("color: #fff; font-weight: bold;");
-    statusLayout->addWidget(d->m_timeLabel);
+    // 创建5个指数卡片
+    QStringList indexNames = {
+        QStringLiteral("上证指数"),
+        QStringLiteral("深证成指"),
+        QStringLiteral("沪深300"),
+        QStringLiteral("创业板指"),
+        QStringLiteral("科创50")
+    };
 
-    statusLayout->addStretch(1);
+    for (int i = 0; i < 5; ++i) {
+        QFrame* card = new QFrame(d->indexPanel);
+        card->setStyleSheet(QString(R"(
+            QFrame {
+                background-color: %1;
+                border-radius: 6px;
+                border: 1px solid %2;
+            }
+        )").arg(DashboardColors::BgMain, DashboardColors::BgBorder));
 
-    // 统计信息组
-    auto* statsLayout = new QHBoxLayout();
-    statsLayout->setSpacing(20);
+        QVBoxLayout* cardLayout = new QVBoxLayout(card);
+        cardLayout->setContentsMargins(12, 10, 12, 10);
+        cardLayout->setSpacing(4);
 
-    // 上涨家数（红色）
-    d->m_upCountLabel = new QLabel("上涨: --", d->m_statusBar);
-    d->m_upCountLabel->setStyleSheet("color: #ff4d4d;"); // 亮红色
-    statsLayout->addWidget(d->m_upCountLabel);
+        // 指数名称
+        QLabel* nameLabel = new QLabel(indexNames[i], card);
+        nameLabel->setStyleSheet(QString("color: %1; font-size: 13px;")
+            .arg(DashboardColors::TextSecondary));
+        cardLayout->addWidget(nameLabel);
+        d->indexNameLabels.append(nameLabel);
 
-    // 平盘家数（灰色）
-    d->m_flatCountLabel = new QLabel("平盘: --", d->m_statusBar);
-    d->m_flatCountLabel->setStyleSheet("color: #888;");
-    statsLayout->addWidget(d->m_flatCountLabel);
+        // 价格和涨跌
+        QHBoxLayout* priceLayout = new QHBoxLayout();
+        
+        QLabel* priceLabel = new QLabel(QStringLiteral("0.00"), card);
+        priceLabel->setStyleSheet(QString("color: %1; font-size: 22px; font-weight: bold;")
+            .arg(DashboardColors::TextPrimary));
+        priceLayout->addWidget(priceLabel);
+        d->indexPriceLabels.append(priceLabel);
 
-    // 下跌家数（绿色）
-    d->m_downCountLabel = new QLabel("下跌: --", d->m_statusBar);
-    d->m_downCountLabel->setStyleSheet("color: #00ff00;"); // 亮绿色
-    statsLayout->addWidget(d->m_downCountLabel);
+        QLabel* changeLabel = new QLabel(QStringLiteral("+0.00%"), card);
+        changeLabel->setStyleSheet(QString("color: %1; font-size: 13px;")
+            .arg(DashboardColors::Up));
+        priceLayout->addWidget(changeLabel);
+        priceLayout->addStretch();
+        d->indexChangeLabels.append(changeLabel);
 
-    // 分隔线
-    auto* sep1 = new QLabel("|", d->m_statusBar);
-    sep1->setStyleSheet("color: #444;");
-    statsLayout->addWidget(sep1);
+        cardLayout->addLayout(priceLayout);
 
-    // 总成交额
-    d->m_turnoverLabel = new QLabel("成交额: --亿", d->m_statusBar);
-    statsLayout->addWidget(d->m_turnoverLabel);
+        layout->addWidget(card, 1);
+    }
+}
 
-    // 分隔线
-    auto* sep2 = new QLabel("|", d->m_statusBar);
-    sep2->setStyleSheet("color: #444;");
-    statsLayout->addWidget(sep2);
+/**
+ * @brief 初始化六宫格排行榜
+ */
+void DashboardPage::setupRankGrid()
+{
+    d->rankGridPanel = new QFrame(this);
+    d->rankGridPanel->setStyleSheet(QString("background-color: %1;").arg(DashboardColors::BgMain));
 
-    // 当前选中项
-    d->m_selectedLabel = new QLabel("选中: 无", d->m_statusBar);
-    d->m_selectedLabel->setStyleSheet("color: #fff;");
-    statsLayout->addWidget(d->m_selectedLabel);
+    d->rankGridLayout = new QGridLayout(d->rankGridPanel);
+    d->rankGridLayout->setContentsMargins(8, 8, 8, 8);
+    d->rankGridLayout->setSpacing(8);
 
-    statusLayout->addLayout(statsLayout);
+    // 表格样式
+    QString tableStyle = QString(R"(
+        QTableView {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 6px;
+            gridline-color: %3;
+            selection-background-color: %4;
+            font-family: 'Consolas', 'JetBrains Mono', monospace;
+        }
+        QTableView::item {
+            padding: 2px 4px;
+            color: %5;
+            font-size: 12px;
+        }
+        QHeaderView::section {
+            background-color: %6;
+            color: %7;
+            padding: 4px 6px;
+            border: none;
+            border-bottom: 1px solid %3;
+            font-size: 11px;
+            font-weight: bold;
+        }
+    )").arg(DashboardColors::BgCard, DashboardColors::BgBorder, DashboardColors::BgBorder,
+            DashboardColors::Primary, DashboardColors::TextPrimary, 
+            DashboardColors::BgHeader, DashboardColors::TextSecondary);
 
-    // 初始化时间更新定时器
-    d->m_clockTimer = new QTimer(this);
-    connect(d->m_clockTimer, &QTimer::timeout, this, &DashboardPage::updateTimeDisplay);
-    d->m_clockTimer->start(1000); // 每秒更新
-    updateTimeDisplay();
+    // 卡片标题样式
+    auto createCardWithTitle = [this, &tableStyle](const QString& title, QTableView*& table, 
+                                                    QAbstractTableModel* model) -> QFrame* {
+        QFrame* card = new QFrame(d->rankGridPanel);
+        card->setStyleSheet(QString("QFrame { background-color: %1; border-radius: 6px; }")
+            .arg(DashboardColors::BgCard));
+
+        QVBoxLayout* layout = new QVBoxLayout(card);
+        layout->setContentsMargins(0, 0, 0, 0);
+        layout->setSpacing(0);
+
+        // 标题栏
+        QFrame* titleBar = new QFrame(card);
+        titleBar->setFixedHeight(28);
+        titleBar->setStyleSheet(QString("background-color: %1; border-top-left-radius: 6px; border-top-right-radius: 6px;")
+            .arg(DashboardColors::BgHeader));
+        QHBoxLayout* titleLayout = new QHBoxLayout(titleBar);
+        titleLayout->setContentsMargins(10, 0, 10, 0);
+
+        QLabel* titleLabel = new QLabel(title, titleBar);
+        titleLabel->setStyleSheet(QString("color: %1; font-size: 12px; font-weight: bold;")
+            .arg(DashboardColors::TextPrimary));
+        titleLayout->addWidget(titleLabel);
+        titleLayout->addStretch();
+
+        layout->addWidget(titleBar);
+
+        // 表格
+        table = new QTableView(card);
+        table->setModel(model);
+        table->setItemDelegateForColumn(StockRankModel::ColChange, new ChangeColorDelegate(this));
+        table->setAlternatingRowColors(true);
+        table->setSelectionBehavior(QAbstractItemView::SelectRows);
+        table->verticalHeader()->setVisible(false);
+        table->setShowGrid(false);
+        table->setStyleSheet(tableStyle);
+        table->horizontalHeader()->setStretchLastSection(true);
+        table->verticalHeader()->setDefaultSectionSize(22);
+        layout->addWidget(table);
+
+        return card;
+    };
+
+    // 第1行：沪A涨跌榜、深A涨跌榜、板块热力图
+    // 左上：沪A涨跌榜
+    d->shGainModel = new StockRankModel(this);
+    QFrame* shGainCard = createCardWithTitle(QStringLiteral("沪A涨幅榜"), d->shGainTable, d->shGainModel);
+    d->rankGridLayout->addWidget(shGainCard, 0, 0);
+
+    // 中上：深A涨跌榜
+    d->szGainModel = new StockRankModel(this);
+    QFrame* szGainCard = createCardWithTitle(QStringLiteral("深A涨幅榜"), d->szGainTable, d->szGainModel);
+    d->rankGridLayout->addWidget(szGainCard, 0, 1);
+
+    // 右上：板块热力图（带Tab）
+    QFrame* sectorCard = new QFrame(d->rankGridPanel);
+    sectorCard->setStyleSheet(QString("QFrame { background-color: %1; border-radius: 6px; }")
+        .arg(DashboardColors::BgCard));
+    QVBoxLayout* sectorLayout = new QVBoxLayout(sectorCard);
+    sectorLayout->setContentsMargins(0, 0, 0, 0);
+    sectorLayout->setSpacing(0);
+
+    // Tab标题栏
+    QFrame* sectorHeader = new QFrame(sectorCard);
+    sectorHeader->setFixedHeight(28);
+    sectorHeader->setStyleSheet(QString("background-color: %1;")
+        .arg(DashboardColors::BgHeader));
+    QHBoxLayout* sectorHeaderLayout = new QHBoxLayout(sectorHeader);
+    sectorHeaderLayout->setContentsMargins(8, 0, 8, 0);
+
+    d->sectorTabs = new QTabWidget(sectorHeader);
+    d->sectorTabs->setStyleSheet(QString(R"(
+        QTabWidget::pane { border: none; background: transparent; }
+        QTabBar::tab {
+            background: transparent;
+            color: %1;
+            padding: 4px 12px;
+            border: none;
+            font-size: 11px;
+        }
+        QTabBar::tab:selected {
+            color: %2;
+            border-bottom: 2px solid %2;
+        }
+    )").arg(DashboardColors::TextSecondary, DashboardColors::Primary));
+    
+    // 添加Tab
+    QStringList tabNames = {QStringLiteral("行业"), QStringLiteral("概念"), QStringLiteral("地区")};
+    for (const QString& tabName : tabNames) {
+        QLabel* placeholder = new QLabel(tabName);
+        d->sectorTabs->addTab(placeholder, tabName);
+    }
+    sectorHeaderLayout->addWidget(d->sectorTabs);
+
+    sectorLayout->addWidget(sectorHeader);
+
+    // 板块表格
+    d->sectorModel = new SectorHeatmapModel(this);
+    d->sectorTable = new QTableView(sectorCard);
+    d->sectorTable->setModel(d->sectorModel);
+    d->sectorTable->setItemDelegateForColumn(1, new ChangeColorDelegate(this));
+    d->sectorTable->setAlternatingRowColors(true);
+    d->sectorTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    d->sectorTable->verticalHeader()->setVisible(false);
+    d->sectorTable->setShowGrid(false);
+    d->sectorTable->setStyleSheet(tableStyle);
+    d->sectorTable->verticalHeader()->setDefaultSectionSize(22);
+    sectorLayout->addWidget(d->sectorTable);
+
+    d->rankGridLayout->addWidget(sectorCard, 0, 2, 2, 1); // 跨两行
+
+    // 第2行：沪5分钟涨跌榜、深5分钟涨跌榜
+    // 左中：沪5分钟涨跌榜
+    d->sh5MinModel = new StockRankModel(this);
+    QFrame* sh5MinCard = createCardWithTitle(QStringLiteral("沪5分钟涨幅"), d->sh5MinTable, d->sh5MinModel);
+    d->rankGridLayout->addWidget(sh5MinCard, 1, 0);
+
+    // 中中：深5分钟涨跌榜
+    d->sz5MinModel = new StockRankModel(this);
+    QFrame* sz5MinCard = createCardWithTitle(QStringLiteral("深5分钟涨幅"), d->sz5MinTable, d->sz5MinModel);
+    d->rankGridLayout->addWidget(sz5MinCard, 1, 1);
+
+    // 设置列宽比例
+    d->rankGridLayout->setColumnStretch(0, 1);
+    d->rankGridLayout->setColumnStretch(1, 1);
+    d->rankGridLayout->setColumnStretch(2, 1);
+    d->rankGridLayout->setRowStretch(0, 1);
+    d->rankGridLayout->setRowStretch(1, 1);
+}
+
+/**
+ * @brief 初始化底部信息区
+ */
+void DashboardPage::setupInfoPanel()
+{
+    d->infoSplitter = new QSplitter(Qt::Horizontal, this);
+    d->infoSplitter->setHandleWidth(1);
+    d->infoSplitter->setStyleSheet(
+        QString("QSplitter::handle { background-color: %1; }").arg(DashboardColors::BgBorder));
+
+    // 1. 自选股列表
+    setupWatchlistPanel();
+    d->infoSplitter->addWidget(d->watchlistContainer);
+
+    // 2. 新闻资讯
+    setupNewsPanel();
+    d->infoSplitter->addWidget(d->newsPanel);
+
+    // 3. 资金流向
+    setupMoneyFlowPanel();
+    d->infoSplitter->addWidget(d->moneyFlowContainer);
+
+    // 设置分割比例
+    d->infoSplitter->setSizes({350, 300, 300});
+}
+
+/**
+ * @brief 初始化自选股面板
+ */
+void DashboardPage::setupWatchlistPanel()
+{
+    d->watchlistContainer = new QWidget(this);
+    d->watchlistContainer->setStyleSheet(QString("background-color: %1;")
+        .arg(DashboardColors::BgCard));
+
+    QVBoxLayout* layout = new QVBoxLayout(d->watchlistContainer);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+
+    // 标题栏
+    QFrame* header = new QFrame(d->watchlistContainer);
+    header->setFixedHeight(36);
+    header->setStyleSheet(QString("background-color: %1;").arg(DashboardColors::BgHeader));
+    QHBoxLayout* headerLayout = new QHBoxLayout(header);
+    headerLayout->setContentsMargins(12, 0, 12, 0);
+
+    QLabel* title = new QLabel(QStringLiteral("自选股"), header);
+    title->setStyleSheet(QString("color: %1; font-size: 13px; font-weight: bold;")
+        .arg(DashboardColors::TextPrimary));
+    headerLayout->addWidget(title);
+
+    d->watchlistFilter = new QComboBox(header);
+    d->watchlistFilter->addItems({QStringLiteral("全部自选"), QStringLiteral("持仓")});
+    d->watchlistFilter->setStyleSheet(QString("background: transparent; color: %1; border: none; font-size: 12px;")
+        .arg(DashboardColors::TextSecondary));
+    headerLayout->addWidget(d->watchlistFilter);
+    headerLayout->addStretch();
+
+    layout->addWidget(header);
+
+    // 表格
+    d->watchlistModel = new WatchlistModel(this);
+    d->watchlistTable = new QTableView(d->watchlistContainer);
+    d->watchlistTable->setModel(d->watchlistModel);
+    d->watchlistTable->setItemDelegateForColumn(WatchlistModel::ColChange, new ChangeColorDelegate(this));
+    d->watchlistTable->setAlternatingRowColors(true);
+    d->watchlistTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    d->watchlistTable->verticalHeader()->setVisible(false);
+    d->watchlistTable->setShowGrid(false);
+    d->watchlistTable->verticalHeader()->setDefaultSectionSize(24);
+    d->watchlistTable->setStyleSheet(QString(R"(
+        QTableView {
+            background-color: %1;
+            border: none;
+            gridline-color: %2;
+            font-family: 'Consolas', 'JetBrains Mono', monospace;
+        }
+        QTableView::item { padding: 2px 4px; color: %3; font-size: 12px; }
+        QHeaderView::section {
+            background-color: %4;
+            color: %5;
+            padding: 4px 6px;
+            border: none;
+            font-size: 11px;
+        }
+    )").arg(DashboardColors::BgCard, DashboardColors::BgBorder, 
+            DashboardColors::TextPrimary, DashboardColors::BgHeader, 
+            DashboardColors::TextSecondary));
+    layout->addWidget(d->watchlistTable);
+}
+
+/**
+ * @brief 初始化新闻面板
+ */
+void DashboardPage::setupNewsPanel()
+{
+    d->newsPanel = new QFrame(this);
+    d->newsPanel->setStyleSheet(QString("background-color: %1;")
+        .arg(DashboardColors::BgCard));
+
+    QVBoxLayout* layout = new QVBoxLayout(d->newsPanel);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+
+    // 标题栏
+    QFrame* header = new QFrame(d->newsPanel);
+    header->setFixedHeight(36);
+    header->setStyleSheet(QString("background-color: %1;").arg(DashboardColors::BgHeader));
+    QHBoxLayout* headerLayout = new QHBoxLayout(header);
+    headerLayout->setContentsMargins(12, 0, 12, 0);
+
+    QLabel* title = new QLabel(QStringLiteral("24小时滚动新闻"), header);
+    title->setStyleSheet(QString("color: %1; font-size: 13px; font-weight: bold;")
+        .arg(DashboardColors::TextPrimary));
+    headerLayout->addWidget(title);
+    headerLayout->addStretch();
+
+    QLabel* moreLabel = new QLabel(QStringLiteral("更多 >"), header);
+    moreLabel->setStyleSheet(QString("color: %1; font-size: 12px;")
+        .arg(DashboardColors::TextTertiary));
+    headerLayout->addWidget(moreLabel);
+
+    layout->addWidget(header);
+
+    // 新闻列表
+    d->newsList = new QListWidget(d->newsPanel);
+    d->newsList->setStyleSheet(QString(R"(
+        QListWidget {
+            background-color: %1;
+            border: none;
+            padding: 4px;
+        }
+        QListWidget::item {
+            color: %2;
+            font-size: 12px;
+            padding: 6px 8px;
+            border-bottom: 1px solid %3;
+        }
+        QListWidget::item:hover {
+            background-color: %4;
+        }
+    )").arg(DashboardColors::BgCard, DashboardColors::TextPrimary, 
+            DashboardColors::BgBorder, DashboardColors::BgHover));
+    layout->addWidget(d->newsList);
+}
+
+/**
+ * @brief 初始化资金流向面板
+ */
+void DashboardPage::setupMoneyFlowPanel()
+{
+    d->moneyFlowContainer = new QWidget(this);
+    d->moneyFlowContainer->setStyleSheet(QString("background-color: %1;")
+        .arg(DashboardColors::BgCard));
+
+    QVBoxLayout* layout = new QVBoxLayout(d->moneyFlowContainer);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+
+    // 标题栏
+    QFrame* header = new QFrame(d->moneyFlowContainer);
+    header->setFixedHeight(36);
+    header->setStyleSheet(QString("background-color: %1;").arg(DashboardColors::BgHeader));
+    QHBoxLayout* headerLayout = new QHBoxLayout(header);
+    headerLayout->setContentsMargins(12, 0, 12, 0);
+
+    QLabel* title = new QLabel(QStringLiteral("资金流向"), header);
+    title->setStyleSheet(QString("color: %1; font-size: 13px; font-weight: bold;")
+        .arg(DashboardColors::TextPrimary));
+    headerLayout->addWidget(title);
+
+    d->moneyFlowPeriod = new QComboBox(header);
+    d->moneyFlowPeriod->addItems({QStringLiteral("当日"), QStringLiteral("3日"), QStringLiteral("5日")});
+    d->moneyFlowPeriod->setStyleSheet(QString("background: transparent; color: %1; border: none; font-size: 12px;")
+        .arg(DashboardColors::TextSecondary));
+    headerLayout->addWidget(d->moneyFlowPeriod);
+    headerLayout->addStretch();
+
+    layout->addWidget(header);
+
+    // 表格
+    d->moneyFlowModel = new MoneyFlowModel(this);
+    d->moneyFlowTable = new QTableView(d->moneyFlowContainer);
+    d->moneyFlowTable->setModel(d->moneyFlowModel);
+    d->moneyFlowTable->setItemDelegateForColumn(MoneyFlowModel::ColNetInflow, new MoneyFlowDelegate(this));
+    d->moneyFlowTable->setAlternatingRowColors(true);
+    d->moneyFlowTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    d->moneyFlowTable->verticalHeader()->setVisible(false);
+    d->moneyFlowTable->setShowGrid(false);
+    d->moneyFlowTable->verticalHeader()->setDefaultSectionSize(24);
+    d->moneyFlowTable->setStyleSheet(QString(R"(
+        QTableView {
+            background-color: %1;
+            border: none;
+            gridline-color: %2;
+            font-family: 'Consolas', 'JetBrains Mono', monospace;
+        }
+        QTableView::item { padding: 2px 4px; color: %3; font-size: 12px; }
+        QHeaderView::section {
+            background-color: %4;
+            color: %5;
+            padding: 4px 6px;
+            border: none;
+            font-size: 11px;
+        }
+    )").arg(DashboardColors::BgCard, DashboardColors::BgBorder, 
+            DashboardColors::TextPrimary, DashboardColors::BgHeader, 
+            DashboardColors::TextSecondary));
+    layout->addWidget(d->moneyFlowTable);
 }
 
 /**
  * @brief 连接信号槽
- * 绑定所有交互事件
  */
-void DashboardPage::connectSignals()
+void DashboardPage::setupConnections()
 {
-    // 市场切换
-    connect(d->m_marketCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+    connect(d->searchEdit, &QLineEdit::textChanged, this, &DashboardPage::onSearchChanged);
+    connect(d->marketCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &DashboardPage::onMarketChanged);
+    connect(d->watchlistFilter, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &DashboardPage::onWatchlistFilterChanged);
+    connect(d->moneyFlowPeriod, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &DashboardPage::onMoneyFlowPeriodChanged);
+    connect(d->sectorTabs, &QTabWidget::currentChanged, this, &DashboardPage::onSectorTabChanged);
 
-    // 行业筛选
-    connect(d->m_industryCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &DashboardPage::onIndustryChanged);
-
-    // 搜索框实时过滤
-    connect(d->m_searchEdit, &QLineEdit::textChanged,
-            this, &DashboardPage::onSearchTextChanged);
-
-    // 搜索框回车确认
-    connect(d->m_searchEdit, &QLineEdit::returnPressed,
-            this, &DashboardPage::onRefreshClicked);
-
-    // 刷新按钮
-    connect(d->m_refreshBtn, &QPushButton::clicked,
-            this, &DashboardPage::onRefreshClicked);
-
-    // 复盘模式开关
-    connect(d->m_reviewBtn, &QPushButton::toggled,
-            this, &DashboardPage::onReviewModeToggled);
-
-    // 播放/暂停
-    connect(d->m_playBtn, &QPushButton::clicked,
-            this, &DashboardPage::onAutoPlay);
-
-    // 热力图信号
-    connect(d->m_treeMap, &TreeMapWidget::itemDoubleClicked,
-            this, &DashboardPage::onItemDoubleClicked);
-
-    connect(d->m_treeMap, &TreeMapWidget::itemHovered,
-            this, &DashboardPage::onItemHovered);
-
-    connect(d->m_treeMap, &TreeMapWidget::statsChanged,
-            this, &DashboardPage::onStatsChanged);
-
-    // 复盘定时器
-    d->m_reviewTimer = new QTimer(this);
-    connect(d->m_reviewTimer, &QTimer::timeout, this, [this]()
-    {
-        d->m_treeMap->nextTimeFrame();
-    });
+    // 双击信号
+    connect(d->shGainTable, &QTableView::doubleClicked, this, &DashboardPage::onRowDoubleClicked);
+    connect(d->szGainTable, &QTableView::doubleClicked, this, &DashboardPage::onRowDoubleClicked);
+    connect(d->watchlistTable, &QTableView::doubleClicked, this, &DashboardPage::onRowDoubleClicked);
 }
 
 /**
- * @brief 初始化数据
- * 创建数据管理器并加载初始数据
+ * @brief 加载演示数据
  */
-void DashboardPage::initData()
+void DashboardPage::loadDemoData()
 {
-    d->m_dataManager = new QuoteDataManager(this);
+    loadIndexData();
+    loadRankData();
+    loadWatchlistData();
+    loadNewsData();
+    loadMoneyFlowData();
+    loadSectorData();
 
-    // 连接数据更新信号
-    connect(d->m_dataManager, &QuoteDataManager::dataUpdated,
-            this, &DashboardPage::onDataUpdated);
+    updateTimeDisplay();
+}
 
-    connect(d->m_dataManager, &QuoteDataManager::itemUpdated,
-            this, [this](const StockQuoteItem& item)
-            {
-                // 单个项目更新时，如果正在显示该项目，可以刷新UI
-                Q_UNUSED(item)
-                // 实际应用中可以优化为局部刷新
-            });
+/**
+ * @brief 加载指数数据
+ */
+void DashboardPage::loadIndexData()
+{
+    d->indexData.clear();
 
-    // 加载初始数据（A股全图，500只模拟股票）
-    loadMarketData("all");
+    struct IndexInfo {
+        QString code;
+        QString name;
+        double current;
+        double change;
+        double changePercent;
+    };
 
-    // 启动自动更新（8秒间隔，与52etf.site保持一致）
-    d->m_dataManager->startAutoUpdate(8000);
+    QVector<IndexInfo> indices = {
+        {"sh000001", QStringLiteral("上证指数"), 3256.78, 23.45, 0.72},
+        {"sz399001", QStringLiteral("深证成指"), 10856.34, -45.67, -0.42},
+        {"sh000300", QStringLiteral("沪深300"), 3892.45, 18.67, 0.48},
+        {"sz399006", QStringLiteral("创业板指"), 2156.89, 32.45, 1.53},
+        {"sh000688", QStringLiteral("科创50"), 987.65, -12.34, -1.24}
+    };
+
+    for (const auto& idx : indices) {
+        IndexData data;
+        data.code = idx.code;
+        data.name = idx.name;
+        data.current = idx.current;
+        data.change = idx.change;
+        data.changePercent = idx.changePercent;
+        d->indexData.append(data);
+    }
+
+    updateIndexDisplay();
+}
+
+/**
+ * @brief 更新指数显示
+ */
+void DashboardPage::updateIndexDisplay()
+{
+    for (int i = 0; i < d->indexData.size() && i < d->indexPriceLabels.size(); ++i) {
+        const IndexData& idx = d->indexData[i];
+        d->indexPriceLabels[i]->setText(QString::number(idx.current, 'f', 2));
+        
+        QString changeText = idx.change >= 0 
+            ? QString("+%1 (+%2%)").arg(idx.change, 0, 'f', 2).arg(idx.changePercent, 0, 'f', 2)
+            : QString("%1 (%2%)").arg(idx.change, 0, 'f', 2).arg(idx.changePercent, 0, 'f', 2);
+        d->indexChangeLabels[i]->setText(changeText);
+        d->indexChangeLabels[i]->setStyleSheet(
+            QString("color: %1; font-size: 13px;").arg(idx.change >= 0 ? DashboardColors::Up : DashboardColors::Down));
+    }
+}
+
+/**
+ * @brief 加载排行数据
+ */
+void DashboardPage::loadRankData()
+{
+    // 沪A涨幅榜
+    QVector<StockRankData> shGainData;
+    for (int i = 1; i <= 15; ++i) {
+        StockRankData stock;
+        stock.rank = i;
+        stock.code = QString("60%1").arg(1000 + i, 4, 10, QChar('0'));
+        stock.name = QStringLiteral("沪股") + QString::number(i);
+        stock.price = 10.0 + QRandomGenerator::global()->bounded(100);
+        stock.changePercent = 10.0 - i * 0.5 + QRandomGenerator::global()->bounded(0.3);
+        stock.change = stock.price * stock.changePercent / 100.0;
+        shGainData.append(stock);
+    }
+    d->shGainModel->setData(shGainData);
+
+    // 深A涨幅榜
+    QVector<StockRankData> szGainData;
+    for (int i = 1; i <= 15; ++i) {
+        StockRankData stock;
+        stock.rank = i;
+        stock.code = QString("00%1").arg(1000 + i, 4, 10, QChar('0'));
+        stock.name = QStringLiteral("深股") + QString::number(i);
+        stock.price = 15.0 + QRandomGenerator::global()->bounded(80);
+        stock.changePercent = 9.5 - i * 0.5 + QRandomGenerator::global()->bounded(0.3);
+        stock.change = stock.price * stock.changePercent / 100.0;
+        szGainData.append(stock);
+    }
+    d->szGainModel->setData(szGainData);
+
+    // 沪5分钟涨幅
+    QVector<StockRankData> sh5MinData;
+    for (int i = 1; i <= 15; ++i) {
+        StockRankData stock;
+        stock.rank = i;
+        stock.code = QString("60%1").arg(2000 + i, 4, 10, QChar('0'));
+        stock.name = QStringLiteral("沪股") + QString::number(100 + i);
+        stock.price = 20.0 + QRandomGenerator::global()->bounded(50);
+        stock.changePercent = 5.0 - i * 0.3 + QRandomGenerator::global()->bounded(0.2);
+        stock.change = stock.price * stock.changePercent / 100.0;
+        sh5MinData.append(stock);
+    }
+    d->sh5MinModel->setData(sh5MinData);
+
+    // 深5分钟涨幅
+    QVector<StockRankData> sz5MinData;
+    for (int i = 1; i <= 15; ++i) {
+        StockRankData stock;
+        stock.rank = i;
+        stock.code = QString("00%1").arg(2000 + i, 4, 10, QChar('0'));
+        stock.name = QStringLiteral("深股") + QString::number(200 + i);
+        stock.price = 25.0 + QRandomGenerator::global()->bounded(40);
+        stock.changePercent = 4.5 - i * 0.3 + QRandomGenerator::global()->bounded(0.2);
+        stock.change = stock.price * stock.changePercent / 100.0;
+        sz5MinData.append(stock);
+    }
+    d->sz5MinModel->setData(sz5MinData);
+}
+
+/**
+ * @brief 加载板块数据
+ */
+void DashboardPage::loadSectorData()
+{
+    QVector<SectorData> sectorData;
+    QStringList sectors = {
+        QStringLiteral("半导体"), QStringLiteral("新能源"), QStringLiteral("医药生物"),
+        QStringLiteral("白酒"), QStringLiteral("银行"), QStringLiteral("证券"),
+        QStringLiteral("房地产"), QStringLiteral("汽车"), QStringLiteral("电子"),
+        QStringLiteral("计算机"), QStringLiteral("通信"), QStringLiteral("传媒"),
+        QStringLiteral("电力"), QStringLiteral("钢铁"), QStringLiteral("煤炭")
+    };
+
+    for (int i = 0; i < sectors.size(); ++i) {
+        SectorData sector;
+        sector.rank = i + 1;
+        sector.name = sectors[i];
+        sector.changePercent = 5.0 - i * 0.6 + QRandomGenerator::global()->bounded(0.5);
+        sector.upCount = 20 + QRandomGenerator::global()->bounded(30);
+        sector.downCount = 10 + QRandomGenerator::global()->bounded(20);
+        sector.amount = 1000000000 + QRandomGenerator::global()->bounded(5000000000);
+        sectorData.append(sector);
+    }
+    d->sectorModel->setData(sectorData);
+}
+
+/**
+ * @brief 加载自选股数据
+ */
+void DashboardPage::loadWatchlistData()
+{
+    QVector<StockRankData> watchlistData;
+    QStringList codes = {"600519", "000858", "601318", "000001", "600036", "601166", "000333", "002594"};
+    QStringList names = {QStringLiteral("贵州茅台"), QStringLiteral("五粮液"), 
+                         QStringLiteral("中国平安"), QStringLiteral("平安银行"), 
+                         QStringLiteral("招商银行"), QStringLiteral("兴业银行"),
+                         QStringLiteral("美的集团"), QStringLiteral("比亚迪")};
+
+    for (int i = 0; i < codes.size(); ++i) {
+        StockRankData stock;
+        stock.rank = i + 1;
+        stock.code = codes[i];
+        stock.name = names[i];
+        stock.price = 50.0 + QRandomGenerator::global()->bounded(1800);
+        stock.changePercent = -5.0 + QRandomGenerator::global()->bounded(10);
+        stock.change = stock.price * stock.changePercent / 100.0;
+        stock.volume = 100000 + QRandomGenerator::global()->bounded(1000000);
+        stock.amount = stock.price * stock.volume;
+        stock.turnover = 0.5 + QRandomGenerator::global()->bounded(5);
+        stock.pe = 10 + QRandomGenerator::global()->bounded(40);
+        watchlistData.append(stock);
+    }
+    d->watchlistModel->setData(watchlistData);
+}
+
+/**
+ * @brief 加载新闻数据
+ */
+void DashboardPage::loadNewsData()
+{
+    d->newsList->clear();
+
+    QStringList newsItems = {
+        QStringLiteral("【要闻】央行：稳健的货币政策要灵活精准、合理适度"),
+        QStringLiteral("【要闻】沪深两市成交额突破1.2万亿元，北向资金净买入超50亿"),
+        QStringLiteral("【研报】中金公司：看好下半年A股市场表现"),
+        QStringLiteral("【公告】贵州茅台：2024年一季度净利润同比增长18%"),
+        QStringLiteral("【要闻】科技板块午后拉升，半导体领涨"),
+        QStringLiteral("【研报】中信证券：新能源汽车销量创新高，产业链受益"),
+        QStringLiteral("【公告】比亚迪：4月新能源汽车销量同比增长40%"),
+        QStringLiteral("【要闻】国务院发布稳经济一揽子政策措施"),
+        QStringLiteral("【研报】国泰君安：看好消费复苏主线"),
+        QStringLiteral("【公告】中国平安：一季度保费收入同比增长5%")
+    };
+
+    for (const QString& news : newsItems) {
+        QString time = QString::number(15 - d->newsList->count()).rightJustified(2, '0') + ":" + 
+                       QString::number(QRandomGenerator::global()->bounded(60)).rightJustified(2, '0');
+        QString displayText = QString("[%1] %2").arg(time, news);
+        d->newsList->addItem(displayText);
+    }
+}
+
+/**
+ * @brief 加载资金流向数据
+ */
+void DashboardPage::loadMoneyFlowData()
+{
+    QVector<MoneyFlowData> flowData;
+    QStringList names = {QStringLiteral("贵州茅台"), QStringLiteral("宁德时代"), 
+                         QStringLiteral("比亚迪"), QStringLiteral("中国平安"),
+                         QStringLiteral("招商银行"), QStringLiteral("五粮液"),
+                         QStringLiteral("美的集团"), QStringLiteral("隆基绿能")};
+
+    for (int i = 0; i < names.size(); ++i) {
+        MoneyFlowData flow;
+        flow.rank = i + 1;
+        flow.code = QString("600%1").arg(500 + i, 3, 10, QChar('0'));
+        flow.name = names[i];
+        flow.netInflow = (100000000 + QRandomGenerator::global()->bounded(500000000)) * (i % 2 == 0 ? 1 : -1);
+        flow.netInflowPercent = 3.0 + QRandomGenerator::global()->bounded(10) * (i % 2 == 0 ? 1 : -1);
+        flow.day3Inflow = flow.netInflow * 2.5;
+        flow.day5Inflow = flow.netInflow * 4.0;
+        flowData.append(flow);
+    }
+    d->moneyFlowModel->setData(flowData);
+}
+
+/**
+ * @brief 刷新数据
+ */
+void DashboardPage::refreshData()
+{
+    loadDemoData();
+    LOG_DEBUG("Dashboard data refreshed");
+}
+
+/**
+ * @brief 搜索变化处理
+ */
+void DashboardPage::onSearchChanged(const QString& text)
+{
+    LOG_DEBUG(QString("Search: %1").arg(text));
 }
 
 /**
  * @brief 市场切换处理
- * 根据选择的市场加载对应数据
  */
-void DashboardPage::onMarketChanged(int index) const
+void DashboardPage::onMarketChanged(int index)
 {
-    QString market = d->m_marketCombo->currentData().toString();
-    d->m_currentMarket = market;
-
-    loadMarketData(market);
-
-    // 更新行业下拉框状态（期货没有行业概念）
-    bool isFutures = (market == "futures");
-    d->m_industryCombo->setEnabled(!isFutures);
-    if (isFutures)
-    {
-        d->m_industryCombo->setCurrentIndex(0);
-    }
+    LOG_DEBUG(QString("Market changed: %1").arg(index));
 }
 
 /**
- * @brief 行业筛选处理
+ * @brief 板块Tab切换处理
  */
-void DashboardPage::onIndustryChanged(int index) const
+void DashboardPage::onSectorTabChanged(int index)
 {
-    Q_UNUSED(index)
-    if (const QString industry = d->m_industryCombo->currentData().toString(); industry.isEmpty())
-    {
-        d->m_treeMap->filterByMarket(d->m_currentMarket);
-    }
-    else
-    {
-        d->m_treeMap->filterByIndustry(industry);
-    }
+    LOG_DEBUG(QString("Sector tab changed: %1").arg(index));
+    loadSectorData();
 }
 
 /**
- * @brief 搜索文本变化处理
- * 实时过滤显示
+ * @brief 自选股筛选变化处理
  */
-void DashboardPage::onSearchTextChanged(const QString& text) const
+void DashboardPage::onWatchlistFilterChanged(int index)
 {
-    if (text.isEmpty())
-    {
-        // 空搜索恢复市场筛选
-        d->m_treeMap->filterByMarket(d->m_currentMarket);
-    }
-    else if (text.length() >= 2)
-    {
-        // 至少2个字符才开始搜索，避免频繁刷新
-        d->m_treeMap->search(text);
-    }
+    LOG_DEBUG(QString("Watchlist filter changed: %1").arg(index));
 }
 
 /**
- * @brief 刷新按钮点击
- * 立即重新加载数据
+ * @brief 资金流向周期变化处理
  */
-void DashboardPage::onRefreshClicked() const
+void DashboardPage::onMoneyFlowPeriodChanged(int index)
 {
-    loadMarketData(d->m_currentMarket);
-
-    // 显示刷新提示
-    d->m_refreshBtn->setText("🔄 刷新中...");
-    QTimer::singleShot(500, this, [this]()
-    {
-        d->m_refreshBtn->setText("🔄 刷新");
-    });
+    LOG_DEBUG(QString("Money flow period changed: %1").arg(index));
 }
 
 /**
- * @brief 加载市场数据
- * 根据市场类型调用数据管理器生成或获取数据
- * @param market 市场标识符
+ * @brief 行双击处理
  */
-void DashboardPage::loadMarketData(const QString& market) const
+void DashboardPage::onRowDoubleClicked(const QModelIndex& index)
 {
-    if (!d->m_dataManager) return;
-
-    if (market == "futures")
-    {
-        // 生成期货数据（12个主要品种）
-        d->m_dataManager->generateMockFuturesData();
-    }
-    else
-    {
-        // 生成股票模拟数据
-        int count = 500;
-        if (market == "hs300") count = 300;
-        else if (market == "zz500") count = 500;
-        else if (market == "cyb" || market == "kcb") count = 200;
-
-        d->m_dataManager->generateMockData(count);
-    }
+    if (!index.isValid()) return;
+    LOG_INFO(QString("Row double clicked: %1").arg(index.row()));
 }
 
 /**
- * @brief 数据更新处理
- * 将新数据传递给热力图控件
+ * @brief 实时数据更新
  */
-void DashboardPage::onDataUpdated() const
+void DashboardPage::updateRealTimeData()
 {
-    if (!d->m_dataManager) return;
-
-    const QVector<StockQuoteItem> items = d->m_dataManager->getAllItems();
-    d->m_treeMap->setData(items);
-
-    // 更新行业下拉框（基于当前数据的行业分布）
-    updateIndustryCombo(items);
-}
-
-/**
- * @brief 更新行业下拉框选项
- * 从数据中提取行业列表
- */
-void DashboardPage::updateIndustryCombo(const QVector<StockQuoteItem>& items) const
-{
-    QSet<QString> industries;
-    for (const auto& item : items)
-    {
-        if (!item.industry.isEmpty())
-        {
-            industries.insert(item.industry);
-        }
+    // 模拟实时价格更新
+    for (int i = 0; i < d->indexData.size(); ++i) {
+        double change = QRandomGenerator::global()->bounded(10.0) - 5.0;
+        d->indexData[i].current += change;
+        d->indexData[i].change += change;
     }
-
-    QStringList list = industries.values();
-    list.sort();
-
-    // 保存当前选择
-    const QString current = d->m_industryCombo->currentData().toString();
-
-    d->m_industryCombo->clear();
-    d->m_industryCombo->addItem("全部", "");
-
-    for (const QString& ind : list)
-    {
-        d->m_industryCombo->addItem(ind, ind);
-    }
-
-    // 恢复选择
-    int index = d->m_industryCombo->findData(current);
-    if (index >= 0)
-    {
-        d->m_industryCombo->setCurrentIndex(index);
-    }
-}
-
-/**
- * @brief 复盘下一帧
- * 调用 TreeMapWidget 的 public 方法，不直接访问 protected 事件
- */
-void DashboardPage::nextReviewFrame() const
-{
-    if (!d->m_treeMap) return;
-
-    if (d->m_reviewBtn && d->m_reviewBtn->isChecked())
-    {
-        // 复盘模式：时间前进
-        d->m_treeMap->nextTimeFrame();
-    }
-    else
-    {
-        // 普通模式：通过发送事件让 TreeMapWidget 处理导航
-        auto event = new QKeyEvent(QKeyEvent::KeyPress, Qt::Key_Right, Qt::NoModifier);
-        QApplication::sendEvent(d->m_treeMap, event); // 修正：直接使用 m_treeMap，不是 d->m_treeMap
-        delete event;
-    }
-}
-
-/**
- * @brief 复盘上一帧
- */
-void DashboardPage::prevReviewFrame() const
-{
-    if (!d->m_treeMap) return;
-
-    if (d->m_reviewBtn && d->m_reviewBtn->isChecked())
-    {
-        d->m_treeMap->prevTimeFrame();
-    }
-    else
-    {
-        // 普通模式：选择上一个
-        auto* event = new QKeyEvent(QKeyEvent::KeyPress, Qt::Key_Left, Qt::NoModifier);
-        QApplication::sendEvent(d->m_treeMap, event);
-        delete event;
-    }
-}
-
-/**
- * @brief 切换自动播放
- */
-void DashboardPage::toggleAutoPlay() const
-{
-    if (!d->m_reviewBtn || !d->m_reviewBtn->isChecked()) return;
-
-    d->m_autoPlaying = !d->m_autoPlaying;
-
-    if (d->m_playBtn)
-    {
-        d->m_playBtn->setText(d->m_autoPlaying ? "⏸ 暂停" : "▶ 播放");
-    }
-
-    if (d->m_autoPlaying)
-    {
-        if (d->m_reviewTimer) d->m_reviewTimer->start(1000);
-    }
-    else
-    {
-        if (d->m_reviewTimer) d->m_reviewTimer->stop();
-    }
-}
-
-/**
- * @brief 复盘模式切换
- * @param enabled true开启复盘，false关闭
- */
-void DashboardPage::onReviewModeToggled(const bool enabled)
-{
-    d->m_treeMap->setReviewMode(enabled);
-    d->m_playBtn->setEnabled(enabled);
-
-    if (enabled)
-    {
-        d->m_reviewBtn->setText("📊 复盘中");
-        d->m_dataManager->stopAutoUpdate(); // 复盘时暂停实时更新
-
-        // 加载历史数据（模拟）
-        QMessageBox::information(this, "复盘模式",
-                                 "复盘模式已开启。\n使用 ← → 方向键浏览历史数据，空格键播放/暂停。");
-    }
-    else
-    {
-        d->m_reviewBtn->setText("📊 复盘");
-        d->m_autoPlaying = false;
-        d->m_playBtn->setText("▶ 播放");
-        d->m_reviewTimer->stop();
-        d->m_dataManager->startAutoUpdate(8000); // 恢复实时更新
-    }
-}
-
-/**
- * @brief 自动播放复盘
- * 开启/停止定时自动翻页
- */
-void DashboardPage::onAutoPlay() const
-{
-    toggleAutoPlay();
-}
-
-/**
- * @brief 双击项目处理
- * 打开详细K线图（预留接口）
- */
-void DashboardPage::onItemDoubleClicked(const StockQuoteItem& item)
-{
-    // 这里可以弹出K线对话框或发送信号给主窗口打开详情页
-    QMessageBox::information(this, "详情",
-                             QString("股票: %1 %2\n现价: %3\n涨跌: %4%\n市值: %5亿")
-                             .arg(item.code, item.name)
-                             .arg(item.price, 0, 'f', 2)
-                             .arg(item.changePercent, 0, 'f', 2)
-                             .arg(item.marketCap, 0, 'f', 2));
-}
-
-/**
- * @brief 鼠标悬停处理
- * 更新状态栏选中信息
- */
-void DashboardPage::onItemHovered(const StockQuoteItem& item) const
-{
-    d->m_selectedLabel->setText(
-        QString("选中: %1 %2 | %3%")
-        .arg(item.code, item.name)
-        .arg(item.changePercent, 0, 'f', 2)
-    );
-}
-
-/**
- * @brief 统计数据更新
- * 来自TreeMapWidget的统计信号，更新底部状态栏
- */
-void DashboardPage::onStatsChanged(int up, int flat, int down, double turnover) const
-{
-    d->m_upCountLabel->setText(QString("上涨: %1").arg(up));
-    d->m_flatCountLabel->setText(QString("平盘: %1").arg(flat));
-    d->m_downCountLabel->setText(QString("下跌: %1").arg(down));
-    d->m_turnoverLabel->setText(QString("成交额: %1亿").arg(turnover, 0, 'f', 2));
+    updateIndexDisplay();
 }
 
 /**
  * @brief 更新时间显示
- * 每秒更新状态栏时间
  */
-void DashboardPage::updateTimeDisplay() const
+void DashboardPage::updateTimeDisplay()
 {
     QDateTime now = QDateTime::currentDateTime();
     QString timeStr = now.toString("yyyy-MM-dd hh:mm:ss");
 
-    // 判断交易时间（A股 9:30-11:30, 13:00-15:00）
-    int hour = now.time().hour();
-    int minute = now.time().minute();
-    bool isTrading = ((hour == 9 && minute >= 30) || (hour == 10) ||
-        (hour == 11 && minute <= 30) ||
-        (hour >= 13 && hour < 15) ||
-        (hour == 15 && minute == 0));
+    QTime time = now.time();
+    bool isTrading = (time >= QTime(9, 30) && time <= QTime(11, 30)) ||
+                     (time >= QTime(13, 0) && time <= QTime(15, 0));
 
-    if (isTrading)
-    {
-        timeStr += " (交易中)";
-        d->m_timeLabel->setStyleSheet("color: #00ff00; font-weight: bold;");
-    }
-    else
-    {
-        timeStr += " (休市)";
-        d->m_timeLabel->setStyleSheet("color: #888; font-weight: bold;");
+    if (isTrading) {
+        timeStr += QStringLiteral(" 交易中");
+        d->timeLabel->setStyleSheet(QString("color: %1;").arg(DashboardColors::Down));
+    } else {
+        timeStr += QStringLiteral(" 休市");
+        d->timeLabel->setStyleSheet(QString("color: %1;").arg(DashboardColors::TextTertiary));
     }
 
-    d->m_timeLabel->setText(timeStr);
-}
+    d->timeLabel->setText(timeStr);
 
-/**
- * @brief 显示帮助信息
- */
-void DashboardPage::showHelp()
-{
-    QString help = R"(快捷键说明：
-• F5          - 立即刷新数据
-• F11         - 全屏切换
-• R           - 切换复盘模式
-• Space       - 复盘播放/暂停
-• ← / →       - 复盘时间后退/前进
-• ↑ / ↓       - 选择上一个/下一个股票
-• ESC         - 取消选中
-
-操作提示：
-• 色块面积代表流通市值大小
-• 颜色红涨绿跌（A股风格）
-• 双击色块查看详细行情
-• 滚轮调整最小显示市值
-• 8秒自动刷新数据)";
-
-    QMessageBox::information(this, "帮助", help);
-}
-
-/**
- * @brief 键盘事件处理
- * 实现快捷键功能
- */
-void DashboardPage::keyPressEvent(QKeyEvent* event)
-{
-    // 先处理 DashboardPage 级别的快捷键
-    switch (event->key())
-    {
-    case Qt::Key_F5:
-        onRefreshClicked();
-        event->accept();
-        return;
-
-    case Qt::Key_F11:
-        // 通知主窗口切换全屏，或自行处理
-        event->ignore(); // 传递给父级处理
-        return;
-
-    case Qt::Key_R:
-        if (d->m_reviewBtn) d->m_reviewBtn->toggle();
-        event->accept();
-        return;
-
-    case Qt::Key_Space:
-        if (d->m_reviewBtn && d->m_reviewBtn->isChecked())
-        {
-            toggleAutoPlay();
-        }
-        event->accept();
-        return;
-
-    case Qt::Key_Right:
-    case Qt::Key_Up:
-        // 复盘前进或选择下一个
-        nextReviewFrame();
-        event->accept();
-        return;
-
-    case Qt::Key_Left:
-    case Qt::Key_Down:
-        // 复盘后退或选择上一个
-        prevReviewFrame();
-        event->accept();
-        return;
-
-    case Qt::Key_Escape:
-        // 取消选中
-        if (d->m_treeMap)
-        {
-            // 调用 public 方法清除选择，而不是 protected 的 keyPressEvent
-            // 假设 TreeMapWidget 有 clearSelection 或类似方法
-            // 或者通过 selectItem 空字符串实现
-            d->m_treeMap->selectItem("");
-        }
-        event->accept();
-        return;
-
-    default:
-        QWidget::keyPressEvent(event); // 或 BasePage::keyPressEvent(event)
-    }
+    // 更新状态
+    int upCount = 1234;
+    int downCount = 890;
+    d->statusLabel->setText(QString("上涨:%1 下跌:%2").arg(upCount).arg(downCount));
 }
 
 void DashboardPage::resizeEvent(QResizeEvent* event)
 {
-    QWidget::resizeEvent(event); // 或 BasePage::resizeEvent(event)
+    BasePage::resizeEvent(event);
 }
 
-/**
- * @brief 设置全屏模式
- * 由主窗口调用，调整UI元素显示
- * @param fullscreen 是否全屏
- */
-void DashboardPage::setFullScreen(const bool fullscreen) const
+void DashboardPage::showEvent(QShowEvent* event)
 {
-    if (fullscreen)
-    {
-        d->m_toolBar->setVisible(false);
-        d->m_statusBar->setVisible(false);
-    }
-    else
-    {
-        d->m_toolBar->setVisible(true);
-        d->m_statusBar->setVisible(true);
-    }
+    BasePage::showEvent(event);
+    d->updateTimer->start();
+    d->clockTimer->start();
+    LOG_DEBUG("DashboardPage shown, timers started");
 }
 
-/**
- * @brief 公开接口：手动刷新
- * 供外部调用强制刷新数据
- */
-void DashboardPage::refreshData() const
+void DashboardPage::hideEvent(QHideEvent* event)
 {
-    onRefreshClicked();
-}
-
-/**
- * @brief 公开接口：设置市场
- * 供外部程序控制当前显示的市场
- * @param market 市场代码
- */
-void DashboardPage::setMarket(const QString& market) const
-{
-    int index = d->m_marketCombo->findData(market);
-    if (index >= 0)
-    {
-        d->m_marketCombo->setCurrentIndex(index);
-    }
+    BasePage::hideEvent(event);
+    d->updateTimer->stop();
+    d->clockTimer->stop();
+    LOG_DEBUG("DashboardPage hidden, timers stopped");
 }
