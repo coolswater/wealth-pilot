@@ -208,7 +208,12 @@ void MainWindow::onNavigateToKLinePage(const QString& instrumentId, const QVaria
         // Set instrument
         auto* kline = qobject_cast<FuturesKLinePage*>(klinePage);
         if (kline) {
-            kline->setInstrument(instrumentId);
+            // Prepare params
+            QVariantMap pageParams = params;
+            pageParams["instrumentId"] = instrumentId;
+            
+            // Activate page with params
+            kline->onPageActivated(pageParams);
         }
         // Switch to KLine page
         d->contentStack->setCurrentWidget(klinePage);
@@ -379,16 +384,22 @@ bool MainWindow::initializeApplication()
     }
     
     // Register services to ServiceLocator
-    // CTP plugin
+    // CTP plugin - may not be available if not loaded
     auto ctpPlugin = PluginLoader::instance().getPlugin<ICTPPlugin>("CTPPlugin");
     if (ctpPlugin) {
         ServiceLocator::instance().registerInstance<ICTPPlugin>(ctpPlugin);
+        LOG_DEBUG("CTPPlugin registered to ServiceLocator");
+    } else {
+        LOG_WARNING("CTPPlugin not available - CTP features will be limited");
     }
     
-    // AI plugin
+    // AI plugin - may not be available if not loaded
     auto aiPlugin = PluginLoader::instance().getPlugin<IAIPlugin>("AIPlugin");
     if (aiPlugin) {
         ServiceLocator::instance().registerInstance<IAIPlugin>(aiPlugin);
+        LOG_DEBUG("AIPlugin registered to ServiceLocator");
+    } else {
+        LOG_WARNING("AIPlugin not available - AI features will be limited");
     }
     
     LOG_INFO("Application initialized successfully");
@@ -412,6 +423,12 @@ void MainWindow::loadSettings()
     }
     // Restore last active page
     QString lastPage = settings.value("window/lastPage", "dashboard").toString();
+    
+    // Don't restore pages that require parameters (like FuturesKLine)
+    if (lastPage == "FuturesKLine") {
+        lastPage = "dashboard";
+    }
+    
     onSidebarItemClicked(lastPage);
     
     LOG_DEBUG("Settings loaded");

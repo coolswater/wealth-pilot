@@ -38,6 +38,7 @@ struct MarketData {
     double openInterest;        // 持仓量
     double upperLimitPrice;     // 涨停价
     double lowerLimitPrice;     // 跌停价
+    double preSettlementPrice;  // 昨结算价
     QDateTime updateTime;       // 更新时间
 };
 

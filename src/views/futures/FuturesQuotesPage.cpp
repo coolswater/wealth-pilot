@@ -230,12 +230,12 @@ void FuturesQuotesPage::initializePage()
 
     d->m_CTPService->setCredentials(brokerId, userId, password, appId, authCode);
     // simnow
-    // d->m_CTPService->setMarketFrontAddress("tcp://182.254.243.31:30011");
-    // d->m_CTPService->setTradingFrontAddress("tcp://182.254.243.31:30001");
+    d->m_CTPService->setMarketFrontAddress("tcp://182.254.243.31:30011");
+    d->m_CTPService->setTradingFrontAddress("tcp://182.254.243.31:30001");
 
     // simnow 7*24小时
-    d->m_CTPService->setMarketFrontAddress("tcp://182.254.243.31:40011");
-    d->m_CTPService->setTradingFrontAddress("tcp://182.254.243.31:40001");
+    // d->m_CTPService->setMarketFrontAddress("tcp://182.254.243.31:40011");
+    // d->m_CTPService->setTradingFrontAddress("tcp://182.254.243.31:40001");
 
     LOG_INFO("CTP credentials configured, calling setupConnections()...");
 

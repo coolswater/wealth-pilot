@@ -66,6 +66,11 @@ struct KLineChart::Impl {
      */
     void calculateVisibleRange() {
         if (data.isEmpty()) {
+            visibleStart = 0;
+            visibleCount = 100;
+            minPrice = 0;
+            maxPrice = 100;
+            priceScale = 1.0;
             return;
         }
         
@@ -78,18 +83,34 @@ struct KLineChart::Impl {
         maxPrice = std::numeric_limits<double>::lowest();
         
         for (int i = visibleStart; i < visibleStart + visibleCount && i < data.size(); ++i) {
-            minPrice = qMin(minPrice, data[i].low);
-            maxPrice = qMax(maxPrice, data[i].high);
+            // 跳过无效数据
+            if (data[i].low > 0) {
+                minPrice = qMin(minPrice, data[i].low);
+            }
+            if (data[i].high > 0) {
+                maxPrice = qMax(maxPrice, data[i].high);
+            }
+        }
+        
+        // 处理无效价格范围
+        if (minPrice <= 0 || maxPrice <= 0 || minPrice >= maxPrice) {
+            minPrice = 0;
+            maxPrice = 100;
         }
         
         // 添加边距
         double margin = (maxPrice - minPrice) * 0.1;
+        if (margin <= 0) {
+            margin = 10;
+        }
         minPrice -= margin;
         maxPrice += margin;
         
         // 计算缩放
-        if (chartRect.height() > 0) {
+        if (chartRect.height() > 0 && maxPrice > minPrice) {
             priceScale = chartRect.height() / (maxPrice - minPrice);
+        } else {
+            priceScale = 1.0;
         }
     }
     
@@ -115,13 +136,21 @@ struct KLineChart::Impl {
      * @brief 价格转Y坐标
      */
     int priceToY(double price) const {
-        return chartRect.bottom() - (price - minPrice) * priceScale;
+        if (priceScale <= 0) {
+            return chartRect.top();
+        }
+        double y = chartRect.bottom() - (price - minPrice) * priceScale;
+        // 限制在图表区域内
+        return qBound(chartRect.top(), static_cast<int>(y), chartRect.bottom());
     }
     
     /**
      * @brief Y坐标转价格
      */
     double yToPrice(int y) const {
+        if (priceScale <= 0) {
+            return minPrice;
+        }
         return minPrice + (chartRect.bottom() - y) / priceScale;
     }
 };
@@ -524,7 +553,7 @@ void KLineChart::drawGrid(QPainter& painter)
  */
 void KLineChart::drawCandles(QPainter& painter)
 {
-    if (d->data.isEmpty()) {
+    if (d->data.isEmpty() || d->priceScale <= 0) {
         return;
     }
     
@@ -533,6 +562,11 @@ void KLineChart::drawCandles(QPainter& painter)
     
     for (int i = d->visibleStart; i < d->visibleStart + d->visibleCount && i < d->data.size(); ++i) {
         const KLineData& kline = d->data[i];
+        
+        // 跳过无效数据
+        if (kline.open <= 0 || kline.close <= 0 || kline.high <= 0 || kline.low <= 0) {
+            continue;
+        }
         
         int x = d->indexToX(i);
         
@@ -552,18 +586,30 @@ void KLineChart::drawCandles(QPainter& painter)
         // 绘制上下影线
         int highY = d->priceToY(kline.high);
         int lowY = d->priceToY(kline.low);
-        painter.drawLine(x, highY, x, lowY);
+        
+        // 确保坐标有效
+        if (highY >= d->chartRect.top() && lowY <= d->chartRect.bottom()) {
+            painter.drawLine(x, highY, x, lowY);
+        }
         
         // 绘制实体
         int openY = d->priceToY(kline.open);
         int closeY = d->priceToY(kline.close);
         
+        // 确保实体高度至少为1像素
+        int bodyHeight = qAbs(closeY - openY);
+        if (bodyHeight < 1) {
+            bodyHeight = 1;
+        }
+        
+        int bodyTop = qMin(openY, closeY);
+        
         if (kline.close > kline.open) {
             // 上涨：空心
-            painter.drawRect(x - halfWidth, closeY, candleWidth, openY - closeY);
+            painter.drawRect(x - halfWidth, bodyTop, candleWidth, bodyHeight);
         } else {
             // 下跌：实心
-            painter.fillRect(x - halfWidth, openY, candleWidth, closeY - openY, color);
+            painter.fillRect(x - halfWidth, bodyTop, candleWidth, bodyHeight, color);
         }
     }
 }
@@ -573,17 +619,19 @@ void KLineChart::drawCandles(QPainter& painter)
  */
 void KLineChart::drawVolume(QPainter& painter)
 {
-    if (d->data.isEmpty() || !d->style.showVolume) {
+    if (d->data.isEmpty() || !d->style.showVolume || d->volumeRect.height() <= 0) {
         return;
     }
     
     // 找到最大成交量
     qint64 maxVolume = 0;
     for (int i = d->visibleStart; i < d->visibleStart + d->visibleCount && i < d->data.size(); ++i) {
-        maxVolume = qMax(maxVolume, d->data[i].volume);
+        if (d->data[i].volume > 0) {
+            maxVolume = qMax(maxVolume, d->data[i].volume);
+        }
     }
     
-    if (maxVolume == 0) {
+    if (maxVolume <= 0) {
         return;
     }
     
@@ -593,6 +641,11 @@ void KLineChart::drawVolume(QPainter& painter)
     for (int i = d->visibleStart; i < d->visibleStart + d->visibleCount && i < d->data.size(); ++i) {
         const KLineData& kline = d->data[i];
         
+        // 跳过无效数据
+        if (kline.volume <= 0) {
+            continue;
+        }
+        
         int x = d->indexToX(i);
         
         // 判断涨跌
@@ -601,6 +654,9 @@ void KLineChart::drawVolume(QPainter& painter)
         
         // 计算高度
         int height = static_cast<int>(kline.volume * d->volumeRect.height() / maxVolume);
+        if (height < 1) {
+            height = 1;
+        }
         int y = d->volumeRect.bottom() - height;
         
         painter.fillRect(x - halfWidth, y, candleWidth, height, color);
