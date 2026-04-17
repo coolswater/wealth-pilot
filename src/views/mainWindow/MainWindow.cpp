@@ -183,6 +183,9 @@ void MainWindow::onSidebarItemClicked(const QString& id)
 {
     LOG_DEBUG(QString("Sidebar item clicked: %1").arg(id));
 
+    // 设置侧边栏选中状态
+    d->sidebar->setCurrentItem(id);
+
     // Get page
     QWidget* page = getPage(id);
     if (page)
@@ -536,18 +539,19 @@ void MainWindow::loadSettings()
     {
         restoreState(state);
     }
-    // Restore last active page
-    QString lastPage = settings.value("window/lastPage", "dashboard").toString();
-
-    // Don't restore pages that require parameters (like FuturesKLine)
-    if (lastPage == "FuturesKLine")
-    {
-        lastPage = "dashboard";
-    }
-
+    
+    // 默认启动页面为 dashboard
+    // 注意：这里强制使用 dashboard 作为启动页面，而不是从设置中读取
+    // 这样可以确保每次启动都显示 dashboard
+    QString lastPage = "dashboard";
+    
+    // 设置侧边栏选中状态
+    d->sidebar->setCurrentItem(lastPage);
+    
+    // 切换到目标页面
     onSidebarItemClicked(lastPage);
 
-    LOG_DEBUG("Settings loaded");
+    LOG_DEBUG(QString("Startup with default page: %1").arg(lastPage));
 }
 
 void MainWindow::saveSettings() const
