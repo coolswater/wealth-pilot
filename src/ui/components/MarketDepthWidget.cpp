@@ -11,7 +11,6 @@
 #include <QLabel>
 #include <QFrame>
 #include <QMouseEvent>
-#include <QApplication>
 
 // ========== PIMPL 实现 ==========
 
@@ -26,20 +25,17 @@ struct MarketDepthWidget::Impl {
     QLabel* changeLabel = nullptr;
     QLabel* changePercentLabel = nullptr;
 
-    // 买盘标签（五档）
-    QLabel* bidPriceLabels[5] = {};
-    QLabel* bidVolumeLabels[5] = {};
-
-    // 卖盘标签（五档）
-    QLabel* askPriceLabels[5] = {};
-    QLabel* askVolumeLabels[5] = {};
+    // 买卖盘标签（一档）
+    QLabel* bidPriceLabel = nullptr;
+    QLabel* bidVolumeLabel = nullptr;
+    QLabel* askPriceLabel = nullptr;
+    QLabel* askVolumeLabel = nullptr;
 
     // 统计标签
     QLabel* openLabel = nullptr;
     QLabel* highLabel = nullptr;
     QLabel* lowLabel = nullptr;
     QLabel* volumeLabel = nullptr;
-    QLabel* turnoverLabel = nullptr;
     QLabel* openInterestLabel = nullptr;
 
     // 昨收价（用于计算涨跌）
@@ -102,38 +98,22 @@ void MarketDepthWidget::updateQuote(const MarketData& quote)
         d->changePercentLabel->setStyleSheet(QString("color: %1;").arg(color.name()));
     }
 
-    // 更新买盘
-    for (int i = 0; i < 5; ++i) {
-        if (d->bidPriceLabels[i]) {
-            double price = 0;
-            int volume = 0;
-            switch (i) {
-                case 0: price = quote.bidPrice1; volume = quote.bidVolume1; break;
-                case 1: price = quote.bidPrice2; volume = quote.bidVolume2; break;
-                case 2: price = quote.bidPrice3; volume = quote.bidVolume3; break;
-                case 3: price = quote.bidPrice4; volume = quote.bidVolume4; break;
-                case 4: price = quote.bidPrice5; volume = quote.bidVolume5; break;
-            }
-            d->bidPriceLabels[i]->setText(formatPrice(price));
-            d->bidVolumeLabels[i]->setText(formatVolume(volume));
-        }
+    // 更新买一
+    if (d->bidPriceLabel) {
+        d->bidPriceLabel->setText(formatPrice(quote.bidPrice1));
+        d->bidPriceLabel->setStyleSheet(QString("color: %1;").arg(d->downColor.name()));
+    }
+    if (d->bidVolumeLabel) {
+        d->bidVolumeLabel->setText(formatVolume(quote.bidVolume1));
     }
 
-    // 更新卖盘
-    for (int i = 0; i < 5; ++i) {
-        if (d->askPriceLabels[i]) {
-            double price = 0;
-            int volume = 0;
-            switch (i) {
-                case 0: price = quote.askPrice1; volume = quote.askVolume1; break;
-                case 1: price = quote.askPrice2; volume = quote.askVolume2; break;
-                case 2: price = quote.askPrice3; volume = quote.askVolume3; break;
-                case 3: price = quote.askPrice4; volume = quote.askVolume4; break;
-                case 4: price = quote.askPrice5; volume = quote.askVolume5; break;
-            }
-            d->askPriceLabels[i]->setText(formatPrice(price));
-            d->askVolumeLabels[i]->setText(formatVolume(volume));
-        }
+    // 更新卖一
+    if (d->askPriceLabel) {
+        d->askPriceLabel->setText(formatPrice(quote.askPrice1));
+        d->askPriceLabel->setStyleSheet(QString("color: %1;").arg(d->upColor.name()));
+    }
+    if (d->askVolumeLabel) {
+        d->askVolumeLabel->setText(formatVolume(quote.askVolume1));
     }
 
     // 更新统计信息
@@ -149,13 +129,10 @@ void MarketDepthWidget::clear()
     if (d->priceLabel) d->priceLabel->setText("--");
     if (d->changeLabel) d->changeLabel->setText("--");
     if (d->changePercentLabel) d->changePercentLabel->setText("--");
-
-    for (int i = 0; i < 5; ++i) {
-        if (d->bidPriceLabels[i]) d->bidPriceLabels[i]->setText("--");
-        if (d->bidVolumeLabels[i]) d->bidVolumeLabels[i]->setText("--");
-        if (d->askPriceLabels[i]) d->askPriceLabels[i]->setText("--");
-        if (d->askVolumeLabels[i]) d->askVolumeLabels[i]->setText("--");
-    }
+    if (d->bidPriceLabel) d->bidPriceLabel->setText("--");
+    if (d->bidVolumeLabel) d->bidVolumeLabel->setText("--");
+    if (d->askPriceLabel) d->askPriceLabel->setText("--");
+    if (d->askVolumeLabel) d->askVolumeLabel->setText("--");
 }
 
 QString MarketDepthWidget::instrumentId() const
@@ -174,23 +151,22 @@ void MarketDepthWidget::mousePressEvent(QMouseEvent *event)
     if (!label) return;
 
     // 检查是否是买盘价格
-    for (int i = 0; i < 5; ++i) {
-        if (label == d->bidPriceLabels[i]) {
-            bool ok = false;
-            double price = label->text().toDouble(&ok);
-            if (ok && price > 0) {
-                emit buyClicked(price);
-            }
-            return;
+    if (label == d->bidPriceLabel) {
+        bool ok = false;
+        double price = label->text().toDouble(&ok);
+        if (ok && price > 0) {
+            emit buyClicked(price);
         }
-        if (label == d->askPriceLabels[i]) {
-            bool ok = false;
-            double price = label->text().toDouble(&ok);
-            if (ok && price > 0) {
-                emit sellClicked(price);
-            }
-            return;
+        return;
+    }
+    
+    if (label == d->askPriceLabel) {
+        bool ok = false;
+        double price = label->text().toDouble(&ok);
+        if (ok && price > 0) {
+            emit sellClicked(price);
         }
+        return;
     }
 }
 
@@ -203,7 +179,6 @@ void MarketDepthWidget::setupUI()
     mainLayout->setSpacing(10);
 
     // 头部
-    setupHeader();
     mainLayout->addLayout(createHeaderLayout());
 
     // 分隔线
@@ -213,7 +188,6 @@ void MarketDepthWidget::setupUI()
     mainLayout->addWidget(line1);
 
     // 价格面板
-    setupPricePanel();
     mainLayout->addLayout(createPriceLayout());
 
     // 分隔线
@@ -222,11 +196,56 @@ void MarketDepthWidget::setupUI()
     line2->setStyleSheet("background-color: #374151;");
     mainLayout->addWidget(line2);
 
+    // 买卖盘口
+    QHBoxLayout* depthLayout = new QHBoxLayout();
+    
+    // 买盘
+    QVBoxLayout* bidLayout = new QVBoxLayout();
+    QLabel* bidTitle = new QLabel(QStringLiteral("买一"), this);
+    bidTitle->setStyleSheet("color: #10B981; font-weight: bold;");
+    bidLayout->addWidget(bidTitle);
+    d->bidPriceLabel = new QLabel("--", this);
+    d->bidPriceLabel->setStyleSheet("color: #10B981; font-size: 16px;");
+    bidLayout->addWidget(d->bidPriceLabel);
+    d->bidVolumeLabel = new QLabel("--", this);
+    d->bidVolumeLabel->setStyleSheet("color: #9CA3AF;");
+    bidLayout->addWidget(d->bidVolumeLabel);
+    depthLayout->addLayout(bidLayout);
+    
+    depthLayout->addStretch();
+    
+    // 卖盘
+    QVBoxLayout* askLayout = new QVBoxLayout();
+    QLabel* askTitle = new QLabel(QStringLiteral("卖一"), this);
+    askTitle->setStyleSheet("color: #EF4444; font-weight: bold;");
+    askLayout->addWidget(askTitle);
+    d->askPriceLabel = new QLabel("--", this);
+    d->askPriceLabel->setStyleSheet("color: #EF4444; font-size: 16px;");
+    askLayout->addWidget(d->askPriceLabel);
+    d->askVolumeLabel = new QLabel("--", this);
+    d->askVolumeLabel->setStyleSheet("color: #9CA3AF;");
+    askLayout->addWidget(d->askVolumeLabel);
+    depthLayout->addLayout(askLayout);
+    
+    mainLayout->addLayout(depthLayout);
+
+    // 分隔线
+    QFrame* line3 = new QFrame(this);
+    line3->setFrameShape(QFrame::HLine);
+    line3->setStyleSheet("background-color: #374151;");
+    mainLayout->addWidget(line3);
+
     // 统计面板
-    setupStatisticsPanel();
     mainLayout->addLayout(createStatisticsLayout());
 
     mainLayout->addStretch();
+    
+    // 设置整体样式
+    setStyleSheet(R"(
+        MarketDepthWidget {
+            background-color: #1F2937;
+        }
+    )");
 }
 
 QLayout* MarketDepthWidget::createHeaderLayout()
@@ -242,29 +261,14 @@ QLayout* MarketDepthWidget::createHeaderLayout()
     return layout;
 }
 
-void MarketDepthWidget::setupHeader()
-{
-    d->instrumentLabel = new QLabel(this);
-    d->instrumentLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #F3F4F6;");
-}
-
-void MarketDepthWidget::setupPricePanel()
-{
-    // 最新价
-    d->priceLabel = new QLabel("--", this);
-    d->priceLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: #F3F4F6;");
-
-    // 涨跌
-    d->changeLabel = new QLabel("--", this);
-    d->changePercentLabel = new QLabel("--", this);
-}
-
 QLayout* MarketDepthWidget::createPriceLayout()
 {
     QVBoxLayout* layout = new QVBoxLayout();
 
     // 最新价行
     QHBoxLayout* priceRow = new QHBoxLayout();
+    d->priceLabel = new QLabel("--", this);
+    d->priceLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: #F3F4F6;");
     priceRow->addWidget(d->priceLabel);
     priceRow->addStretch();
     layout->addLayout(priceRow);
@@ -274,35 +278,14 @@ QLayout* MarketDepthWidget::createPriceLayout()
     QLabel* changeTitle = new QLabel(QStringLiteral("涨跌"), this);
     changeTitle->setStyleSheet("color: #9CA3AF;");
     changeRow->addWidget(changeTitle);
+    d->changeLabel = new QLabel("--", this);
     changeRow->addWidget(d->changeLabel);
+    d->changePercentLabel = new QLabel("--", this);
     changeRow->addWidget(d->changePercentLabel);
     changeRow->addStretch();
     layout->addLayout(changeRow);
 
     return layout;
-}
-
-void MarketDepthWidget::setupDepthPanel()
-{
-    // 五档盘口
-    for (int i = 0; i < 5; ++i) {
-        d->bidPriceLabels[i] = new QLabel("--", this);
-        d->bidVolumeLabels[i] = new QLabel("--", this);
-        d->askPriceLabels[i] = new QLabel("--", this);
-        d->askVolumeLabels[i] = new QLabel("--", this);
-
-        d->bidPriceLabels[i]->setStyleSheet("color: #10B981;");  // 买盘绿色
-        d->askPriceLabels[i]->setStyleSheet("color: #EF4444;");  // 卖盘红色
-    }
-}
-
-void MarketDepthWidget::setupStatisticsPanel()
-{
-    d->openLabel = new QLabel("--", this);
-    d->highLabel = new QLabel("--", this);
-    d->lowLabel = new QLabel("--", this);
-    d->volumeLabel = new QLabel("--", this);
-    d->openInterestLabel = new QLabel("--", this);
 }
 
 QLayout* MarketDepthWidget::createStatisticsLayout()
@@ -314,28 +297,38 @@ QLayout* MarketDepthWidget::createStatisticsLayout()
     QLabel* openTitle = new QLabel(QStringLiteral("开盘"), this);
     openTitle->setStyleSheet("color: #9CA3AF;");
     layout->addWidget(openTitle, 0, 0);
+    d->openLabel = new QLabel("--", this);
+    d->openLabel->setStyleSheet("color: #F3F4F6;");
     layout->addWidget(d->openLabel, 0, 1);
 
     QLabel* highTitle = new QLabel(QStringLiteral("最高"), this);
     highTitle->setStyleSheet("color: #9CA3AF;");
     layout->addWidget(highTitle, 0, 2);
+    d->highLabel = new QLabel("--", this);
+    d->highLabel->setStyleSheet("color: #EF4444;");
     layout->addWidget(d->highLabel, 0, 3);
 
     // 第二行
     QLabel* lowTitle = new QLabel(QStringLiteral("最低"), this);
     lowTitle->setStyleSheet("color: #9CA3AF;");
     layout->addWidget(lowTitle, 1, 0);
+    d->lowLabel = new QLabel("--", this);
+    d->lowLabel->setStyleSheet("color: #10B981;");
     layout->addWidget(d->lowLabel, 1, 1);
 
     QLabel* volTitle = new QLabel(QStringLiteral("成交量"), this);
     volTitle->setStyleSheet("color: #9CA3AF;");
     layout->addWidget(volTitle, 1, 2);
+    d->volumeLabel = new QLabel("--", this);
+    d->volumeLabel->setStyleSheet("color: #F3F4F6;");
     layout->addWidget(d->volumeLabel, 1, 3);
 
     // 第三行
     QLabel* oiTitle = new QLabel(QStringLiteral("持仓量"), this);
     oiTitle->setStyleSheet("color: #9CA3AF;");
     layout->addWidget(oiTitle, 2, 0);
+    d->openInterestLabel = new QLabel("--", this);
+    d->openInterestLabel->setStyleSheet("color: #F3F4F6;");
     layout->addWidget(d->openInterestLabel, 2, 1);
 
     return layout;

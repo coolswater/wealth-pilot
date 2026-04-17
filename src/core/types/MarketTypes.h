@@ -278,19 +278,10 @@ struct TickData {
 };
 
 /**
- * @brief 订单数据
+ * @brief 订单数据（CTP专用）
+ * @note 此结构体在 ICTPPlugin.h 中定义，此处仅做前向声明
  */
-struct OrderData {
-    QString orderId;            ///< 订单ID
-    QString instrumentId;       ///< 合约代码
-    TradeDirection direction;   ///< 买卖方向
-    double price = 0.0;         ///< 委托价格
-    int volume = 0;             ///< 委托数量
-    int filledVolume = 0;       ///< 成交数量
-    OrderStatus status = OrderStatus::Pending;  ///< 订单状态
-    QDateTime createTime;       ///< 创建时间
-    QDateTime updateTime;       ///< 更新时间
-};
+// struct OrderData; // 使用 ICTPPlugin.h 中的定义
 
 // ============================================================================
 // 工具函数
@@ -388,7 +379,7 @@ inline QString formatChangePercent(double percent, bool showSign = true) {
 Q_DECLARE_METATYPE(KLineData)
 Q_DECLARE_METATYPE(MarketSnapshot)
 Q_DECLARE_METATYPE(TickData)
-Q_DECLARE_METATYPE(OrderData)
+// Q_DECLARE_METATYPE(OrderData) // 在 ICTPPlugin.h 中定义
 Q_DECLARE_METATYPE(KLinePeriod)
 Q_DECLARE_METATYPE(AdjustmentType)
 Q_DECLARE_METATYPE(TradeDirection)

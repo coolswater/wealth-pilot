@@ -185,6 +185,8 @@ set(UI_COMPONENT_SOURCES
         src/ui/components/BaseChartWidget.cpp
         src/ui/components/ComponentFactory.h
         src/ui/components/ComponentFactory.cpp
+        src/ui/components/ChartConfig.h
+        src/ui/components/ChartConfig.cpp
         src/ui/components/KLineChart.h
         src/ui/components/KLineChart.cpp
         src/ui/components/ChartToolBar.h

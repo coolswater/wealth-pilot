@@ -114,6 +114,11 @@ private:
     QString formatPrice(double price, int precision = 2);
     QString formatVolume(qint64 volume);
     QString formatChange(double change, double base);
+    
+    // 布局创建方法
+    QLayout* createHeaderLayout();
+    QLayout* createPriceLayout();
+    QLayout* createStatisticsLayout();
 
     // ========== PIMPL ==========
 
