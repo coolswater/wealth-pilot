@@ -54,21 +54,25 @@ enum class AdjustmentType {
  * @brief 买卖方向枚举
  */
 enum class TradeDirection {
-    Buy,            ///< 买入
-    Sell,           ///< 卖出
-    Unknown         ///< 未知
+    Buy = 0,            ///< 买入/开多
+    Sell = 1,           ///< 卖出/开空
+    BuyClose = 2,       ///< 平空（买入平仓）
+    SellClose = 3,      ///< 平多（卖出平仓）
+    Unknown = 99        ///< 未知
 };
 
 /**
  * @brief 订单状态枚举
  */
 enum class OrderStatus {
-    Pending,        ///< 待提交
-    Submitted,      ///< 已提交
-    Partial,        ///< 部分成交
-    Filled,         ///< 全部成交
-    Cancelled,      ///< 已撤销
-    Rejected        ///< 已拒绝
+    Pending = 0,        ///< 待提交
+    Submitted = 1,      ///< 已提交
+    Accepted = 2,       ///< 已接受
+    Rejected = 3,       ///< 已拒绝
+    PartialFilled = 4,  ///< 部分成交
+    Filled = 5,         ///< 全部成交
+    Cancelled = 6,      ///< 已撤销
+    Unknown = 99        ///< 未知
 };
 
 /**

@@ -241,6 +241,8 @@ set(WIDGET_SOURCES
         src/views/widgets/AddSymbolDialog.h
         src/views/widgets/DividerWidget.h
         src/views/widgets/DividerWidget.cpp
+        src/views/widgets/OrderDialog.h
+        src/views/widgets/OrderDialog.cpp
 )
 
 # Views 视图
@@ -266,14 +268,40 @@ set(VIEW_SOURCES
         src/views/futures/FuturesPagesRegistration.cpp
         src/views/stock/StockQuotesPage.h
         src/views/stock/StockQuotesPage.cpp
+        src/views/stock/StockKLinePage.h
+        src/views/stock/StockKLinePage.cpp
         src/views/settings/SettingsPage.h
         src/views/settings/SettingsPage.cpp
         src/views/settings/CTPBrokerDialog.h
         src/views/settings/CTPBrokerDialog.cpp
+        src/views/settings/RiskSettingsPage.h
+        src/views/settings/RiskSettingsPage.cpp
         src/views/warning/WarningPage.h
         src/views/warning/WarningPage.cpp
         src/views/aboutus/AboutUSPage.h
         src/views/aboutus/AboutUSPage.cpp
+        src/views/account/AccountPage.h
+        src/views/account/AccountPage.cpp
+        src/views/trading/TradeHistoryPage.h
+        src/views/trading/TradeHistoryPage.cpp
+        src/views/trading/ConditionOrderPage.h
+        src/views/trading/ConditionOrderPage.cpp
+        src/views/trading/TradingIntegration.h
+        src/views/trading/TradingIntegration.cpp
+        src/views/TradingPagesRegistration.cpp
+)
+
+# Trading 交易系统
+set(TRADING_SOURCES
+        src/trading/TradingTypes.h
+        src/trading/OrderManager.h
+        src/trading/OrderManager.cpp
+        src/trading/PositionManager.h
+        src/trading/PositionManager.cpp
+        src/trading/RiskController.h
+        src/trading/RiskController.cpp
+        src/trading/TradingService.h
+        src/trading/TradingService.cpp
 )
 
 # 合并所有源文件
@@ -301,6 +329,7 @@ set(SOURCES
         ${UI_ANIMATION_SOURCES}
         ${WIDGET_SOURCES}
         ${VIEW_SOURCES}
+        ${TRADING_SOURCES}
 )
 
 # 创建可执行文件

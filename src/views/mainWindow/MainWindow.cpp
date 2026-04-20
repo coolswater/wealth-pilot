@@ -40,6 +40,10 @@
 #include "views/settings/SettingsPage.h"
 #include "views/signalCenter/SignalCenterPage.h"
 #include "views/watchList/WatchListPage.h"
+#include "views/account/AccountPage.h"
+#include "views/trading/TradeHistoryPage.h"
+#include "views/trading/ConditionOrderPage.h"
+#include "views/settings/RiskSettingsPage.h"
 
 // PIMPL 实现
 struct MainWindow::Impl
@@ -310,9 +314,13 @@ void MainWindow::setupUI()
     d->sidebar->addItem("stock", "股票");
     d->sidebar->addItem("futures", "期货");
     d->sidebar->addItem("portfolio", "持仓");
+    d->sidebar->addItem("account", "账户");
+    d->sidebar->addItem("tradeHistory", "成交");
+    d->sidebar->addItem("conditionOrder", "条件单");
     d->sidebar->addItem("watchlist", "自选");
     d->sidebar->addItem("signal", "信号");
     d->sidebar->addItem("news", "资讯");
+    d->sidebar->addItem("riskSettings", "风控");
     d->sidebar->addItem("settings", "设置");
     d->sidebar->addItem("about", "关于");
 
@@ -362,9 +370,13 @@ void MainWindow::createPages() const
         "stock",
         "futures",
         "portfolio",
+        "account",
+        "tradeHistory",
+        "conditionOrder",
         "watchlist",
         "signal",
         "news",
+        "riskSettings",
         "settings",
         "about"
     };
@@ -475,6 +487,22 @@ QWidget* MainWindow::getPage(const QString& pageId)
     else if (pageId == "FuturesKLine")
     {
         page = new FuturesKLinePage(this);
+    }
+    else if (pageId == "account")
+    {
+        page = new AccountPage(this);
+    }
+    else if (pageId == "tradeHistory")
+    {
+        page = new TradeHistoryPage(this);
+    }
+    else if (pageId == "conditionOrder")
+    {
+        page = new ConditionOrderPage(this);
+    }
+    else if (pageId == "riskSettings")
+    {
+        page = new RiskSettingsPage(this);
     }
 
     if (page)
