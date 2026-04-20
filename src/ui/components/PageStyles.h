@@ -102,6 +102,10 @@ public:
      * @brief 主按钮样式
      */
     static QString primaryButton() {
+        QColor primaryColor = ThemeColors::primary();
+        QColor hoverColor = primaryColor.lighter(120);
+        QColor pressedColor = primaryColor.darker(120);
+        
         return QString(R"(
             QPushButton {
                 background-color: %1;
@@ -117,10 +121,10 @@ public:
             QPushButton:pressed {
                 background-color: %4;
             }
-        )").arg(ThemeColors::primary().name(),
+        )").arg(primaryColor.name(),
                 ThemeColors::textPrimary().name(),
-                ThemeColors::primary().lighter(120).name(),
-                ThemeColors::primary().darker(120).name());
+                hoverColor.name(),
+                pressedColor.name());
     }
     
     /**

@@ -160,15 +160,16 @@ void RiskSettingsPage::initConnections()
 void RiskSettingsPage::loadSettings()
 {
     QSettings settings("WealthPilot", "RiskSettings");
-    m_maxPositionValueSpin->setValue(settings.value("maxPositionValue", 1000000).toDouble());
-    m_maxPositionCountSpin->setValue(settings.value("maxPositionCount", 10).toInt());
-    m_maxDailyLossSpin->setValue(settings.value("maxDailyLoss", 50000).toDouble());
-    m_maxSingleLossSpin->setValue(settings.value("maxSingleLoss", 5000).toDouble());
-    m_maxLeverageSpin->setValue(settings.value("maxLeverage", 10).toDouble());
-    m_maxMarginRatioSpin->setValue(settings.value("maxMarginRatio", 80).toDouble());
-    m_maxDrawdownSpin->setValue(settings.value("maxDrawdown", 20).toDouble());
-    m_enableNightTradeCheck->setChecked(settings.value("enableNightTrade", true).toBool());
-    m_enableReverseTradeCheck->setChecked(settings.value("enableReverseTrade", false).toBool());
+    
+    if (m_maxPositionValueSpin) m_maxPositionValueSpin->setValue(settings.value("maxPositionValue", 1000000).toDouble());
+    if (m_maxPositionCountSpin) m_maxPositionCountSpin->setValue(settings.value("maxPositionCount", 10).toInt());
+    if (m_maxDailyLossSpin) m_maxDailyLossSpin->setValue(settings.value("maxDailyLoss", 50000).toDouble());
+    if (m_maxSingleLossSpin) m_maxSingleLossSpin->setValue(settings.value("maxSingleLoss", 5000).toDouble());
+    if (m_maxLeverageSpin) m_maxLeverageSpin->setValue(settings.value("maxLeverage", 10).toDouble());
+    if (m_maxMarginRatioSpin) m_maxMarginRatioSpin->setValue(settings.value("maxMarginRatio", 80).toDouble());
+    if (m_maxDrawdownSpin) m_maxDrawdownSpin->setValue(settings.value("maxDrawdown", 20).toDouble());
+    if (m_enableNightTradeCheck) m_enableNightTradeCheck->setChecked(settings.value("enableNightTrade", true).toBool());
+    if (m_enableReverseTradeCheck) m_enableReverseTradeCheck->setChecked(settings.value("enableReverseTrade", false).toBool());
 }
 
 void RiskSettingsPage::saveSettings()

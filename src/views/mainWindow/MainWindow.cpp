@@ -510,6 +510,14 @@ QWidget* MainWindow::getPage(const QString& pageId)
         d->pageCache[pageId] = page;
         d->contentStack->addWidget(page);
 
+        // 如果是 BasePage，调用 initializePage
+        auto* basePage = qobject_cast<BasePage*>(page);
+        if (basePage && !basePage->isInitialized())
+        {
+            basePage->initializePage();
+            basePage->setInitialized(true);
+        }
+
         LOG_DEBUG(QString("Page loaded: %1").arg(pageId));
     }
 
