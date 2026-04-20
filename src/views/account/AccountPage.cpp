@@ -1,4 +1,5 @@
 #include "AccountPage.h"
+#include "ui/components/PageStyles.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>
@@ -11,18 +12,11 @@
 
 AccountPage::AccountPage(QWidget *parent)
     : BasePage(parent)
-    , m_balance(0.0)
-    , m_available(0.0)
-    , m_margin(0.0)
-    , m_frozenMargin(0.0)
-    , m_commission(0.0)
-    , m_closeProfit(0.0)
-    , m_positionProfit(0.0)
-    , m_totalProfit(0.0)
-    , m_totalLoss(0.0)
-    , m_totalCommission(0.0)
-    , m_maxDrawdown(0.0)
-    , m_winRate(0.0)
+    , m_balance(0.0), m_available(0.0), m_margin(0.0)
+    , m_frozenMargin(0.0), m_commission(0.0)
+    , m_closeProfit(0.0), m_positionProfit(0.0)
+    , m_totalProfit(0.0), m_totalLoss(0.0)
+    , m_totalCommission(0.0), m_maxDrawdown(0.0), m_winRate(0.0)
 {
 }
 
@@ -34,7 +28,6 @@ void AccountPage::initializePage()
 {
     initUI();
     initConnections();
-    updateStyles();
 }
 
 void AccountPage::onPageActivated(const QVariantMap &params)
@@ -43,154 +36,132 @@ void AccountPage::onPageActivated(const QVariantMap &params)
     refreshData();
 }
 
-QFrame* AccountPage::createSummaryCard(const QString &title, const QString &value,
-                                        const QString &change, bool isUp)
-{
-    QFrame *card = new QFrame(this);
-    card->setObjectName("summaryCard");
-    card->setStyleSheet(R"(
-        QFrame#summaryCard {
-            background-color: #2C2D33;
-            border-radius: 8px;
-            padding: 12px;
-        }
-    )");
-    
-    QVBoxLayout *layout = new QVBoxLayout(card);
-    layout->setSpacing(4);
-    
-    QLabel *titleLabel = new QLabel(title, card);
-    titleLabel->setStyleSheet("color: #8E8E93; font-size: 12px;");
-    
-    QLabel *valueLabel = new QLabel(value, card);
-    valueLabel->setStyleSheet("color: #FFFFFF; font-size: 18px; font-weight: bold;");
-    
-    layout->addWidget(titleLabel);
-    layout->addWidget(valueLabel);
-    
-    if (!change.isEmpty()) {
-        QLabel *changeLabel = new QLabel(change, card);
-        changeLabel->setStyleSheet(QString("color: %1; font-size: 12px;")
-                                   .arg(isUp ? "#FF3B30" : "#34C759"));
-        layout->addWidget(changeLabel);
-    }
-    
-    return card;
-}
-
 void AccountPage::initUI()
 {
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setSpacing(16);
     mainLayout->setContentsMargins(24, 16, 24, 16);
     
-    // ===== Header =====
+    // Header
     QHBoxLayout *headerLayout = new QHBoxLayout();
+    QLabel *titleLabel = new QLabel("账户资金", this);
+    titleLabel->setStyleSheet(PageStyles::titleText());
     
-    QLabel *titleLabel = new QLabel("Account & Funds", this);
-    titleLabel->setStyleSheet("font-size: 20px; font-weight: bold; color: #FFFFFF;");
-    
-    m_refreshBtn = new QPushButton("Refresh", this);
-    m_exportBtn = new QPushButton("Export", this);
+    m_refreshBtn = new QPushButton("刷新", this);
+    m_exportBtn = new QPushButton("导出", this);
+    m_refreshBtn->setStyleSheet(PageStyles::secondaryButton());
+    m_exportBtn->setStyleSheet(PageStyles::secondaryButton());
     
     headerLayout->addWidget(titleLabel);
     headerLayout->addStretch();
     headerLayout->addWidget(m_refreshBtn);
     headerLayout->addWidget(m_exportBtn);
-    
     mainLayout->addLayout(headerLayout);
     
-    // ===== Summary Cards =====
+    // Summary Cards Row 1
     QHBoxLayout *summaryLayout = new QHBoxLayout();
     summaryLayout->setSpacing(12);
     
-    // Balance card
-    QFrame *balanceCard = createSummaryCard("Account Balance", "0.00");
-    m_balanceLabel = balanceCard->findChildren<QLabel*>().value(1);
+    auto createCard = [](const QString &title) -> QFrame* {
+        QFrame *card = new QFrame();
+        card->setStyleSheet(PageStyles::statCard());
+        QVBoxLayout *layout = new QVBoxLayout(card);
+        layout->setSpacing(4);
+        QLabel *tLabel = new QLabel(title, card);
+        tLabel->setStyleSheet(PageStyles::labelText());
+        QLabel *vLabel = new QLabel("0.00", card);
+        vLabel->setStyleSheet(PageStyles::valueText());
+        layout->addWidget(tLabel);
+        layout->addWidget(vLabel);
+        return card;
+    };
+    
+    QFrame *balanceCard = createCard("账户余额");
+    m_balanceLabel = balanceCard->findChildren<QLabel*>().last();
     summaryLayout->addWidget(balanceCard);
     
-    // Available card
-    QFrame *availableCard = createSummaryCard("Available Funds", "0.00");
-    m_availableLabel = availableCard->findChildren<QLabel*>().value(1);
+    QFrame *availableCard = createCard("可用资金");
+    m_availableLabel = availableCard->findChildren<QLabel*>().last();
     summaryLayout->addWidget(availableCard);
     
-    // Margin card
-    QFrame *marginCard = createSummaryCard("Occupied Margin", "0.00");
-    m_marginLabel = marginCard->findChildren<QLabel*>().value(1);
+    QFrame *marginCard = createCard("占用保证金");
+    m_marginLabel = marginCard->findChildren<QLabel*>().last();
     summaryLayout->addWidget(marginCard);
     
-    // Frozen margin card
-    QFrame *frozenCard = createSummaryCard("Frozen Margin", "0.00");
-    m_frozenMarginLabel = frozenCard->findChildren<QLabel*>().value(1);
+    QFrame *frozenCard = createCard("冻结保证金");
+    m_frozenMarginLabel = frozenCard->findChildren<QLabel*>().last();
     summaryLayout->addWidget(frozenCard);
     
-    // Commission card
-    QFrame *commissionCard = createSummaryCard("Total Commission", "0.00");
-    m_commissionLabel = commissionCard->findChildren<QLabel*>().value(1);
+    QFrame *commissionCard = createCard("手续费");
+    m_commissionLabel = commissionCard->findChildren<QLabel*>().last();
     summaryLayout->addWidget(commissionCard);
     
     mainLayout->addLayout(summaryLayout);
     
-    // ===== Profit/Loss Row =====
+    // Summary Cards Row 2 (P&L)
     QHBoxLayout *pnlLayout = new QHBoxLayout();
     pnlLayout->setSpacing(12);
     
-    QFrame *closeProfitCard = createSummaryCard("Realized P&L", "0.00");
-    m_closeProfitLabel = closeProfitCard->findChildren<QLabel*>().value(1);
+    QFrame *closeProfitCard = createCard("已实现盈亏");
+    m_closeProfitLabel = closeProfitCard->findChildren<QLabel*>().last();
     pnlLayout->addWidget(closeProfitCard);
     
-    QFrame *posProfitCard = createSummaryCard("Unrealized P&L", "0.00");
-    m_positionProfitLabel = posProfitCard->findChildren<QLabel*>().value(1);
+    QFrame *posProfitCard = createCard("浮动盈亏");
+    m_positionProfitLabel = posProfitCard->findChildren<QLabel*>().last();
     pnlLayout->addWidget(posProfitCard);
     
-    QFrame *totalProfitCard = createSummaryCard("Total Profit", "0.00");
-    m_totalProfitLabel = totalProfitCard->findChildren<QLabel*>().value(1);
+    QFrame *totalProfitCard = createCard("总盈利");
+    m_totalProfitLabel = totalProfitCard->findChildren<QLabel*>().last();
+    m_totalProfitLabel->setStyleSheet(PageStyles::valueText(PageStyles::upColor()));
     pnlLayout->addWidget(totalProfitCard);
     
-    QFrame *totalLossCard = createSummaryCard("Total Loss", "0.00");
-    m_totalLossLabel = totalLossCard->findChildren<QLabel*>().value(1);
+    QFrame *totalLossCard = createCard("总亏损");
+    m_totalLossLabel = totalLossCard->findChildren<QLabel*>().last();
+    m_totalLossLabel->setStyleSheet(PageStyles::valueText(PageStyles::downColor()));
     pnlLayout->addWidget(totalLossCard);
     
-    QFrame *winRateCard = createSummaryCard("Win Rate", "0.00%");
-    m_winRateLabel = winRateCard->findChildren<QLabel*>().value(1);
+    QFrame *winRateCard = createCard("胜率");
+    m_winRateLabel = winRateCard->findChildren<QLabel*>().last();
     pnlLayout->addWidget(winRateCard);
     
     mainLayout->addLayout(pnlLayout);
     
-    // ===== Filter Bar =====
+    // Filter Bar
     QHBoxLayout *filterLayout = new QHBoxLayout();
     
-    filterLayout->addWidget(new QLabel("Type:", this));
+    filterLayout->addWidget(new QLabel("类型:", this));
     m_typeFilterCombo = new QComboBox(this);
-    m_typeFilterCombo->addItems({"All", "Deposit", "Withdraw", "Profit", "Loss", "Commission", "Transfer"});
+    m_typeFilterCombo->addItems({"全部", "入金", "出金", "盈利", "亏损", "手续费", "转账"});
+    m_typeFilterCombo->setStyleSheet(PageStyles::comboBox());
     filterLayout->addWidget(m_typeFilterCombo);
     
-    filterLayout->addWidget(new QLabel("From:", this));
+    filterLayout->addWidget(new QLabel("从:", this));
     m_startDateEdit = new QDateEdit(QDate::currentDate().addDays(-30), this);
     m_startDateEdit->setCalendarPopup(true);
     m_startDateEdit->setDisplayFormat("yyyy-MM-dd");
+    m_startDateEdit->setStyleSheet(PageStyles::dateEdit());
     filterLayout->addWidget(m_startDateEdit);
     
-    filterLayout->addWidget(new QLabel("To:", this));
+    filterLayout->addWidget(new QLabel("到:", this));
     m_endDateEdit = new QDateEdit(QDate::currentDate(), this);
     m_endDateEdit->setCalendarPopup(true);
     m_endDateEdit->setDisplayFormat("yyyy-MM-dd");
+    m_endDateEdit->setStyleSheet(PageStyles::dateEdit());
     filterLayout->addWidget(m_endDateEdit);
     
     filterLayout->addStretch();
-    
     mainLayout->addLayout(filterLayout);
     
-    // ===== Fund Flow Table =====
+    // Fund Flow Table
     m_fundFlowTable = new QTableWidget(this);
     m_fundFlowTable->setColumnCount(5);
-    m_fundFlowTable->setHorizontalHeaderLabels({"Time", "Type", "Amount", "Balance", "Remark"});
+    m_fundFlowTable->setHorizontalHeaderLabels({"时间", "类型", "金额", "余额", "备注"});
     m_fundFlowTable->horizontalHeader()->setStretchLastSection(true);
     m_fundFlowTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_fundFlowTable->setAlternatingRowColors(true);
     m_fundFlowTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_fundFlowTable->verticalHeader()->setVisible(false);
-    
+    m_fundFlowTable->setStyleSheet(PageStyles::table());
     mainLayout->addWidget(m_fundFlowTable, 1);
 }
 
@@ -201,56 +172,6 @@ void AccountPage::initConnections()
     connect(m_typeFilterCombo, &QComboBox::currentTextChanged, this, &AccountPage::onDateRangeChanged);
     connect(m_startDateEdit, &QDateEdit::dateChanged, this, &AccountPage::onDateRangeChanged);
     connect(m_endDateEdit, &QDateEdit::dateChanged, this, &AccountPage::onDateRangeChanged);
-}
-
-void AccountPage::updateStyles()
-{
-    setStyleSheet(R"(
-        QWidget {
-            background-color: #1E1F24;
-        }
-        QTableWidget {
-            background-color: #2C2D33;
-            color: #FFFFFF;
-            gridline-color: #3A3B41;
-            border: 1px solid #3A3B41;
-            border-radius: 6px;
-        }
-        QTableWidget::item {
-            padding: 6px;
-        }
-        QTableWidget::item:selected {
-            background-color: #3A3B41;
-        }
-        QHeaderView::section {
-            background-color: #2C2D33;
-            color: #8E8E93;
-            padding: 8px;
-            border: none;
-            border-bottom: 1px solid #3A3B41;
-        }
-        QPushButton {
-            background-color: #2C2D33;
-            color: #FFFFFF;
-            border: 1px solid #3A3B41;
-            border-radius: 4px;
-            padding: 6px 16px;
-        }
-        QPushButton:hover {
-            background-color: #3A3B41;
-            border-color: #FF9500;
-        }
-        QComboBox, QDateEdit {
-            background-color: #2C2D33;
-            color: #FFFFFF;
-            border: 1px solid #3A3B41;
-            border-radius: 4px;
-            padding: 4px 8px;
-        }
-        QLabel {
-            color: #FFFFFF;
-        }
-    )");
 }
 
 void AccountPage::setAccountData(double balance, double available, double margin,
@@ -264,7 +185,6 @@ void AccountPage::setAccountData(double balance, double available, double margin
     m_commission = commission;
     m_closeProfit = closeProfit;
     m_positionProfit = positionProfit;
-    
     updateSummary();
 }
 
@@ -288,23 +208,15 @@ void AccountPage::setStatistics(double totalProfit, double totalLoss, double tot
     m_totalCommission = totalCommission;
     m_maxDrawdown = maxDrawdown;
     m_winRate = winRate;
-    
-    updateStatistics();
+    updateSummary();
 }
 
-void AccountPage::refreshData()
-{
-    emit requestRefresh();
-}
-
-void AccountPage::onDateRangeChanged()
-{
-    updateFundFlowTable();
-}
+void AccountPage::refreshData() { emit requestRefresh(); }
+void AccountPage::onDateRangeChanged() { updateFundFlowTable(); }
 
 void AccountPage::onExportClicked()
 {
-    QString filePath = QFileDialog::getSaveFileName(this, "Export Fund Flow",
+    QString filePath = QFileDialog::getSaveFileName(this, "导出资金流水",
         QString("fund_flow_%1.csv").arg(QDate::currentDate().toString("yyyyMMdd")),
         "CSV Files (*.csv)");
     
@@ -312,40 +224,39 @@ void AccountPage::onExportClicked()
         QFile file(filePath);
         if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QTextStream out(&file);
-            out << "Time,Type,Amount,Balance,Remark\n";
-            for (const auto &record : m_fundFlowRecords) {
+            out << "时间,类型,金额,余额,备注\n";
+            for (const auto &r : m_fundFlowRecords) {
                 out << QString("%1,%2,%3,%4,%5\n")
-                    .arg(record.time.toString("yyyy-MM-dd HH:mm:ss"))
-                    .arg(record.type)
-                    .arg(record.amount, 0, 'f', 2)
-                    .arg(record.balance, 0, 'f', 2)
-                    .arg(record.remark);
+                    .arg(r.time.toString("yyyy-MM-dd HH:mm:ss"))
+                    .arg(r.type).arg(r.amount, 0, 'f', 2)
+                    .arg(r.balance, 0, 'f', 2).arg(r.remark);
             }
             file.close();
-            QMessageBox::information(this, "Export Complete", "Exported successfully!");
+            QMessageBox::information(this, "导出完成", "导出成功！");
         }
     }
 }
 
 void AccountPage::updateSummary()
 {
-    if (m_balanceLabel) m_balanceLabel->setText(QString::number(m_balance, 'f', 2));
-    if (m_availableLabel) m_availableLabel->setText(QString::number(m_available, 'f', 2));
-    if (m_marginLabel) m_marginLabel->setText(QString::number(m_margin, 'f', 2));
-    if (m_frozenMarginLabel) m_frozenMarginLabel->setText(QString::number(m_frozenMargin, 'f', 2));
-    if (m_commissionLabel) m_commissionLabel->setText(QString::number(m_commission, 'f', 2));
+    m_balanceLabel->setText(QString::number(m_balance, 'f', 2));
+    m_availableLabel->setText(QString::number(m_available, 'f', 2));
+    m_marginLabel->setText(QString::number(m_margin, 'f', 2));
+    m_frozenMarginLabel->setText(QString::number(m_frozenMargin, 'f', 2));
+    m_commissionLabel->setText(QString::number(m_commission, 'f', 2));
     
-    if (m_closeProfitLabel) {
-        m_closeProfitLabel->setText(QString::number(m_closeProfit, 'f', 2));
-        m_closeProfitLabel->setStyleSheet(QString("color: %1; font-size: 18px; font-weight: bold;")
-                                           .arg(m_closeProfit >= 0 ? "#FF3B30" : "#34C759"));
-    }
+    // P&L with color
+    m_closeProfitLabel->setText(QString::number(m_closeProfit, 'f', 2));
+    m_closeProfitLabel->setStyleSheet(PageStyles::valueText(
+        m_closeProfit >= 0 ? PageStyles::upColor() : PageStyles::downColor()));
     
-    if (m_positionProfitLabel) {
-        m_positionProfitLabel->setText(QString::number(m_positionProfit, 'f', 2));
-        m_positionProfitLabel->setStyleSheet(QString("color: %1; font-size: 18px; font-weight: bold;")
-                                              .arg(m_positionProfit >= 0 ? "#FF3B30" : "#34C759"));
-    }
+    m_positionProfitLabel->setText(QString::number(m_positionProfit, 'f', 2));
+    m_positionProfitLabel->setStyleSheet(PageStyles::valueText(
+        m_positionProfit >= 0 ? PageStyles::upColor() : PageStyles::downColor()));
+    
+    m_totalProfitLabel->setText(QString::number(m_totalProfit, 'f', 2));
+    m_totalLossLabel->setText(QString::number(m_totalLoss, 'f', 2));
+    m_winRateLabel->setText(QString::number(m_winRate, 'f', 1) + "%");
 }
 
 void AccountPage::updateFundFlowTable()
@@ -354,46 +265,25 @@ void AccountPage::updateFundFlowTable()
     QDate startDate = m_startDateEdit->date();
     QDate endDate = m_endDateEdit->date();
     
-    // Filter records
     QVector<FundFlowRecord> filtered;
-    for (const auto &record : m_fundFlowRecords) {
-        QDate recordDate = record.time.date();
-        if (recordDate < startDate || recordDate > endDate) continue;
-        if (filterType != "All" && record.type != filterType) continue;
-        filtered.append(record);
+    for (const auto &r : m_fundFlowRecords) {
+        QDate d = r.time.date();
+        if (d < startDate || d > endDate) continue;
+        if (filterType != "全部" && r.type != filterType) continue;
+        filtered.append(r);
     }
     
     m_fundFlowTable->setRowCount(filtered.size());
-    
     for (int i = 0; i < filtered.size(); ++i) {
-        const auto &record = filtered[i];
+        const auto &r = filtered[i];
+        m_fundFlowTable->setItem(i, 0, new QTableWidgetItem(r.time.toString("yyyy-MM-dd HH:mm:ss")));
+        m_fundFlowTable->setItem(i, 1, new QTableWidgetItem(r.type));
         
-        auto *timeItem = new QTableWidgetItem(record.time.toString("yyyy-MM-dd HH:mm:ss"));
-        auto *typeItem = new QTableWidgetItem(record.type);
-        auto *amountItem = new QTableWidgetItem(QString::number(record.amount, 'f', 2));
-        auto *balanceItem = new QTableWidgetItem(QString::number(record.balance, 'f', 2));
-        auto *remarkItem = new QTableWidgetItem(record.remark);
-        
-        // Color amount based on positive/negative
-        if (record.amount >= 0) {
-            amountItem->setForeground(QColor("#FF3B30"));
-        } else {
-            amountItem->setForeground(QColor("#34C759"));
-        }
-        
-        m_fundFlowTable->setItem(i, 0, timeItem);
-        m_fundFlowTable->setItem(i, 1, typeItem);
+        auto *amountItem = new QTableWidgetItem(QString::number(r.amount, 'f', 2));
+        amountItem->setForeground(QColor(r.amount >= 0 ? PageStyles::upColor() : PageStyles::downColor()));
         m_fundFlowTable->setItem(i, 2, amountItem);
-        m_fundFlowTable->setItem(i, 3, balanceItem);
-        m_fundFlowTable->setItem(i, 4, remarkItem);
+        
+        m_fundFlowTable->setItem(i, 3, new QTableWidgetItem(QString::number(r.balance, 'f', 2)));
+        m_fundFlowTable->setItem(i, 4, new QTableWidgetItem(r.remark));
     }
-}
-
-void AccountPage::updateStatistics()
-{
-    if (m_totalProfitLabel) m_totalProfitLabel->setText(QString::number(m_totalProfit, 'f', 2));
-    if (m_totalLossLabel) m_totalLossLabel->setText(QString::number(m_totalLoss, 'f', 2));
-    if (m_totalCommissionLabel) m_totalCommissionLabel->setText(QString::number(m_totalCommission, 'f', 2));
-    if (m_maxDrawdownLabel) m_maxDrawdownLabel->setText(QString::number(m_maxDrawdown, 'f', 2) + "%");
-    if (m_winRateLabel) m_winRateLabel->setText(QString::number(m_winRate, 'f', 1) + "%");
 }

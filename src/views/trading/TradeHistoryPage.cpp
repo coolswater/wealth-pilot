@@ -1,7 +1,7 @@
 #include "TradeHistoryPage.h"
+#include "ui/components/PageStyles.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QFormLayout>
 #include <QHeaderView>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -21,13 +21,11 @@ void TradeHistoryPage::initializePage()
 {
     initUI();
     initConnections();
-    updateStyles();
 }
 
 void TradeHistoryPage::onPageActivated(const QVariantMap &params)
 {
     Q_UNUSED(params);
-    onRefreshClicked();
 }
 
 void TradeHistoryPage::initUI()
@@ -38,8 +36,8 @@ void TradeHistoryPage::initUI()
     
     // Header
     QHBoxLayout *headerLayout = new QHBoxLayout();
-    QLabel *titleLabel = new QLabel("Trade History", this);
-    titleLabel->setStyleSheet("font-size: 20px; font-weight: bold; color: #FFFFFF;");
+    QLabel *titleLabel = new QLabel("成交记录", this);
+    titleLabel->setStyleSheet(PageStyles::titleText());
     headerLayout->addWidget(titleLabel);
     headerLayout->addStretch();
     mainLayout->addLayout(headerLayout);
@@ -50,43 +48,43 @@ void TradeHistoryPage::initUI()
     
     auto createStatCard = [](const QString &title, const QString &color) -> QFrame* {
         QFrame *frame = new QFrame();
-        frame->setStyleSheet("background-color: #2C2D33; border-radius: 6px; padding: 8px 12px;");
+        frame->setStyleSheet(PageStyles::statCard(color));
         QVBoxLayout *layout = new QVBoxLayout(frame);
         layout->setSpacing(2);
         QLabel *tLabel = new QLabel(title, frame);
-        tLabel->setStyleSheet("color: #8E8E93; font-size: 11px;");
+        tLabel->setStyleSheet(PageStyles::labelText());
         QLabel *vLabel = new QLabel("0", frame);
-        vLabel->setStyleSheet(QString("color: %1; font-size: 16px; font-weight: bold;").arg(color));
+        vLabel->setStyleSheet(PageStyles::valueText(color));
         layout->addWidget(tLabel);
         layout->addWidget(vLabel);
         return frame;
     };
     
-    QFrame *totalCard = createStatCard("Total Trades", "#FFFFFF");
+    QFrame *totalCard = createStatCard("总交易", PageStyles::primaryColor());
     m_totalTradesLabel = totalCard->findChildren<QLabel*>().last();
     statsLayout->addWidget(totalCard);
     
-    QFrame *winCard = createStatCard("Wins", "#FF3B30");
+    QFrame *winCard = createStatCard("盈利", PageStyles::upColor());
     m_winCountLabel = winCard->findChildren<QLabel*>().last();
     statsLayout->addWidget(winCard);
     
-    QFrame *lossCard = createStatCard("Losses", "#34C759");
+    QFrame *lossCard = createStatCard("亏损", PageStyles::downColor());
     m_lossCountLabel = lossCard->findChildren<QLabel*>().last();
     statsLayout->addWidget(lossCard);
     
-    QFrame *winRateCard = createStatCard("Win Rate", "#5856D6");
+    QFrame *winRateCard = createStatCard("胜率", "#5856D6");
     m_winRateLabel = winRateCard->findChildren<QLabel*>().last();
     statsLayout->addWidget(winRateCard);
     
-    QFrame *profitCard = createStatCard("Total Profit", "#FF3B30");
+    QFrame *profitCard = createStatCard("总盈利", PageStyles::upColor());
     m_totalProfitLabel = profitCard->findChildren<QLabel*>().last();
     statsLayout->addWidget(profitCard);
     
-    QFrame *lossCard2 = createStatCard("Total Loss", "#34C759");
+    QFrame *lossCard2 = createStatCard("总亏损", PageStyles::downColor());
     m_totalLossLabel = lossCard2->findChildren<QLabel*>().last();
     statsLayout->addWidget(lossCard2);
     
-    QFrame *pfCard = createStatCard("Profit Factor", "#FF9500");
+    QFrame *pfCard = createStatCard("盈亏比", PageStyles::warningColor());
     m_profitFactorLabel = pfCard->findChildren<QLabel*>().last();
     statsLayout->addWidget(pfCard);
     
@@ -94,29 +92,41 @@ void TradeHistoryPage::initUI()
     
     // Filter Bar
     QHBoxLayout *filterLayout = new QHBoxLayout();
-    filterLayout->addWidget(new QLabel("Direction:", this));
+    
+    filterLayout->addWidget(new QLabel("方向:", this));
     m_directionFilterCombo = new QComboBox(this);
-    m_directionFilterCombo->addItems({"All", "Buy", "Sell"});
+    m_directionFilterCombo->addItems({"全部", "买入", "卖出"});
+    m_directionFilterCombo->setStyleSheet(PageStyles::comboBox());
     filterLayout->addWidget(m_directionFilterCombo);
+    
     filterLayout->addSpacing(12);
-    filterLayout->addWidget(new QLabel("Type:", this));
+    filterLayout->addWidget(new QLabel("类型:", this));
     m_typeFilterCombo = new QComboBox(this);
-    m_typeFilterCombo->addItems({"All", "Open", "Close"});
+    m_typeFilterCombo->addItems({"全部", "开仓", "平仓"});
+    m_typeFilterCombo->setStyleSheet(PageStyles::comboBox());
     filterLayout->addWidget(m_typeFilterCombo);
+    
     filterLayout->addSpacing(12);
-    filterLayout->addWidget(new QLabel("From:", this));
+    filterLayout->addWidget(new QLabel("从:", this));
     m_startDateEdit = new QDateEdit(QDate::currentDate().addDays(-30), this);
     m_startDateEdit->setCalendarPopup(true);
     m_startDateEdit->setDisplayFormat("yyyy-MM-dd");
+    m_startDateEdit->setStyleSheet(PageStyles::dateEdit());
     filterLayout->addWidget(m_startDateEdit);
-    filterLayout->addWidget(new QLabel("To:", this));
+    
+    filterLayout->addWidget(new QLabel("到:", this));
     m_endDateEdit = new QDateEdit(QDate::currentDate(), this);
     m_endDateEdit->setCalendarPopup(true);
     m_endDateEdit->setDisplayFormat("yyyy-MM-dd");
+    m_endDateEdit->setStyleSheet(PageStyles::dateEdit());
     filterLayout->addWidget(m_endDateEdit);
+    
     filterLayout->addStretch();
-    m_refreshBtn = new QPushButton("Refresh", this);
-    m_exportBtn = new QPushButton("Export", this);
+    
+    m_refreshBtn = new QPushButton("刷新", this);
+    m_refreshBtn->setStyleSheet(PageStyles::secondaryButton());
+    m_exportBtn = new QPushButton("导出", this);
+    m_exportBtn->setStyleSheet(PageStyles::secondaryButton());
     filterLayout->addWidget(m_refreshBtn);
     filterLayout->addWidget(m_exportBtn);
     mainLayout->addLayout(filterLayout);
@@ -124,12 +134,13 @@ void TradeHistoryPage::initUI()
     // Trade Table
     m_tradeTable = new QTableWidget(this);
     m_tradeTable->setColumnCount(9);
-    m_tradeTable->setHorizontalHeaderLabels({"Trade ID", "Contract", "Time", "Price", "Qty", "Direction", "Type", "Profit", "Remark"});
+    m_tradeTable->setHorizontalHeaderLabels({"成交ID", "合约", "时间", "价格", "数量", "方向", "类型", "盈亏", "备注"});
     m_tradeTable->horizontalHeader()->setStretchLastSection(true);
     m_tradeTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tradeTable->setAlternatingRowColors(true);
     m_tradeTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_tradeTable->verticalHeader()->setVisible(false);
+    m_tradeTable->setStyleSheet(PageStyles::table());
     mainLayout->addWidget(m_tradeTable, 1);
 }
 
@@ -141,21 +152,6 @@ void TradeHistoryPage::initConnections()
     connect(m_typeFilterCombo, &QComboBox::currentTextChanged, this, &TradeHistoryPage::onFilterChanged);
     connect(m_startDateEdit, &QDateEdit::dateChanged, this, &TradeHistoryPage::onFilterChanged);
     connect(m_endDateEdit, &QDateEdit::dateChanged, this, &TradeHistoryPage::onFilterChanged);
-}
-
-void TradeHistoryPage::updateStyles()
-{
-    setStyleSheet(R"(
-        QWidget { background-color: #1E1F24; }
-        QTableWidget { background-color: #2C2D33; color: #FFFFFF; gridline-color: #3A3B41; border: 1px solid #3A3B41; border-radius: 6px; }
-        QTableWidget::item { padding: 6px; }
-        QTableWidget::item:selected { background-color: #3A3B41; }
-        QHeaderView::section { background-color: #2C2D33; color: #8E8E93; padding: 8px; border: none; border-bottom: 1px solid #3A3B41; }
-        QPushButton { background-color: #2C2D33; color: #FFFFFF; border: 1px solid #3A3B41; border-radius: 4px; padding: 6px 16px; }
-        QPushButton:hover { background-color: #3A3B41; border-color: #FF9500; }
-        QComboBox, QDateEdit { background-color: #2C2D33; color: #FFFFFF; border: 1px solid #3A3B41; border-radius: 4px; padding: 4px 8px; }
-        QLabel { color: #FFFFFF; }
-    )");
 }
 
 void TradeHistoryPage::addTradeRecord(const TradeRecord &record)
@@ -174,24 +170,24 @@ void TradeHistoryPage::setTradeRecords(const QVector<TradeRecord> &records)
 
 QVector<TradeHistoryPage::TradeRecord> TradeHistoryPage::getFilteredRecords() const
 {
-    QString directionFilter = m_directionFilterCombo->currentText();
+    QString dirFilter = m_directionFilterCombo->currentText();
     QString typeFilter = m_typeFilterCombo->currentText();
     QDate startDate = m_startDateEdit->date();
     QDate endDate = m_endDateEdit->date();
     
     QVector<TradeRecord> filtered;
-    for (const auto &record : m_records) {
-        QDate recordDate = record.tradeTime.date();
-        if (recordDate < startDate || recordDate > endDate) continue;
-        if (directionFilter != "All") {
-            bool isBuy = (directionFilter == "Buy");
-            if (record.isBuy != isBuy) continue;
+    for (const auto &r : m_records) {
+        QDate d = r.tradeTime.date();
+        if (d < startDate || d > endDate) continue;
+        if (dirFilter != "全部") {
+            bool isBuy = (dirFilter == "买入");
+            if (r.isBuy != isBuy) continue;
         }
-        if (typeFilter != "All") {
-            bool isOpen = (typeFilter == "Open");
-            if (record.isOpen != isOpen) continue;
+        if (typeFilter != "全部") {
+            bool isOpen = (typeFilter == "开仓");
+            if (r.isOpen != isOpen) continue;
         }
-        filtered.append(record);
+        filtered.append(r);
     }
     return filtered;
 }
@@ -200,22 +196,23 @@ void TradeHistoryPage::onRefreshClicked() { emit requestRefresh(); }
 
 void TradeHistoryPage::onExportClicked()
 {
-    QString filePath = QFileDialog::getSaveFileName(this, "Export", "trade_history.csv", "CSV Files (*.csv)");
+    QString filePath = QFileDialog::getSaveFileName(this, "导出", "trade_history.csv", "CSV Files (*.csv)");
     if (!filePath.isEmpty()) {
         QFile file(filePath);
         if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QTextStream out(&file);
-            out << "Trade ID,Contract,Time,Price,Quantity,Direction,Type,Profit,Remark\n";
+            out << "成交ID,合约,时间,价格,数量,方向,类型,盈亏,备注\n";
             for (const auto &r : getFilteredRecords()) {
                 out << QString("%1,%2,%3,%4,%5,%6,%7,%8,%9\n")
                     .arg(r.tradeId).arg(r.instrumentId)
                     .arg(r.tradeTime.toString("yyyy-MM-dd HH:mm:ss"))
                     .arg(r.price, 0, 'f', 2).arg(r.quantity)
-                    .arg(r.isBuy ? "Buy" : "Sell").arg(r.isOpen ? "Open" : "Close")
+                    .arg(r.isBuy ? "买入" : "卖出")
+                    .arg(r.isOpen ? "开仓" : "平仓")
                     .arg(r.profit, 0, 'f', 2).arg(r.remark);
             }
             file.close();
-            QMessageBox::information(this, "Export", "Exported successfully!");
+            QMessageBox::information(this, "导出", "导出成功！");
         }
     }
 }
@@ -238,10 +235,11 @@ void TradeHistoryPage::updateTable()
         m_tradeTable->setItem(i, 2, new QTableWidgetItem(r.tradeTime.toString("yyyy-MM-dd HH:mm:ss")));
         m_tradeTable->setItem(i, 3, new QTableWidgetItem(QString::number(r.price, 'f', 2)));
         m_tradeTable->setItem(i, 4, new QTableWidgetItem(QString::number(r.quantity)));
-        m_tradeTable->setItem(i, 5, new QTableWidgetItem(r.isBuy ? "Buy" : "Sell"));
-        m_tradeTable->setItem(i, 6, new QTableWidgetItem(r.isOpen ? "Open" : "Close"));
+        m_tradeTable->setItem(i, 5, new QTableWidgetItem(r.isBuy ? "买入" : "卖出"));
+        m_tradeTable->setItem(i, 6, new QTableWidgetItem(r.isOpen ? "开仓" : "平仓"));
+        
         auto *profitItem = new QTableWidgetItem(QString::number(r.profit, 'f', 2));
-        profitItem->setForeground(QBrush(QColor(r.profit >= 0 ? "#FF3B30" : "#34C759")));
+        profitItem->setForeground(QColor(r.profit >= 0 ? PageStyles::upColor() : PageStyles::downColor()));
         m_tradeTable->setItem(i, 7, profitItem);
         m_tradeTable->setItem(i, 8, new QTableWidgetItem(r.remark));
     }
@@ -250,10 +248,7 @@ void TradeHistoryPage::updateTable()
 TradeHistoryPage::Statistics TradeHistoryPage::calculateStatistics() const
 {
     Statistics stats = {};
-    QVector<TradeRecord> filtered = getFilteredRecords();
-    stats.totalTrades = filtered.size();
-    
-    for (const auto &r : filtered) {
+    for (const auto &r : getFilteredRecords()) {
         if (!r.isOpen) {
             if (r.profit >= 0) {
                 stats.winCount++;
@@ -265,14 +260,10 @@ TradeHistoryPage::Statistics TradeHistoryPage::calculateStatistics() const
         }
         stats.totalCommission += r.commission;
     }
-    
-    int closedTrades = stats.winCount + stats.lossCount;
-    if (closedTrades > 0) {
-        stats.winRate = (double)stats.winCount / closedTrades * 100.0;
-    }
-    if (stats.totalLoss > 0) {
-        stats.profitFactor = stats.totalProfit / stats.totalLoss;
-    }
+    stats.totalTrades = getFilteredRecords().size();
+    int closed = stats.winCount + stats.lossCount;
+    if (closed > 0) stats.winRate = (double)stats.winCount / closed * 100.0;
+    if (stats.totalLoss > 0) stats.profitFactor = stats.totalProfit / stats.totalLoss;
     return stats;
 }
 

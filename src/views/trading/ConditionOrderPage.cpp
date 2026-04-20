@@ -1,4 +1,5 @@
 #include "ConditionOrderPage.h"
+#include "ui/components/PageStyles.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -23,13 +24,11 @@ void ConditionOrderPage::initializePage()
 {
     initUI();
     initConnections();
-    updateStyles();
 }
 
 void ConditionOrderPage::onPageActivated(const QVariantMap &params)
 {
     Q_UNUSED(params);
-    onRefreshClicked();
 }
 
 void ConditionOrderPage::initUI()
@@ -40,8 +39,8 @@ void ConditionOrderPage::initUI()
     
     // Header
     QHBoxLayout *headerLayout = new QHBoxLayout();
-    QLabel *titleLabel = new QLabel("Condition Orders", this);
-    titleLabel->setStyleSheet("font-size: 20px; font-weight: bold; color: #FFFFFF;");
+    QLabel *titleLabel = new QLabel("条件单管理", this);
+    titleLabel->setStyleSheet(PageStyles::titleText());
     headerLayout->addWidget(titleLabel);
     headerLayout->addStretch();
     mainLayout->addLayout(headerLayout);
@@ -52,28 +51,28 @@ void ConditionOrderPage::initUI()
     
     auto createSummaryCard = [](const QString &title, const QString &color) -> QFrame* {
         QFrame *frame = new QFrame();
-        frame->setStyleSheet(QString("background-color: #2C2D33; border-radius: 8px; border-left: 4px solid %1; padding: 12px 16px;").arg(color));
+        frame->setStyleSheet(PageStyles::statCard(color));
         QHBoxLayout *layout = new QHBoxLayout(frame);
         layout->setContentsMargins(8, 8, 8, 8);
         QLabel *tLabel = new QLabel(title, frame);
-        tLabel->setStyleSheet("color: #8E8E93; font-size: 12px;");
+        tLabel->setStyleSheet(PageStyles::labelText());
         QLabel *vLabel = new QLabel("0", frame);
-        vLabel->setStyleSheet(QString("color: %1; font-size: 20px; font-weight: bold;").arg(color));
+        vLabel->setStyleSheet(PageStyles::valueText(color));
         layout->addWidget(tLabel);
         layout->addStretch();
         layout->addWidget(vLabel);
         return frame;
     };
     
-    QFrame *totalCard = createSummaryCard("Total Orders", "#FFFFFF");
+    QFrame *totalCard = createSummaryCard("总单数", PageStyles::primaryColor());
     m_totalCountLabel = totalCard->findChildren<QLabel*>().last();
     summaryLayout->addWidget(totalCard);
     
-    QFrame *pendingCard = createSummaryCard("Pending", "#FF9500");
+    QFrame *pendingCard = createSummaryCard("待触发", PageStyles::warningColor());
     m_pendingCountLabel = pendingCard->findChildren<QLabel*>().last();
     summaryLayout->addWidget(pendingCard);
     
-    QFrame *triggeredCard = createSummaryCard("Triggered", "#34C759");
+    QFrame *triggeredCard = createSummaryCard("已触发", PageStyles::successColor());
     m_triggeredCountLabel = triggeredCard->findChildren<QLabel*>().last();
     summaryLayout->addWidget(triggeredCard);
     
@@ -81,22 +80,35 @@ void ConditionOrderPage::initUI()
     
     // Filter Bar
     QHBoxLayout *filterLayout = new QHBoxLayout();
-    filterLayout->addWidget(new QLabel("Status:", this));
+    
+    filterLayout->addWidget(new QLabel("状态:", this));
     m_statusFilterCombo = new QComboBox(this);
-    m_statusFilterCombo->addItems({"All", "Pending", "Triggered", "Cancelled", "Expired"});
+    m_statusFilterCombo->addItems({"全部", "待触发", "已触发", "已撤销", "已过期"});
+    m_statusFilterCombo->setStyleSheet(PageStyles::comboBox());
     filterLayout->addWidget(m_statusFilterCombo);
+    
     filterLayout->addSpacing(20);
-    filterLayout->addWidget(new QLabel("Type:", this));
+    filterLayout->addWidget(new QLabel("类型:", this));
     m_typeFilterCombo = new QComboBox(this);
-    m_typeFilterCombo->addItems({"All", "Stop Loss", "Take Profit", "Trailing Stop", "Price Trigger", "Time Trigger"});
+    m_typeFilterCombo->addItems({"全部", "止损", "止盈", "跟踪止损", "价格触发", "时间触发"});
+    m_typeFilterCombo->setStyleSheet(PageStyles::comboBox());
     filterLayout->addWidget(m_typeFilterCombo);
+    
     filterLayout->addStretch();
     
-    m_addBtn = new QPushButton("Add", this);
-    m_editBtn = new QPushButton("Edit", this);
-    m_deleteBtn = new QPushButton("Delete", this);
-    m_cancelBtn = new QPushButton("Cancel Order", this);
-    m_refreshBtn = new QPushButton("Refresh", this);
+    m_addBtn = new QPushButton("添加", this);
+    m_editBtn = new QPushButton("编辑", this);
+    m_deleteBtn = new QPushButton("删除", this);
+    m_cancelBtn = new QPushButton("撤销", this);
+    m_refreshBtn = new QPushButton("刷新", this);
+    
+    QString btnStyle = PageStyles::secondaryButton();
+    m_addBtn->setStyleSheet(btnStyle);
+    m_editBtn->setStyleSheet(btnStyle);
+    m_deleteBtn->setStyleSheet(btnStyle);
+    m_cancelBtn->setStyleSheet(btnStyle);
+    m_refreshBtn->setStyleSheet(btnStyle);
+    
     m_editBtn->setEnabled(false);
     m_deleteBtn->setEnabled(false);
     m_cancelBtn->setEnabled(false);
@@ -111,13 +123,14 @@ void ConditionOrderPage::initUI()
     // Order Table
     m_orderTable = new QTableWidget(this);
     m_orderTable->setColumnCount(9);
-    m_orderTable->setHorizontalHeaderLabels({"Order ID", "Contract", "Type", "Trigger Price", "Order Price", "Quantity", "Direction", "Status", "Create Time"});
+    m_orderTable->setHorizontalHeaderLabels({"单号", "合约", "类型", "触发价", "委托价", "数量", "方向", "状态", "创建时间"});
     m_orderTable->horizontalHeader()->setStretchLastSection(true);
     m_orderTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_orderTable->setSelectionMode(QAbstractItemView::SingleSelection);
     m_orderTable->setAlternatingRowColors(true);
     m_orderTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_orderTable->verticalHeader()->setVisible(false);
+    m_orderTable->setStyleSheet(PageStyles::table());
     mainLayout->addWidget(m_orderTable, 1);
 }
 
@@ -132,22 +145,6 @@ void ConditionOrderPage::initConnections()
     connect(m_typeFilterCombo, &QComboBox::currentTextChanged, this, &ConditionOrderPage::onFilterChanged);
     connect(m_orderTable, &QTableWidget::itemSelectionChanged, this, &ConditionOrderPage::onSelectionChanged);
     connect(m_orderTable, &QTableWidget::doubleClicked, this, &ConditionOrderPage::onEditClicked);
-}
-
-void ConditionOrderPage::updateStyles()
-{
-    setStyleSheet(R"(
-        QWidget { background-color: #1E1F24; }
-        QTableWidget { background-color: #2C2D33; color: #FFFFFF; gridline-color: #3A3B41; border: 1px solid #3A3B41; border-radius: 6px; }
-        QTableWidget::item { padding: 6px; }
-        QTableWidget::item:selected { background-color: #3A3B41; }
-        QHeaderView::section { background-color: #2C2D33; color: #8E8E93; padding: 8px; border: none; border-bottom: 1px solid #3A3B41; font-weight: bold; }
-        QPushButton { background-color: #2C2D33; color: #FFFFFF; border: 1px solid #3A3B41; border-radius: 4px; padding: 6px 16px; }
-        QPushButton:hover { background-color: #3A3B41; border-color: #FF9500; }
-        QPushButton:disabled { color: #8E8E93; background-color: #252629; }
-        QComboBox { background-color: #2C2D33; color: #FFFFFF; border: 1px solid #3A3B41; border-radius: 4px; padding: 4px 8px; min-width: 100px; }
-        QLabel { color: #FFFFFF; }
-    )");
 }
 
 void ConditionOrderPage::addConditionOrder(const ConditionOrder &order)
@@ -169,8 +166,8 @@ ConditionOrderPage::ConditionOrder ConditionOrderPage::getSelectedOrder() const
     int row = m_orderTable->currentRow();
     if (row < 0) return ConditionOrder();
     QString orderId = m_orderTable->item(row, 0)->text();
-    for (const auto &order : m_orders) {
-        if (order.orderId == orderId) return order;
+    for (const auto &o : m_orders) {
+        if (o.orderId == orderId) return o;
     }
     return ConditionOrder();
 }
@@ -178,37 +175,43 @@ ConditionOrderPage::ConditionOrder ConditionOrderPage::getSelectedOrder() const
 void ConditionOrderPage::onAddClicked()
 {
     QDialog dialog(this);
-    dialog.setWindowTitle("Add Condition Order");
+    dialog.setWindowTitle("添加条件单");
     dialog.setMinimumWidth(400);
     QFormLayout *form = new QFormLayout(&dialog);
     
     QComboBox *typeCombo = new QComboBox(&dialog);
-    typeCombo->addItems({"Stop Loss", "Take Profit", "Trailing Stop", "Price Trigger", "Time Trigger"});
-    form->addRow("Type:", typeCombo);
+    typeCombo->addItems({"止损", "止盈", "跟踪止损", "价格触发", "时间触发"});
+    typeCombo->setStyleSheet(PageStyles::comboBox());
+    form->addRow("类型:", typeCombo);
     
     QLineEdit *instrumentEdit = new QLineEdit(&dialog);
-    instrumentEdit->setPlaceholderText("e.g., au2506");
-    form->addRow("Contract:", instrumentEdit);
+    instrumentEdit->setPlaceholderText("如: au2506");
+    instrumentEdit->setStyleSheet(PageStyles::inputField());
+    form->addRow("合约:", instrumentEdit);
     
     QDoubleSpinBox *triggerPriceSpin = new QDoubleSpinBox(&dialog);
     triggerPriceSpin->setDecimals(2);
     triggerPriceSpin->setMaximum(999999.99);
-    form->addRow("Trigger Price:", triggerPriceSpin);
+    triggerPriceSpin->setStyleSheet(PageStyles::inputField());
+    form->addRow("触发价:", triggerPriceSpin);
     
     QDoubleSpinBox *orderPriceSpin = new QDoubleSpinBox(&dialog);
     orderPriceSpin->setDecimals(2);
     orderPriceSpin->setMaximum(999999.99);
-    orderPriceSpin->setSpecialValueText("Market");
-    form->addRow("Order Price:", orderPriceSpin);
+    orderPriceSpin->setSpecialValueText("市价");
+    orderPriceSpin->setStyleSheet(PageStyles::inputField());
+    form->addRow("委托价:", orderPriceSpin);
     
     QSpinBox *quantitySpin = new QSpinBox(&dialog);
     quantitySpin->setMinimum(1);
     quantitySpin->setMaximum(99999);
-    form->addRow("Quantity:", quantitySpin);
+    quantitySpin->setStyleSheet(PageStyles::inputField());
+    form->addRow("数量:", quantitySpin);
     
     QComboBox *directionCombo = new QComboBox(&dialog);
-    directionCombo->addItems({"Buy/Open", "Sell/Open", "Buy/Close", "Sell/Close"});
-    form->addRow("Direction:", directionCombo);
+    directionCombo->addItems({"买入/开仓", "卖出/开仓", "买入/平仓", "卖出/平仓"});
+    directionCombo->setStyleSheet(PageStyles::comboBox());
+    form->addRow("方向:", directionCombo);
     
     QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
     form->addRow(buttonBox);
@@ -236,29 +239,32 @@ void ConditionOrderPage::onAddClicked()
 void ConditionOrderPage::onEditClicked()
 {
     ConditionOrder order = getSelectedOrder();
-    if (order.orderId.isEmpty()) { QMessageBox::warning(this, "Warning", "Please select an order."); return; }
-    if (order.status != ConditionOrderStatus::Pending) { QMessageBox::warning(this, "Warning", "Only pending orders can be edited."); return; }
+    if (order.orderId.isEmpty()) { QMessageBox::warning(this, "提示", "请选择订单"); return; }
+    if (order.status != ConditionOrderStatus::Pending) { QMessageBox::warning(this, "提示", "只能编辑待触发订单"); return; }
     
     QDialog dialog(this);
-    dialog.setWindowTitle("Edit Condition Order");
+    dialog.setWindowTitle("编辑条件单");
     QFormLayout *form = new QFormLayout(&dialog);
     
     QDoubleSpinBox *triggerPriceSpin = new QDoubleSpinBox(&dialog);
     triggerPriceSpin->setDecimals(2);
     triggerPriceSpin->setMaximum(999999.99);
     triggerPriceSpin->setValue(order.triggerPrice);
-    form->addRow("Trigger Price:", triggerPriceSpin);
+    triggerPriceSpin->setStyleSheet(PageStyles::inputField());
+    form->addRow("触发价:", triggerPriceSpin);
     
     QDoubleSpinBox *orderPriceSpin = new QDoubleSpinBox(&dialog);
     orderPriceSpin->setDecimals(2);
     orderPriceSpin->setMaximum(999999.99);
     orderPriceSpin->setValue(order.orderPrice);
-    form->addRow("Order Price:", orderPriceSpin);
+    orderPriceSpin->setStyleSheet(PageStyles::inputField());
+    form->addRow("委托价:", orderPriceSpin);
     
     QSpinBox *quantitySpin = new QSpinBox(&dialog);
     quantitySpin->setMinimum(1);
     quantitySpin->setValue(order.quantity);
-    form->addRow("Quantity:", quantitySpin);
+    quantitySpin->setStyleSheet(PageStyles::inputField());
+    form->addRow("数量:", quantitySpin);
     
     QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
     form->addRow(buttonBox);
@@ -279,8 +285,8 @@ void ConditionOrderPage::onEditClicked()
 void ConditionOrderPage::onDeleteClicked()
 {
     ConditionOrder order = getSelectedOrder();
-    if (order.orderId.isEmpty()) { QMessageBox::warning(this, "Warning", "Please select an order."); return; }
-    if (QMessageBox::question(this, "Confirm", QString("Delete order %1?").arg(order.orderId)) == QMessageBox::Yes) {
+    if (order.orderId.isEmpty()) { QMessageBox::warning(this, "提示", "请选择订单"); return; }
+    if (QMessageBox::question(this, "确认", QString("删除订单 %1?").arg(order.orderId)) == QMessageBox::Yes) {
         QString orderId = order.orderId;
         for (int i = 0; i < m_orders.size(); ++i) {
             if (m_orders[i].orderId == orderId) { m_orders.removeAt(i); break; }
@@ -294,9 +300,9 @@ void ConditionOrderPage::onDeleteClicked()
 void ConditionOrderPage::onCancelClicked()
 {
     ConditionOrder order = getSelectedOrder();
-    if (order.orderId.isEmpty()) { QMessageBox::warning(this, "Warning", "Please select an order."); return; }
-    if (order.status != ConditionOrderStatus::Pending) { QMessageBox::warning(this, "Warning", "Only pending orders can be cancelled."); return; }
-    if (QMessageBox::question(this, "Confirm", QString("Cancel order %1?").arg(order.orderId)) == QMessageBox::Yes) {
+    if (order.orderId.isEmpty()) { QMessageBox::warning(this, "提示", "请选择订单"); return; }
+    if (order.status != ConditionOrderStatus::Pending) { QMessageBox::warning(this, "提示", "只能撤销待触发订单"); return; }
+    if (QMessageBox::question(this, "确认", QString("撤销订单 %1?").arg(order.orderId)) == QMessageBox::Yes) {
         for (int i = 0; i < m_orders.size(); ++i) {
             if (m_orders[i].orderId == order.orderId) {
                 m_orders[i].status = ConditionOrderStatus::Cancelled;
@@ -325,26 +331,27 @@ void ConditionOrderPage::updateTable()
     QString typeFilter = m_typeFilterCombo->currentText();
     
     QVector<ConditionOrder> filtered;
-    for (const auto &order : m_orders) {
-        if (statusFilter != "All" && statusToString(order.status) != statusFilter) continue;
-        if (typeFilter != "All" && conditionTypeToString(order.conditionType) != typeFilter) continue;
-        filtered.append(order);
+    for (const auto &o : m_orders) {
+        if (statusFilter != "全部" && statusToString(o.status) != statusFilter) continue;
+        if (typeFilter != "全部" && conditionTypeToString(o.conditionType) != typeFilter) continue;
+        filtered.append(o);
     }
     
     m_orderTable->setRowCount(filtered.size());
     for (int i = 0; i < filtered.size(); ++i) {
-        const auto &order = filtered[i];
-        m_orderTable->setItem(i, 0, new QTableWidgetItem(order.orderId));
-        m_orderTable->setItem(i, 1, new QTableWidgetItem(order.instrumentId));
-        m_orderTable->setItem(i, 2, new QTableWidgetItem(conditionTypeToString(order.conditionType)));
-        m_orderTable->setItem(i, 3, new QTableWidgetItem(QString::number(order.triggerPrice, 'f', 2)));
-        m_orderTable->setItem(i, 4, new QTableWidgetItem(order.orderPrice > 0 ? QString::number(order.orderPrice, 'f', 2) : "Market"));
-        m_orderTable->setItem(i, 5, new QTableWidgetItem(QString::number(order.quantity)));
-        m_orderTable->setItem(i, 6, new QTableWidgetItem(QString("%1/%2").arg(order.isBuy ? "Buy" : "Sell").arg(order.isOpen ? "Open" : "Close")));
-        auto *statusItem = new QTableWidgetItem(statusToString(order.status));
-        statusItem->setForeground(QBrush(statusColor(order.status)));
+        const auto &o = filtered[i];
+        m_orderTable->setItem(i, 0, new QTableWidgetItem(o.orderId));
+        m_orderTable->setItem(i, 1, new QTableWidgetItem(o.instrumentId));
+        m_orderTable->setItem(i, 2, new QTableWidgetItem(conditionTypeToString(o.conditionType)));
+        m_orderTable->setItem(i, 3, new QTableWidgetItem(QString::number(o.triggerPrice, 'f', 2)));
+        m_orderTable->setItem(i, 4, new QTableWidgetItem(o.orderPrice > 0 ? QString::number(o.orderPrice, 'f', 2) : "市价"));
+        m_orderTable->setItem(i, 5, new QTableWidgetItem(QString::number(o.quantity)));
+        m_orderTable->setItem(i, 6, new QTableWidgetItem(QString("%1/%2").arg(o.isBuy ? "买" : "卖").arg(o.isOpen ? "开" : "平")));
+        
+        auto *statusItem = new QTableWidgetItem(statusToString(o.status));
+        statusItem->setForeground(QBrush(statusColor(o.status)));
         m_orderTable->setItem(i, 7, statusItem);
-        m_orderTable->setItem(i, 8, new QTableWidgetItem(order.createTime.toString("yyyy-MM-dd HH:mm:ss")));
+        m_orderTable->setItem(i, 8, new QTableWidgetItem(o.createTime.toString("yyyy-MM-dd HH:mm:ss")));
     }
 }
 
@@ -352,9 +359,9 @@ void ConditionOrderPage::updateSummary()
 {
     int total = m_orders.size();
     int pending = 0, triggered = 0;
-    for (const auto &order : m_orders) {
-        if (order.status == ConditionOrderStatus::Pending) pending++;
-        else if (order.status == ConditionOrderStatus::Triggered) triggered++;
+    for (const auto &o : m_orders) {
+        if (o.status == ConditionOrderStatus::Pending) pending++;
+        else if (o.status == ConditionOrderStatus::Triggered) triggered++;
     }
     m_totalCountLabel->setText(QString::number(total));
     m_pendingCountLabel->setText(QString::number(pending));
@@ -364,33 +371,33 @@ void ConditionOrderPage::updateSummary()
 QString ConditionOrderPage::conditionTypeToString(ConditionType type) const
 {
     switch (type) {
-        case ConditionType::StopLoss: return "Stop Loss";
-        case ConditionType::TakeProfit: return "Take Profit";
-        case ConditionType::TrailingStop: return "Trailing Stop";
-        case ConditionType::PriceTrigger: return "Price Trigger";
-        case ConditionType::TimeTrigger: return "Time Trigger";
-        default: return "Unknown";
+        case ConditionType::StopLoss: return "止损";
+        case ConditionType::TakeProfit: return "止盈";
+        case ConditionType::TrailingStop: return "跟踪止损";
+        case ConditionType::PriceTrigger: return "价格触发";
+        case ConditionType::TimeTrigger: return "时间触发";
+        default: return "未知";
     }
 }
 
 QString ConditionOrderPage::statusToString(ConditionOrderStatus status) const
 {
     switch (status) {
-        case ConditionOrderStatus::Pending: return "Pending";
-        case ConditionOrderStatus::Triggered: return "Triggered";
-        case ConditionOrderStatus::Cancelled: return "Cancelled";
-        case ConditionOrderStatus::Expired: return "Expired";
-        default: return "Unknown";
+        case ConditionOrderStatus::Pending: return "待触发";
+        case ConditionOrderStatus::Triggered: return "已触发";
+        case ConditionOrderStatus::Cancelled: return "已撤销";
+        case ConditionOrderStatus::Expired: return "已过期";
+        default: return "未知";
     }
 }
 
 QColor ConditionOrderPage::statusColor(ConditionOrderStatus status) const
 {
     switch (status) {
-        case ConditionOrderStatus::Pending: return QColor("#FF9500");
-        case ConditionOrderStatus::Triggered: return QColor("#34C759");
-        case ConditionOrderStatus::Cancelled: return QColor("#8E8E93");
-        case ConditionOrderStatus::Expired: return QColor("#FF2D55");
-        default: return QColor("#FFFFFF");
+        case ConditionOrderStatus::Pending: return QColor(PageStyles::warningColor());
+        case ConditionOrderStatus::Triggered: return QColor(PageStyles::successColor());
+        case ConditionOrderStatus::Cancelled: return QColor(PageStyles::flatColor());
+        case ConditionOrderStatus::Expired: return QColor(PageStyles::errorColor());
+        default: return QColor(PageStyles::primaryColor());
     }
 }
