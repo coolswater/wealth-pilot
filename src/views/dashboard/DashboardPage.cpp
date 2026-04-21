@@ -767,12 +767,14 @@ void DashboardPage::setupIndexPanel()
     QStringList indexNames = {
         QStringLiteral("上证指数"),
         QStringLiteral("深证成指"),
-        QStringLiteral("沪深300"),
         QStringLiteral("创业板指"),
-        QStringLiteral("科创50")
+        QStringLiteral("沪深300"),
+        QStringLiteral("科创50"),
+        QStringLiteral("上证50"),
+        QStringLiteral("沪深300"),
+        QStringLiteral("北证50")
     };
-
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 8; ++i) {
         QFrame* card = new QFrame(d->indexPanel);
         card->setStyleSheet(QString(R"(
             QFrame {
