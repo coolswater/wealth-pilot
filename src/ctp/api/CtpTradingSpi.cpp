@@ -297,7 +297,38 @@ void CtpTradingSpi::OnRspQryTradingAccount(CThostFtdcTradingAccountField *pTradi
 
 void CtpTradingSpi::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pInvestorPosition, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-
+    if (pInvestorPosition && (!pRspInfo || pRspInfo->ErrorID == 0)) {
+        QString instrumentId = QString::fromLocal8Bit(pInvestorPosition->InstrumentID);
+        char posDirection = pInvestorPosition->PosiDirection;
+        
+        // 根据持仓方向确定多头/空头
+        int longPos = 0;
+        int shortPos = 0;
+        
+        switch (posDirection) {
+        case THOST_FTDC_PD_Long:
+            longPos = pInvestorPosition->Position;
+            break;
+        case THOST_FTDC_PD_Short:
+            shortPos = pInvestorPosition->Position;
+            break;
+        case THOST_FTDC_PD_Net:
+            // 净持仓模式下，根据买卖方向判断
+            if (pInvestorPosition->PosiDirection == THOST_FTDC_PD_Long) {
+                longPos = pInvestorPosition->Position;
+            } else {
+                shortPos = pInvestorPosition->Position;
+            }
+            break;
+        }
+        
+        emit positionUpdated(instrumentId, longPos, shortPos);
+        
+        LOG_DEBUG(QString("Position received: %1, direction=%2, pos=%3")
+            .arg(instrumentId)
+            .arg(posDirection)
+            .arg(pInvestorPosition->Position));
+    }
 }
 
 void CtpTradingSpi::OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument,
@@ -373,6 +404,74 @@ OrderStatus CtpTradingSpi::convertOrderStatus(char status) {
 
 Direction CtpTradingSpi::convertDirection(char dir) {
     return dir == THOST_FTDC_D_Buy ? Direction::Buy : Direction::Sell;
+}
+
+void CtpTradingSpi::queryOrders()
+{
+    QMutexLocker locker(&d->apiMutex);
+    if (!d->api) return;
+
+    CThostFtdcQryOrderField req{};
+    strncpy(req.BrokerID, d->brokerId.toLocal8Bit().constData(), sizeof(req.BrokerID) - 1);
+    strncpy(req.InvestorID, d->userId.toLocal8Bit().constData(), sizeof(req.InvestorID) - 1);
+
+    int ret = d->api->ReqQryOrder(&req, ++d->requestId);
+    if (ret != 0) {
+        emit error(d->requestId, ret, "查询订单请求发送失败");
+    }
+    
+    LOG_INFO("Query orders sent");
+}
+
+void CtpTradingSpi::queryTrades()
+{
+    QMutexLocker locker(&d->apiMutex);
+    if (!d->api) return;
+
+    CThostFtdcQryTradeField req{};
+    strncpy(req.BrokerID, d->brokerId.toLocal8Bit().constData(), sizeof(req.BrokerID) - 1);
+    strncpy(req.InvestorID, d->userId.toLocal8Bit().constData(), sizeof(req.InvestorID) - 1);
+
+    int ret = d->api->ReqQryTrade(&req, ++d->requestId);
+    if (ret != 0) {
+        emit error(d->requestId, ret, "查询成交请求发送失败");
+    }
+    
+    LOG_INFO("Query trades sent");
+}
+
+void CtpTradingSpi::OnRspQryOrder(CThostFtdcOrderField *pOrder,
+                                   CThostFtdcRspInfoField *pRspInfo,
+                                   int nRequestID, bool bIsLast)
+{
+    static QVector<OrderInfo> orders;
+    
+    if (pOrder && (!pRspInfo || pRspInfo->ErrorID == 0)) {
+        orders.append(convertOrderField(*pOrder));
+    }
+    
+    if (bIsLast) {
+        emit ordersQueried(orders);
+        LOG_INFO(QString("Orders query finished, count: %1").arg(orders.size()));
+        orders.clear();
+    }
+}
+
+void CtpTradingSpi::OnRspQryTrade(CThostFtdcTradeField *pTrade,
+                                   CThostFtdcRspInfoField *pRspInfo,
+                                   int nRequestID, bool bIsLast)
+{
+    static QVector<TradeInfo> trades;
+    
+    if (pTrade && (!pRspInfo || pRspInfo->ErrorID == 0)) {
+        trades.append(convertTradeField(*pTrade));
+    }
+    
+    if (bIsLast) {
+        emit tradesQueried(trades);
+        LOG_INFO(QString("Trades query finished, count: %1").arg(trades.size()));
+        trades.clear();
+    }
 }
 
 OffsetFlag CtpTradingSpi::convertOffsetFlag(char flag) {

@@ -339,6 +339,7 @@ struct ConditionOrder {
     bool isTriggered = false;       ///< 是否已触发
     QDateTime createTime;           ///< 创建时间
     QDateTime triggerTimeActual;    ///< 实际触发时间
+    QString triggeredOrderId;       ///< 触发后的订单ID
     
     QString remark;                 ///< 备注
 };

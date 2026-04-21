@@ -70,6 +70,10 @@ public:
                                   CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
     void OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument,
                             CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
+    void OnRspQryOrder(CThostFtdcOrderField *pOrder,
+                       CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
+    void OnRspQryTrade(CThostFtdcTradeField *pTrade,
+                       CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
     void OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, 
                                     CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
@@ -87,6 +91,8 @@ signals:
                            const QString& instrumentName, double priceTick, int volumeMultiple);
     void instrumentQueryFinished(int totalCount);
     void settlementConfirmed(bool success, const QString& msg);  ///< 结算单确认结果
+    void ordersQueried(const QVector<OrderInfo>& orders);       ///< 订单查询结果
+    void tradesQueried(const QVector<TradeInfo>& trades);       ///< 成交查询结果
     void error(int requestId, int errorId, const QString& msg);
 
 private:

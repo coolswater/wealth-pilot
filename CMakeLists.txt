@@ -66,6 +66,8 @@ set(CORE_CACHE_SOURCES
 set(CORE_DATABASE_SOURCES
         src/core/database/DatabaseManager.h
         src/core/database/DatabaseManager.cpp
+        src/data/DataStorage.h
+        src/data/DataStorage.cpp
 )
 
 # Core - Task 异步任务
@@ -130,6 +132,10 @@ set(MARKET_SOURCES
         src/market/QuoteDataManager.cpp
         src/market/FavoritesManager.h
         src/market/FavoritesManager.cpp
+        src/market/MarketDataHub.h
+        src/market/MarketDataHub.cpp
+        src/market/StockDataSource.h
+        src/market/StockDataSource.cpp
 )
 
 # Models 数据模型
@@ -154,6 +160,10 @@ set(UTIL_SOURCES
         src/utils/TechnicalIndicators.cpp
         src/utils/PerformanceMonitor.h
         src/utils/PerformanceMonitor.cpp
+        src/utils/ExcelExporter.h
+        src/utils/ExcelExporter.cpp
+        src/utils/ReportGenerator.h
+        src/utils/ReportGenerator.cpp
 )
 
 # Network 网络
@@ -289,6 +299,8 @@ set(VIEW_SOURCES
         src/views/trading/ConditionOrderPage.cpp
         src/views/trading/TradingIntegration.h
         src/views/trading/TradingIntegration.cpp
+        src/views/trading/TradingPanel.h
+        src/views/trading/TradingPanel.cpp
         src/views/TradingPagesRegistration.cpp
 )
 
@@ -303,6 +315,12 @@ set(TRADING_SOURCES
         src/trading/RiskController.cpp
         src/trading/TradingService.h
         src/trading/TradingService.cpp
+        src/trading/AccountSyncManager.h
+        src/trading/AccountSyncManager.cpp
+        src/trading/ConditionOrderEngine.h
+        src/trading/ConditionOrderEngine.cpp
+        src/trading/AlertManager.h
+        src/trading/AlertManager.cpp
 )
 
 # 合并所有源文件
