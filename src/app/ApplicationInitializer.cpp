@@ -265,19 +265,29 @@ bool ApplicationInitializer::initializePlugins()
     // Initialize PluginLoader
     timer.start();
     
-    // 注册内置插件
+    // 注册并启动内置插件
     auto& pluginLoader = PluginLoader::instance();
     
-    // 注册 CTP 插件
+    // 注册并启动 CTP 插件
     auto ctpPlugin = new CTP::CTPPlugin();
     if (pluginLoader.registerBuiltInPlugin(ctpPlugin)) {
         LOG_INFO("CTPPlugin registered as built-in plugin");
+        if (pluginLoader.loadPlugin("CTPPlugin")) {
+            LOG_INFO("CTPPlugin loaded and started successfully");
+        } else {
+            LOG_WARNING("CTPPlugin failed to load");
+        }
     }
     
-    // 注册 AI 插件
+    // 注册并启动 AI 插件
     auto aiPlugin = new AI::AIPlugin();
     if (pluginLoader.registerBuiltInPlugin(aiPlugin)) {
         LOG_INFO("AIPlugin registered as built-in plugin");
+        if (pluginLoader.loadPlugin("AIPlugin")) {
+            LOG_INFO("AIPlugin loaded and started successfully");
+        } else {
+            LOG_WARNING("AIPlugin failed to load");
+        }
     }
     
     emit moduleInitialized("PluginLoader", true, timer.elapsed());

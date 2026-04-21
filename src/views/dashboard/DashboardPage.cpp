@@ -16,6 +16,7 @@
 
 #include "DashboardPage.h"
 #include "core/config/Tokens.h"
+#include "market/StockDataSource.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -38,6 +39,7 @@
 #include <QFrame>
 #include <QListWidget>
 #include <QProgressBar>
+#include <algorithm>
 
 // ============================================================================
 // 涨跌颜色委托 - 高性能绘制
@@ -133,6 +135,11 @@ public:
 // ============================================================================
 
 struct DashboardPage::Impl {
+    // 数据源
+    StockDataSource* indexDataSource = nullptr;      ///< 指数数据源
+    StockDataSource* rankDataSource = nullptr;       ///< 排行榜数据源
+    StockDataSource* watchlistDataSource = nullptr;  ///< 自选股数据源
+    
     // 主布局
     QVBoxLayout* mainLayout = nullptr;
     QSplitter* mainSplitter = nullptr;
@@ -149,6 +156,24 @@ struct DashboardPage::Impl {
     QVector<QLabel*> indexPriceLabels;
     QVector<QLabel*> indexChangeLabels;
     QVector<IndexData> indexData;
+    
+    // 指数代码列表
+    QStringList indexSymbols = {
+        "sh000001",  // 上证指数
+        "sz399001",  // 深证成指
+        "sh000300",  // 沪深300
+        "sz399006",  // 创业板指
+        "sh000688"   // 科创50
+    };
+    
+    // 热门股票代码（用于排行榜）
+    QStringList hotStockSymbols = {
+        "sh600519", "sh601318", "sz000858", "sz000001", "sh600036",
+        "sz002594", "sz300750", "sh601012", "sz000333", "sh600900",
+        "sz002415", "sh601888", "sz000002", "sh600276", "sz002304",
+        "sh601166", "sz000651", "sh601398", "sz002352", "sh600030",
+        "sz000725", "sh601288", "sz002475", "sh600000", "sz000063"
+    };
 
     // 六宫格排行榜
     QFrame* rankGridPanel = nullptr;
@@ -592,12 +617,12 @@ void DashboardPage::initializePage()
     if (isInitialized()) return;
 
     setupConnections();
-    loadDemoData();
+    loadRealData();  // 使用真实数据
 
     setInitialized(true);
     emit pageStatusChanged(QStringLiteral("initialized"));
 
-    LOG_DEBUG("DashboardPage initialized");
+    LOG_DEBUG("DashboardPage initialized with real data");
 }
 
 /**
@@ -1202,6 +1227,185 @@ void DashboardPage::loadDemoData()
     loadSectorData();
 
     updateTimeDisplay();
+}
+
+/**
+ * @brief 加载真实行情数据
+ */
+void DashboardPage::loadRealData()
+{
+    // 初始化数据源
+    d->indexDataSource = new StockDataSource(StockDataSource::Source::Sina, this);
+    d->rankDataSource = new StockDataSource(StockDataSource::Source::Sina, this);
+    d->watchlistDataSource = new StockDataSource(StockDataSource::Source::Sina, this);
+    
+    // 连接信号
+    connect(d->indexDataSource, &StockDataSource::quotesReceived,
+            this, &DashboardPage::onIndexQuotesReceived);
+    connect(d->rankDataSource, &StockDataSource::quotesReceived,
+            this, &DashboardPage::onRankQuotesReceived);
+    connect(d->watchlistDataSource, &StockDataSource::quotesReceived,
+            this, &DashboardPage::onWatchlistQuotesReceived);
+    
+    // 请求指数数据
+    d->indexDataSource->requestQuotes(d->indexSymbols);
+    
+    // 请求排行榜数据
+    d->rankDataSource->requestQuotes(d->hotStockSymbols);
+    
+    // 启动自动刷新（5秒）
+    d->indexDataSource->startAutoRefresh(5000);
+    d->rankDataSource->startAutoRefresh(5000);
+    
+    // 加载其他数据（新闻、资金流向等暂时用模拟数据）
+    loadNewsData();
+    loadMoneyFlowData();
+    loadSectorData();
+    
+    updateTimeDisplay();
+    
+    LOG_INFO("DashboardPage: Real data loading started");
+}
+
+/**
+ * @brief 处理指数数据
+ */
+void DashboardPage::onIndexQuotesReceived(const QVector<StockQuote>& quotes)
+{
+    d->indexData.clear();
+    
+    for (const auto& quote : quotes) {
+        IndexData data;
+        data.code = quote.symbol;
+        data.name = quote.name;
+        data.current = quote.lastPrice;
+        data.change = quote.changeAmount;
+        data.changePercent = quote.changePercent;
+        d->indexData.append(data);
+    }
+    
+    updateIndexDisplay();
+    
+    d->statusLabel->setText(QString("已更新 %1 %2")
+        .arg(QDateTime::currentDateTime().toString("HH:mm:ss"))
+        .arg(QStringLiteral("指数数据已更新")));
+}
+
+/**
+ * @brief 处理排行榜数据
+ */
+void DashboardPage::onRankQuotesReceived(const QVector<StockQuote>& quotes)
+{
+    // 按涨跌幅排序
+    QVector<StockQuote> sortedQuotes = quotes;
+    std::sort(sortedQuotes.begin(), sortedQuotes.end(),
+        [](const StockQuote& a, const StockQuote& b) {
+            return a.changePercent > b.changePercent;
+        });
+    
+    // 沪A涨幅榜（前15名）
+    QVector<StockRankData> shGainData;
+    int rank = 1;
+    for (const auto& quote : sortedQuotes) {
+        if (quote.symbol.startsWith("sh") && quote.changePercent > 0) {
+            StockRankData stock;
+            stock.rank = rank++;
+            stock.code = quote.symbol;
+            stock.name = quote.name;
+            stock.price = quote.lastPrice;
+            stock.changePercent = quote.changePercent;
+            stock.change = quote.changeAmount;
+            stock.volume = quote.volume;
+            stock.amount = quote.turnover;
+            shGainData.append(stock);
+            if (shGainData.size() >= 15) break;
+        }
+    }
+    d->shGainModel->setData(shGainData);
+    
+    // 深A涨幅榜
+    QVector<StockRankData> szGainData;
+    rank = 1;
+    for (const auto& quote : sortedQuotes) {
+        if (quote.symbol.startsWith("sz") && quote.changePercent > 0) {
+            StockRankData stock;
+            stock.rank = rank++;
+            stock.code = quote.symbol;
+            stock.name = quote.name;
+            stock.price = quote.lastPrice;
+            stock.changePercent = quote.changePercent;
+            stock.change = quote.changeAmount;
+            stock.volume = quote.volume;
+            stock.amount = quote.turnover;
+            szGainData.append(stock);
+            if (szGainData.size() >= 15) break;
+        }
+    }
+    d->szGainModel->setData(szGainData);
+    
+    // 沪A跌幅榜
+    QVector<StockRankData> shLossData;
+    rank = 1;
+    for (int i = sortedQuotes.size() - 1; i >= 0; --i) {
+        const auto& quote = sortedQuotes[i];
+        if (quote.symbol.startsWith("sh") && quote.changePercent < 0) {
+            StockRankData stock;
+            stock.rank = rank++;
+            stock.code = quote.symbol;
+            stock.name = quote.name;
+            stock.price = quote.lastPrice;
+            stock.changePercent = quote.changePercent;
+            stock.change = quote.changeAmount;
+            stock.volume = quote.volume;
+            stock.amount = quote.turnover;
+            shLossData.append(stock);
+            if (shLossData.size() >= 15) break;
+        }
+    }
+    d->sh5MinModel->setData(shLossData);
+    
+    // 深A跌幅榜
+    QVector<StockRankData> szLossData;
+    rank = 1;
+    for (int i = sortedQuotes.size() - 1; i >= 0; --i) {
+        const auto& quote = sortedQuotes[i];
+        if (quote.symbol.startsWith("sz") && quote.changePercent < 0) {
+            StockRankData stock;
+            stock.rank = rank++;
+            stock.code = quote.symbol;
+            stock.name = quote.name;
+            stock.price = quote.lastPrice;
+            stock.changePercent = quote.changePercent;
+            stock.change = quote.changeAmount;
+            stock.volume = quote.volume;
+            stock.amount = quote.turnover;
+            szLossData.append(stock);
+            if (szLossData.size() >= 15) break;
+        }
+    }
+    d->sz5MinModel->setData(szLossData);
+}
+
+/**
+ * @brief 处理自选股数据
+ */
+void DashboardPage::onWatchlistQuotesReceived(const QVector<StockQuote>& quotes)
+{
+    QVector<StockRankData> watchlistData;
+    int rank = 1;
+    for (const auto& quote : quotes) {
+        StockRankData stock;
+        stock.rank = rank++;
+        stock.code = quote.symbol;
+        stock.name = quote.name;
+        stock.price = quote.lastPrice;
+        stock.changePercent = quote.changePercent;
+        stock.change = quote.changeAmount;
+        stock.volume = quote.volume;
+        stock.amount = quote.turnover;
+        watchlistData.append(stock);
+    }
+    d->watchlistModel->setData(watchlistData);
 }
 
 /**

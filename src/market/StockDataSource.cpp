@@ -17,6 +17,7 @@ StockDataSource::StockDataSource(Source source, QObject *parent)
     , m_refreshTimer(new QTimer(this))
 {
     connect(m_refreshTimer, &QTimer::timeout, this, &StockDataSource::onRefreshTimer);
+    connect(m_networkManager, &QNetworkAccessManager::finished, this, &StockDataSource::onNetworkReply);
     LOG_DEBUG(QString("StockDataSource created, source: %1").arg(static_cast<int>(source)));
 }
 
@@ -34,11 +35,14 @@ void StockDataSource::requestQuotes(const QStringList &symbols)
     m_subscribedSymbols = symbols;
     QString url = buildQuotesUrl(symbols);
 
-    QNetworkReply *reply = m_networkManager->get(QNetworkRequest(QUrl(url)));
+    QNetworkRequest request{QUrl(url)};
+    request.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+    request.setRawHeader("Referer", "http://finance.sina.com.cn");
+    QNetworkReply *reply = m_networkManager->get(request);
     m_pendingRequests[reply] = url;
     m_requestTypes[reply] = {RequestType::Quotes, QString()};
 
-    LOG_DEBUG(QString("Requesting quotes: %1 symbols").arg(symbols.size()));
+    LOG_INFO(QString("Requesting quotes: %1 symbols, URL: %2").arg(symbols.size()).arg(url));
 }
 
 void StockDataSource::requestKLine(const QString &symbol, KLinePeriod period, int count)
@@ -105,6 +109,8 @@ void StockDataSource::onNetworkReply(QNetworkReply *reply)
     }
 
     QByteArray data = reply->readAll();
+    LOG_DEBUG(QString("Network reply received: %1 bytes, type: %2")
+        .arg(data.size()).arg(static_cast<int>(type)));
 
     switch (type) {
     case RequestType::Quotes:
@@ -144,20 +150,25 @@ void StockDataSource::parseSinaQuotes(const QByteArray &data)
     QString response = QString::fromLocal8Bit(data);
     QVector<StockQuote> quotes;
 
-    QRegularExpression re(R"(var hq_str_(\w+)=\"([^\"]*)\")");
+    // 更简单的正则表达式
+    QRegularExpression re("var hq_str_(\\w+)=\"([^\"]*)\"");
     QRegularExpressionMatchIterator it = re.globalMatch(response);
 
+    int matchCount = 0;
     while (it.hasNext()) {
         QRegularExpressionMatch match = it.next();
+        matchCount++;
         QString symbol = match.captured(1);
         QString content = match.captured(2);
 
         if (content.isEmpty()) {
+            LOG_DEBUG(QString("Empty content for symbol: %1").arg(symbol));
             continue;
         }
 
         QStringList fields = content.split(',');
-        if (fields.size() < 32) {
+        if (fields.size() < 10) {
+            LOG_DEBUG(QString("Not enough fields for %1: %2 fields").arg(symbol).arg(fields.size()));
             continue;
         }
 
@@ -183,9 +194,13 @@ void StockDataSource::parseSinaQuotes(const QByteArray &data)
         quotes.append(quote);
     }
 
+    LOG_DEBUG(QString("Regex matched %1 times, parsed %2 quotes").arg(matchCount).arg(quotes.size()));
+
     if (!quotes.isEmpty()) {
         emit quotesReceived(quotes);
-        LOG_DEBUG(QString("Parsed %1 quotes from Sina").arg(quotes.size()));
+        LOG_INFO(QString("Parsed %1 quotes from Sina").arg(quotes.size()));
+    } else {
+        LOG_WARNING(QString("No quotes parsed, response length: %1").arg(response.length()));
     }
 }
 

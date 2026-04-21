@@ -27,6 +27,7 @@
 #include <QAbstractTableModel>
 #include <memory>
 #include "core/config/Tokens.h"
+#include "market/StockDataSource.h"
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -266,6 +267,11 @@ private slots:
     void onRowDoubleClicked(const QModelIndex& index);
     void updateRealTimeData();
     void updateTimeDisplay();
+    
+    // 真实数据槽函数
+    void onIndexQuotesReceived(const QVector<StockQuote>& quotes);
+    void onRankQuotesReceived(const QVector<StockQuote>& quotes);
+    void onWatchlistQuotesReceived(const QVector<StockQuote>& quotes);
 
 private:
     void setupUI();
@@ -280,6 +286,7 @@ private:
     
     // 数据加载
     void loadDemoData();
+    void loadRealData();            ///< 加载真实数据
     void loadIndexData();
     void loadRankData();
     void loadWatchlistData();
@@ -290,6 +297,12 @@ private:
     // UI更新
     void updateIndexDisplay();
     void updateSectorHeatmap();
+    
+    // 数据处理
+    void processIndexQuotes(const QVector<StockQuote>& quotes);
+    void processRankQuotes(const QVector<StockQuote>& quotes);
+    QVector<StockRankData> filterTopGainers(const QVector<StockQuote>& quotes, int count);
+    QVector<StockRankData> filterTopLosers(const QVector<StockQuote>& quotes, int count);
 
     struct Impl;
     std::unique_ptr<Impl> d;
