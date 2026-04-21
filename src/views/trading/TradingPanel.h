@@ -23,7 +23,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include "trading/TradingTypes.h"
-#include "../widgets/OrderDialog.h"
+#include "ui/components/OrderDialog.h"
 
 /**
  * @brief 交易面板组件

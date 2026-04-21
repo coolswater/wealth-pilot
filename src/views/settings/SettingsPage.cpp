@@ -17,7 +17,7 @@
 #include <QFileDialog>
 #include <QApplication>
 
-#include <views/widgets/CardWidget.h>
+#include <ui/components/CardWidget.h>
 #include <core/config/ConfigManager.h>
 #include <ui/ThemeManager.h>
 #include <core/config/Tokens.h>

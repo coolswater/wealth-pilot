@@ -7,7 +7,7 @@
 #include <QListWidget>
 #include <QTextBrowser>
 
-#include <views/widgets/CardWidget.h>
+#include <ui/components/CardWidget.h>
 
 struct NewsPage::Impl {};
 

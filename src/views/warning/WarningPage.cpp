@@ -7,7 +7,7 @@
 #include <QListWidget>
 #include <QCheckBox>
 
-#include <views/widgets/CardWidget.h>
+#include <ui/components/CardWidget.h>
 
 struct WarningPage::Impl {};
 

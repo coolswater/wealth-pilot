@@ -4,7 +4,7 @@
  */
 
 #include "TradingPanel.h"
-#include "../widgets/OrderDialog.h"
+#include "ui/components/OrderDialog.h"
 #include "trading/TradingService.h"
 #include "ui/components/PageStyles.h"
 #include "utils/Logger.h"

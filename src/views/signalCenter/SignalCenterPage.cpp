@@ -8,7 +8,7 @@
 #include <QResizeEvent>
 #include <QScrollArea>
 
-#include <views/widgets/CardWidget.h>
+#include <ui/components/CardWidget.h>
 
 #include <QTimer>
 

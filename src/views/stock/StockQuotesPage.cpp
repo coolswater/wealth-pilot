@@ -10,7 +10,7 @@
 #include <QLineEdit>
 #include <QRandomGenerator>
 
-#include <views/widgets/CardWidget.h>
+#include <ui/components/CardWidget.h>
 
 struct StockQuotesPage::Impl {
     QTableWidget* table = nullptr;

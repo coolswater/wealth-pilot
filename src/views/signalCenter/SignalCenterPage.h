@@ -5,7 +5,7 @@
 
 #include <core/base/BasePage.h>
 
-#include <views/widgets/CardWidget.h>
+#include <ui/components//CardWidget.h>
 
 class SignalCenterPage : public BasePage
 {

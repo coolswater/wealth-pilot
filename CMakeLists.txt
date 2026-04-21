@@ -210,6 +210,38 @@ set(UI_COMPONENT_SOURCES
         src/ui/components/TickTableView.cpp
         src/ui/components/ChartStatusBar.h
         src/ui/components/ChartStatusBar.cpp
+        src/ui/components/BaseWidget.h
+        src/ui/components/BaseWidget.cpp
+        src/ui/components/SidebarWidget.h
+        src/ui/components/SidebarWidget.cpp
+        src/ui/components/SvgIconEngine.h
+        src/ui/components/SvgIconEngine.cpp
+        src/ui/components/SvgIconWidget.h
+        src/ui/components/SvgIconWidget.cpp
+        src/ui/components/TitleBarWidget.h
+        src/ui/components/TitleBarWidget.cpp
+        src/ui/components/ThemeToggleButton.h
+        src/ui/components/ThemeToggleButton.cpp
+        src/ui/components/CardWidget.h
+        src/ui/components/CardWidget.cpp
+        src/ui/components/StatusBarWidget.h
+        src/ui/components/StatusBarWidget.cpp
+        src/ui/components/AssetCardWidget.h
+        src/ui/components/AssetCardWidget.cpp
+        src/ui/components/AssetPieChart.h
+        src/ui/components/AssetPieChart.cpp
+        src/ui/components/AIAssistantPanelWidget.cpp
+        src/ui/components/AIAssistantPanelWidget.h
+        src/ui/components/NetworkIndicator.cpp
+        src/ui/components/NetworkIndicator.h
+        src/ui/components/TreeMapWidget.cpp
+        src/ui/components/TreeMapWidget.h
+        src/ui/components/AddSymbolDialog.cpp
+        src/ui/components/AddSymbolDialog.h
+        src/ui/components/DividerWidget.h
+        src/ui/components/DividerWidget.cpp
+        src/ui/components/OrderDialog.h
+        src/ui/components/OrderDialog.cpp
         src/ui/ThemeManager.h
         src/ui/ThemeManager.cpp
 )
@@ -218,42 +250,6 @@ set(UI_COMPONENT_SOURCES
 set(UI_ANIMATION_SOURCES
         src/ui/animation/AnimationManager.h
         src/ui/animation/AnimationManager.cpp
-)
-
-# Widgets 控件
-set(WIDGET_SOURCES
-        src/views/widgets/BaseWidget.h
-        src/views/widgets/BaseWidget.cpp
-        src/views/widgets/SidebarWidget.h
-        src/views/widgets/SidebarWidget.cpp
-        src/views/widgets/SvgIconEngine.h
-        src/views/widgets/SvgIconEngine.cpp
-        src/views/widgets/SvgIconWidget.h
-        src/views/widgets/SvgIconWidget.cpp
-        src/views/widgets/TitleBarWidget.h
-        src/views/widgets/TitleBarWidget.cpp
-        src/views/widgets/ThemeToggleButton.h
-        src/views/widgets/ThemeToggleButton.cpp
-        src/views/widgets/CardWidget.h
-        src/views/widgets/CardWidget.cpp
-        src/views/widgets/StatusBarWidget.h
-        src/views/widgets/StatusBarWidget.cpp
-        src/views/widgets/AssetCardWidget.h
-        src/views/widgets/AssetCardWidget.cpp
-        src/views/widgets/AssetPieChart.h
-        src/views/widgets/AssetPieChart.cpp
-        src/views/widgets/AIAssistantPanelWidget.cpp
-        src/views/widgets/AIAssistantPanelWidget.h
-        src/views/widgets/NetworkIndicator.cpp
-        src/views/widgets/NetworkIndicator.h
-        src/views/widgets/TreeMapWidget.cpp
-        src/views/widgets/TreeMapWidget.h
-        src/views/widgets/AddSymbolDialog.cpp
-        src/views/widgets/AddSymbolDialog.h
-        src/views/widgets/DividerWidget.h
-        src/views/widgets/DividerWidget.cpp
-        src/views/widgets/OrderDialog.h
-        src/views/widgets/OrderDialog.cpp
 )
 
 # Views 视图
