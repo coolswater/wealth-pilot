@@ -193,13 +193,6 @@ void CtpMarketSpi::OnRspSubMarketData(CThostFtdcSpecificInstrumentField *pSpecif
                                       int nRequestID, bool bIsLast) {
     QString instrumentId = pSpecificInstrument ? QString::fromLocal8Bit(pSpecificInstrument->InstrumentID) : "unknown";
     int errorId = pRspInfo ? pRspInfo->ErrorID : 0;
-    
-    qDebug() << "=== CtpMarketSpi::OnRspSubMarketData() ==="
-             << "Instrument:" << instrumentId
-             << "ErrorID:" << errorId;
-    
-    LOG_INFO(QString("CtpMarketSpi::OnRspSubMarketData() - Instrument: %1, ErrorID: %2")
-             .arg(instrumentId).arg(errorId));
 
     // 订阅响应处理
     if (pRspInfo && pRspInfo->ErrorID != 0) {
@@ -211,11 +204,6 @@ void CtpMarketSpi::OnRspSubMarketData(CThostFtdcSpecificInstrumentField *pSpecif
 
 void CtpMarketSpi::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDepthMarketData) {
     if (!pDepthMarketData) return;
-
-    qDebug() << "=== CtpMarketSpi::OnRtnDepthMarketData() ==="
-             << "Instrument:" << pDepthMarketData->InstrumentID
-             << "LastPrice:" << pDepthMarketData->LastPrice;
-
     auto data = convertDepthMarketData(*pDepthMarketData);
 
     // 使用批量缓冲或直接发送

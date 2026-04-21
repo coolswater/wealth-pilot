@@ -295,7 +295,7 @@ void MainWindow::setupUI()
     d->rootLayout->addWidget(d->titleBar);
 
     // 分割线
-    DividerWidget *titleDivider = DividerWidget::createHorizontal(d->titleBar, ChartStyles::Colors::BgElevated, 1, 0);
+    DividerWidget* titleDivider = DividerWidget::createHorizontal(d->titleBar, ChartStyles::Colors::BgElevated, 1, 0);
     d->rootLayout->addWidget(titleDivider);
 
     // 主要内容区域
@@ -327,7 +327,7 @@ void MainWindow::setupUI()
     d->mainLayout->addWidget(d->sidebar);
 
     // 分割线
-    DividerWidget *sidebarDivider = DividerWidget::createVertical(d->sidebar, ChartStyles::Colors::BgElevated, 1, 0);
+    DividerWidget* sidebarDivider = DividerWidget::createVertical(d->sidebar, ChartStyles::Colors::BgElevated, 1, 0);
     d->mainLayout->addWidget(sidebarDivider);
 
     // 内容重叠层
@@ -337,7 +337,7 @@ void MainWindow::setupUI()
     d->mainLayout->addWidget(d->contentStack, 1);
 
     // 分割线
-    DividerWidget *aiDivider = DividerWidget::createVertical(d->contentStack, ChartStyles::Colors::BgElevated, 1, 0);
+    DividerWidget* aiDivider = DividerWidget::createVertical(d->contentStack, ChartStyles::Colors::BgElevated, 1, 0);
     d->mainLayout->addWidget(aiDivider);
 
     // AI分析面板
@@ -347,7 +347,8 @@ void MainWindow::setupUI()
     d->mainLayout->addWidget(d->aiPanel);
 
     // 分割线
-    DividerWidget *statusBarDivider = DividerWidget::createHorizontal(d->contentStack, ChartStyles::Colors::BgElevated, 1, 0);
+    DividerWidget* statusBarDivider = DividerWidget::createHorizontal(d->contentStack, ChartStyles::Colors::BgElevated,
+                                                                      1, 0);
     d->rootLayout->addWidget(statusBarDivider);
 
     // 状态栏
@@ -355,8 +356,6 @@ void MainWindow::setupUI()
     d->statusBar->setObjectName("statusBar");
     d->statusBar->setFixedHeight(Layout::Height::StatusBar);
     d->rootLayout->addWidget(d->statusBar);
-
-
 }
 
 /**
@@ -526,8 +525,6 @@ QWidget* MainWindow::getPage(const QString& pageId)
 
 bool MainWindow::initializeApplication()
 {
-    LOG_INFO("Starting application initialization...");
-
     // Initialize application
     if (!ApplicationInitializer::instance().initialize())
     {
@@ -580,15 +577,15 @@ void MainWindow::loadSettings()
     {
         restoreState(state);
     }
-    
+
     // 默认启动页面为 dashboard
     // 注意：这里强制使用 dashboard 作为启动页面，而不是从设置中读取
     // 这样可以确保每次启动都显示 dashboard
     QString lastPage = "dashboard";
-    
+
     // 设置侧边栏选中状态
     d->sidebar->setCurrentItem(lastPage);
-    
+
     // 切换到目标页面
     onSidebarItemClicked(lastPage);
 

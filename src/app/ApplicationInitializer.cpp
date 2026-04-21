@@ -10,6 +10,8 @@
 #include "../core/database/DatabaseManager.h"
 #include "../core/task/AsyncTaskManager.h"
 #include "../plugins/PluginLoader.h"
+#include "../plugins/CTPPlugin.h"
+#include "../ai/plugin/AIPlugin.h"
 #include "../ui/ThemeManager.h"
 #include "../utils/Logger.h"
 
@@ -46,8 +48,6 @@ bool ApplicationInitializer::initialize()
     }
 
     LOG_INFO("Starting application initialization...");
-    QElapsedTimer totalTimer;
-    totalTimer.start();
 
     // Initialize in order
     if (!initializeCore()) {
@@ -72,9 +72,6 @@ bool ApplicationInitializer::initialize()
 
     m_initialized = true;
     m_currentPhase = InitPhase::Complete;
-
-    qint64 totalTime = totalTimer.elapsed();
-    LOG_INFO(QString("Application initialization complete in %1ms").arg(totalTime));
 
     emit initializationComplete(true);
     return true;
@@ -267,8 +264,22 @@ bool ApplicationInitializer::initializePlugins()
 
     // Initialize PluginLoader
     timer.start();
-    // PluginLoader auto-loads on construction
-    (void)PluginLoader::instance();
+    
+    // 注册内置插件
+    auto& pluginLoader = PluginLoader::instance();
+    
+    // 注册 CTP 插件
+    auto ctpPlugin = new CTP::CTPPlugin();
+    if (pluginLoader.registerBuiltInPlugin(ctpPlugin)) {
+        LOG_INFO("CTPPlugin registered as built-in plugin");
+    }
+    
+    // 注册 AI 插件
+    auto aiPlugin = new AI::AIPlugin();
+    if (pluginLoader.registerBuiltInPlugin(aiPlugin)) {
+        LOG_INFO("AIPlugin registered as built-in plugin");
+    }
+    
     emit moduleInitialized("PluginLoader", true, timer.elapsed());
     emit progressUpdated(++current, total, "PluginLoader");
 

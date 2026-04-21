@@ -83,7 +83,7 @@ QPushButton {
 }
 
 QPushButton:hover { background-color: rgba(255, 255, 255, 0.05); }
-QPushButton:pressed { background-color: rgba(255, 255, 255, 0.08); }
+QPushButton:pressed { background-color: #14FFFFFF; }
 QPushButton:disabled { background-color: rgba(255, 255, 255, 0.02); color: #6B7280; }
 
 QPushButton[primary="true"] { background-color: #3B82F6; }
@@ -187,7 +187,7 @@ QHeaderView::section:hover { background-color: rgba(255, 255, 255, 0.05); color:
 /* ==================== 卡片 ==================== */
 CardWidget {
     background-color: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid #14FFFFFF;
     border-radius: 12px;
 }
 
@@ -357,8 +357,8 @@ QMessageBox { background-color: #1A1F2E; }
 QMessageBox QLabel { color: #E4E6EB; }
 
 /* ==================== 分隔线 ==================== */
-DividerWidget[frameType="horizontal"] { min-height: 1px; max-height: 1px; background-color: rgba(255, 255, 255, 0.08); }
-DividerWidget[frameType="vertical"] { min-width: 1px; max-width: 1px; background-color: rgba(255, 255, 255, 0.08); }
+DividerWidget[frameType="horizontal"] { min-height: 1px; max-height: 1px; background-color: #14FFFFFF; ; }
+DividerWidget[frameType="vertical"] { min-width: 1px; max-width: 1px; background-color: #14FFFFFF; ; }
 
 /* ==================== 主题切换按钮 ==================== */
 ThemeToggleButton {
@@ -381,7 +381,7 @@ FuturesQuotesPage QLabel#statusLabel { color: #6B7280; padding: 5px; border-top:
 FuturesQuotesPage QPushButton#subscribeBtn { background-color: #3B82F6; color: white; border-radius: 4px; padding: 6px 12px; }
 
 SettingsPage { background-color: transparent; }
-SettingsPage QGroupBox { background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; margin-top: 16px; padding: 16px; }
+SettingsPage QGroupBox { background-color: rgba(255, 255, 255, 0.03); border: 1px solid #14FFFFFF; border-radius: 8px; margin-top: 16px; padding: 16px; }
 
 AboutUSPage { background-color: transparent; }
-AboutUSPage CardWidget { background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); }
+AboutUSPage CardWidget { background-color: rgba(255, 255, 255, 0.03); border: 1px solid #14FFFFFF; }

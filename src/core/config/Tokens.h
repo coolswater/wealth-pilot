@@ -72,7 +72,7 @@ namespace Colors {
     inline const QString TextInverse = "#1A1F2E";      //< 反色文字
 
     // ========== 边框色 ==========
-    inline const QString Border = "rgba(255, 255, 255, 0.08)";
+    inline const QString Border = "#14FFFFFF";
     inline const QString BorderLight = "rgba(255, 255, 255, 0.05)";
     inline const QString BorderHover = "rgba(255, 255, 255, 0.15)";
     inline const QString BorderFocus = "#3B82F6";

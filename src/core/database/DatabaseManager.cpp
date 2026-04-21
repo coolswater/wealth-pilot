@@ -38,8 +38,6 @@ void ConnectionPool::initialize()
             m_availableConnections.enqueue(db);
         }
     }
-    
-    LOG_INFO(QString("ConnectionPool initialized with %1 connections").arg(m_availableConnections.size()));
 }
 
 void ConnectionPool::cleanup()
@@ -323,8 +321,7 @@ bool DatabaseManager::initialize(const DatabaseConfig& config)
     
     // Create tables
     createTables();
-    
-    LOG_INFO("DatabaseManager initialized");
+
     return true;
 }
 
