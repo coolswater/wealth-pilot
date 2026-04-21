@@ -1,52 +1,91 @@
-#ifndef STOCKQUOTES_H
-#define STOCKQUOTES_H
+/**
+ * @file StockQuotesPage.h
+ * @brief 股票行情页面 - 对接真实行情数据
+ */
 
+#pragma once
+
+#include <QTableView>
+#include <QSortFilterProxyModel>
+#include <QAbstractTableModel>
 #include <memory>
-#include <QVector>
 #include <core/base/BasePage.h>
 #include "market/StockDataSource.h"
-#include "models/StockQuoteItem.h"
 
-class QTableWidget;
-class QComboBox;
-class QLineEdit;
+QT_BEGIN_NAMESPACE
 class QLabel;
-class QTimer;
+class QLineEdit;
+class QComboBox;
+class QPushButton;
+QT_END_NAMESPACE
+
+/**
+ * @brief 股票行情表格模型
+ */
+class StockQuoteModel : public QAbstractTableModel {
+    Q_OBJECT
+public:
+    enum Column {
+        ColCode = 0,      ///< 代码
+        ColName,          ///< 名称
+        ColPrice,         ///< 最新价
+        ColChange,        ///< 涨跌幅
+        ColChangeAmount,  ///< 涨跌额
+        ColVolume,        ///< 成交量
+        ColAmount,        ///< 成交额
+        ColCount
+    };
+
+    explicit StockQuoteModel(QObject* parent = nullptr);
+    
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    int columnCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+    
+    void setData(const QVector<StockQuote>& quotes);
+    void updateQuote(const StockQuote& quote);
+    void clear();
+
+private:
+    QVector<StockQuote> m_data;
+    QHash<QString, int> m_symbolIndex;  ///< 快速查找索引
+    
+    static QString formatVolume(qint64 volume);
+    static QString formatMoney(double value);
+};
 
 /**
  * @brief 股票行情页面
- * @details 展示实时股票行情数据，支持搜索、筛选、自选
  */
-class StockQuotesPage : public BasePage
-{
+class StockQuotesPage : public BasePage {
     Q_OBJECT
 
 public:
-    explicit StockQuotesPage(QWidget *parent = nullptr);
-    ~StockQuotesPage();
+    explicit StockQuotesPage(QWidget* parent = nullptr);
+    ~StockQuotesPage() override;
 
     QString pageId() const override;
     void initializePage() override;
+    void onPageActivated(const QVariantMap& params = {}) override;
+    void onPageDeactivated() override;
+
+signals:
+    void navigateToKLinePage(const QString& symbol, const QVariantMap& params);
 
 private slots:
     void onQuotesReceived(const QVector<StockQuote>& quotes);
-    void onSearchTextChanged(const QString& text);
+    void onSearchChanged(const QString& text);
     void onFilterChanged(int index);
     void onRefreshData();
-    void onViewButtonClicked();
-    void onAddToFavoriteClicked();
+    void onRowDoubleClicked(const QModelIndex& index);
 
 private:
     void setupUI();
     void setupConnections();
-    void updateTable(const QVector<StockQuote>& quotes);
-    void updateTableRow(int row, const StockQuote& quote);
-    void applyFilter();
-    QString formatVolume(qint64 volume) const;
-    QString formatMoney(double value) const;
+    void requestStockData();
+    void updateStatus(const QString& text);
 
-    struct Impl;
+    class Impl;
     std::unique_ptr<Impl> d;
 };
-
-#endif // STOCKQUOTES_H

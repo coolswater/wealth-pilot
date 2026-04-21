@@ -156,16 +156,18 @@ struct DashboardPage::Impl {
     QVector<QLabel*> indexPriceLabels;
     QVector<QLabel*> indexChangeLabels;
     QVector<IndexData> indexData;
-    
+
     // 指数代码列表
     QStringList indexSymbols = {
         "sh000001",  // 上证指数
         "sz399001",  // 深证成指
-        "sh000300",  // 沪深300
         "sz399006",  // 创业板指
-        "sh000688"   // 科创50
+        "sh000688",  // 科创50
+        "sh000016",  // 上证50
+        "sh000300",  // 沪深300
+        "bj899050",  // 北证50
     };
-    
+
     // 热门股票代码（用于排行榜）
     QStringList hotStockSymbols = {
         "sh600519", "sh601318", "sz000858", "sz000001", "sh600036",
