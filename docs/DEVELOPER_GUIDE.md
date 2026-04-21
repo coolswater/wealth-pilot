@@ -1,521 +1,401 @@
-# WealthPilot 开发指南
+# WealthPilot 开发者指南
 
 ## 目录
 
-1. [开发环境搭建](#开发环境搭建)
-2. [项目结构](#项目结构)
-3. [编码规范](#编码规范)
-4. [开发流程](#开发流程)
-5. [调试技巧](#调试技巧)
-6. [发布流程](#发布流程)
+1. [开发环境搭建](#1-开发环境搭建)
+2. [项目架构](#2-项目架构)
+3. [核心模块](#3-核心模块)
+4. [开发规范](#4-开发规范)
+5. [扩展开发](#5-扩展开发)
+6. [调试技巧](#6-调试技巧)
 
 ---
 
-## 开发环境搭建
+## 1. 开发环境搭建
 
-### 必需软件
+### 1.1 必需软件
 
-1. **Qt 6.10.2**
-   - 下载地址: https://www.qt.io/download
-   - 安装组件: MinGW 64-bit, Qt Creator
+| 软件 | 版本 | 用途 |
+|------|------|------|
+| Qt | 6.10.2 | GUI框架 |
+| CMake | 3.16+ | 构建系统 |
+| MinGW | 64-bit | 编译器 |
+| Git | 最新版 | 版本控制 |
+| Qt Creator | 最新版 | IDE（可选） |
 
-2. **CMake 3.16+**
-   - 下载地址: https://cmake.org/download/
+### 1.2 环境配置
 
-3. **Git**
-   - 下载地址: https://git-scm.com/download
+#### Windows 环境变量
+```
+QT_DIR=C:\Qt\6.10.2\mingw_64
+CMAKE_PREFIX_PATH=%QT_DIR%
+PATH=%QT_DIR%\bin;C:\Qt\Tools\mingw1630_64\bin;C:\Qt\Tools\CMake_64\bin;%PATH%
+```
 
-4. **Visual Studio Code** (可选)
-   - 推荐插件: C/C++, CMake Tools
-
-### 克隆项目
+### 1.3 克隆与构建
 
 ```bash
-git clone https://github.com/wealthpilot/wealth-pilot.git
+# 克隆项目
+git clone https://github.com/your-repo/wealth-pilot.git
 cd wealth-pilot
-```
 
-### 编译项目
-
-```bash
-mkdir build
-cd build
-cmake ..
-cmake --build . --config Release
-```
-
-### 运行项目
-
-```bash
-./WealthPilot
-```
-
----
-
-## 项目结构
-
-```
-wealth-pilot/
-├── src/                    # 源代码
-│   ├── core/              # 核心模块
-│   │   ├── ServiceLocator.h/cpp
-│   │   ├── EnvironmentConfig.h/cpp
-│   │   ├── CacheManager.h/cpp
-│   │   ├── DatabaseManager.h/cpp
-│   │   └── AsyncTaskManager.h/cpp
-│   │
-│   ├── plugins/           # 插件系统
-│   │   ├── IPlugin.h
-│   │   ├── PluginLoader.h/cpp
-│   │   ├── ICTPPlugin.h
-│   │   ├── IAIPlugin.h
-│   │   ├── CTPPlugin.h/cpp
-│   │   └── AIPlugin.h/cpp
-│   │
-│   ├── ui/                # UI组件库
-│   │   └── components/
-│   │       ├── UIComponents.h
-│   │       ├── ThemeEngine.h/cpp
-│   │       └── KLineChart.h
-│   │
-│   ├── network/           # 网络模块
-│   │   └── NetworkCache.h/cpp
-│   │
-│   ├── utils/             # 工具模块
-│   │   ├── TechnicalIndicators.h/cpp
-│   │   └── Logger.h/cpp
-│   │
-│   ├── services/          # 服务层
-│   │   ├── AIService.h/cpp
-│   │   └── CTPService.h/cpp
-│   │
-│   └── views/             # 视图层
-│       ├── mainWindow/
-│       ├── widgets/
-│       └── pages/
-│
-├── tests/                 # 测试代码
-│   ├── TestServiceLocator.cpp
-│   ├── TestCacheManager.cpp
-│   ├── TestPluginLoader.cpp
-│   └── PerformanceTest.cpp
-│
-├── docs/                  # 文档
-│   ├── OPTIMIZATION_ARCHITECTURE.md
-│   ├── OPTIMIZATION_REPORT.md
-│   ├── REFACTORING_REPORT.md
-│   ├── API_DOCUMENTATION.md
-│   └── USER_MANUAL.md
-│
-├── resources/             # 资源文件
-│   ├── icons/
-│   ├── images/
-│   ├── fonts/
-│   └── style/
-│
-├── external/              # 第三方库
-├── scripts/               # 构建脚本
-├── CMakeLists.txt         # CMake配置
-└── README.md              # 项目说明
-```
-
----
-
-## 编码规范
-
-### 命名规范
-
-#### 类名
-- 使用PascalCase
-- 以大写字母开头
-- 示例: `ServiceLocator`, `CacheManager`
-
-#### 函数名
-- 使用camelCase
-- 以小写字母开头
-- 示例: `initialize()`, `getMarketData()`
-
-#### 变量名
-- 成员变量: `m_` 前缀 + camelCase
-- 示例: `m_cache`, `m_networkManager`
-- 局部变量: camelCase
-- 示例: `result`, `dataList`
-
-#### 常量
-- 使用UPPER_CASE
-- 示例: `MAX_CACHE_SIZE`, `DEFAULT_TIMEOUT`
-
-#### 枚举
-- 使用PascalCase
-- 示例: `enum class CacheLevel { L1_Memory, L2_Disk }`
-
-### 代码风格
-
-#### 头文件
-```cpp
-/**
- * @file FileName.h
- * @brief 文件描述
- * @author WealthPilot Team
- * @version 2.0.0
- */
-
-#ifndef FILENAME_H
-#define FILENAME_H
-
-#include <QObject>
-
-class ClassName : public QObject
-{
-    Q_OBJECT
-
-public:
-    explicit ClassName(QObject* parent = nullptr);
-    ~ClassName() override;
-
-private:
-    struct Impl;
-    std::unique_ptr<Impl> d;
-};
-
-#endif // FILENAME_H
-```
-
-#### 实现文件
-```cpp
-/**
- * @file FileName.cpp
- * @brief 文件描述
- */
-
-#include "FileName.h"
-
-struct ClassName::Impl {
-    // 私有实现
-};
-
-ClassName::ClassName(QObject* parent)
-    : QObject(parent)
-    , d(std::make_unique<Impl>())
-{
-}
-
-ClassName::~ClassName()
-{
-}
-```
-
-#### 函数注释
-```cpp
-/**
- * @brief 函数描述
- * @param paramName 参数描述
- * @return 返回值描述
- */
-ReturnType functionName(ParamType paramName);
-```
-
-### 最佳实践
-
-#### 使用智能指针
-```cpp
-// 推荐
-std::unique_ptr<Impl> d;
-std::shared_ptr<Data> data;
-
-// 避免
-Impl* d;
-Data* data;
-```
-
-#### 使用RAII
-```cpp
-// 推荐
-{
-    QMutexLocker locker(&m_mutex);
-    // 访问共享资源
-}
-// 自动解锁
-
-// 避免
-m_mutex.lock();
-// 访问共享资源
-m_mutex.unlock();
-```
-
-#### 使用const
-```cpp
-// 推荐
-const QString& getName() const;
-void processData(const QMap<QString, QVariant>& data);
-
-// 避免不必要的拷贝
-QString getName(); // 不推荐
-```
-
-#### 使用PIMPL模式
-```cpp
-// 头文件
-class ClassName {
-private:
-    struct Impl;
-    std::unique_ptr<Impl> d;
-};
-
-// 实现文件
-struct ClassName::Impl {
-    // 私有成员
-};
-```
-
----
-
-## 开发流程
-
-### 1. 创建新功能
-
-#### 步骤1: 创建分支
-```bash
-git checkout -b feature/new-feature
-```
-
-#### 步骤2: 编写代码
-- 遵循编码规范
-- 添加必要注释
-- 编写单元测试
-
-#### 步骤3: 编译测试
-```bash
+# 创建构建目录
 mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Debug
-cmake --build .
-ctest
+
+# 配置项目
+cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug ..
+
+# 编译
+cmake --build . --target WealthPilot -j4
+
+# 运行
+./WealthPilot.exe
 ```
 
-#### 步骤4: 提交代码
-```bash
-git add .
-git commit -m "feat: add new feature"
-git push origin feature/new-feature
+---
+
+## 2. 项目架构
+
+### 2.1 整体架构
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Views Layer                          │
+│  (DashboardPage, StockKLinePage, PortfolioPage, ...)   │
+├─────────────────────────────────────────────────────────┤
+│                    UI Components                        │
+│  (KLineChart, MarketDepthWidget, CardWidget, ...)      │
+├─────────────────────────────────────────────────────────┤
+│                    Core Layer                           │
+│  (Config, Cache, Database, Navigation, Task, Types)    │
+├─────────────────────────────────────────────────────────┤
+│                    Services Layer                       │
+│  (CTP API, AI Service, Market Data, Trading)           │
+└─────────────────────────────────────────────────────────┘
 ```
 
-#### 步骤5: 创建Pull Request
-- 在GitHub创建PR
-- 等待代码审查
-- 合并到主分支
+### 2.2 模块依赖关系
 
-### 2. 创建新插件
+```
+app
+ └── views
+      ├── ui/components
+      ├── core
+      │    ├── config
+      │    ├── cache
+      │    ├── database
+      │    ├── navigation
+      │    └── task
+      ├── trading
+      ├── ctp
+      ├── ai
+      └── utils
+```
 
-#### 步骤1: 定义接口
+### 2.3 设计模式
+
+| 模式 | 应用场景 | 示例 |
+|------|----------|------|
+| 单例模式 | 全局管理器 | ThemeManager, ConfigManager |
+| PIMPL模式 | 隐藏实现细节 | KLineChart::Impl |
+| 工厂模式 | 页面创建 | PageFactoryRegistry |
+| 观察者模式 | 事件通知 | Qt信号槽 |
+| 依赖注入 | 服务解耦 | ServiceLocator |
+
+---
+
+## 3. 核心模块
+
+### 3.1 设计系统 (Tokens)
+
+所有设计变量定义在 `src/core/config/Tokens.h`：
+
 ```cpp
-// src/plugins/IMyPlugin.h
-class IMyPlugin : public IPlugin
+// 颜色
+Tokens::Colors::Primary      // #3B82F6
+Tokens::Colors::Danger       // #EF4444 (涨)
+Tokens::Colors::Success      // #10B981 (跌)
+
+// 间距
+Tokens::Spacing::MD          // 16px
+
+// 圆角
+Tokens::Radius::LG           // 12px
+
+// 字体
+Tokens::Font::Size::Body     // 14px
+```
+
+### 3.2 导航系统
+
+```cpp
+// 注册页面
+PageFactoryRegistry::instance().registerPage(
+    "dashboard",
+    []() -> BasePage* { return new DashboardPage(); }
+);
+
+// 导航到页面
+PageNavigator::instance().navigateTo("dashboard");
+```
+
+### 3.3 配置管理
+
+```cpp
+// 读取配置
+QString theme = ConfigManager::instance().get("theme/current", "dark");
+
+// 写入配置
+ConfigManager::instance().set("theme/current", "light");
+```
+
+### 3.4 数据库
+
+```cpp
+// 执行查询
+QSqlQuery query = DatabaseManager::instance().executeQuery(
+    "SELECT * FROM stocks WHERE code = ?", {symbol}
+);
+```
+
+---
+
+## 4. 开发规范
+
+### 4.1 命名规范
+
+| 类型 | 规范 | 示例 |
+|------|------|------|
+| 类名 | 大驼峰 | `DashboardPage` |
+| 函数名 | 小驼峰 | `updateData()` |
+| 变量名 | 小驼峰 | `totalCount` |
+| 成员变量 | m_前缀 | `m_currentTheme` |
+| 常量 | 全大写 | `MAX_COUNT` |
+| 命名空间 | 大驼峰 | `Tokens` |
+
+### 4.2 文件组织
+
+```cpp
+// 头文件结构
+/**
+ * @file ClassName.h
+ * @brief 简要描述
+ * @details 详细描述
+ * @author Author Name
+ * @version 1.0.0
+ */
+
+#ifndef CLASSNAME_H
+#define CLASSNAME_H
+
+// Qt includes
+#include <QWidget>
+
+// STD includes
+#include <memory>
+
+// Project includes
+#include "core/config/Tokens.h"
+
+// Forward declarations
+class QLabel;
+
+// Class definition
+class ClassName : public QWidget
 {
     Q_OBJECT
+
 public:
-    virtual void myFunction() = 0;
+    explicit ClassName(QWidget* parent = nullptr);
+    ~ClassName();
+
+private:
+    struct Impl;
+    std::unique_ptr<Impl> d;
 };
 
-Q_DECLARE_INTERFACE(IMyPlugin, "com.wealthpilot.IMyPlugin")
+#endif // CLASSNAME_H
 ```
 
-#### 步骤2: 实现插件
+### 4.3 注释规范
+
 ```cpp
-// src/plugins/MyPlugin.h
-class MyPlugin : public QObject, public IMyPlugin
-{
-    Q_OBJECT
-    Q_PLUGIN_METADATA(IID "com.wealthpilot.IMyPlugin")
-    Q_INTERFACES(IMyPlugin)
-public:
-    void myFunction() override;
-};
+/**
+ * @brief 简要描述
+ * @details 详细描述
+ * @param param1 参数1说明
+ * @param param2 参数2说明
+ * @return 返回值说明
+ * @throws 异常说明
+ * @example
+ * @code
+ * // 使用示例
+ * @endcode
+ */
 ```
 
-#### 步骤3: 注册插件
-```cpp
-// 在ApplicationInitializer中注册
-registerModule("MyPlugin", InitPhase::Plugins, []() {
-    return PluginLoader::instance().loadPlugin("MyPlugin");
-});
-```
+### 4.4 代码风格
 
-### 3. 添加新页面
+- 使用 4 空格缩进
+- 大括号独占一行
+- 每行不超过 100 字符
+- 使用 `auto` 简化类型声明
+- 优先使用 `const` 和 `constexpr`
 
-#### 步骤1: 创建页面类
+---
+
+## 5. 扩展开发
+
+### 5.1 添加新页面
+
+1. **创建页面类**
+
 ```cpp
-// src/views/pages/MyPage.h
+// src/views/mypage/MyPage.h
+#ifndef MYPAGE_H
+#define MYPAGE_H
+
+#include <core/base/BasePage.h>
+
 class MyPage : public BasePage
 {
     Q_OBJECT
+
 public:
     explicit MyPage(QWidget* parent = nullptr);
+    ~MyPage();
+
+    void initializePage() override;
+
 private:
     void setupUI();
+    void setupConnections();
 };
+#endif
 ```
 
-#### 步骤2: 注册页面
+2. **实现页面类**
+
 ```cpp
-// 在MainWindow中注册
-void MainWindow::createPages()
+// src/views/mypage/MyPage.cpp
+#include "MyPage.h"
+#include "core/config/Tokens.h"
+
+MyPage::MyPage(QWidget* parent) : BasePage(parent)
 {
-    d->pageCache["mypage"] = nullptr; // 懒加载
+    setupUI();
+    setupConnections();
+}
+
+void MyPage::initializePage()
+{
+    // 页面初始化逻辑
+}
+
+void MyPage::setupUI()
+{
+    setStyleSheet(QString("background-color: %1;")
+        .arg(Tokens::Colors::BgBase));
 }
 ```
 
-#### 步骤3: 实现懒加载
+3. **注册页面**
+
 ```cpp
-QWidget* MainWindow::getPage(const QString& pageId)
-{
-    if (pageId == "mypage") {
-        auto page = new MyPage(this);
-        d->pageCache["mypage"] = page;
-        return page;
-    }
-}
+// 在 main.cpp 或初始化代码中
+PageFactoryRegistry::instance().registerPage(
+    "mypage",
+    []() -> BasePage* { return new MyPage(); }
+);
 ```
+
+4. **更新 CMakeLists.txt**
+
+```cmake
+set(VIEW_SOURCES
+    # ... existing sources
+    views/mypage/MyPage.cpp
+)
+```
+
+### 5.2 添加新组件
+
+1. 在 `src/ui/components/` 创建组件
+2. 使用 PIMPL 模式隐藏实现
+3. 使用 Tokens 定义样式
+4. 添加到 `ComponentFactory`
+
+### 5.3 添加新主题
+
+1. 创建 `resources/style/theme_new.qss`
+2. 在 `ThemeManager` 中注册主题
+3. 更新 `Tokens.h` 添加主题颜色
 
 ---
 
-## 调试技巧
+## 6. 调试技巧
 
-### 使用日志
+### 6.1 日志系统
 
 ```cpp
 #include "utils/Logger.h"
 
-LOG_DEBUG("Debug message");
-LOG_INFO("Info message");
-LOG_WARNING("Warning message");
-LOG_ERROR("Error message");
+LOG_DEBUG("调试信息");
+LOG_INFO("普通信息");
+LOG_WARNING("警告信息");
+LOG_ERROR("错误信息");
 ```
 
-### 使用断点
+### 6.2 常见问题排查
 
-1. 在Qt Creator中设置断点
-2. 点击调试按钮
-3. 查看变量值
+#### 编译错误
+- 检查 Qt 版本是否正确
+- 检查 CMake 配置
+- 清理 build 目录重新构建
 
-### 使用性能分析
+#### 运行时错误
+- 检查日志文件 `logs/app.log`
+- 使用 Qt Creator 调试器
+- 检查内存泄漏
 
-```cpp
-#include <QElapsedTimer>
+#### 样式问题
+- 检查 QSS 语法
+- 确认颜色值格式正确
+- 使用 `QWidget::styleSheet()` 查看当前样式
 
-QElapsedTimer timer;
-timer.start();
+### 6.3 性能优化
 
-// 执行代码
-
-qDebug() << "Elapsed:" << timer.elapsed() << "ms";
-```
-
-### 内存泄漏检测
-
-```cpp
-// 使用Valgrind (Linux)
-valgrind --leak-check=full ./WealthPilot
-
-// 使用Visual Studio (Windows)
-// 调试 -> 性能探查器 -> 内存使用情况
-```
+- 使用 `QElapsedTimer` 测量耗时
+- 避免频繁的 UI 更新
+- 使用数据缓存减少网络请求
+- 启用 `QT_OPENGL` 加速渲染
 
 ---
 
-## 发布流程
+## 附录
 
-### 1. 版本号规范
-
-使用语义化版本号: `MAJOR.MINOR.PATCH`
-
-- MAJOR: 重大更新，不兼容的API修改
-- MINOR: 新增功能，向后兼容
-- PATCH: Bug修复，向后兼容
-
-### 2. 编译发布版本
+### A. 常用命令
 
 ```bash
-mkdir build-release
-cd build-release
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build . --config Release
+# 清理构建
+cmake --build . --target clean
+
+# 重新构建
+cmake --build . --target WealthPilot --clean-first
+
+# 生成文档
+doxygen Doxyfile
+
+# 运行测试
+ctest --output-on-failure
 ```
 
-### 3. 打包发布
+### B. 参考资源
 
-```bash
-# Windows
-windeployqt WealthPilot.exe
-
-# macOS
-macdeployqt WealthPilot.app
-
-# Linux
-linuxdeployqt WealthPilot
-```
-
-### 4. 创建发布说明
-
-```markdown
-# WealthPilot v2.0.0
-
-## 新增功能
-- 插件系统
-- AI智能分析
-- 技术指标计算
-
-## 改进
-- 性能优化
-- UI改进
-
-## Bug修复
-- 修复连接问题
-- 修复内存泄漏
-```
-
-### 5. 发布到GitHub
-
-1. 创建Release标签
-2. 上传安装包
-3. 发布Release Notes
+- [Qt 6 文档](https://doc.qt.io/qt-6/)
+- [CMake 文档](https://cmake.org/documentation/)
+- [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/)
 
 ---
 
-## 贡献指南
-
-### 提交规范
-
-使用约定式提交:
-
-- `feat:` 新功能
-- `fix:` Bug修复
-- `docs:` 文档更新
-- `style:` 代码格式
-- `refactor:` 重构
-- `test:` 测试
-- `chore:` 构建/工具
-
-示例:
-```
-feat: add AI analysis feature
-fix: resolve memory leak in cache manager
-docs: update API documentation
-```
-
-### 代码审查
-
-- 所有代码必须经过审查
-- 至少一位审查者批准
-- 通过所有测试
-
----
-
-## 联系方式
-
-- **项目主页**: https://github.com/wealthpilot/wealth-pilot
-- **问题反馈**: https://github.com/wealthpilot/wealth-pilot/issues
-- **邮箱**: dev@wealthpilot.com
-
----
-
-**WealthPilot Team**
+*版本：1.0.0 | 更新日期：2026-04-21*

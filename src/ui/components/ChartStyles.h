@@ -3,10 +3,12 @@
  * @brief 图表样式配置 - 统一管理图表相关样式
  *
  * @details 定义：
- * - 颜色常量
+ * - 颜色常量（与 Tokens.h 保持同步）
  * - 尺寸常量
  * - 样式字符串
  * - 布局比例
+ *
+ * @note 颜色值应与 core/config/Tokens.h 保持一致
  *
  * @author WealthPilot Team
  * @version 2.0.0
@@ -17,6 +19,7 @@
 
 #include <QColor>
 #include <QString>
+#include "core/config/Tokens.h"
 
 /**
  * @brief 图表样式命名空间

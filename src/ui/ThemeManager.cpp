@@ -1,4 +1,5 @@
 #include "ThemeManager.h"
+#include "core/config/Tokens.h"
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -95,37 +96,37 @@ QString ThemeManager::styleSheet() const
 
 void ThemeManager::loadBuiltinThemes()
 {
-    // 内置亮色主题配置
+    // 浅色主题 - 使用 Tokens
     QJsonObject lightColors;
     lightColors["background"] = "#F8FAFC";
-    lightColors["foreground"] = "#1F2937";
-    lightColors["accent"] = "#3B82F6";
-    lightColors["rise"] = "#10B981";
-    lightColors["fall"] = "#EF4444";
-    lightColors["neutral"] = "#9CA3AF";
+    lightColors["foreground"] = Tokens::Colors::TextPrimary;
+    lightColors["accent"] = Tokens::Colors::Primary;
+    lightColors["rise"] = Tokens::Colors::Success;
+    lightColors["fall"] = Tokens::Colors::Danger;
+    lightColors["neutral"] = Tokens::Colors::TextSecondary;
     lightColors["border"] = "#E5E7EB";
     lightColors["card"] = "#FFFFFF";
 
     QJsonObject lightTheme;
     lightTheme["colors"] = lightColors;
-    lightTheme["styleSheetPath"] = ":/style/theme_light.qss"; // 可选的样式表路径
+    lightTheme["styleSheetPath"] = ":/style/theme_light.qss";
 
-    // 内置暗色主题配置
+    // 深色主题 - 使用 Tokens
     QJsonObject darkColors;
-    darkColors["background"] = "#1A1F2E";
-    darkColors["foreground"] = "#FFFFFF";
-    darkColors["accent"] = "#3B82F6";
-    darkColors["rise"] = "#10B981";
-    darkColors["fall"] = "#EF4444";
-    darkColors["neutral"] = "#9CA3AF";
-    darkColors["border"] = "#FFFFFF";
-    darkColors["card"] = "#242937";
+    darkColors["background"] = Tokens::Colors::BgBase;
+    darkColors["foreground"] = Tokens::Colors::TextPrimary;
+    darkColors["accent"] = Tokens::Colors::Primary;
+    darkColors["rise"] = Tokens::Colors::Success;
+    darkColors["fall"] = Tokens::Colors::Danger;
+    darkColors["neutral"] = Tokens::Colors::TextSecondary;
+    darkColors["border"] = Tokens::Colors::Border;
+    darkColors["card"] = Tokens::Colors::BgElevated;
 
     QJsonObject darkTheme;
     darkTheme["colors"] = darkColors;
     darkTheme["styleSheetPath"] = ":/style/theme_dark.qss";
 
-    // 内置护眼主题配置
+    // 护眼主题
     QJsonObject eyeCareColors;
     eyeCareColors["background"] = "#1E1A14";
     eyeCareColors["foreground"] = "#E8DCC8";

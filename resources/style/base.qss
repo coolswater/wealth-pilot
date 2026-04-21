@@ -1,0 +1,108 @@
+/**
+ * WealthPilot 共享基础样式 v1.0
+ * 所有主题共用的样式定义，避免重复代码
+ *
+ * 使用方式：在主题文件开头 @import 或直接合并
+ */
+
+/* ==================== 全局重置 ==================== */
+* {
+    margin: 0;
+    padding: 0;
+}
+
+/* ==================== 滚动条样式（通用）==================== */
+QScrollBar:vertical {
+    background-color: transparent;
+    width: 8px;
+    margin: 4px 2px;
+    border-radius: 4px;
+}
+
+QScrollBar:horizontal {
+    background-color: transparent;
+    height: 8px;
+    margin: 2px 4px;
+    border-radius: 4px;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+    background: none;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0;
+    background: none;
+}
+
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background: none;
+}
+
+/* ==================== 滚动区域 ==================== */
+QScrollArea {
+    background-color: transparent;
+    border: none;
+}
+
+QScrollArea > QWidget > QWidget {
+    background-color: transparent;
+}
+
+/* ==================== 分隔器 ==================== */
+QSplitter::handle:horizontal {
+    width: 1px;
+}
+
+QSplitter::handle:vertical {
+    height: 1px;
+}
+
+/* ==================== 菜单基础样式 ==================== */
+QMenu::separator {
+    height: 1px;
+    margin: 4px 8px;
+}
+
+QMenu::icon {
+    padding-left: 8px;
+}
+
+/* ==================== 标签页基础样式 ==================== */
+QTabWidget::pane {
+    border-radius: 8px;
+}
+
+QTabBar::tab:!selected {
+    margin-bottom: 0;
+}
+
+/* ==================== 表格基础样式 ==================== */
+QTableView,
+QTableWidget {
+    outline: none;
+}
+
+QHeaderView::section {
+    font-weight: 500;
+}
+
+/* ==================== 列表基础样式 ==================== */
+QListWidget {
+    outline: none;
+}
+
+/* ==================== 工具按钮基础样式 ==================== */
+QToolButton {
+    border: none;
+    border-radius: 6px;
+}

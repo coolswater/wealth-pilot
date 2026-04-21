@@ -15,6 +15,7 @@
  */
 
 #include "KLineChart.h"
+#include "core/config/Tokens.h"
 #include <QPainter>
 #include <QMouseEvent>
 #include <QWheelEvent>
@@ -166,9 +167,9 @@ KLineChart::KLineChart(QWidget *parent)
     , d(std::make_unique<Impl>())
 {
     // 设置默认样式
-    d->style.upColor = QColor("#26A69A");      // 上涨颜色（绿色）
-    d->style.downColor = QColor("#EF5350");    // 下跌颜色（红色）
-    d->style.flatColor = QColor("#757575");    // 平盘颜色（灰色）
+    d->style.upColor = QColor(Tokens::Colors::Success);      // 上涨颜色（绿色）
+    d->style.downColor = QColor(Tokens::Colors::Danger);    // 下跌颜色（红色）
+    d->style.flatColor = QColor(Tokens::Colors::TextSecondary);    // 平盘颜色（灰色）
     d->style.candleWidth = 8;                  // 蜡烛宽度
     d->style.candleSpacing = 2;                // 蜡烛间距
     d->style.showVolume = true;                // 显示成交量
@@ -523,7 +524,7 @@ void KLineChart::keyPressEvent(QKeyEvent *event)
  */
 void KLineChart::drawBackground(QPainter& painter)
 {
-    painter.fillRect(rect(), QColor("#1A1A2E"));
+    painter.fillRect(rect(), QColor(Tokens::Colors::BgBase));
 }
 
 /**
@@ -531,7 +532,7 @@ void KLineChart::drawBackground(QPainter& painter)
  */
 void KLineChart::drawGrid(QPainter& painter)
 {
-    painter.setPen(QPen(QColor("#2A2A3E"), 1, Qt::DashLine));
+    painter.setPen(QPen(QColor(Tokens::Colors::Border), 1, Qt::DashLine));
     
     // 水平网格线
     int hLines = 5;
@@ -699,7 +700,7 @@ void KLineChart::drawIndicators(QPainter& painter)
  */
 void KLineChart::drawCrosshair(QPainter& painter)
 {
-    painter.setPen(QPen(QColor("#FFFFFF"), 1, Qt::DashLine));
+    painter.setPen(QPen(QColor(Tokens::Colors::TextPrimary), 1, Qt::DashLine));
     
     // 垂直线
     painter.drawLine(d->crosshairX, d->chartRect.top(), 

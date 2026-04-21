@@ -81,4 +81,13 @@ CMakeLists.txt.user*
 .uic/
 /build*/
 .idea
+/.qtcreator
 /cmake-build-debug/
+/logs/
+/datastorage/
+/db/
+
+# Temporary files
+*.log
+*.bak
+*.tmp

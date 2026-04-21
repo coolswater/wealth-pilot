@@ -13,6 +13,7 @@
 
 #include "FuturesKLinePage.h"
 #include "ui/components/ChartStyles.h"
+#include "core/config/Tokens.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QSplitter>
@@ -532,12 +533,12 @@ void FuturesKLinePage::calculateIndicators()
     // 计算均线
     if (d->indicatorStates["MA5"]) {
         QVector<double> ma5 = TechnicalIndicators::SMA(closes, 5);
-        d->klineChart->addIndicator("MA5", ma5, QColor("#FFD700"));
+        d->klineChart->addIndicator("MA5", ma5, QColor(Tokens::Colors::ChartYellow));
     }
 
     if (d->indicatorStates["MA10"]) {
         QVector<double> ma10 = TechnicalIndicators::SMA(closes, 10);
-        d->klineChart->addIndicator("MA10", ma10, QColor("#00CED1"));
+        d->klineChart->addIndicator("MA10", ma10, QColor(Tokens::Colors::ChartCyan));
     }
 
     if (d->indicatorStates["MA20"]) {
@@ -547,25 +548,25 @@ void FuturesKLinePage::calculateIndicators()
 
     if (d->indicatorStates["MA30"]) {
         QVector<double> ma30 = TechnicalIndicators::SMA(closes, 30);
-        d->klineChart->addIndicator("MA30", ma30, QColor("#9B59B6"));
+        d->klineChart->addIndicator("MA30", ma30, QColor(Tokens::Colors::ChartPurple));
     }
 
     if (d->indicatorStates["MA60"]) {
         QVector<double> ma60 = TechnicalIndicators::SMA(closes, 60);
-        d->klineChart->addIndicator("MA60", ma60, QColor("#3498DB"));
+        d->klineChart->addIndicator("MA60", ma60, QColor(Tokens::Colors::ChartBlue));
     }
 
     // MACD
     if (d->indicatorStates["MACD"]) {
         auto macd = TechnicalIndicators::MACD(closes, 12, 26, 9);
-        d->klineChart->addIndicator("MACD_DIF", macd.values["DIF"], QColor("#FFD700"));
-        d->klineChart->addIndicator("MACD_DEA", macd.values["DEA"], QColor("#00CED1"));
+        d->klineChart->addIndicator("MACD_DIF", macd.values["DIF"], QColor(Tokens::Colors::ChartYellow));
+        d->klineChart->addIndicator("MACD_DEA", macd.values["DEA"], QColor(Tokens::Colors::ChartCyan));
     }
 
     // RSI
     if (d->indicatorStates["RSI"]) {
         QVector<double> rsi = TechnicalIndicators::RSI(closes, 14);
-        d->klineChart->addIndicator("RSI", rsi, QColor("#9B59B6"));
+        d->klineChart->addIndicator("RSI", rsi, QColor(Tokens::Colors::ChartPurple));
     }
 
     // KDJ
@@ -577,16 +578,16 @@ void FuturesKLinePage::calculateIndicators()
         }
 
         auto kdj = TechnicalIndicators::KDJ(highs, lows, closes, 9, 3, 3);
-        d->klineChart->addIndicator("KDJ_K", kdj.values["K"], QColor("#FFD700"));
-        d->klineChart->addIndicator("KDJ_D", kdj.values["D"], QColor("#00CED1"));
+        d->klineChart->addIndicator("KDJ_K", kdj.values["K"], QColor(Tokens::Colors::ChartYellow));
+        d->klineChart->addIndicator("KDJ_D", kdj.values["D"], QColor(Tokens::Colors::ChartCyan));
         d->klineChart->addIndicator("KDJ_J", kdj.values["J"], QColor("#FF6B6B"));
     }
 
     // BOLL
     if (d->indicatorStates["BOLL"]) {
         auto boll = TechnicalIndicators::BollingerBands(closes, 20, 2.0);
-        d->klineChart->addIndicator("BOLL_UPPER", boll.values["Upper"], QColor("#FFD700"));
-        d->klineChart->addIndicator("BOLL_MIDDLE", boll.values["Middle"], QColor("#00CED1"));
+        d->klineChart->addIndicator("BOLL_UPPER", boll.values["Upper"], QColor(Tokens::Colors::ChartYellow));
+        d->klineChart->addIndicator("BOLL_MIDDLE", boll.values["Middle"], QColor(Tokens::Colors::ChartCyan));
         d->klineChart->addIndicator("BOLL_LOWER", boll.values["Lower"], QColor("#FF6B6B"));
     }
 }
@@ -633,7 +634,7 @@ void FuturesKLinePage::updateStatusBar()
         bool connected = d->ctpService && d->ctpService->isLoggedIn();
         d->statusBar->setConnectionStatus(
             connected ? "CTP 已连接" : "CTP 未连接",
-            connected ? QColor("#10B981") : QColor("#EF4444")
+            connected ? QColor(Tokens::Colors::Success) : QColor(Tokens::Colors::Danger)
         );
     }
 }

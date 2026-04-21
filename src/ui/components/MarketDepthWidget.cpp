@@ -4,6 +4,7 @@
  */
 
 #include "MarketDepthWidget.h"
+#include "core/config/Tokens.h"
 #include "plugins/ICTPPlugin.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>

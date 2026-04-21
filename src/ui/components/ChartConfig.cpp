@@ -4,6 +4,7 @@
  */
 
 #include "ChartConfig.h"
+#include "core/config/Tokens.h"
 #include <QStandardPaths>
 #include <QDir>
 
@@ -226,10 +227,10 @@ void ChartConfig::save()
 
 void ChartConfig::reset()
 {
-    // 重置为默认值
-    m_upColor = QColor("#EF4444");
-    m_downColor = QColor("#10B981");
-    m_flatColor = QColor("#9CA3AF");
+    // 重置为默认值 - 使用 Tokens 中的颜色
+    m_upColor = QColor(Tokens::Colors::Danger);     // 红色=涨
+    m_downColor = QColor(Tokens::Colors::Success);  // 绿色=跌
+    m_flatColor = QColor(Tokens::Colors::TextSecondary);
     m_candleWidth = 8;
     m_candleSpacing = 2;
     m_showGrid = true;
@@ -248,18 +249,18 @@ void ChartConfig::reset()
 
 void ChartConfig::initDefaultIndicators()
 {
-    // 均线
+    // 均线 - 使用 Tokens 中的颜色
     m_indicatorPeriods["MA5"] = 5;
     m_indicatorPeriods["MA10"] = 10;
     m_indicatorPeriods["MA20"] = 20;
     m_indicatorPeriods["MA30"] = 30;
     m_indicatorPeriods["MA60"] = 60;
 
-    m_indicatorColors["MA5"] = QColor("#FFD700");
-    m_indicatorColors["MA10"] = QColor("#00CED1");
+    m_indicatorColors["MA5"] = QColor(Tokens::Colors::ChartYellow);
+    m_indicatorColors["MA10"] = QColor(Tokens::Colors::ChartCyan);
     m_indicatorColors["MA20"] = QColor("#FF6B6B");
-    m_indicatorColors["MA30"] = QColor("#9B59B6");
-    m_indicatorColors["MA60"] = QColor("#3498DB");
+    m_indicatorColors["MA30"] = QColor(Tokens::Colors::ChartPurple);
+    m_indicatorColors["MA60"] = QColor(Tokens::Colors::ChartBlue);
 
     m_indicatorEnabled["MA5"] = true;
     m_indicatorEnabled["MA10"] = true;
@@ -269,22 +270,22 @@ void ChartConfig::initDefaultIndicators()
 
     // MACD
     m_indicatorPeriods["MACD"] = 12;
-    m_indicatorColors["MACD"] = QColor("#FFD700");
+    m_indicatorColors["MACD"] = QColor(Tokens::Colors::ChartYellow);
     m_indicatorEnabled["MACD"] = false;
 
     // RSI
     m_indicatorPeriods["RSI"] = 14;
-    m_indicatorColors["RSI"] = QColor("#9B59B6");
+    m_indicatorColors["RSI"] = QColor(Tokens::Colors::ChartPurple);
     m_indicatorEnabled["RSI"] = false;
 
     // KDJ
     m_indicatorPeriods["KDJ"] = 9;
-    m_indicatorColors["KDJ"] = QColor("#FFD700");
+    m_indicatorColors["KDJ"] = QColor(Tokens::Colors::ChartYellow);
     m_indicatorEnabled["KDJ"] = false;
 
     // BOLL
     m_indicatorPeriods["BOLL"] = 20;
-    m_indicatorColors["BOLL"] = QColor("#FFD700");
+    m_indicatorColors["BOLL"] = QColor(Tokens::Colors::ChartYellow);
     m_indicatorEnabled["BOLL"] = false;
 
     // VOL

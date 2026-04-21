@@ -4,6 +4,7 @@
  */
 
 #include "TickTableView.h"
+#include "core/config/Tokens.h"
 #include <QTableWidgetItem>
 #include <QScrollBar>
 #include <QHeaderView>
@@ -199,7 +200,7 @@ void TickTableView::updateRowStyle(int row, const QString& flag)
     }
 
     // 设置背景色（交替行）
-    QColor bgColor = (row % 2 == 0) ? QColor("#111827") : QColor("#1F2937");
+    QColor bgColor = (row % 2 == 0) ? QColor(Tokens::Colors::BgSurface) : QColor(Tokens::Colors::BgElevated);
     for (int col = 0; col < columnCount(); ++col) {
         QTableWidgetItem* cellItem = item(row, col);
         if (cellItem) {

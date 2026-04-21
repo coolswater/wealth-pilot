@@ -1,5 +1,6 @@
 // AssetPieChart.cpp
 #include "AssetPieChart.h"
+#include "core/config/Tokens.h"
 #include <QtCharts/QValueAxis>
 #include <QtCharts/QCategoryAxis>
 #include <QVBoxLayout>
@@ -42,14 +43,14 @@ void AssetPieChart::setData(const QVector<std::pair<QString, double>>& assets) c
     }
 
     static const QColor colors[] = {
-        QColor("#3B82F6"), QColor("#10B981"), QColor("#F97316"),
-        QColor("#8B5CF6"), QColor("#EC4899")
+        QColor(Tokens::Colors::Primary), QColor(Tokens::Colors::Success), QColor(Tokens::Colors::Warning),
+        QColor(Tokens::Colors::Secondary), QColor("#EC4899")
     };
 
     int i = 0;
     for (auto* slice : m_series->slices()) {
         slice->setColor(colors[i % 5]);
-        slice->setBorderColor(QColor("#1A1F2E"));
+        slice->setBorderColor(QColor(Tokens::Colors::BgBase));
         slice->setBorderWidth(2);
         ++i;
     }
@@ -86,19 +87,19 @@ void NetValueChart::setupChart()
     m_series = new QLineSeries(this);
     m_series->setName("我的收益");
 
-    QPen pen(QColor("#3B82F6"));
+    QPen pen(QColor(Tokens::Colors::Primary));
     pen.setWidth(3);
     m_series->setPen(pen);
 
     m_benchmarkSeries = new QLineSeries(this);
     m_benchmarkSeries->setName("沪深300");
-    QPen benchPen(QColor("#9CA3AF"));
+    QPen benchPen(QColor(Tokens::Colors::TextSecondary));
     benchPen.setWidth(2);
     benchPen.setStyle(Qt::DashLine);
     m_benchmarkSeries->setPen(benchPen);
 
     QLinearGradient gradient(0, 0, 0, 400);
-    gradient.setColorAt(0.0, QColor("#3B82F6").lighter(120));
+    gradient.setColorAt(0.0, QColor(Tokens::Colors::Primary).lighter(120));
     gradient.setColorAt(1.0, Qt::transparent);
 
     m_areaSeries = new QAreaSeries(m_series);
@@ -116,13 +117,13 @@ void NetValueChart::setupChart()
     chart->legend()->setMarkerShape(QLegend::MarkerShapeRectangle);
 
     auto* axisX = new QValueAxis();
-    axisX->setLabelsColor(QColor("#9CA3AF"));
+    axisX->setLabelsColor(QColor(Tokens::Colors::TextSecondary));
     axisX->setGridLineColor(QColor("#2A3142"));
     axisX->setLinePenColor(QColor("#2A3142"));
     axisX->setLabelFormat("%d日");
 
     auto* axisY = new QValueAxis();
-    axisY->setLabelsColor(QColor("#9CA3AF"));
+    axisY->setLabelsColor(QColor(Tokens::Colors::TextSecondary));
     axisY->setGridLineColor(QColor("#2A3142"));
     axisY->setLinePenColor(QColor("#2A3142"));
     axisY->setLabelFormat("%+.1f%%");

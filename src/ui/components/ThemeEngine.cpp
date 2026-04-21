@@ -4,6 +4,7 @@
  */
 
 #include "ThemeEngine.h"
+#include "core/config/Tokens.h"
 #include "../../utils/Logger.h"
 #include <QApplication>
 #include <QWidget>
@@ -135,23 +136,23 @@ QString ThemeEngine::compiledStyleSheet() const
 
 void ThemeEngine::loadThemes()
 {
-    // 深色主题
+    // 深色主题 - 使用 Tokens 中的颜色
     UIComponents::ThemeConfig darkTheme;
     darkTheme.name = "dark";
-    darkTheme.primaryColor = QColor("#3B82F6");
-    darkTheme.secondaryColor = QColor("#8B5CF6");
-    darkTheme.backgroundColor = QColor("#1A1A2E");
-    darkTheme.surfaceColor = QColor("#16213E");
-    darkTheme.onPrimaryColor = QColor("#FFFFFF");
-    darkTheme.onSecondaryColor = QColor("#FFFFFF");
-    darkTheme.onBackgroundColor = QColor("#E2E8F0");
-    darkTheme.onSurfaceColor = QColor("#E2E8F0");
+    darkTheme.primaryColor = QColor(Tokens::Colors::Primary);
+    darkTheme.secondaryColor = QColor(Tokens::Colors::Secondary);
+    darkTheme.backgroundColor = QColor(Tokens::Colors::BgBase);
+    darkTheme.surfaceColor = QColor(Tokens::Colors::BgSurface);
+    darkTheme.onPrimaryColor = QColor(Tokens::Colors::TextPrimary);
+    darkTheme.onSecondaryColor = QColor(Tokens::Colors::TextPrimary);
+    darkTheme.onBackgroundColor = QColor(Tokens::Colors::TextPrimary);
+    darkTheme.onSurfaceColor = QColor(Tokens::Colors::TextSecondary);
     darkTheme.baseFont = QFont("Microsoft YaHei", 10);
     darkTheme.titleFont = QFont("Microsoft YaHei", 14, QFont::Bold);
     darkTheme.bodyFont = QFont("Microsoft YaHei", 10);
-    darkTheme.borderRadius = 8;
-    darkTheme.spacing = 8;
-    darkTheme.padding = 16;
+    darkTheme.borderRadius = Tokens::Radius::MD;
+    darkTheme.spacing = Tokens::Spacing::SM;
+    darkTheme.padding = Tokens::Spacing::MD;
     darkTheme.elevation = 4.0;
     m_themes["dark"] = darkTheme;
     
@@ -169,9 +170,9 @@ void ThemeEngine::loadThemes()
     lightTheme.baseFont = QFont("Microsoft YaHei", 10);
     lightTheme.titleFont = QFont("Microsoft YaHei", 14, QFont::Bold);
     lightTheme.bodyFont = QFont("Microsoft YaHei", 10);
-    lightTheme.borderRadius = 8;
-    lightTheme.spacing = 8;
-    lightTheme.padding = 16;
+    lightTheme.borderRadius = Tokens::Radius::MD;
+    lightTheme.spacing = Tokens::Spacing::SM;
+    lightTheme.padding = Tokens::Spacing::MD;
     lightTheme.elevation = 2.0;
     m_themes["light"] = lightTheme;
     
@@ -189,9 +190,9 @@ void ThemeEngine::loadThemes()
     eyecareTheme.baseFont = QFont("Microsoft YaHei", 10);
     eyecareTheme.titleFont = QFont("Microsoft YaHei", 14, QFont::Bold);
     eyecareTheme.bodyFont = QFont("Microsoft YaHei", 10);
-    eyecareTheme.borderRadius = 8;
-    eyecareTheme.spacing = 8;
-    eyecareTheme.padding = 16;
+    eyecareTheme.borderRadius = Tokens::Radius::MD;
+    eyecareTheme.spacing = Tokens::Spacing::SM;
+    eyecareTheme.padding = Tokens::Spacing::MD;
     eyecareTheme.elevation = 2.0;
     m_themes["eyecare"] = eyecareTheme;
 }

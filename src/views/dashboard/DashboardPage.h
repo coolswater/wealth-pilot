@@ -26,6 +26,7 @@
 #include <QTableView>
 #include <QAbstractTableModel>
 #include <memory>
+#include "core/config/Tokens.h"
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -40,41 +41,7 @@ class QFrame;
 QT_END_NAMESPACE
 
 // ============================================================================
-// 颜色常量 - 金融软件专业配色
-// ============================================================================
-
-namespace DashboardColors {
-    // 背景色
-    constexpr const char* BgMain = "#0d1117";       ///< 主背景（极深灰）
-    constexpr const char* BgCard = "#161b22";       ///< 卡片背景
-    constexpr const char* BgHeader = "#21262d";     ///< 表头背景
-    constexpr const char* BgHover = "#30363d";      ///< 悬停背景
-    constexpr const char* BgBorder = "#30363d";     ///< 边框颜色
-    
-    // 文字色
-    constexpr const char* TextPrimary = "#c9d1d9";   ///< 主文字（浅灰白）
-    constexpr const char* TextSecondary = "#8b949e"; ///< 次要文字（中灰）
-    constexpr const char* TextTertiary = "#6e7681";  ///< 三级文字
-    
-    // 涨跌色（金融标准：红涨绿跌）
-    constexpr const char* Up = "#ff4d4f";      ///< 涨 - 正红
-    constexpr const char* UpBg = "#ff4d4f20";  ///< 涨背景（透明红）
-    constexpr const char* Down = "#00b578";    ///< 跌 - 正绿
-    constexpr const char* DownBg = "#00b57820"; ///< 跌背景（透明绿）
-    constexpr const char* Flat = "#8b949e";    ///< 平 - 灰色
-    
-    // 特殊高亮
-    constexpr const char* LimitUp = "#ff4d4f40";   ///< 涨停背景
-    constexpr const char* LimitDown = "#00b57840"; ///< 跌停背景
-    
-    // 主色调
-    constexpr const char* Primary = "#3b82f6";  ///< 主蓝色
-    constexpr const char* Warning = "#f97316";  ///< 警告橙色
-    constexpr const char* Info = "#58a6ff";     ///< 信息蓝色
-}
-
-// ============================================================================
-// 数据结构定义
+// 数据结构定义（颜色使用 Colors 命名空间）
 // ============================================================================
 
 /**

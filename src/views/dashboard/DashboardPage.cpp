@@ -15,6 +15,7 @@
  */
 
 #include "DashboardPage.h"
+#include "core/config/Tokens.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -60,31 +61,31 @@ public:
         
         if (value > 9.9) {
             // 涨停
-            textColor = QColor(DashboardColors::Up);
-            bgColor = QColor(DashboardColors::LimitUp);
+            textColor = QColor(Tokens::Colors::Danger);
+            bgColor = QColor(Tokens::Colors::DangerBg);
         } else if (value > 0.01) {
-            textColor = QColor(DashboardColors::Up);
-            bgColor = QColor(DashboardColors::UpBg);
+            textColor = QColor(Tokens::Colors::Danger);
+            bgColor = QColor(Tokens::Colors::DangerBg);
         } else if (value < -9.9) {
             // 跌停
-            textColor = QColor(DashboardColors::Down);
-            bgColor = QColor(DashboardColors::LimitDown);
+            textColor = QColor(Tokens::Colors::Success);
+            bgColor = QColor(Tokens::Colors::SuccessBg);
         } else if (value < -0.01) {
-            textColor = QColor(DashboardColors::Down);
-            bgColor = QColor(DashboardColors::DownBg);
+            textColor = QColor(Tokens::Colors::Success);
+            bgColor = QColor(Tokens::Colors::SuccessBg);
         } else {
-            textColor = QColor(DashboardColors::Flat);
+            textColor = QColor(Tokens::Colors::TextSecondary);
             bgColor = Qt::transparent;
         }
 
         // 绘制背景
         painter->save();
         if (option.state & QStyle::State_Selected) {
-            painter->fillRect(option.rect, QColor(DashboardColors::Primary));
+            painter->fillRect(option.rect, QColor(Tokens::Colors::Primary));
         } else if (bgColor != Qt::transparent) {
             painter->fillRect(option.rect, bgColor);
         } else if (option.state & QStyle::State_MouseOver) {
-            painter->fillRect(option.rect, QColor(DashboardColors::BgHover));
+            painter->fillRect(option.rect, QColor(Tokens::Colors::BgHover));
         }
         painter->restore();
 
@@ -108,15 +109,15 @@ public:
         
         // 确定颜色
         QColor textColor = value >= 0 
-            ? QColor(DashboardColors::Up) 
-            : QColor(DashboardColors::Down);
+            ? QColor(Tokens::Colors::Danger) 
+            : QColor(Tokens::Colors::Success);
 
         // 绘制背景
         painter->save();
         if (option.state & QStyle::State_Selected) {
-            painter->fillRect(option.rect, QColor(DashboardColors::Primary));
+            painter->fillRect(option.rect, QColor(Tokens::Colors::Primary));
         } else if (option.state & QStyle::State_MouseOver) {
-            painter->fillRect(option.rect, QColor(DashboardColors::BgHover));
+            painter->fillRect(option.rect, QColor(Tokens::Colors::BgHover));
         }
         painter->restore();
 
@@ -567,7 +568,7 @@ DashboardPage::DashboardPage(QWidget* parent)
     setObjectName("DashboardPage");
 
     // 设置背景色
-    setStyleSheet(QString("background-color: %1;").arg(DashboardColors::BgMain));
+    setStyleSheet(QString("background-color: %1;").arg(Tokens::Colors::BgBase));
 
     // 实时更新定时器
     d->updateTimer = new QTimer(this);
@@ -615,7 +616,7 @@ void DashboardPage::setupUI()
     d->mainSplitter = new QSplitter(Qt::Vertical, this);
     d->mainSplitter->setHandleWidth(1);
     d->mainSplitter->setStyleSheet(
-        QString("QSplitter::handle { background-color: %1; }").arg(DashboardColors::BgBorder));
+        QString("QSplitter::handle { background-color: %1; }").arg(Tokens::Colors::Border));
 
     // 3. 指数面板（顶部）
     setupIndexPanel();
@@ -643,7 +644,7 @@ void DashboardPage::setupHeader()
     QFrame* header = new QFrame(this);
     header->setFixedHeight(48);
     header->setStyleSheet(QString("background-color: %1; border-bottom: 1px solid %2;")
-        .arg(DashboardColors::BgCard, DashboardColors::BgBorder));
+        .arg(Tokens::Colors::BgElevated, Tokens::Colors::Border));
 
     QHBoxLayout* layout = new QHBoxLayout(header);
     layout->setContentsMargins(16, 0, 16, 0);
@@ -652,7 +653,7 @@ void DashboardPage::setupHeader()
     // 页面标题
     QLabel* titleLabel = new QLabel(QStringLiteral("行情看板"), header);
     titleLabel->setStyleSheet(QString("font-size: 18px; font-weight: bold; color: %1;")
-        .arg(DashboardColors::TextPrimary));
+        .arg(Tokens::Colors::TextPrimary));
     layout->addWidget(titleLabel);
 
     layout->addSpacing(20);
@@ -681,8 +682,8 @@ void DashboardPage::setupHeader()
             color: %3;
             selection-background-color: %4;
         }
-    )").arg(DashboardColors::BgCard, DashboardColors::BgBorder, 
-            DashboardColors::TextPrimary, DashboardColors::Primary));
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::Border, 
+            Tokens::Colors::TextPrimary, Tokens::Colors::Primary));
     layout->addWidget(d->marketCombo);
 
     layout->addSpacing(20);
@@ -700,8 +701,8 @@ void DashboardPage::setupHeader()
             color: %3;
         }
         QLineEdit::placeholder { color: %4; }
-    )").arg(DashboardColors::BgCard, DashboardColors::BgBorder, 
-            DashboardColors::TextPrimary, DashboardColors::TextTertiary));
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::Border, 
+            Tokens::Colors::TextPrimary, Tokens::Colors::TextTertiary));
     layout->addWidget(d->searchEdit);
 
     layout->addStretch();
@@ -709,7 +710,7 @@ void DashboardPage::setupHeader()
     // 时间显示
     d->timeLabel = new QLabel(header);
     d->timeLabel->setStyleSheet(QString("color: %1; font-size: 13px;")
-        .arg(DashboardColors::TextSecondary));
+        .arg(Tokens::Colors::TextSecondary));
     layout->addWidget(d->timeLabel);
 
     layout->addSpacing(20);
@@ -717,7 +718,7 @@ void DashboardPage::setupHeader()
     // 状态信息
     d->statusLabel = new QLabel(header);
     d->statusLabel->setStyleSheet(QString("color: %1; font-size: 13px;")
-        .arg(DashboardColors::TextTertiary));
+        .arg(Tokens::Colors::TextTertiary));
     layout->addWidget(d->statusLabel);
 
     d->mainLayout->addWidget(header);
@@ -729,7 +730,7 @@ void DashboardPage::setupHeader()
 void DashboardPage::setupIndexPanel()
 {
     d->indexPanel = new QFrame(this);
-    d->indexPanel->setStyleSheet(QString("background-color: %1;").arg(DashboardColors::BgCard));
+    d->indexPanel->setStyleSheet(QString("background-color: %1;").arg(Tokens::Colors::BgElevated));
 
     QHBoxLayout* layout = new QHBoxLayout(d->indexPanel);
     layout->setContentsMargins(8, 8, 8, 8);
@@ -752,7 +753,7 @@ void DashboardPage::setupIndexPanel()
                 border-radius: 6px;
                 border: 1px solid %2;
             }
-        )").arg(DashboardColors::BgMain, DashboardColors::BgBorder));
+        )").arg(Tokens::Colors::BgBase, Tokens::Colors::Border));
 
         QVBoxLayout* cardLayout = new QVBoxLayout(card);
         cardLayout->setContentsMargins(12, 10, 12, 10);
@@ -761,7 +762,7 @@ void DashboardPage::setupIndexPanel()
         // 指数名称
         QLabel* nameLabel = new QLabel(indexNames[i], card);
         nameLabel->setStyleSheet(QString("color: %1; font-size: 13px;")
-            .arg(DashboardColors::TextSecondary));
+            .arg(Tokens::Colors::TextSecondary));
         cardLayout->addWidget(nameLabel);
         d->indexNameLabels.append(nameLabel);
 
@@ -770,13 +771,13 @@ void DashboardPage::setupIndexPanel()
         
         QLabel* priceLabel = new QLabel(QStringLiteral("0.00"), card);
         priceLabel->setStyleSheet(QString("color: %1; font-size: 22px; font-weight: bold;")
-            .arg(DashboardColors::TextPrimary));
+            .arg(Tokens::Colors::TextPrimary));
         priceLayout->addWidget(priceLabel);
         d->indexPriceLabels.append(priceLabel);
 
         QLabel* changeLabel = new QLabel(QStringLiteral("+0.00%"), card);
         changeLabel->setStyleSheet(QString("color: %1; font-size: 13px;")
-            .arg(DashboardColors::Up));
+            .arg(Tokens::Colors::Danger));
         priceLayout->addWidget(changeLabel);
         priceLayout->addStretch();
         d->indexChangeLabels.append(changeLabel);
@@ -793,7 +794,7 @@ void DashboardPage::setupIndexPanel()
 void DashboardPage::setupRankGrid()
 {
     d->rankGridPanel = new QFrame(this);
-    d->rankGridPanel->setStyleSheet(QString("background-color: %1;").arg(DashboardColors::BgMain));
+    d->rankGridPanel->setStyleSheet(QString("background-color: %1;").arg(Tokens::Colors::BgBase));
 
     d->rankGridLayout = new QGridLayout(d->rankGridPanel);
     d->rankGridLayout->setContentsMargins(8, 8, 8, 8);
@@ -823,16 +824,16 @@ void DashboardPage::setupRankGrid()
             font-size: 11px;
             font-weight: bold;
         }
-    )").arg(DashboardColors::BgCard, DashboardColors::BgBorder, DashboardColors::BgBorder,
-            DashboardColors::Primary, DashboardColors::TextPrimary, 
-            DashboardColors::BgHeader, DashboardColors::TextSecondary);
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::Border, Tokens::Colors::Border,
+            Tokens::Colors::Primary, Tokens::Colors::TextPrimary, 
+            Tokens::Colors::BgSurface, Tokens::Colors::TextSecondary);
 
     // 卡片标题样式
     auto createCardWithTitle = [this, &tableStyle](const QString& title, QTableView*& table, 
                                                     QAbstractTableModel* model) -> QFrame* {
         QFrame* card = new QFrame(d->rankGridPanel);
         card->setStyleSheet(QString("QFrame { background-color: %1; border-radius: 6px; }")
-            .arg(DashboardColors::BgCard));
+            .arg(Tokens::Colors::BgElevated));
 
         QVBoxLayout* layout = new QVBoxLayout(card);
         layout->setContentsMargins(0, 0, 0, 0);
@@ -842,13 +843,13 @@ void DashboardPage::setupRankGrid()
         QFrame* titleBar = new QFrame(card);
         titleBar->setFixedHeight(28);
         titleBar->setStyleSheet(QString("background-color: %1; border-top-left-radius: 6px; border-top-right-radius: 6px;")
-            .arg(DashboardColors::BgHeader));
+            .arg(Tokens::Colors::BgSurface));
         QHBoxLayout* titleLayout = new QHBoxLayout(titleBar);
         titleLayout->setContentsMargins(10, 0, 10, 0);
 
         QLabel* titleLabel = new QLabel(title, titleBar);
         titleLabel->setStyleSheet(QString("color: %1; font-size: 12px; font-weight: bold;")
-            .arg(DashboardColors::TextPrimary));
+            .arg(Tokens::Colors::TextPrimary));
         titleLayout->addWidget(titleLabel);
         titleLayout->addStretch();
 
@@ -884,7 +885,7 @@ void DashboardPage::setupRankGrid()
     // 右上：板块热力图（带Tab）
     QFrame* sectorCard = new QFrame(d->rankGridPanel);
     sectorCard->setStyleSheet(QString("QFrame { background-color: %1; border-radius: 6px; }")
-        .arg(DashboardColors::BgCard));
+        .arg(Tokens::Colors::BgElevated));
     QVBoxLayout* sectorLayout = new QVBoxLayout(sectorCard);
     sectorLayout->setContentsMargins(0, 0, 0, 0);
     sectorLayout->setSpacing(0);
@@ -893,7 +894,7 @@ void DashboardPage::setupRankGrid()
     QFrame* sectorHeader = new QFrame(sectorCard);
     sectorHeader->setFixedHeight(28);
     sectorHeader->setStyleSheet(QString("background-color: %1;")
-        .arg(DashboardColors::BgHeader));
+        .arg(Tokens::Colors::BgSurface));
     QHBoxLayout* sectorHeaderLayout = new QHBoxLayout(sectorHeader);
     sectorHeaderLayout->setContentsMargins(8, 0, 8, 0);
 
@@ -911,7 +912,7 @@ void DashboardPage::setupRankGrid()
             color: %2;
             border-bottom: 2px solid %2;
         }
-    )").arg(DashboardColors::TextSecondary, DashboardColors::Primary));
+    )").arg(Tokens::Colors::TextSecondary, Tokens::Colors::Primary));
     
     // 添加Tab
     QStringList tabNames = {QStringLiteral("行业"), QStringLiteral("概念"), QStringLiteral("地区")};
@@ -965,7 +966,7 @@ void DashboardPage::setupInfoPanel()
     d->infoSplitter = new QSplitter(Qt::Horizontal, this);
     d->infoSplitter->setHandleWidth(1);
     d->infoSplitter->setStyleSheet(
-        QString("QSplitter::handle { background-color: %1; }").arg(DashboardColors::BgBorder));
+        QString("QSplitter::handle { background-color: %1; }").arg(Tokens::Colors::Border));
 
     // 1. 自选股列表
     setupWatchlistPanel();
@@ -990,7 +991,7 @@ void DashboardPage::setupWatchlistPanel()
 {
     d->watchlistContainer = new QWidget(this);
     d->watchlistContainer->setStyleSheet(QString("background-color: %1;")
-        .arg(DashboardColors::BgCard));
+        .arg(Tokens::Colors::BgElevated));
 
     QVBoxLayout* layout = new QVBoxLayout(d->watchlistContainer);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -999,19 +1000,19 @@ void DashboardPage::setupWatchlistPanel()
     // 标题栏
     QFrame* header = new QFrame(d->watchlistContainer);
     header->setFixedHeight(36);
-    header->setStyleSheet(QString("background-color: %1;").arg(DashboardColors::BgHeader));
+    header->setStyleSheet(QString("background-color: %1;").arg(Tokens::Colors::BgSurface));
     QHBoxLayout* headerLayout = new QHBoxLayout(header);
     headerLayout->setContentsMargins(12, 0, 12, 0);
 
     QLabel* title = new QLabel(QStringLiteral("自选股"), header);
     title->setStyleSheet(QString("color: %1; font-size: 13px; font-weight: bold;")
-        .arg(DashboardColors::TextPrimary));
+        .arg(Tokens::Colors::TextPrimary));
     headerLayout->addWidget(title);
 
     d->watchlistFilter = new QComboBox(header);
     d->watchlistFilter->addItems({QStringLiteral("全部自选"), QStringLiteral("持仓")});
     d->watchlistFilter->setStyleSheet(QString("background: transparent; color: %1; border: none; font-size: 12px;")
-        .arg(DashboardColors::TextSecondary));
+        .arg(Tokens::Colors::TextSecondary));
     headerLayout->addWidget(d->watchlistFilter);
     headerLayout->addStretch();
 
@@ -1042,9 +1043,9 @@ void DashboardPage::setupWatchlistPanel()
             border: none;
             font-size: 11px;
         }
-    )").arg(DashboardColors::BgCard, DashboardColors::BgBorder, 
-            DashboardColors::TextPrimary, DashboardColors::BgHeader, 
-            DashboardColors::TextSecondary));
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::Border, 
+            Tokens::Colors::TextPrimary, Tokens::Colors::BgSurface, 
+            Tokens::Colors::TextSecondary));
     layout->addWidget(d->watchlistTable);
 }
 
@@ -1055,7 +1056,7 @@ void DashboardPage::setupNewsPanel()
 {
     d->newsPanel = new QFrame(this);
     d->newsPanel->setStyleSheet(QString("background-color: %1;")
-        .arg(DashboardColors::BgCard));
+        .arg(Tokens::Colors::BgElevated));
 
     QVBoxLayout* layout = new QVBoxLayout(d->newsPanel);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -1064,19 +1065,19 @@ void DashboardPage::setupNewsPanel()
     // 标题栏
     QFrame* header = new QFrame(d->newsPanel);
     header->setFixedHeight(36);
-    header->setStyleSheet(QString("background-color: %1;").arg(DashboardColors::BgHeader));
+    header->setStyleSheet(QString("background-color: %1;").arg(Tokens::Colors::BgSurface));
     QHBoxLayout* headerLayout = new QHBoxLayout(header);
     headerLayout->setContentsMargins(12, 0, 12, 0);
 
     QLabel* title = new QLabel(QStringLiteral("24小时滚动新闻"), header);
     title->setStyleSheet(QString("color: %1; font-size: 13px; font-weight: bold;")
-        .arg(DashboardColors::TextPrimary));
+        .arg(Tokens::Colors::TextPrimary));
     headerLayout->addWidget(title);
     headerLayout->addStretch();
 
     QLabel* moreLabel = new QLabel(QStringLiteral("更多 >"), header);
     moreLabel->setStyleSheet(QString("color: %1; font-size: 12px;")
-        .arg(DashboardColors::TextTertiary));
+        .arg(Tokens::Colors::TextTertiary));
     headerLayout->addWidget(moreLabel);
 
     layout->addWidget(header);
@@ -1098,8 +1099,8 @@ void DashboardPage::setupNewsPanel()
         QListWidget::item:hover {
             background-color: %4;
         }
-    )").arg(DashboardColors::BgCard, DashboardColors::TextPrimary, 
-            DashboardColors::BgBorder, DashboardColors::BgHover));
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary, 
+            Tokens::Colors::Border, Tokens::Colors::BgHover));
     layout->addWidget(d->newsList);
 }
 
@@ -1110,7 +1111,7 @@ void DashboardPage::setupMoneyFlowPanel()
 {
     d->moneyFlowContainer = new QWidget(this);
     d->moneyFlowContainer->setStyleSheet(QString("background-color: %1;")
-        .arg(DashboardColors::BgCard));
+        .arg(Tokens::Colors::BgElevated));
 
     QVBoxLayout* layout = new QVBoxLayout(d->moneyFlowContainer);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -1119,19 +1120,19 @@ void DashboardPage::setupMoneyFlowPanel()
     // 标题栏
     QFrame* header = new QFrame(d->moneyFlowContainer);
     header->setFixedHeight(36);
-    header->setStyleSheet(QString("background-color: %1;").arg(DashboardColors::BgHeader));
+    header->setStyleSheet(QString("background-color: %1;").arg(Tokens::Colors::BgSurface));
     QHBoxLayout* headerLayout = new QHBoxLayout(header);
     headerLayout->setContentsMargins(12, 0, 12, 0);
 
     QLabel* title = new QLabel(QStringLiteral("资金流向"), header);
     title->setStyleSheet(QString("color: %1; font-size: 13px; font-weight: bold;")
-        .arg(DashboardColors::TextPrimary));
+        .arg(Tokens::Colors::TextPrimary));
     headerLayout->addWidget(title);
 
     d->moneyFlowPeriod = new QComboBox(header);
     d->moneyFlowPeriod->addItems({QStringLiteral("当日"), QStringLiteral("3日"), QStringLiteral("5日")});
     d->moneyFlowPeriod->setStyleSheet(QString("background: transparent; color: %1; border: none; font-size: 12px;")
-        .arg(DashboardColors::TextSecondary));
+        .arg(Tokens::Colors::TextSecondary));
     headerLayout->addWidget(d->moneyFlowPeriod);
     headerLayout->addStretch();
 
@@ -1162,9 +1163,9 @@ void DashboardPage::setupMoneyFlowPanel()
             border: none;
             font-size: 11px;
         }
-    )").arg(DashboardColors::BgCard, DashboardColors::BgBorder, 
-            DashboardColors::TextPrimary, DashboardColors::BgHeader, 
-            DashboardColors::TextSecondary));
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::Border, 
+            Tokens::Colors::TextPrimary, Tokens::Colors::BgSurface, 
+            Tokens::Colors::TextSecondary));
     layout->addWidget(d->moneyFlowTable);
 }
 
@@ -1253,7 +1254,7 @@ void DashboardPage::updateIndexDisplay()
             : QString("%1 (%2%)").arg(idx.change, 0, 'f', 2).arg(idx.changePercent, 0, 'f', 2);
         d->indexChangeLabels[i]->setText(changeText);
         d->indexChangeLabels[i]->setStyleSheet(
-            QString("color: %1; font-size: 13px;").arg(idx.change >= 0 ? DashboardColors::Up : DashboardColors::Down));
+            QString("color: %1; font-size: 13px;").arg(idx.change >= 0 ? Tokens::Colors::Danger : Tokens::Colors::Success));
     }
 }
 
@@ -1515,10 +1516,10 @@ void DashboardPage::updateTimeDisplay()
 
     if (isTrading) {
         timeStr += QStringLiteral(" 交易中");
-        d->timeLabel->setStyleSheet(QString("color: %1;").arg(DashboardColors::Down));
+        d->timeLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::Success));
     } else {
         timeStr += QStringLiteral(" 休市");
-        d->timeLabel->setStyleSheet(QString("color: %1;").arg(DashboardColors::TextTertiary));
+        d->timeLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::TextTertiary));
     }
 
     d->timeLabel->setText(timeStr);

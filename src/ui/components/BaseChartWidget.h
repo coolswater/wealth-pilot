@@ -18,6 +18,7 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include <QResizeEvent>
+#include "core/config/Tokens.h"
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QTimer>
@@ -203,9 +204,9 @@ private:
     bool m_performanceMode = false;
     bool m_mousePressed = false;
 
-    QColor m_backgroundColor = ThemeColors::backgroundPrimary();
+    QColor m_backgroundColor = QColor(Tokens::Colors::BgBase);
     QColor m_gridColor = QColor("#2A2A3E");
-    QColor m_crosshairColor = QColor("#4B5563");
+    QColor m_crosshairColor = QColor(Tokens::Colors::TextDisabled);
 
     QRect m_chartRect;
     QMargins m_margins{60, 30, 20, 30};

@@ -18,6 +18,7 @@
 #include <QObject>
 #include <QColor>
 #include <QSettings>
+#include "core/config/Tokens.h"
 #include <QMap>
 #include <QString>
 #include <memory>
@@ -225,10 +226,10 @@ private:
     ChartConfig();
     ~ChartConfig() = default;
 
-    // K线颜色
-    QColor m_upColor{"#EF4444"};
-    QColor m_downColor{"#10B981"};
-    QColor m_flatColor{"#9CA3AF"};
+    // K线颜色 - 使用 Tokens 中的颜色
+    QColor m_upColor{Tokens::Colors::Danger};     // 红色=涨
+    QColor m_downColor{Tokens::Colors::Success};  // 绿色=跌
+    QColor m_flatColor{Tokens::Colors::TextSecondary};
 
     // K线样式
     int m_candleWidth = 8;

@@ -1,135 +1,154 @@
 /**
  * @file PageStyles.h
- * @brief 页面样式工具类 - 统一管理所有页面样式
+ * @brief 页面样式工具类 - 基于 Tokens 提供统一样式
+ * 
+ * @details 所有样式都使用 Tokens::Colors 命名空间中的颜色常量
+ * 避免硬编码颜色值，确保样式一致性
  */
 
 #ifndef PAGESTYLES_H
 #define PAGESTYLES_H
 
 #include <QString>
-#include "ThemeColors.h"
+#include "core/config/Tokens.h"
 
 /**
  * @brief 页面样式工具类
- * @details 提供统一的页面样式字符串，避免重复代码
  */
 class PageStyles
 {
 public:
-    // ========== 页面主样式 ==========
+    // ========== 基础样式（使用 Tokens::Colors 命名空间）==========
     
-    /**
-     * @brief 页面主背景样式
-     */
     static QString pageBackground() {
-        return QString("background-color: %1;")
-            .arg(ThemeColors::backgroundPrimary().name());
+        return QString("background-color: %1;").arg(Tokens::Colors::BgBase);
     }
     
-    /**
-     * @brief 卡片容器样式
-     */
     static QString cardContainer() {
         return QString(R"(
             background-color: %1;
             border: 1px solid %2;
             border-radius: 8px;
             padding: 12px;
-        )").arg(ThemeColors::backgroundSecondary().name(),
-                ThemeColors::border().name());
-    }
-    
-    /**
-     * @brief 统计卡片样式
-     * @param accentColor 强调色（可选）
-     */
-    static QString statCard(const QString &accentColor = QString()) {
-        QString style = QString(R"(
-            background-color: %1;
-            border-radius: 8px;
-            padding: 12px 16px;
-        )").arg(ThemeColors::backgroundSecondary().name());
-        
-        if (!accentColor.isEmpty()) {
-            style = QString(R"(
-                background-color: %1;
-                border-left: 4px solid %2;
-                border-radius: 8px;
-                padding: 12px 16px;
-            )").arg(ThemeColors::backgroundSecondary().name(), accentColor);
-        }
-        return style;
+        )").arg(Tokens::Colors::BgElevated, Tokens::Colors::Border);
     }
     
     // ========== 文字样式 ==========
     
-    /**
-     * @brief 标题文字样式
-     */
     static QString titleText() {
         return QString("font-size: 20px; font-weight: bold; color: %1;")
-            .arg(ThemeColors::textPrimary().name());
+            .arg(Tokens::Colors::TextPrimary);
     }
     
-    /**
-     * @brief 副标题文字样式
-     */
     static QString subtitleText() {
-        return QString("font-size: 14px; color: %1;")
-            .arg(ThemeColors::textSecondary().name());
+        return QString("font-size: 14px; color: %1;").arg(Tokens::Colors::TextSecondary);
     }
     
-    /**
-     * @brief 数值文字样式
-     * @param color 颜色（可选，默认主文字色）
-     */
     static QString valueText(const QString &color = QString()) {
-        QString c = color.isEmpty() ? ThemeColors::textPrimary().name() : color;
+        QString c = color.isEmpty() ? Tokens::Colors::TextPrimary : color;
         return QString("font-size: 18px; font-weight: bold; color: %1;").arg(c);
     }
     
-    /**
-     * @brief 小标签文字样式
-     */
     static QString labelText() {
-        return QString("font-size: 12px; color: %1;")
-            .arg(ThemeColors::textSecondary().name());
+        return QString("font-size: 12px; color: %1;").arg(Tokens::Colors::TextSecondary);
     }
     
     // ========== 控件样式 ==========
     
-    /**
-     * @brief 主按钮样式
-     */
     static QString primaryButton() {
-        QColor primaryColor = ThemeColors::primary();
-        QColor hoverColor = primaryColor.lighter(120);
-        QColor pressedColor = primaryColor.darker(120);
-        
         return QString(R"(
             QPushButton {
                 background-color: %1;
-                color: %2;
+                color: white;
                 border: none;
                 border-radius: 6px;
                 padding: 8px 20px;
                 font-weight: bold;
             }
-            QPushButton:hover {
-                background-color: %3;
-            }
-            QPushButton:pressed {
-                background-color: %4;
-            }
-        )").arg(primaryColor.name(),
-                ThemeColors::textPrimary().name(),
-                hoverColor.name(),
-                pressedColor.name());
+            QPushButton:hover { background-color: %2; }
+            QPushButton:pressed { background-color: %3; }
+        )").arg(Tokens::Colors::Primary, Tokens::Colors::PrimaryHover, "#1D4ED8");
     }
     
-    /**
-     * @brief 次要按钮样式
-     */
+    static QString inputField() {
+        return QString(R"(
+            QLineEdit, QSpinBox, QDoubleSpinBox {
+                background-color: %1;
+                color: %2;
+                border: 1px solid %3;
+                border-radius: 4px;
+                padding: 6px 10px;
+            }
+            QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus {
+                border-color: %4;
+            }
+        )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary, 
+                Tokens::Colors::Border, Tokens::Colors::Primary);
+    }
+    
+    static QString comboBox() {
+        return QString(R"(
+            QComboBox {
+                background-color: %1;
+                color: %2;
+                border: 1px solid %3;
+                border-radius: 4px;
+                padding: 6px 12px;
+            }
+            QComboBox:hover { border-color: %4; }
+            QComboBox::drop-down { border: none; width: 20px; }
+            QComboBox QAbstractItemView {
+                background-color: %1;
+                color: %2;
+                selection-background-color: %4;
+            }
+        )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary, 
+                Tokens::Colors::Border, Tokens::Colors::Primary);
+    }
+    
+    static QString table() {
+        return QString(R"(
+            QTableWidget {
+                background-color: %1;
+                color: %2;
+                gridline-color: %3;
+                border: 1px solid %3;
+                border-radius: 6px;
+            }
+            QTableWidget::item { padding: 6px; }
+            QTableWidget::item:selected { background-color: %4; }
+            QHeaderView::section {
+                background-color: %5;
+                color: %6;
+                padding: 8px;
+                border: none;
+                border-bottom: 1px solid %3;
+                font-weight: bold;
+            }
+        )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary, 
+                Tokens::Colors::Border, Tokens::Colors::Primary,
+                Tokens::Colors::BgSurface, Tokens::Colors::TextSecondary);
+    }
+    
+    static QString groupBox() {
+        return QString(R"(
+            QGroupBox {
+                color: %1;
+                font-weight: bold;
+                border: 1px solid %2;
+                border-radius: 6px;
+                margin-top: 12px;
+                padding-top: 8px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 0 8px;
+                background-color: %3;
+            }
+        )").arg(Tokens::Colors::TextPrimary, Tokens::Colors::Border, Tokens::Colors::BgBase);
+    }
+    
     static QString secondaryButton() {
         return QString(R"(
             QPushButton {
@@ -147,78 +166,11 @@ public:
                 color: %6;
                 background-color: %7;
             }
-        )").arg(ThemeColors::backgroundSecondary().name(),
-                ThemeColors::textPrimary().name(),
-                ThemeColors::border().name(),
-                ThemeColors::backgroundHover().name(),
-                ThemeColors::primary().name(),
-                ThemeColors::textDisabled().name(),
-                ThemeColors::backgroundPrimary().name());
+        )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary, Tokens::Colors::Border,
+                Tokens::Colors::BgHover, Tokens::Colors::Primary,
+                Tokens::Colors::TextDisabled, Tokens::Colors::BgBase);
     }
     
-    /**
-     * @brief 输入框样式
-     */
-    static QString inputField() {
-        return QString(R"(
-            QLineEdit, QSpinBox, QDoubleSpinBox {
-                background-color: %1;
-                color: %2;
-                border: 1px solid %3;
-                border-radius: 4px;
-                padding: 6px 10px;
-                min-height: 28px;
-            }
-            QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus {
-                border-color: %4;
-            }
-        )").arg(ThemeColors::backgroundSecondary().name(),
-                ThemeColors::textPrimary().name(),
-                ThemeColors::border().name(),
-                ThemeColors::primary().name());
-    }
-    
-    /**
-     * @brief 下拉框样式
-     */
-    static QString comboBox() {
-        return QString(R"(
-            QComboBox {
-                background-color: %1;
-                color: %2;
-                border: 1px solid %3;
-                border-radius: 4px;
-                padding: 6px 12px;
-                min-width: 80px;
-            }
-            QComboBox:hover {
-                border-color: %4;
-            }
-            QComboBox::drop-down {
-                border: none;
-                width: 20px;
-            }
-            QComboBox QAbstractItemView {
-                background-color: %1;
-                color: %2;
-                selection-background-color: %4;
-            }
-        )").arg(ThemeColors::backgroundSecondary().name(),
-                ThemeColors::textPrimary().name(),
-                ThemeColors::border().name(),
-                ThemeColors::primary().name());
-    }
-    
-    /**
-     * @brief 日期选择器样式
-     */
-    static QString dateEdit() {
-        return comboBox();  // 样式相同
-    }
-    
-    /**
-     * @brief 复选框样式
-     */
     static QString checkBox() {
         return QString(R"(
             QCheckBox {
@@ -229,80 +181,19 @@ public:
                 width: 18px;
                 height: 18px;
                 border-radius: 4px;
-                border: 1px solid %2;
+                border: 2px solid %2;
                 background-color: %3;
+            }
+            QCheckBox::indicator:hover {
+                border-color: %4;
             }
             QCheckBox::indicator:checked {
                 background-color: %4;
                 border-color: %4;
             }
-        )").arg(ThemeColors::textPrimary().name(),
-                ThemeColors::border().name(),
-                ThemeColors::backgroundSecondary().name(),
-                ThemeColors::primary().name());
+        )").arg(Tokens::Colors::TextPrimary, Tokens::Colors::Border, Tokens::Colors::BgElevated, Tokens::Colors::Primary);
     }
     
-    /**
-     * @brief 分组框样式
-     */
-    static QString groupBox() {
-        return QString(R"(
-            QGroupBox {
-                color: %1;
-                font-weight: bold;
-                border: 1px solid %2;
-                border-radius: 6px;
-                margin-top: 12px;
-                padding-top: 8px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                subcontrol-position: top left;
-                padding: 0 8px;
-                background-color: %3;
-            }
-        )").arg(ThemeColors::textPrimary().name(),
-                ThemeColors::border().name(),
-                ThemeColors::backgroundPrimary().name());
-    }
-    
-    /**
-     * @brief 表格样式
-     */
-    static QString table() {
-        return QString(R"(
-            QTableWidget {
-                background-color: %1;
-                color: %2;
-                gridline-color: %3;
-                border: 1px solid %3;
-                border-radius: 6px;
-            }
-            QTableWidget::item {
-                padding: 6px;
-            }
-            QTableWidget::item:selected {
-                background-color: %4;
-            }
-            QHeaderView::section {
-                background-color: %5;
-                color: %6;
-                padding: 8px;
-                border: none;
-                border-bottom: 1px solid %3;
-                font-weight: bold;
-            }
-        )").arg(ThemeColors::backgroundSecondary().name(),
-                ThemeColors::textPrimary().name(),
-                ThemeColors::border().name(),
-                ThemeColors::primary().name(),
-                ThemeColors::backgroundSecondary().name(),
-                ThemeColors::textSecondary().name());
-    }
-    
-    /**
-     * @brief 标签页样式
-     */
     static QString tabWidget() {
         return QString(R"(
             QTabWidget::pane {
@@ -325,54 +216,42 @@ public:
             QTabBar::tab:hover {
                 color: %7;
             }
-        )").arg(ThemeColors::border().name(),
-                ThemeColors::backgroundPrimary().name(),
-                ThemeColors::backgroundSecondary().name(),
-                ThemeColors::textSecondary().name(),
-                ThemeColors::backgroundHover().name(),
-                ThemeColors::textPrimary().name(),
-                ThemeColors::primary().name());
+        )").arg(Tokens::Colors::Border, Tokens::Colors::BgBase,
+                Tokens::Colors::BgElevated, Tokens::Colors::TextSecondary,
+                Tokens::Colors::BgHover, Tokens::Colors::TextPrimary, Tokens::Colors::Primary);
     }
     
-    // ========== 组合样式 ==========
-    
-    /**
-     * @brief 完整页面样式
-     */
-    static QString fullPageStyle() {
-        return QString(R"(
-            QWidget {
+    static QString statCard(const QString &accentColor = QString()) {
+        QString style = QString(R"(
+            background-color: %1;
+            border-radius: 8px;
+            padding: 12px 16px;
+        )").arg(Tokens::Colors::BgElevated);
+        
+        if (!accentColor.isEmpty()) {
+            style = QString(R"(
                 background-color: %1;
-                color: %2;
-            }
-            QLabel {
-                color: %2;
-            }
-            %3
-            %4
-            %5
-            %6
-            %7
-            %8
-        )").arg(ThemeColors::backgroundPrimary().name(),
-                ThemeColors::textPrimary().name(),
-                secondaryButton(),
-                inputField(),
-                comboBox(),
-                checkBox(),
-                groupBox(),
-                table());
+                border-left: 4px solid %2;
+                border-radius: 8px;
+                padding: 12px 16px;
+            )").arg(Tokens::Colors::BgElevated, accentColor);
+        }
+        return style;
     }
     
-    // ========== 颜色常量（便捷访问）==========
+    static QString dateEdit() {
+        return comboBox();  // 样式相同
+    }
     
-    static QString upColor() { return ThemeColors::upColor().name(); }
-    static QString downColor() { return ThemeColors::downColor().name(); }
-    static QString flatColor() { return ThemeColors::flatColor().name(); }
-    static QString primaryColor() { return ThemeColors::primary().name(); }
-    static QString warningColor() { return ThemeColors::warning().name(); }
-    static QString errorColor() { return ThemeColors::error().name(); }
-    static QString successColor() { return ThemeColors::success().name(); }
+    // ========== 颜色便捷访问 ==========
+    
+    static QString upColor() { return Tokens::Colors::Danger; }
+    static QString downColor() { return Tokens::Colors::Success; }
+    static QString flatColor() { return Tokens::Colors::TextSecondary; }
+    static QString primaryColor() { return Tokens::Colors::Primary; }
+    static QString warningColor() { return Tokens::Colors::Warning; }
+    static QString errorColor() { return Tokens::Colors::Danger; }
+    static QString successColor() { return Tokens::Colors::Success; }
 };
 
 #endif // PAGESTYLES_H

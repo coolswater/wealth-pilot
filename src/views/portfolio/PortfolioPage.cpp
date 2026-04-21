@@ -15,6 +15,7 @@
  */
 
 #include "PortfolioPage.h"
+#include "core/config/Tokens.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -48,38 +49,14 @@
 #include <QChartView>
 
 // ============================================================================
-// 颜色常量 - 设计规范
+// 图表专用颜色
 // ============================================================================
 
-namespace Colors {
-    // 背景
-    constexpr const char* BgMain = "#1E1F24";
-    constexpr const char* BgCard = "#2C2D33";
-    constexpr const char* BgHover = "#3A3B41";
-    
-    // 文字
-    constexpr const char* TextPrimary = "#FFFFFF";
-    constexpr const char* TextSecondary = "#8E8E93";
-    constexpr const char* TextTertiary = "#6B7280";
-    
-    // 涨跌（中国习惯：红涨绿跌）
-    constexpr const char* Up = "#FF3B30";      // 红色 - 涨
-    constexpr const char* Down = "#34C759";    // 绿色 - 跌
-    constexpr const char* Flat = "#8E8E93";    // 灰色 - 平
-    
-    // 图表配色
+namespace PortfolioColors {
     constexpr const char* Stock = "#FF9500";   // 橙色
     constexpr const char* Futures = "#5856D6"; // 紫色
-    constexpr const char* Fund = "#FF2D55";    // 粉色
-    constexpr const char* Cash = "#34C759";    // 绿色
-    
-    // 折线图
     constexpr const char* MyProfit = "#FF3B30";  // 红色
     constexpr const char* Benchmark = "#007AFF"; // 蓝色
-    
-    // 主色调
-    constexpr const char* Primary = "#3B82F6";
-    constexpr const char* Warning = "#F97316";
 }
 
 // ============================================================================
@@ -96,19 +73,19 @@ public:
         
         QColor textColor;
         if (value > 0) {
-            textColor = QColor(Colors::Up);
+            textColor = QColor(Tokens::Colors::Danger);
         } else if (value < 0) {
-            textColor = QColor(Colors::Down);
+            textColor = QColor(Tokens::Colors::Success);
         } else {
-            textColor = QColor(Colors::TextSecondary);
+            textColor = QColor(Tokens::Colors::TextSecondary);
         }
 
         // 绘制背景
         painter->save();
         if (option.state & QStyle::State_Selected) {
-            painter->fillRect(option.rect, QColor(Colors::Primary));
+            painter->fillRect(option.rect, QColor(Tokens::Colors::Primary));
         } else if (option.state & QStyle::State_MouseOver) {
-            painter->fillRect(option.rect, QColor(Colors::BgHover));
+            painter->fillRect(option.rect, QColor(Tokens::Colors::BgHover));
         }
         painter->restore();
 
@@ -350,7 +327,7 @@ void PortfolioPage::setupUI()
     d->mainLayout->setSpacing(16);
 
     // 设置背景
-    setStyleSheet(QString("background-color: %1;").arg(Colors::BgMain));
+    setStyleSheet(QString("background-color: %1;").arg(Tokens::Colors::BgBase));
 
     // 1. 头部
     setupHeader();
@@ -376,7 +353,7 @@ void PortfolioPage::setupHeader()
     // 页面标题
     QLabel* titleLabel = new QLabel(QStringLiteral("我的看板"), this);
     titleLabel->setStyleSheet(QString("font-size: 24px; font-weight: bold; color: %1;")
-        .arg(Colors::TextPrimary));
+        .arg(Tokens::Colors::TextPrimary));
     layout->addWidget(titleLabel);
 
     layout->addStretch();
@@ -384,7 +361,7 @@ void PortfolioPage::setupHeader()
     // 更新时间
     d->updateTimeLabel = new QLabel(this);
     d->updateTimeLabel->setStyleSheet(QString("color: %1; font-size: 12px;")
-        .arg(Colors::TextTertiary));
+        .arg(Tokens::Colors::TextTertiary));
     layout->addWidget(d->updateTimeLabel);
 
     layout->addSpacing(20);
@@ -406,7 +383,7 @@ void PortfolioPage::setupHeader()
         QLineEdit::placeholder {
             color: %3;
         }
-    )").arg(Colors::BgCard, Colors::TextPrimary, Colors::TextTertiary));
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary, Tokens::Colors::TextTertiary));
     layout->addWidget(d->searchEdit);
 
     // 刷新按钮
@@ -423,7 +400,7 @@ void PortfolioPage::setupHeader()
         QPushButton:hover {
             background-color: #2563EB;
         }
-    )").arg(Colors::Primary));
+    )").arg(Tokens::Colors::Primary));
     connect(refreshBtn, &QPushButton::clicked, this, &PortfolioPage::refreshData);
     layout->addWidget(refreshBtn);
 
@@ -444,7 +421,7 @@ void PortfolioPage::setupSummaryCards()
             background-color: %1;
             border-radius: 8px;
         }
-    )").arg(Colors::BgCard);
+    )").arg(Tokens::Colors::BgElevated);
 
     // 1. 总资产卡片
     d->totalAssetCard = new QFrame(this);
@@ -455,15 +432,15 @@ void PortfolioPage::setupSummaryCards()
     totalLayout->setSpacing(8);
     
     QLabel* totalTitle = new QLabel(QStringLiteral("总资产"), d->totalAssetCard);
-    totalTitle->setStyleSheet(QString("color: %1; font-size: 14px;").arg(Colors::TextSecondary));
+    totalTitle->setStyleSheet(QString("color: %1; font-size: 14px;").arg(Tokens::Colors::TextSecondary));
     totalLayout->addWidget(totalTitle);
     
     d->totalAssetLabel = new QLabel(QStringLiteral("¥0"), d->totalAssetCard);
-    d->totalAssetLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Colors::TextPrimary));
+    d->totalAssetLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Tokens::Colors::TextPrimary));
     totalLayout->addWidget(d->totalAssetLabel);
     
     d->totalAssetChangeLabel = new QLabel(QStringLiteral("较昨日 +¥0"), d->totalAssetCard);
-    d->totalAssetChangeLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Colors::TextTertiary));
+    d->totalAssetChangeLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::TextTertiary));
     totalLayout->addWidget(d->totalAssetChangeLabel);
     
     layout->addWidget(d->totalAssetCard, 1);
@@ -477,15 +454,15 @@ void PortfolioPage::setupSummaryCards()
     pnlLayout->setSpacing(8);
     
     QLabel* pnlTitle = new QLabel(QStringLiteral("今日盈亏"), d->dailyPnLCard);
-    pnlTitle->setStyleSheet(QString("color: %1; font-size: 14px;").arg(Colors::TextSecondary));
+    pnlTitle->setStyleSheet(QString("color: %1; font-size: 14px;").arg(Tokens::Colors::TextSecondary));
     pnlLayout->addWidget(pnlTitle);
     
     d->dailyPnLLabel = new QLabel(QStringLiteral("+¥0"), d->dailyPnLCard);
-    d->dailyPnLLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Colors::Up));
+    d->dailyPnLLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Tokens::Colors::Danger));
     pnlLayout->addWidget(d->dailyPnLLabel);
     
     d->dailyPnLDetailLabel = new QLabel(QStringLiteral("股票 +¥0 | 期货 +¥0"), d->dailyPnLCard);
-    d->dailyPnLDetailLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Colors::TextTertiary));
+    d->dailyPnLDetailLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::TextTertiary));
     pnlLayout->addWidget(d->dailyPnLDetailLabel);
     
     layout->addWidget(d->dailyPnLCard, 1);
@@ -499,15 +476,15 @@ void PortfolioPage::setupSummaryCards()
     returnLayout->setSpacing(8);
     
     QLabel* returnTitle = new QLabel(QStringLiteral("持仓收益率"), d->returnCard);
-    returnTitle->setStyleSheet(QString("color: %1; font-size: 14px;").arg(Colors::TextSecondary));
+    returnTitle->setStyleSheet(QString("color: %1; font-size: 14px;").arg(Tokens::Colors::TextSecondary));
     returnLayout->addWidget(returnTitle);
     
     d->returnLabel = new QLabel(QStringLiteral("+0.00%"), d->returnCard);
-    d->returnLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Colors::Up));
+    d->returnLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Tokens::Colors::Danger));
     returnLayout->addWidget(d->returnLabel);
     
     d->returnDetailLabel = new QLabel(QStringLiteral("沪深300同期 +10.6%"), d->returnCard);
-    d->returnDetailLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Colors::TextTertiary));
+    d->returnDetailLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::TextTertiary));
     returnLayout->addWidget(d->returnDetailLabel);
     
     layout->addWidget(d->returnCard, 1);
@@ -521,11 +498,11 @@ void PortfolioPage::setupSummaryCards()
     riskLayout->setSpacing(8);
     
     QLabel* riskTitle = new QLabel(QStringLiteral("期货风险度"), d->riskCard);
-    riskTitle->setStyleSheet(QString("color: %1; font-size: 14px;").arg(Colors::TextSecondary));
+    riskTitle->setStyleSheet(QString("color: %1; font-size: 14px;").arg(Tokens::Colors::TextSecondary));
     riskLayout->addWidget(riskTitle);
     
     d->riskLabel = new QLabel(QStringLiteral("中等"), d->riskCard);
-    d->riskLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Colors::Warning));
+    d->riskLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Tokens::Colors::Warning));
     riskLayout->addWidget(d->riskLabel);
     
     d->riskBar = new QProgressBar(d->riskCard);
@@ -547,7 +524,7 @@ void PortfolioPage::setupSummaryCards()
     riskLayout->addWidget(d->riskBar);
     
     QLabel* riskDetail = new QLabel(QStringLiteral("保证金占用 ¥210,000"), d->riskCard);
-    riskDetail->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Colors::TextTertiary));
+    riskDetail->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::TextTertiary));
     riskLayout->addWidget(riskDetail);
     
     layout->addWidget(d->riskCard, 1);
@@ -563,13 +540,13 @@ void PortfolioPage::setupMainContent()
 
     // 左侧：资产配置
     QFrame* leftPanel = new QFrame(splitter);
-    leftPanel->setStyleSheet(QString("background-color: %1; border-radius: 8px;").arg(Colors::BgCard));
+    leftPanel->setStyleSheet(QString("background-color: %1; border-radius: 8px;").arg(Tokens::Colors::BgElevated));
     QVBoxLayout* leftLayout = new QVBoxLayout(leftPanel);
     leftLayout->setContentsMargins(20, 20, 20, 20);
     leftLayout->setSpacing(16);
 
     QLabel* pieTitle = new QLabel(QStringLiteral("资产配置"), leftPanel);
-    pieTitle->setStyleSheet(QString("color: %1; font-size: 16px; font-weight: bold;").arg(Colors::TextPrimary));
+    pieTitle->setStyleSheet(QString("color: %1; font-size: 16px; font-weight: bold;").arg(Tokens::Colors::TextPrimary));
     leftLayout->addWidget(pieTitle);
 
     setupAssetAllocation();
@@ -580,7 +557,7 @@ void PortfolioPage::setupMainContent()
 
     // 右侧：净值走势
     QFrame* rightPanel = new QFrame(splitter);
-    rightPanel->setStyleSheet(QString("background-color: %1; border-radius: 8px;").arg(Colors::BgCard));
+    rightPanel->setStyleSheet(QString("background-color: %1; border-radius: 8px;").arg(Tokens::Colors::BgElevated));
     QVBoxLayout* rightLayout = new QVBoxLayout(rightPanel);
     rightLayout->setContentsMargins(20, 20, 20, 20);
     rightLayout->setSpacing(16);
@@ -588,7 +565,7 @@ void PortfolioPage::setupMainContent()
     // 标题行
     QHBoxLayout* chartHeader = new QHBoxLayout();
     QLabel* chartTitle = new QLabel(QStringLiteral("资产净值走势"), rightPanel);
-    chartTitle->setStyleSheet(QString("color: %1; font-size: 16px; font-weight: bold;").arg(Colors::TextPrimary));
+    chartTitle->setStyleSheet(QString("color: %1; font-size: 16px; font-weight: bold;").arg(Tokens::Colors::TextPrimary));
     chartHeader->addWidget(chartTitle);
     chartHeader->addStretch();
 
@@ -611,7 +588,7 @@ void PortfolioPage::setupMainContent()
             color: %1;
             selection-background-color: #3A3B41;
         }
-    )").arg(Colors::TextPrimary, Colors::BgCard));
+    )").arg(Tokens::Colors::TextPrimary, Tokens::Colors::BgElevated));
     chartHeader->addWidget(d->timeRangeCombo);
 
     rightLayout->addLayout(chartHeader);
@@ -653,10 +630,10 @@ void PortfolioPage::setupAssetAllocation()
 
     // 预设颜色
     QVector<QPair<QString, QColor>> items = {
-        {QStringLiteral("股票"), QColor(Colors::Stock)},
-        {QStringLiteral("期货"), QColor(Colors::Futures)},
-        {QStringLiteral("基金"), QColor(Colors::Fund)},
-        {QStringLiteral("现金"), QColor(Colors::Cash)}
+        {QStringLiteral("股票"), QColor(PortfolioColors::Stock)},
+        {QStringLiteral("期货"), QColor(PortfolioColors::Futures)},
+        {QStringLiteral("基金"), QColor(Tokens::Colors::Danger)},
+        {QStringLiteral("现金"), QColor(Tokens::Colors::Success)}
     };
 
     for (const auto& item : items) {
@@ -671,14 +648,14 @@ void PortfolioPage::setupAssetAllocation()
         
         // 名称
         QLabel* name = new QLabel(item.first);
-        name->setStyleSheet(QString("color: %1; font-size: 13px;").arg(Colors::TextPrimary));
+        name->setStyleSheet(QString("color: %1; font-size: 13px;").arg(Tokens::Colors::TextPrimary));
         row->addWidget(name);
         
         row->addStretch();
         
         // 金额和占比（占位）
         QLabel* value = new QLabel(QStringLiteral("¥0 (0%)"));
-        value->setStyleSheet(QString("color: %1; font-size: 13px;").arg(Colors::TextSecondary));
+        value->setStyleSheet(QString("color: %1; font-size: 13px;").arg(Tokens::Colors::TextSecondary));
         value->setObjectName(item.first + "_value");
         row->addWidget(value);
         
@@ -691,13 +668,13 @@ void PortfolioPage::setupNetValueChart()
     QChart* chart = new QChart();
     chart->setMargins(QMargins(0, 20, 0, 0));
     chart->legend()->setAlignment(Qt::AlignBottom);
-    chart->legend()->setLabelColor(QColor(Colors::TextSecondary));
+    chart->legend()->setLabelColor(QColor(Tokens::Colors::TextSecondary));
     chart->setBackgroundRoundness(8);
 
     // 我的收益曲线
     d->profitSeries = new QLineSeries();
     d->profitSeries->setName(QStringLiteral("我的收益"));
-    QPen profitPen(QColor(Colors::MyProfit));
+    QPen profitPen(QColor(PortfolioColors::MyProfit));
     profitPen.setWidth(2);
     d->profitSeries->setPen(profitPen);
     chart->addSeries(d->profitSeries);
@@ -705,7 +682,7 @@ void PortfolioPage::setupNetValueChart()
     // 沪深300基准曲线
     d->benchmarkSeries = new QLineSeries();
     d->benchmarkSeries->setName(QStringLiteral("沪深300"));
-    QPen benchmarkPen(QColor(Colors::Benchmark));
+    QPen benchmarkPen(QColor(PortfolioColors::Benchmark));
     benchmarkPen.setWidth(2);
     d->benchmarkSeries->setPen(benchmarkPen);
     chart->addSeries(d->benchmarkSeries);
@@ -713,7 +690,7 @@ void PortfolioPage::setupNetValueChart()
     // X轴（时间）
     QDateTimeAxis* axisX = new QDateTimeAxis();
     axisX->setFormat("MM-dd");
-    axisX->setLabelsColor(QColor(Colors::TextTertiary));
+    axisX->setLabelsColor(QColor(Tokens::Colors::TextTertiary));
     axisX->setGridLineVisible(false);
     chart->addAxis(axisX, Qt::AlignBottom);
     d->profitSeries->attachAxis(axisX);
@@ -722,7 +699,7 @@ void PortfolioPage::setupNetValueChart()
     // Y轴（净值）
     QValueAxis* axisY = new QValueAxis();
     axisY->setLabelFormat("%.1f万");
-    axisY->setLabelsColor(QColor(Colors::TextTertiary));
+    axisY->setLabelsColor(QColor(Tokens::Colors::TextTertiary));
     axisY->setGridLineVisible(true);
     axisY->setGridLineColor(QColor("#2A2B31"));
     chart->addAxis(axisY, Qt::AlignLeft);
@@ -738,7 +715,7 @@ void PortfolioPage::setupPositionTable()
 {
     QFrame* tableFrame = new QFrame(this);
     tableFrame->setStyleSheet(QString("background-color: %1; border-radius: 8px;")
-        .arg(Colors::BgCard));
+        .arg(Tokens::Colors::BgElevated));
     QVBoxLayout* layout = new QVBoxLayout(tableFrame);
     layout->setContentsMargins(20, 20, 20, 20);
     layout->setSpacing(16);
@@ -746,7 +723,7 @@ void PortfolioPage::setupPositionTable()
     // 标题
     QLabel* title = new QLabel(QStringLiteral("持仓明细"), tableFrame);
     title->setStyleSheet(QString("color: %1; font-size: 16px; font-weight: bold;")
-        .arg(Colors::TextPrimary));
+        .arg(Tokens::Colors::TextPrimary));
     layout->addWidget(title);
 
     // Tab
@@ -771,7 +748,7 @@ void PortfolioPage::setupPositionTable()
         QTabBar::tab:hover {
             color: %4;
         }
-    )").arg(Colors::BgCard, Colors::TextSecondary, Colors::Primary, Colors::TextPrimary));
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextSecondary, Tokens::Colors::Primary, Tokens::Colors::TextPrimary));
 
     // 表格样式
     QString tableStyle = QString(R"(
@@ -792,7 +769,7 @@ void PortfolioPage::setupPositionTable()
             border: none;
             font-size: 12px;
         }
-    )").arg(Colors::BgCard, Colors::TextPrimary, Colors::TextSecondary);
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary, Tokens::Colors::TextSecondary);
 
     // 股票持仓
     d->stockTable = new QTableView(d->positionTabs);
@@ -907,20 +884,20 @@ void PortfolioPage::updateSummaryDisplay()
     // 今日盈亏
     if (d->summary.dailyPnL >= 0) {
         d->dailyPnLLabel->setText(QString("+¥%1").arg(d->summary.dailyPnL, 0, 'f', 0));
-        d->dailyPnLLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Colors::Up));
+        d->dailyPnLLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Tokens::Colors::Danger));
     } else {
         d->dailyPnLLabel->setText(QString("-¥%1").arg(-d->summary.dailyPnL, 0, 'f', 0));
-        d->dailyPnLLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Colors::Down));
+        d->dailyPnLLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Tokens::Colors::Success));
     }
     d->dailyPnLDetailLabel->setText(QStringLiteral("股票 +¥18,200 | 期货 +¥10,250"));
 
     // 持仓收益率
     if (d->summary.returnRate >= 0) {
         d->returnLabel->setText(QString("+%1%").arg(d->summary.returnRate, 0, 'f', 2));
-        d->returnLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Colors::Up));
+        d->returnLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Tokens::Colors::Danger));
     } else {
         d->returnLabel->setText(QString("%1%").arg(d->summary.returnRate, 0, 'f', 2));
-        d->returnLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Colors::Down));
+        d->returnLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Tokens::Colors::Success));
     }
     d->returnDetailLabel->setText(QStringLiteral("沪深300同期 +10.6%"));
 
@@ -928,13 +905,13 @@ void PortfolioPage::updateSummaryDisplay()
     d->riskBar->setValue(static_cast<int>(d->summary.riskLevel));
     if (d->summary.riskLevel > 70) {
         d->riskLabel->setText(QStringLiteral("高风险"));
-        d->riskLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Colors::Up));
+        d->riskLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Tokens::Colors::Danger));
     } else if (d->summary.riskLevel > 50) {
         d->riskLabel->setText(QStringLiteral("中等"));
-        d->riskLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Colors::Warning));
+        d->riskLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Tokens::Colors::Warning));
     } else {
         d->riskLabel->setText(QStringLiteral("低风险"));
-        d->riskLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Colors::Down));
+        d->riskLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Tokens::Colors::Success));
     }
 }
 
@@ -958,17 +935,17 @@ void PortfolioPage::updateAssetAllocation()
     };
     
     QVector<AssetItem> items = {
-        {QStringLiteral("股票"), stockValue, QColor(Colors::Stock)},
-        {QStringLiteral("期货"), futuresValue, QColor(Colors::Futures)},
-        {QStringLiteral("基金"), fundValue, QColor(Colors::Fund)},
-        {QStringLiteral("现金"), cashValue, QColor(Colors::Cash)}
+        {QStringLiteral("股票"), stockValue, QColor(PortfolioColors::Stock)},
+        {QStringLiteral("期货"), futuresValue, QColor(PortfolioColors::Futures)},
+        {QStringLiteral("基金"), fundValue, QColor(Tokens::Colors::Danger)},
+        {QStringLiteral("现金"), cashValue, QColor(Tokens::Colors::Success)}
     };
 
     for (const auto& item : items) {
         if (item.value > 0) {
             QPieSlice* slice = d->pieSeries->append(item.name, item.value);
             slice->setColor(item.color);
-            slice->setLabelColor(QColor(Colors::TextPrimary));
+            slice->setLabelColor(QColor(Tokens::Colors::TextPrimary));
         }
     }
 

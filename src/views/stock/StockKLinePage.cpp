@@ -16,6 +16,7 @@
 #include "StockKLinePage.h"
 #include "ui/components/KLineChart.h"
 #include "core/types/MarketTypes.h"
+#include "core/config/Tokens.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
