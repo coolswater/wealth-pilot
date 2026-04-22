@@ -763,18 +763,17 @@ void DashboardPage::setupIndexPanel()
     layout->setContentsMargins(8, 8, 8, 8);
     layout->setSpacing(8);
 
-    // 创建5个指数卡片
+    // 创建7个指数卡片（与indexSymbols对应）
     QStringList indexNames = {
         QStringLiteral("上证指数"),
         QStringLiteral("深证成指"),
         QStringLiteral("创业板指"),
-        QStringLiteral("沪深300"),
         QStringLiteral("科创50"),
         QStringLiteral("上证50"),
         QStringLiteral("沪深300"),
         QStringLiteral("北证50")
     };
-    for (int i = 0; i < 8; ++i) {
+    for (int i = 0; i < 7; ++i) {
         QFrame* card = new QFrame(d->indexPanel);
         card->setStyleSheet(QString(R"(
             QFrame {
@@ -1701,6 +1700,16 @@ void DashboardPage::onRowDoubleClicked(const QModelIndex& index)
  */
 void DashboardPage::updateRealTimeData()
 {
+    // 检查是否在交易时间内
+    QTime now = QTime::currentTime();
+    bool isTrading = (now >= QTime(9, 30) && now <= QTime(11, 30)) ||
+                     (now >= QTime(13, 0) && now <= QTime(15, 0));
+    
+    // 非交易时间不更新数据
+    if (!isTrading) {
+        return;
+    }
+    
     // 模拟实时价格更新
     for (int i = 0; i < d->indexData.size(); ++i) {
         double change = QRandomGenerator::global()->bounded(10.0) - 5.0;
