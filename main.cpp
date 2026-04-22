@@ -29,6 +29,7 @@
  */
 #include "src/views/mainWindow/MainWindow.h"
 #include "src/utils/Logger.h"
+#include "src/core/database/DatabaseManager.h"
 #include <QApplication>
 #include <QFontDatabase>
 #include <QLocale>
@@ -43,11 +44,8 @@ void cleanupServices()
     LOG_INFO("========================================");
     LOG_INFO("Cleaning up services...");
 
-    // CTPService::instance()->shutdown();
-    // AIService::instance()->shutdown();
-    // DataService::instance()->shutdown();
-    // NetworkManager::instance()->shutdown();
-    // DatabaseManager::instance()->shutdown();
+    // 清理数据库管理器
+    DatabaseManager::instance()->shutdown();
 
     LOG_INFO("All services cleaned up");
     LOG_INFO("========================================");

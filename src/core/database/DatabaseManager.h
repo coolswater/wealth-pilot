@@ -179,6 +179,11 @@ public:
     void optimize();
 
     /**
+     * @brief Shutdown database manager
+     */
+    void shutdown();
+
+    /**
      * @brief Get database statistics
      */
     QMap<QString, QVariant> statistics() const;

@@ -177,14 +177,9 @@ bool ApplicationInitializer::initializeCore()
     emit moduleInitialized("CacheManager", true, timer.elapsed());
     emit progressUpdated(++current, total, "CacheManager");
 
-    // Initialize DatabaseManager
-    timer.restart();
-    if (!DatabaseManager::instance()->initialize()) {
-        LOG_ERROR("Failed to initialize DatabaseManager");
-        return false;
-    }
-    emit moduleInitialized("DatabaseManager", true, timer.elapsed());
-    emit progressUpdated(++current, total, "DatabaseManager");
+    // Note: DatabaseManager is initialized by DataStorageService
+    // to avoid duplicate initialization with different configurations
+    LOG_DEBUG("DatabaseManager will be initialized by DataStorageService");
 
     // Initialize registered modules
     for (const auto& module : m_modules[InitPhase::Core]) {

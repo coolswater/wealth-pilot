@@ -316,18 +316,21 @@ DatabaseManager::DatabaseManager()
 
 DatabaseManager::~DatabaseManager()
 {
-    // 先停止异步线程
-    if (m_asyncThread) {
-        m_asyncThread->stop();
-        m_asyncThread->quit();
-        m_asyncThread->wait();
-        m_asyncThread.reset();
-    }
-    
-    // 清理连接池
-    if (m_connectionPool) {
-        m_connectionPool->cleanup();
-        m_connectionPool.reset();
+    // 如果没有调用 shutdown，在这里清理
+    if (m_asyncThread || m_connectionPool) {
+        // 停止异步线程
+        if (m_asyncThread) {
+            m_asyncThread->stop();
+            m_asyncThread->quit();
+            m_asyncThread->wait();
+            m_asyncThread.reset();
+        }
+        
+        // 清理连接池
+        if (m_connectionPool) {
+            m_connectionPool->cleanup();
+            m_connectionPool.reset();
+        }
     }
     
     LOG_DEBUG("DatabaseManager destroyed");
@@ -655,4 +658,27 @@ void DatabaseManager::applyOptimizations()
     m_connectionPool->returnConnection(db);
     
     LOG_DEBUG("Database optimizations applied");
+}
+
+void DatabaseManager::shutdown()
+{
+    QMutexLocker locker(&m_mutex);
+    
+    LOG_INFO("Shutting down DatabaseManager...");
+    
+    // 停止异步线程
+    if (m_asyncThread) {
+        m_asyncThread->stop();
+        m_asyncThread->quit();
+        m_asyncThread->wait();
+        m_asyncThread.reset();
+    }
+    
+    // 清理连接池
+    if (m_connectionPool) {
+        m_connectionPool->cleanup();
+        m_connectionPool.reset();
+    }
+    
+    LOG_INFO("DatabaseManager shutdown complete");
 }
