@@ -1,18 +1,264 @@
+/**
+ * @file WatchListPage.cpp
+ * @brief 自选股页面实现 - 个人自选股管理
+ */
+
 #include "WatchListPage.h"
+#include "core/config/Tokens.h"
+#include "utils/Logger.h"
 
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QLabel>
+#include <QLineEdit>
+#include <QHeaderView>
+#include <QMessageBox>
+#include <QTimer>
+#include <QSortFilterProxyModel>
+#include <QComboBox>
+#include <QStyledItemDelegate>
+#include <QPainter>
+#include <QSettings>
+#include <QInputDialog>
 
-struct WatchListPage::Impl {
+using namespace Tokens::Colors;
+
+// ============================================================================
+// 涨跌颜色委托
+// ============================================================================
+
+class WatchListDelegate : public QStyledItemDelegate {
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+
+    void paint(QPainter* painter, const QStyleOptionViewItem& option,
+               const QModelIndex& index) const override {
+        bool ok = false;
+        double changePercent = index.data(Qt::UserRole).toDouble(&ok);
+        
+        QStyleOptionViewItem opt = option;
+        initStyleOption(&opt, index);
+        
+        if (index.column() == WatchListModel::ColChange || 
+            index.column() == WatchListModel::ColChangeAmount) {
+            if (ok) {
+                if (changePercent > 0) {
+                    opt.palette.setColor(QPalette::Text, QColor(Danger));
+                } else if (changePercent < 0) {
+                    opt.palette.setColor(QPalette::Text, QColor(Success));
+                } else {
+                    opt.palette.setColor(QPalette::Text, QColor(TextSecondary));
+                }
+            }
+        }
+        
+        QStyledItemDelegate::paint(painter, opt, index);
+    }
 };
 
-WatchListPage::WatchListPage(QWidget *parent)
+// ============================================================================
+// WatchListModel 实现
+// ============================================================================
+
+WatchListModel::WatchListModel(QObject* parent)
+    : QAbstractTableModel(parent)
+{
+}
+
+int WatchListModel::rowCount(const QModelIndex& parent) const
+{
+    if (parent.isValid()) return 0;
+    return m_data.size();
+}
+
+int WatchListModel::columnCount(const QModelIndex& parent) const
+{
+    if (parent.isValid()) return 0;
+    return ColCount;
+}
+
+QVariant WatchListModel::data(const QModelIndex& index, int role) const
+{
+    if (!index.isValid() || index.row() >= m_data.size())
+        return QVariant();
+
+    const StockQuote& quote = m_data[index.row()];
+
+    if (role == Qt::DisplayRole) {
+        switch (index.column()) {
+        case ColCode:
+            return quote.symbol.mid(2);
+        case ColName:
+            return quote.name;
+        case ColPrice:
+            return QString::number(quote.lastPrice, 'f', 2);
+        case ColChange: {
+            QString sign = quote.changePercent >= 0 ? "+" : "";
+            return QString("%1%2%").arg(sign).arg(quote.changePercent, 0, 'f', 2);
+        }
+        case ColChangeAmount:
+            return QString::number(quote.changeAmount, 'f', 2);
+        case ColVolume:
+            return formatVolume(quote.volume);
+        case ColAmount:
+            return formatMoney(quote.turnover);
+        case ColHigh:
+            return QString::number(quote.highPrice, 'f', 2);
+        case ColLow:
+            return QString::number(quote.lowPrice, 'f', 2);
+        }
+    }
+    
+    if (role == Qt::UserRole && index.column() == ColChange) {
+        return quote.changePercent;
+    }
+    
+    if (role == Qt::TextAlignmentRole) {
+        if (index.column() == ColCode || index.column() == ColName)
+            return QVariant(Qt::AlignLeft | Qt::AlignVCenter);
+        return QVariant(Qt::AlignRight | Qt::AlignVCenter);
+    }
+
+    return QVariant();
+}
+
+QVariant WatchListModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
+        return QVariant();
+
+    switch (section) {
+    case ColCode: return QStringLiteral("代码");
+    case ColName: return QStringLiteral("名称");
+    case ColPrice: return QStringLiteral("最新价");
+    case ColChange: return QStringLiteral("涨跌幅");
+    case ColChangeAmount: return QStringLiteral("涨跌额");
+    case ColVolume: return QStringLiteral("成交量");
+    case ColAmount: return QStringLiteral("成交额");
+    case ColHigh: return QStringLiteral("最高");
+    case ColLow: return QStringLiteral("最低");
+    }
+    return QVariant();
+}
+
+void WatchListModel::setData(const QVector<StockQuote>& quotes)
+{
+    beginResetModel();
+    m_data = quotes;
+    endResetModel();
+}
+
+void WatchListModel::addSymbol(const QString& symbol)
+{
+    if (!m_symbolSet.contains(symbol)) {
+        m_symbolSet.insert(symbol);
+    }
+}
+
+void WatchListModel::removeSymbol(int row)
+{
+    if (row >= 0 && row < m_data.size()) {
+        QString symbol = m_data[row].symbol;
+        beginRemoveRows(QModelIndex(), row, row);
+        m_data.removeAt(row);
+        m_symbolSet.remove(symbol);
+        endRemoveRows();
+    }
+}
+
+void WatchListModel::clear()
+{
+    beginResetModel();
+    m_data.clear();
+    m_symbolSet.clear();
+    endResetModel();
+}
+
+QStringList WatchListModel::symbols() const
+{
+    QStringList result;
+    for (const auto& quote : m_data) {
+        result.append(quote.symbol);
+    }
+    return result;
+}
+
+QString WatchListModel::formatVolume(qint64 volume)
+{
+    if (volume <= 0) return "--";
+    if (volume >= 100000000) {
+        return QString("%1亿").arg(volume / 100000000.0, 0, 'f', 2);
+    }
+    if (volume >= 10000) {
+        return QString("%1万").arg(volume / 10000.0, 0, 'f', 2);
+    }
+    return QString::number(volume);
+}
+
+QString WatchListModel::formatMoney(double value)
+{
+    if (value <= 0) return "--";
+    if (value >= 100000000.0) {
+        return QString("%1亿").arg(value / 100000000.0, 0, 'f', 2);
+    }
+    if (value >= 10000.0) {
+        return QString("%1万").arg(value / 10000.0, 0, 'f', 2);
+    }
+    return QString::number(value, 'f', 2);
+}
+
+// ============================================================================
+// WatchListPage::Impl
+// ============================================================================
+
+class WatchListPage::Impl {
+public:
+    // UI 组件
+    QTableView* tableView = nullptr;
+    WatchListModel* model = nullptr;
+    QSortFilterProxyModel* proxyModel = nullptr;
+    QLabel* statusLabel = nullptr;
+    QLineEdit* searchInput = nullptr;
+    QLineEdit* addInput = nullptr;
+    QPushButton* addBtn = nullptr;
+    QPushButton* removeBtn = nullptr;
+    
+    // 数据源
+    StockDataSource* dataSource = nullptr;
+    
+    // 状态
+    std::atomic<bool> isVisible{true};
+    
+    // 默认自选股
+    QStringList defaultSymbols = {
+        "sh600519",  // 贵州茅台
+        "sh601318",  // 中国平安
+        "sz000858",  // 五粮液
+        "sz000001",  // 平安银行
+        "sh600036",  // 招商银行
+    };
+};
+
+// ============================================================================
+// WatchListPage 实现
+// ============================================================================
+
+WatchListPage::WatchListPage(QWidget* parent)
     : BasePage(parent)
     , d(std::make_unique<Impl>())
 {
-    // 构造函数保持轻量，所有UI延迟到initializePage构建
-    setObjectName("WatchListPagePage");
+    setupUI();
+    setupConnections();
 }
 
-WatchListPage::~WatchListPage() = default;
+WatchListPage::~WatchListPage()
+{
+    saveWatchList();
+    if (d->dataSource) {
+        d->dataSource->stopAutoRefresh();
+    }
+}
 
 QString WatchListPage::pageId() const
 {
@@ -21,20 +267,259 @@ QString WatchListPage::pageId() const
 
 void WatchListPage::initializePage()
 {
-
+    if (isInitialized()) return;
+    
+    // 初始化数据源
+    d->dataSource = new StockDataSource(StockDataSource::Source::Sina, this);
+    connect(d->dataSource, &StockDataSource::quotesReceived,
+            this, &WatchListPage::onQuotesReceived);
+    
+    // 加载自选股列表
+    loadWatchList();
+    
+    // 请求初始数据
+    requestStockData();
+    
+    // 启动自动刷新（10秒）
+    d->dataSource->startAutoRefresh(10000);
+    
+    setInitialized(true);
+    LOG_INFO("WatchListPage initialized");
 }
+
+void WatchListPage::onPageActivated(const QVariantMap& params)
+{
+    Q_UNUSED(params);
+    d->isVisible = true;
+    if (d->dataSource) {
+        d->dataSource->startAutoRefresh(10000);
+    }
+}
+
+void WatchListPage::onPageDeactivated()
+{
+    d->isVisible = false;
+    if (d->dataSource) {
+        d->dataSource->stopAutoRefresh();
+    }
+}
+
+void WatchListPage::addStock(const QString& symbol, const QString& name)
+{
+    Q_UNUSED(name);
+    QString fullSymbol = symbol;
+    
+    // 添加前缀
+    if (!symbol.startsWith("sh") && !symbol.startsWith("sz")) {
+        if (symbol.startsWith("6")) {
+            fullSymbol = "sh" + symbol;
+        } else {
+            fullSymbol = "sz" + symbol;
+        }
+    }
+    
+    if (!d->defaultSymbols.contains(fullSymbol)) {
+        d->defaultSymbols.append(fullSymbol);
+        d->model->addSymbol(fullSymbol);
+        saveWatchList();
+        requestStockData();
+    }
+}
+
+// ============================================================================
+// UI 设置
+// ============================================================================
 
 void WatchListPage::setupUI()
 {
+    auto* mainLayout = qobject_cast<QVBoxLayout*>(layout());
+    if (!mainLayout) {
+        mainLayout = new QVBoxLayout(this);
+        mainLayout->setSpacing(0);
+        mainLayout->setContentsMargins(10, 10, 10, 10);
+    }
 
+    // 工具栏
+    auto* toolbarLayout = new QHBoxLayout;
+
+    auto* refreshBtn = new QPushButton(QStringLiteral("刷新"));
+    refreshBtn->setProperty("ghost", true);
+
+    d->addInput = new QLineEdit();
+    d->addInput->setPlaceholderText(QStringLiteral("添加股票代码"));
+    d->addInput->setMaximumWidth(150);
+
+    d->addBtn = new QPushButton(QStringLiteral("添加"));
+    d->addBtn->setObjectName("addBtn");
+    d->addBtn->setProperty("primary", true);
+
+    d->removeBtn = new QPushButton(QStringLiteral("删除"));
+    d->removeBtn->setProperty("danger", true);
+
+    auto* filterLabel = new QLabel(QStringLiteral("搜索:"));
+    filterLabel->setProperty("secondary", true);
+    d->searchInput = new QLineEdit();
+    d->searchInput->setPlaceholderText(QStringLiteral("搜索..."));
+    d->searchInput->setMaximumWidth(120);
+
+    toolbarLayout->addWidget(refreshBtn);
+    toolbarLayout->addSpacing(10);
+    toolbarLayout->addWidget(d->addInput);
+    toolbarLayout->addWidget(d->addBtn);
+    toolbarLayout->addWidget(d->removeBtn);
+    toolbarLayout->addStretch();
+    toolbarLayout->addWidget(filterLabel);
+    toolbarLayout->addWidget(d->searchInput);
+
+    mainLayout->addLayout(toolbarLayout);
+
+    // 表格模型
+    d->model = new WatchListModel(this);
+    d->proxyModel = new QSortFilterProxyModel(this);
+    d->proxyModel->setSourceModel(d->model);
+    d->proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
+    d->proxyModel->setFilterKeyColumn(-1);
+
+    // 表格视图
+    d->tableView = new QTableView(this);
+    d->tableView->setModel(d->proxyModel);
+
+    d->tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    d->tableView->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    d->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    d->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    d->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+    d->tableView->setSortingEnabled(true);
+    d->tableView->setAlternatingRowColors(true);
+    d->tableView->setShowGrid(false);
+    d->tableView->verticalHeader()->setVisible(false);
+    d->tableView->horizontalHeader()->setStretchLastSection(true);
+    d->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    d->tableView->horizontalHeader()->setDefaultAlignment(Qt::AlignCenter);
+    d->tableView->setItemDelegate(new WatchListDelegate(this));
+
+    // 列宽
+    d->tableView->setColumnWidth(WatchListModel::ColCode, 80);
+    d->tableView->setColumnWidth(WatchListModel::ColName, 100);
+    d->tableView->setColumnWidth(WatchListModel::ColPrice, 80);
+    d->tableView->setColumnWidth(WatchListModel::ColChange, 80);
+    d->tableView->setColumnWidth(WatchListModel::ColChangeAmount, 80);
+    d->tableView->setColumnWidth(WatchListModel::ColVolume, 90);
+    d->tableView->setColumnWidth(WatchListModel::ColAmount, 90);
+    d->tableView->setColumnWidth(WatchListModel::ColHigh, 80);
+    d->tableView->setColumnWidth(WatchListModel::ColLow, 80);
+
+    mainLayout->addWidget(d->tableView);
+
+    // 状态栏
+    d->statusLabel = new QLabel(QStringLiteral("正在加载自选股..."), this);
+    d->statusLabel->setObjectName("statusLabel");
+    mainLayout->addWidget(d->statusLabel);
+
+    // 连接按钮
+    connect(refreshBtn, &QPushButton::clicked, this, &WatchListPage::onRefreshData);
+    connect(d->addBtn, &QPushButton::clicked, this, &WatchListPage::onAddStock);
+    connect(d->removeBtn, &QPushButton::clicked, this, &WatchListPage::onRemoveStock);
 }
 
-void WatchListPage::setupAnimations()
+void WatchListPage::setupConnections()
 {
-
+    connect(d->searchInput, &QLineEdit::textChanged, 
+            this, &WatchListPage::onSearchChanged);
+    connect(d->tableView, &QTableView::doubleClicked,
+            this, &WatchListPage::onRowDoubleClicked);
 }
 
-void WatchListPage::connectSignals()
-{
+// ============================================================================
+// 数据处理
+// ============================================================================
 
+void WatchListPage::loadWatchList()
+{
+    QSettings settings("WealthPilot", "WatchList");
+    QStringList symbols = settings.value("symbols").toStringList();
+    
+    if (symbols.isEmpty()) {
+        symbols = d->defaultSymbols;
+    }
+    
+    d->defaultSymbols = symbols;
+    for (const QString& symbol : symbols) {
+        d->model->addSymbol(symbol);
+    }
+    
+    LOG_INFO(QString("Loaded %1 watchlist symbols").arg(symbols.size()));
+}
+
+void WatchListPage::saveWatchList()
+{
+    QSettings settings("WealthPilot", "WatchList");
+    settings.setValue("symbols", d->model->symbols());
+    settings.sync();
+    LOG_INFO("WatchList saved");
+}
+
+void WatchListPage::requestStockData()
+{
+    if (d->dataSource && !d->defaultSymbols.isEmpty()) {
+        d->dataSource->requestQuotes(d->defaultSymbols);
+        d->statusLabel->setText(QStringLiteral("正在请求行情数据..."));
+    }
+}
+
+void WatchListPage::onQuotesReceived(const QVector<StockQuote>& quotes)
+{
+    d->model->setData(quotes);
+    
+    d->statusLabel->setText(QString(QStringLiteral("自选股 %1 只 · %2"))
+        .arg(quotes.size())
+        .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
+}
+
+void WatchListPage::onSearchChanged(const QString& text)
+{
+    d->proxyModel->setFilterFixedString(text);
+}
+
+void WatchListPage::onRefreshData()
+{
+    requestStockData();
+}
+
+void WatchListPage::onAddStock()
+{
+    QString symbol = d->addInput->text().trimmed();
+    if (!symbol.isEmpty()) {
+        addStock(symbol);
+        d->addInput->clear();
+    }
+}
+
+void WatchListPage::onRemoveStock()
+{
+    QModelIndexList selected = d->tableView->selectionModel()->selectedRows();
+    if (!selected.isEmpty()) {
+        QModelIndex sourceIndex = d->proxyModel->mapToSource(selected.first());
+        d->model->removeSymbol(sourceIndex.row());
+        
+        // 同步 defaultSymbols
+        d->defaultSymbols = d->model->symbols();
+        saveWatchList();
+        
+        LOG_INFO("Stock removed from watchlist");
+    }
+}
+
+void WatchListPage::onRowDoubleClicked(const QModelIndex& index)
+{
+    QModelIndex sourceIndex = d->proxyModel->mapToSource(index);
+    QString code = d->model->data(d->model->index(sourceIndex.row(), WatchListModel::ColCode)).toString();
+    QString name = d->model->data(d->model->index(sourceIndex.row(), WatchListModel::ColName)).toString();
+    
+    LOG_INFO(QString("Double clicked: %1 (%2)").arg(code, name));
+    
+    QVariantMap params;
+    params["symbol"] = code;
+    params["name"] = name;
+    emit navigateToKLinePage(code, params);
 }

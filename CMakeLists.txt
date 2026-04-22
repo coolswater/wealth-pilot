@@ -136,6 +136,8 @@ set(MARKET_SOURCES
         src/market/MarketDataHub.cpp
         src/market/StockDataSource.h
         src/market/StockDataSource.cpp
+        src/market/NewsDataSource.h
+        src/market/NewsDataSource.cpp
 )
 
 # Models 数据模型
