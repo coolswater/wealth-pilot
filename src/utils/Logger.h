@@ -2,13 +2,14 @@
  * @file Logger.h
  * @brief 日志管理器
  * @author WealthPilot Team
- * @version 2.0.0
+ * @version 2.1.0
  * 
  * @details 线程安全的日志系统，支持：
  * - 分级日志 (Debug/Info/Warning/Error)
  * - 文件输出
  * - 控制台输出
- * - 日志文件轮转
+ * - 日志文件按日期滚动
+ * - 自动清理过期日志
  * 
  * @thread_safe 所有公共方法都是线程安全的
  */
@@ -20,6 +21,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QMutex>
+#include <QDate>
 #include <memory>
 
 /**
@@ -47,8 +49,9 @@ public:
     /**
      * @brief 初始化日志系统
      * @param logFile 日志文件路径，为空则只输出到控制台
+     * @param maxDays 保留日志的最大天数，超过的日志文件将被自动清理
      */
-    void init(const QString& logFile = QString());
+    void init(const QString& logFile = QString(), int maxDays = 30);
 
     /**
      * @brief 设置日志级别
@@ -93,6 +96,10 @@ private:
 
     QString levelToString(Level level) const;
     QString currentTime() const;
+    void checkDateChange();
+    void rotateLogFile();
+    void cleanOldLogs();
+    QString getDatedLogFileName(const QDate& date) const;
 
     struct Impl;
     std::unique_ptr<Impl> d;

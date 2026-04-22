@@ -2,13 +2,13 @@
  * @file main.cpp
  * @brief 应用程序入口
  *
- * @details WealthPilot智能投资管理软件主入�?
- * 负责�?
+ * @details WealthPilot智能投资管理软件主入口
+ * 负责：
  * - 初始化Qt应用框架
  * - 配置高DPI支持
  * - 加载字体和主题
  * - 初始化核心服务
- * - 启动应用主循
+ * - 启动应用主循环
  *
  * @note 程序启动流程
  * 1. 设置Qt应用属性（高DPI、事件压缩）
@@ -18,10 +18,10 @@
  * 5. 加载自定义字体
  * 6. 初始化主题管理器
  * 7. 初始化网络管理器
- * 8. 初始化数据服
+ * 8. 初始化数据服务
  * 9. 初始化AI服务
  * 10. 创建并显示主窗口
- * 11. 进入主事件循�?
+ * 11. 进入主事件循环
  *
  * @author WealthPilot Team
  * @version 1.0.0
@@ -55,19 +55,19 @@ void cleanupServices()
 
 /**
  * @brief 应用程序入口函数
- * @param argc 命令行参数数
- * @param argv 命令行参数数
+ * @param argc 命令行参数数量
+ * @param argv 命令行参数数组
  * @return int 程序退出码：0=成功，非0=错误
  */
 int main(int argc, char* argv[])
 {
-    // 设置应用程序属�?压缩高频事件（如鼠标移动），提高性能
+    // 设置应用程序属性：压缩高频事件（如鼠标移动），提高性能
     QApplication::setAttribute(Qt::AA_CompressHighFrequencyEvents);
 
     // ========== 创建Qt应用实例 ==========
     const QApplication app(argc, argv);
 
-    // ========== 设置应用元信�?==========
+    // ========== 设置应用元信息 ==========
     QApplication::setApplicationName("WealthPilot-财富领航AI助手");
     QApplication::setOrganizationName("Hexd");
     QApplication::setApplicationVersion("1.0.0");
@@ -75,14 +75,17 @@ int main(int argc, char* argv[])
     // 设置应用ICon
     QApplication::setWindowIcon(QIcon(":/images/app_icon.png"));
 
-    // ========== 初始化日志系�?==========
-    Logger::instance()->init("logs/wealthpilot.log");
+    // ========== 初始化日志系统 ==========
+    // 日志保存到 D:\C++\wealth-pilot\logs 目录
+    QString logPath = "D:/C++/wealth-pilot/logs/wealthpilot.log";
+    Logger::instance()->init(logPath);
     LOG_INFO("========================================");
     LOG_INFO("WealthPilot-Wealth Navigator AI Assistant");
     LOG_INFO(QString("Version: %1").arg(QApplication::applicationVersion()));
+    LOG_INFO(QString("Log file: %1").arg(logPath));
     LOG_INFO("========================================");
 
-    // ========== 加载自定义字�?==========
+    // ========== 加载自定义字体 ==========
     const int fontRegular = QFontDatabase::addApplicationFont(":/fonts/Roboto-Regular.ttf");
     const int fontMedium = QFontDatabase::addApplicationFont(":/fonts/Roboto-Medium.ttf");
     const int fontBold = QFontDatabase::addApplicationFont(":/fonts/Roboto-Bold.ttf");
@@ -94,13 +97,13 @@ int main(int argc, char* argv[])
 
     // 设置应用默认字体
     QFont defaultFont("Roboto", 10);
-    defaultFont.setStyleStrategy(QFont::PreferAntialias); // 优先使用抗锯�?
+    defaultFont.setStyleStrategy(QFont::PreferAntialias); // 优先使用抗锯齿
     QApplication::setFont(defaultFont);
 
     // ========== 初始化主题管理器 ==========
     ThemeManager::instance()->setTheme(ThemeManager::ThemeType::Dark);
 
-    // ========== 国际�?==========
+    // ========== 国际化 ==========
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
     for (const QString& locale : uiLanguages)
@@ -113,7 +116,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    // ========== 创建主窗�?==========
+    // ========== 创建主窗口 ==========
     MainWindow w;
 
     // 确保退出时清理服务
@@ -128,4 +131,3 @@ int main(int argc, char* argv[])
 
     return QApplication::exec();
 }
-
