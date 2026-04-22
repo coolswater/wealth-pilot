@@ -28,6 +28,7 @@
 #include <memory>
 #include "core/config/Tokens.h"
 #include "market/StockDataSource.h"
+#include "market/NewsDataSource.h"  // NewsItem 定义
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -126,6 +127,7 @@ class StockRankModel : public QAbstractTableModel {
 public:
     enum Column {
         ColRank = 0,        ///< 排名
+        ColCode,            ///< 代码
         ColName,            ///< 名称
         ColPrice,           ///< 现价
         ColChange,          ///< 涨跌幅
@@ -211,6 +213,7 @@ class MoneyFlowModel : public QAbstractTableModel {
 public:
     enum Column {
         ColRank = 0,
+        ColCode,            ///< 代码
         ColName,
         ColNetInflow,
         ColNetInflowPercent,
@@ -287,6 +290,7 @@ private:
     // 数据加载
     void loadDemoData();
     void loadRealData();            ///< 加载真实数据
+    void loadLocalData();           ///< 加载本地缓存数据
     void loadIndexData();
     void loadRankData();
     void loadWatchlistData();
@@ -303,6 +307,12 @@ private:
     void processRankQuotes(const QVector<StockQuote>& quotes);
     QVector<StockRankData> filterTopGainers(const QVector<StockQuote>& quotes, int count);
     QVector<StockRankData> filterTopLosers(const QVector<StockQuote>& quotes, int count);
+    
+    // 数据存储
+    void saveIndexDataToDb(const QVector<StockQuote>& quotes);
+    void saveQuoteCacheToDb(const QVector<StockQuote>& quotes);
+    void saveNewsToDb(const QVector<NewsItem>& news);
+    bool checkAndLoadLocalData();
 
     struct Impl;
     std::unique_ptr<Impl> d;

@@ -84,7 +84,6 @@ CMakeLists.txt.user*
 /.qtcreator
 /cmake-build-debug/
 /logs/
-/datastorage/
 /db/
 
 # Temporary files

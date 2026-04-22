@@ -68,6 +68,8 @@ set(CORE_DATABASE_SOURCES
         src/core/database/DatabaseManager.cpp
         src/data/DataStorage.h
         src/data/DataStorage.cpp
+        src/data/DataStorageService.h
+        src/data/DataStorageService.cpp
 )
 
 # Core - Task 异步任务
