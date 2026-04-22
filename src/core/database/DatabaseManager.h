@@ -100,6 +100,7 @@ public:
     
     void executeQuery(const QString& queryId, const QString& sql, const QMap<QString, QVariant>& params = QMap<QString, QVariant>());
     void executeBatch(const QString& queryId, const QString& sql, const QVector<QMap<QString, QVariant>>& batchData);
+    void stop();  ///< 停止线程
 
 signals:
     void queryCompleted(const QString& queryId, const QueryResult& result);

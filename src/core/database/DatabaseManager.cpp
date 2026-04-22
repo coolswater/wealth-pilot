@@ -118,7 +118,18 @@ QSqlDatabase ConnectionPool::createConnection()
     QSqlDatabase db;
     if (m_config.databaseName.endsWith(".db") || m_config.databaseName.contains(".")) {
         // SQLite database
-        QString dbPath = QCoreApplication::applicationDirPath() + "/data/" + m_config.databaseName;
+        QString dbPath;
+        
+        // 检查是否为绝对路径（Windows: C:/ 或 D:/ 等，或 Unix: /）
+        if (m_config.databaseName.contains(":/") || m_config.databaseName.startsWith("/")) {
+            // 绝对路径，直接使用
+            dbPath = m_config.databaseName;
+        } else {
+            // 相对路径，添加应用目录前缀
+            dbPath = QCoreApplication::applicationDirPath() + "/data/" + m_config.databaseName;
+        }
+        
+        // 确保目录存在
         QDir dir = QFileInfo(dbPath).absoluteDir();
         if (!dir.exists()) {
             dir.mkpath(".");
@@ -206,6 +217,13 @@ void AsyncQueryThread::executeBatch(const QString& queryId, const QString& sql, 
     
     m_taskQueue.enqueue(task);
     m_condition.wakeOne();
+}
+
+void AsyncQueryThread::stop()
+{
+    QMutexLocker locker(&m_mutex);
+    m_running = false;
+    m_condition.wakeAll();
 }
 
 void AsyncQueryThread::run()
@@ -298,10 +316,20 @@ DatabaseManager::DatabaseManager()
 
 DatabaseManager::~DatabaseManager()
 {
+    // 先停止异步线程
     if (m_asyncThread) {
+        m_asyncThread->stop();
         m_asyncThread->quit();
         m_asyncThread->wait();
+        m_asyncThread.reset();
     }
+    
+    // 清理连接池
+    if (m_connectionPool) {
+        m_connectionPool->cleanup();
+        m_connectionPool.reset();
+    }
+    
     LOG_DEBUG("DatabaseManager destroyed");
 }
 
