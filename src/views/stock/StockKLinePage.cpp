@@ -286,18 +286,19 @@ void StockKLinePage::initToolBar()
         btn->setStyleSheet(R"(
             QPushButton {
                 background: transparent;
-                color: #9ca3af;
+                color: #888888;
                 border: none;
                 padding: 0 10px;
                 font-size: 13px;
                 border-radius: 4px;
             }
             QPushButton:checked {
-                background: #3b82f6;
+                background: #2a2a2a;
                 color: #ffffff;
             }
             QPushButton:hover:!checked {
-                background: #2d3748;
+                background: #1a1a1a;
+                color: #aaaaaa;
             }
         )");
         connect(btn, &QPushButton::clicked, this, [this, i, btn, periodGroup]() {
@@ -335,18 +336,19 @@ void StockKLinePage::initToolBar()
         btn->setStyleSheet(R"(
             QPushButton {
                 background: transparent;
-                color: #9ca3af;
+                color: #888888;
                 border: none;
                 padding: 0 8px;
                 font-size: 12px;
                 border-radius: 4px;
             }
             QPushButton:checked {
-                background: #3b82f6;
+                background: #2a2a2a;
                 color: #ffffff;
             }
             QPushButton:hover:!checked {
-                background: #2d3748;
+                background: #1a1a1a;
+                color: #aaaaaa;
             }
         )");
         connect(btn, &QPushButton::clicked, this, [this, i, btn, minPeriodGroup, periodGroup]() {
@@ -373,8 +375,8 @@ void StockKLinePage::initToolBar()
     d->adjustCombo->setFixedHeight(26);
     d->adjustCombo->setStyleSheet(R"(
         QComboBox {
-            background: #2d3748;
-            color: #9ca3af;
+            background: #1a1a1a;
+            color: #aaaaaa;
             border: none;
             padding: 0 8px;
             font-size: 12px;
@@ -382,9 +384,9 @@ void StockKLinePage::initToolBar()
         }
         QComboBox::drop-down { border: none; width: 16px; }
         QComboBox QAbstractItemView {
-            background: #2d3748;
+            background: #1a1a1a;
             color: #ffffff;
-            selection-background-color: #3b82f6;
+            selection-background-color: #2a2a2a;
         }
     )");
     layout->addWidget(d->adjustCombo);
@@ -394,7 +396,7 @@ void StockKLinePage::initToolBar()
     d->refreshBtn->setFixedHeight(26);
     d->refreshBtn->setStyleSheet(R"(
         QPushButton {
-            background: #3b82f6;
+            background: #2a2a2a;
             color: #ffffff;
             border: none;
             padding: 0 16px;
@@ -402,7 +404,7 @@ void StockKLinePage::initToolBar()
             border-radius: 4px;
         }
         QPushButton:hover {
-            background: #2563eb;
+            background: #3a3a3a;
         }
     )");
     layout->addWidget(d->refreshBtn);
@@ -584,7 +586,7 @@ void StockKLinePage::initMainArea()
     
     d->priceLabel = new QLabel("--");
     d->priceLabel->setAlignment(Qt::AlignCenter);
-    d->priceLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: #ff4d4f;");
+    d->priceLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: #FF3366;");
     priceRowLayout->addWidget(d->priceLabel);
     
     auto* changeWidget = new QWidget();
@@ -593,11 +595,11 @@ void StockKLinePage::initMainArea()
     changeLayout->setSpacing(0);
     
     d->changeLabel = new QLabel("--");
-    d->changeLabel->setStyleSheet("font-size: 12px; color: #ff4d4f;");
+    d->changeLabel->setStyleSheet("font-size: 12px; color: #FF3366;");
     changeLayout->addWidget(d->changeLabel);
     
     auto* changePercentLabel = new QLabel("--");
-    changePercentLabel->setStyleSheet("font-size: 12px; color: #ff4d4f;");
+    changePercentLabel->setStyleSheet("font-size: 12px; color: #FF3366;");
     changeLayout->addWidget(changePercentLabel);
     m_changePercentLabel = changePercentLabel;
     
@@ -616,7 +618,7 @@ void StockKLinePage::initMainArea()
     statusRowLayout->addStretch();
     
     auto* statusLabel = new QLabel(QStringLiteral("交易中"));
-    statusLabel->setStyleSheet("font-size: 12px; color: #00b578;");
+    statusLabel->setStyleSheet("font-size: 12px; color: #00D4AA;");
     statusRowLayout->addWidget(statusLabel);
     
     topInfoLayout->addWidget(statusRow);
@@ -632,7 +634,7 @@ void StockKLinePage::initMainArea()
     orderRatioLayout->setContentsMargins(0, 0, 0, 0);
     orderRatioLayout->setSpacing(4);
     auto* orderRatioLabel = new QLabel(QStringLiteral("委比"));
-    orderRatioLabel->setStyleSheet("font-size: 12px; color: #6b7280;");
+    orderRatioLabel->setStyleSheet("font-size: 12px; color: #666666;");
     orderRatioLayout->addWidget(orderRatioLabel);
     m_orderRatioValue = new QLabel("--");
     m_orderRatioValue->setStyleSheet("font-size: 12px; color: #ffffff;");
@@ -680,15 +682,15 @@ void StockKLinePage::initMainArea()
         rowLayout->setSpacing(4);
         
         auto* lbl = new QLabel(label);
-        lbl->setStyleSheet(QString("color: %1; font-size: 12px; min-width: 28px;").arg(isSell ? "#00b578" : "#ff4d4f"));
+        lbl->setStyleSheet(QString("color: %1; font-size: 12px; min-width: 28px;").arg(isSell ? "#00D4AA" : "#FF3366"));
         rowLayout->addWidget(lbl);
         
         priceLbl = new QLabel("--");
-        priceLbl->setStyleSheet(QString("color: %1; font-size: 12px; min-width: 50px;").arg(isSell ? "#00b578" : "#ff4d4f"));
+        priceLbl->setStyleSheet(QString("color: %1; font-size: 12px; min-width: 50px;").arg(isSell ? "#00D4AA" : "#FF3366"));
         rowLayout->addWidget(priceLbl);
         
         volLbl = new QLabel("--");
-        volLbl->setStyleSheet("color: #9ca3af; font-size: 12px;");
+        volLbl->setStyleSheet("color: #888888; font-size: 12px;");
         volLbl->setAlignment(Qt::AlignRight);
         rowLayout->addWidget(volLbl);
         
@@ -707,7 +709,7 @@ void StockKLinePage::initMainArea()
     // 分隔线
     auto* depthDivider = new QFrame();
     depthDivider->setFrameShape(QFrame::HLine);
-    depthDivider->setStyleSheet("QFrame { background: #2d3748; max-height: 1px; }");
+    depthDivider->setStyleSheet("QFrame { background: #2a2a2a; max-height: 1px; }");
     depthLayout->addWidget(depthDivider);
     
     // 买1-5
@@ -724,7 +726,7 @@ void StockKLinePage::initMainArea()
     // 分隔线
     auto* divider2 = new QFrame();
     divider2->setFrameShape(QFrame::HLine);
-    divider2->setStyleSheet("QFrame { background: #2d3748; max-height: 1px; }");
+    divider2->setStyleSheet("QFrame { background: #2a2a2a; max-height: 1px; }");
     rightLayout->addWidget(divider2);
     
     // ========== 详细信息表格（14行4列） ==========
@@ -739,7 +741,7 @@ void StockKLinePage::initMainArea()
     m_detailTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     m_detailTable->setStyleSheet(R"(
         QTableWidget {
-            background: #161b22;
+            background: #0a0a0a;
             color: #ffffff;
             border: none;
             font-size: 11px;
@@ -770,7 +772,7 @@ void StockKLinePage::initMainArea()
         
         // 第一列：标签
         auto* labelItem1 = new QTableWidgetItem(rowLabels[row]);
-        labelItem1->setForeground(QColor("#6b7280"));
+        labelItem1->setForeground(QColor("#666666"));
         labelItem1->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         m_detailTable->setItem(row, 0, labelItem1);
         
@@ -781,7 +783,7 @@ void StockKLinePage::initMainArea()
         
         // 第三列：标签
         auto* labelItem2 = new QTableWidgetItem(rowLabels2[row]);
-        labelItem2->setForeground(QColor("#6b7280"));
+        labelItem2->setForeground(QColor("#666666"));
         labelItem2->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         m_detailTable->setItem(row, 2, labelItem2);
         
@@ -840,20 +842,20 @@ void StockKLinePage::initMainArea()
         priceItem->setTextAlignment(Qt::AlignCenter);
         // 根据价格变化设置颜色
         if (i > 0 && prices[i].toDouble() > prices[i-1].toDouble()) {
-            priceItem->setForeground(QColor("#ff4d4f"));  // 红色
+            priceItem->setForeground(QColor("#FF3366"));  // 玫红色（涨）
         } else if (i > 0 && prices[i].toDouble() < prices[i-1].toDouble()) {
-            priceItem->setForeground(QColor("#00b578"));  // 绿色
+            priceItem->setForeground(QColor("#00D4AA"));  // 青绿色（跌）
         }
         m_tradeRecordTable->setItem(i, 1, priceItem);
         
         auto* volItem = new QTableWidgetItem(volumes[i]);
         volItem->setTextAlignment(Qt::AlignCenter);
-        volItem->setForeground(QColor("#9ca3af"));
+        volItem->setForeground(QColor("#888888"));
         m_tradeRecordTable->setItem(i, 2, volItem);
         
         auto* countItem = new QTableWidgetItem(counts[i]);
         countItem->setTextAlignment(Qt::AlignCenter);
-        countItem->setForeground(QColor("#9ca3af"));
+        countItem->setForeground(QColor("#888888"));
         m_tradeRecordTable->setItem(i, 3, countItem);
     }
     
