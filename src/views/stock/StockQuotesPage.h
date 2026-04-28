@@ -71,7 +71,7 @@ public:
     void onPageDeactivated() override;
 
 signals:
-    void navigateToKLinePage(const QString& symbol, const QVariantMap& params);
+    void navigateToKLinePage(const QString& symbol, const QString& name);
 
 private slots:
     void onQuotesReceived(const QVector<StockQuote>& quotes);

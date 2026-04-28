@@ -503,10 +503,7 @@ void StockQuotesPage::onRowDoubleClicked(const QModelIndex& index)
     LOG_INFO(QString("Double clicked: %1 (%2)").arg(code, name));
     
     // 发送导航信号
-    QVariantMap params;
-    params["symbol"] = code;
-    params["name"] = name;
-    emit navigateToKLinePage(code, params);
+    emit navigateToKLinePage(code, name);
 }
 
 void StockQuotesPage::updateStatus(const QString& text)

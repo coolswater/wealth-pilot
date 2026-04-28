@@ -1,6 +1,6 @@
 /**
  * @file NewsPage.cpp
- * @brief 新闻资讯页面实现 - 对接华尔街见闻API
+ * @brief 新闻资讯页面实现 - 垂直滚动卡片列表设计
  */
 
 #include "NewsPage.h"
@@ -11,17 +11,31 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
-#include <QListWidget>
-#include <QTextBrowser>
-#include <QComboBox>
-#include <QTimer>
-#include <QDateTime>
 #include <QScrollArea>
 #include <QFrame>
-#include <QDesktopServices>
-#include <QUrl>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QTextBrowser>
+#include <QMouseEvent>
+#include <QGraphicsDropShadowEffect>
+#include <QDateTime>
+#include <QRegularExpression>
 
-using namespace Tokens::Colors;
+// ============================================================================
+// 颜色常量 - 深色主题（与整体界面统一）
+// ============================================================================
+namespace {
+    // 使用 Tokens 中定义的颜色（直接使用字符串）
+    const QString COLOR_BG_GLOBAL = QStringLiteral("#1A1F2E");        // 全局背景
+    const QString COLOR_BG_CARD = QStringLiteral("#242937");          // 卡片背景
+    const QString COLOR_TEXT_TITLE = QStringLiteral("#FFFFFF");       // 标题文字
+    const QString COLOR_TEXT_META = QStringLiteral("#9CA3AF");        // 元数据文字
+    const QString COLOR_TEXT_SUMMARY = QStringLiteral("#FFFFFF");     // 摘要文字
+    const QString COLOR_HIGHLIGHT = QStringLiteral("#F97316");        // 强调色（数字）
+    const QString COLOR_CATEGORY_ACTIVE = QStringLiteral("#3B82F6");  // 分类标签高亮
+    const QString COLOR_SEPARATOR = QStringLiteral("#14FFFFFF");      // 分隔线
+    const QString COLOR_HOVER_BG = QStringLiteral("rgba(255, 255, 255, 0.05)"); // 悬停背景
+}
 
 // ============================================================================
 // NewsPage::Impl
@@ -29,29 +43,196 @@ using namespace Tokens::Colors;
 
 class NewsPage::Impl {
 public:
-    // UI 组件
-    QListWidget* newsList = nullptr;
-    QTextBrowser* contentBrowser = nullptr;
-    QLabel* titleLabel = nullptr;
-    QLabel* sourceLabel = nullptr;
-    QLabel* timeLabel = nullptr;
-    QComboBox* categoryCombo = nullptr;
-    QLabel* statusLabel = nullptr;
-    QPushButton* openUrlBtn = nullptr;
+    QWidget* container = nullptr;
+    QVBoxLayout* containerLayout = nullptr;
+    QScrollArea* scrollArea = nullptr;
+    QWidget* scrollContent = nullptr;
+    QVBoxLayout* cardsLayout = nullptr;
     
-    // 数据源
+    QVector<NewsCardData> allNews;
+    QVector<NewsCardWidget*> cards;
+    
+    QString currentCategory = QStringLiteral("全部");
     NewsDataSource* dataSource = nullptr;
-    
-    // 数据
-    QVector<NewsItem> allNews;
-    NewsItem currentNews;
-    
-    // 定时刷新
-    QTimer* refreshTimer = nullptr;
-    
-    // 当前筛选
-    QString currentCategory;
 };
+
+// ============================================================================
+// NewsCardWidget 实现
+// ============================================================================
+
+NewsCardWidget::NewsCardWidget(const NewsCardData& data, QWidget* parent)
+    : QFrame(parent)
+    , m_data(data)
+{
+    setupUI();
+}
+
+void NewsCardWidget::setLastCard(bool isLast)
+{
+    if (m_separator) {
+        m_separator->setVisible(!isLast);
+    }
+}
+
+void NewsCardWidget::setupUI()
+{
+    setStyleSheet(QString(R"(
+        NewsCardWidget {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 8px;
+        }
+    )").arg(COLOR_BG_CARD, COLOR_SEPARATOR));
+    
+    // 添加阴影效果
+    auto* shadow = new QGraphicsDropShadowEffect(this);
+    shadow->setBlurRadius(8);
+    shadow->setColor(QColor(0, 0, 0, 30));
+    shadow->setOffset(0, 2);
+    setGraphicsEffect(shadow);
+    
+    setMinimumHeight(140);
+    setCursor(Qt::PointingHandCursor);
+    
+    auto* mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(16, 16, 16, 12);
+    mainLayout->setSpacing(10);
+    
+    // 标题行
+    auto* titleRow = new QHBoxLayout();
+    titleRow->setSpacing(8);
+    
+    m_titleLabel = new QLabel(m_data.title);
+    m_titleLabel->setStyleSheet(QString(
+        "QLabel { color: %1; font-size: 15px; font-weight: bold; }"
+    ).arg(COLOR_TEXT_TITLE));
+    m_titleLabel->setWordWrap(true);
+    titleRow->addWidget(m_titleLabel, 1);
+    
+    m_timeLabel = new QLabel(formatTime(m_data.publishTime));
+    m_timeLabel->setStyleSheet(QString(
+        "QLabel { color: %1; font-size: 12px; }"
+    ).arg(COLOR_TEXT_META));
+    m_timeLabel->setAlignment(Qt::AlignTop | Qt::AlignRight);
+    titleRow->addWidget(m_timeLabel);
+    
+    mainLayout->addLayout(titleRow);
+    
+    // 元数据行
+    auto* metaRow = new QHBoxLayout();
+    metaRow->setSpacing(8);
+    
+    QString sourceText = m_data.source;
+    if (!m_data.category.isEmpty()) {
+        sourceText += QString(" · %1").arg(m_data.category);
+    }
+    m_sourceLabel = new QLabel(sourceText);
+    m_sourceLabel->setStyleSheet(QString(
+        "QLabel { color: %1; font-size: 12px; }"
+    ).arg(COLOR_TEXT_META));
+    metaRow->addWidget(m_sourceLabel, 1);
+    
+    m_detailBtn = new QPushButton(QStringLiteral("详情"));
+    m_detailBtn->setStyleSheet(QString(R"(
+        QPushButton {
+            background-color: transparent;
+            color: %1;
+            border: 1px solid %1;
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 4px;
+        }
+        QPushButton:hover {
+            background-color: %1;
+            color: white;
+        }
+    )").arg(COLOR_CATEGORY_ACTIVE));
+    m_detailBtn->setCursor(Qt::PointingHandCursor);
+    connect(m_detailBtn, &QPushButton::clicked, this, [this]() {
+        emit detailRequested(m_data);
+    });
+    metaRow->addWidget(m_detailBtn);
+    
+    mainLayout->addLayout(metaRow);
+    
+    // 摘要
+    m_summaryLabel = new QLabel();
+    QString summaryText = highlightNumbersInText(m_data.summary, m_data.highlightNumbers);
+    m_summaryLabel->setTextFormat(Qt::RichText);
+    m_summaryLabel->setText(summaryText);
+    m_summaryLabel->setStyleSheet(QString(
+        "QLabel { color: %1; font-size: 13px; line-height: 1.5; }"
+    ).arg(COLOR_TEXT_SUMMARY));
+    m_summaryLabel->setWordWrap(true);
+    m_summaryLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    mainLayout->addWidget(m_summaryLabel);
+    
+    // 分隔线
+    m_separator = new QFrame();
+    m_separator->setFrameShape(QFrame::HLine);
+    m_separator->setStyleSheet(QString(
+        "QFrame { background-color: %1; border: none; max-height: 1px; }"
+    ).arg(COLOR_SEPARATOR));
+    mainLayout->addWidget(m_separator);
+}
+
+QString NewsCardWidget::formatTime(const QDateTime& time) const
+{
+    qint64 secs = time.secsTo(QDateTime::currentDateTime());
+    
+    if (secs < 60) {
+        return QStringLiteral("刚刚");
+    } else if (secs < 3600) {
+        return QString(QStringLiteral("%1分钟前")).arg(secs / 60);
+    } else if (secs < 86400) {
+        return QString(QStringLiteral("%1小时前")).arg(secs / 3600);
+    } else {
+        return time.toString("MM-dd HH:mm");
+    }
+}
+
+QString NewsCardWidget::highlightNumbersInText(const QString& text, const QStringList& numbers) const
+{
+    QString result = text;
+    for (const auto& num : numbers) {
+        // 使用富文本标记高亮数字
+        result.replace(num, QString("<span style='color: %1; font-weight: bold;'>%2</span>")
+            .arg(COLOR_HIGHLIGHT, num));
+    }
+    return result;
+}
+
+void NewsCardWidget::mousePressEvent(QMouseEvent* event)
+{
+    QFrame::mousePressEvent(event);
+    if (event->button() == Qt::LeftButton) {
+        emit clicked();
+    }
+}
+
+void NewsCardWidget::enterEvent(QEnterEvent* event)
+{
+    QFrame::enterEvent(event);
+    setStyleSheet(QString(R"(
+        NewsCardWidget {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 8px;
+        }
+    )").arg(COLOR_BG_CARD, COLOR_CATEGORY_ACTIVE));
+}
+
+void NewsCardWidget::leaveEvent(QEvent* event)
+{
+    QFrame::leaveEvent(event);
+    setStyleSheet(QString(R"(
+        NewsCardWidget {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 8px;
+        }
+    )").arg(COLOR_BG_CARD, COLOR_SEPARATOR));
+}
 
 // ============================================================================
 // NewsPage 实现
@@ -62,14 +243,11 @@ NewsPage::NewsPage(QWidget* parent)
     , d(std::make_unique<Impl>())
 {
     setupUI();
-    setupConnections();
+    loadDemoData();
 }
 
 NewsPage::~NewsPage()
 {
-    if (d->refreshTimer) {
-        d->refreshTimer->stop();
-    }
 }
 
 QString NewsPage::pageId() const
@@ -86,264 +264,319 @@ void NewsPage::initializePage()
     connect(d->dataSource, &NewsDataSource::newsReceived,
             this, &NewsPage::onNewsReceived);
     
-    // 请求初始数据
-    requestNews();
-    
-    // 启动定时刷新（5分钟）
-    d->refreshTimer = new QTimer(this);
-    connect(d->refreshTimer, &QTimer::timeout, this, &NewsPage::onAutoRefresh);
-    d->refreshTimer->start(300000);
-    
     setInitialized(true);
-    LOG_INFO("NewsPage initialized with WallStCN API");
+    LOG_INFO("NewsPage initialized");
 }
-
-void NewsPage::onPageActivated(const QVariantMap& params)
-{
-    Q_UNUSED(params);
-    if (d->refreshTimer) {
-        d->refreshTimer->start(300000);
-    }
-}
-
-// ============================================================================
-// UI 设置
-// ============================================================================
 
 void NewsPage::setupUI()
 {
-    auto* mainLayout = new QHBoxLayout(this);
-    mainLayout->setContentsMargins(10, 10, 10, 10);
-    mainLayout->setSpacing(10);
-
-    // 左侧：新闻列表
-    auto* leftPanel = new QWidget();
-    auto* leftLayout = new QVBoxLayout(leftPanel);
-    leftLayout->setContentsMargins(0, 0, 0, 0);
-    leftLayout->setSpacing(8);
-
-    // 工具栏
-    auto* toolbarLayout = new QHBoxLayout();
+    // 全局背景
+    setStyleSheet(QString("QWidget { background-color: %1; }").arg(COLOR_BG_GLOBAL));
     
-    auto* refreshBtn = new QPushButton(QStringLiteral("刷新"));
-    refreshBtn->setProperty("ghost", true);
+    auto* mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setSpacing(0);
     
-    d->categoryCombo = new QComboBox();
-    d->categoryCombo->addItem(QStringLiteral("全球"), static_cast<int>(NewsDataSource::Channel::Global));
-    d->categoryCombo->addItem(QStringLiteral("A股"), static_cast<int>(NewsDataSource::Channel::AShares));
-    d->categoryCombo->addItem(QStringLiteral("美股"), static_cast<int>(NewsDataSource::Channel::USStocks));
-    d->categoryCombo->addItem(QStringLiteral("外汇"), static_cast<int>(NewsDataSource::Channel::Forex));
-    d->categoryCombo->addItem(QStringLiteral("商品"), static_cast<int>(NewsDataSource::Channel::Commodities));
-    d->categoryCombo->setMaximumWidth(100);
+    // 分类栏
+    setupCategoryBar();
     
-    toolbarLayout->addWidget(refreshBtn);
-    toolbarLayout->addSpacing(10);
-    toolbarLayout->addWidget(new QLabel(QStringLiteral("频道:")));
-    toolbarLayout->addWidget(d->categoryCombo);
-    toolbarLayout->addStretch();
-    
-    leftLayout->addLayout(toolbarLayout);
-
-    // 新闻列表
-    d->newsList = new QListWidget();
-    d->newsList->setStyleSheet(QString(R"(
-        QListWidget {
-            background-color: %1;
-            border: 1px solid %2;
-            border-radius: 8px;
-            padding: 8px;
-        }
-        QListWidget::item {
-            padding: 12px 8px;
-            border-bottom: 1px solid %2;
-            color: %3;
-        }
-        QListWidget::item:selected {
-            background-color: rgba(59, 130, 246, 0.2);
-            color: %4;
-        }
-        QListWidget::item:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-    )").arg(BgElevated, Border, TextPrimary, Primary));
-    
-    leftLayout->addWidget(d->newsList);
-
-    // 状态栏
-    d->statusLabel = new QLabel(QStringLiteral("正在加载新闻..."));
-    d->statusLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(TextSecondary));
-    leftLayout->addWidget(d->statusLabel);
-
-    leftPanel->setFixedWidth(400);
-    mainLayout->addWidget(leftPanel);
-
-    // 右侧：新闻详情
-    auto* rightPanel = new QWidget();
-    auto* rightLayout = new QVBoxLayout(rightPanel);
-    rightLayout->setContentsMargins(16, 16, 16, 16);
-    rightLayout->setSpacing(12);
-
-    // 标题
-    d->titleLabel = new QLabel(QStringLiteral("选择新闻查看详情"));
-    d->titleLabel->setStyleSheet(QString("font-size: 20px; font-weight: 600; color: %1;").arg(TextPrimary));
-    d->titleLabel->setWordWrap(true);
-    rightLayout->addWidget(d->titleLabel);
-
-    // 元信息
-    auto* metaLayout = new QHBoxLayout();
-    d->sourceLabel = new QLabel();
-    d->sourceLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(TextSecondary));
-    d->timeLabel = new QLabel();
-    d->timeLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(TextSecondary));
-    
-    d->openUrlBtn = new QPushButton(QStringLiteral("查看原文"));
-    d->openUrlBtn->setProperty("ghost", true);
-    d->openUrlBtn->setVisible(false);
-    
-    metaLayout->addWidget(d->sourceLabel);
-    metaLayout->addSpacing(16);
-    metaLayout->addWidget(d->timeLabel);
-    metaLayout->addStretch();
-    metaLayout->addWidget(d->openUrlBtn);
-    rightLayout->addLayout(metaLayout);
-
-    // 分隔线
-    auto* separator = new QFrame();
-    separator->setFrameShape(QFrame::HLine);
-    separator->setStyleSheet(QString("background-color: %1; max-height: 1px;").arg(Border));
-    rightLayout->addWidget(separator);
-
-    // 内容
-    d->contentBrowser = new QTextBrowser();
-    d->contentBrowser->setStyleSheet(QString(R"(
-        QTextBrowser {
-            background-color: transparent;
-            border: none;
-            color: %1;
-            font-size: 14px;
-            line-height: 1.8;
-        }
-    )").arg(TextPrimary));
-    d->contentBrowser->setOpenExternalLinks(true);
-    rightLayout->addWidget(d->contentBrowser, 1);
-
-    mainLayout->addWidget(rightPanel, 1);
-
-    // 连接按钮
-    connect(refreshBtn, &QPushButton::clicked, this, &NewsPage::onRefreshNews);
-    connect(d->openUrlBtn, &QPushButton::clicked, this, [this]() {
-        if (!d->currentNews.url.isEmpty()) {
-            QDesktopServices::openUrl(QUrl(d->currentNews.url));
-        }
-    });
+    // 滚动区域
+    setupScrollArea();
 }
 
-void NewsPage::setupConnections()
+void NewsPage::setupCategoryBar()
 {
-    connect(d->newsList, &QListWidget::itemClicked, 
-            this, &NewsPage::onNewsSelected);
-    connect(d->categoryCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &NewsPage::onFilterChanged);
-}
-
-// ============================================================================
-// 数据处理
-// ============================================================================
-
-void NewsPage::requestNews()
-{
-    if (d->dataSource) {
-        int channelIndex = d->categoryCombo->currentIndex();
-        int channelData = d->categoryCombo->itemData(channelIndex).toInt();
-        auto channel = static_cast<NewsDataSource::Channel>(channelData);
-        d->dataSource->requestNews(channel, 30);
-        d->statusLabel->setText(QStringLiteral("正在加载新闻..."));
+    auto* categoryBar = new QFrame();
+    categoryBar->setStyleSheet(QString(
+        "QFrame { background-color: %1; border-bottom: 1px solid %2; }"
+    ).arg(COLOR_BG_CARD, COLOR_SEPARATOR));
+    categoryBar->setFixedHeight(48);
+    
+    auto* barLayout = new QHBoxLayout(categoryBar);
+    barLayout->setContentsMargins(16, 8, 16, 8);
+    barLayout->setSpacing(8);
+    
+    QStringList categories = {
+        QStringLiteral("全部"),
+        QStringLiteral("新闻"),
+        QStringLiteral("能源"),
+        QStringLiteral("金融")
+    };
+    
+    for (const auto& cat : categories) {
+        auto* btn = new QPushButton(cat);
+        btn->setCheckable(true);
+        btn->setChecked(cat == d->currentCategory);
+        btn->setFixedHeight(32);
+        btn->setCursor(Qt::PointingHandCursor);
+        
+        QString activeStyle = QString(R"(
+            QPushButton {
+                background-color: %1;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 4px 16px;
+                font-size: 13px;
+            }
+        )").arg(COLOR_CATEGORY_ACTIVE);
+        
+        QString normalStyle = QString(R"(
+            QPushButton {
+                background-color: transparent;
+                color: %1;
+                border: 1px solid %2;
+                border-radius: 4px;
+                padding: 4px 16px;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: %3;
+                border-color: %4;
+            }
+        )").arg(COLOR_TEXT_META, COLOR_SEPARATOR, COLOR_HOVER_BG, COLOR_CATEGORY_ACTIVE);
+        
+        btn->setStyleSheet(btn->isChecked() ? activeStyle : normalStyle);
+        
+        connect(btn, &QPushButton::clicked, this, [this, btn, cat, activeStyle, normalStyle]() {
+            // 更新按钮样式
+            auto* bar = qobject_cast<QFrame*>(btn->parent());
+            if (bar) {
+                for (auto* child : bar->findChildren<QPushButton*>()) {
+                    bool isActive = child == btn;
+                    child->setChecked(isActive);
+                    child->setStyleSheet(isActive ? activeStyle : normalStyle);
+                }
+            }
+            
+            onCategoryClicked(cat);
+        });
+        
+        barLayout->addWidget(btn);
     }
+    
+    barLayout->addStretch();
+    
+    // 添加到主布局
+    auto* mainLayout = qobject_cast<QVBoxLayout*>(QWidget::layout());
+    if (mainLayout) {
+        mainLayout->insertWidget(0, categoryBar);
+    }
+}
+
+void NewsPage::setupScrollArea()
+{
+    d->scrollArea = new QScrollArea();
+    d->scrollArea->setWidgetResizable(true);
+    d->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    d->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    d->scrollArea->setStyleSheet(QString(
+        "QScrollArea { background-color: %1; border: none; }"
+        "QScrollBar:vertical { width: 8px; background-color: transparent; }"
+        "QScrollBar::handle:vertical { background-color: #3d3d5c; border-radius: 4px; min-height: 40px; }"
+        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }"
+    ).arg(COLOR_BG_GLOBAL));
+    
+    d->scrollContent = new QWidget();
+    d->scrollContent->setStyleSheet(QString("QWidget { background-color: %1; }").arg(COLOR_BG_GLOBAL));
+    
+    d->cardsLayout = new QVBoxLayout(d->scrollContent);
+    d->cardsLayout->setContentsMargins(16, 16, 16, 16);
+    d->cardsLayout->setSpacing(12);
+    d->cardsLayout->addStretch();
+    
+    d->scrollArea->setWidget(d->scrollContent);
+    
+    // 添加到主布局
+    auto* mainLayout = qobject_cast<QVBoxLayout*>(QWidget::layout());
+    if (mainLayout) {
+        mainLayout->addWidget(d->scrollArea);
+    }
+}
+
+void NewsPage::loadDemoData()
+{
+    QDateTime now = QDateTime::currentDateTime();
+    
+    d->allNews = {
+        {
+            QStringLiteral("n1"),
+            QStringLiteral("伊朗外交部：将采取一切必要措施回应以色列袭击"),
+            QStringLiteral("伊朗外交部发言人表示，伊朗将采取一切必要措施回应以色列对伊朗驻叙利亚领事馆的袭击。伊朗外交部发言人卡纳尼在新闻发布会上表示，伊朗保留采取对等回应的权利，并呼吁国际社会谴责以色列的侵略行为。"),
+            QStringLiteral("新华社"),
+            QStringLiteral("新闻"),
+            now.addSecs(-7200),
+            {},
+            QStringLiteral("伊朗外交部发言人卡纳尼在新闻发布会上表示，伊朗保留采取对等回应的权利，并呼吁国际社会谴责以色列的侵略行为。伊朗将采取一切必要措施回应以色列对伊朗驻叙利亚领事馆的袭击。")
+        },
+        {
+            QStringLiteral("n2"),
+            QStringLiteral("俄罗斯天然气工业股份公司：2024年对华天然气出口增长20.09%"),
+            QStringLiteral("俄罗斯天然气工业股份公司（Gazprom）发布声明称，2024年对华天然气出口量达到1.93亿立方米，同比增长20.09%。公司表示，将继续扩大与中国在能源领域的合作，预计2025年出口量将进一步增长。"),
+            QStringLiteral("路透社"),
+            QStringLiteral("能源"),
+            now.addSecs(-14400),
+            {QStringLiteral("20.09%"), QStringLiteral("1.93亿立方米")},
+            QStringLiteral("俄罗斯天然气工业股份公司（Gazprom）发布声明称，2024年对华天然气出口量达到1.93亿立方米，同比增长20.09%。公司表示，将继续扩大与中国在能源领域的合作，预计2025年出口量将进一步增长。双方正在讨论新的天然气管道项目。")
+        },
+        {
+            QStringLiteral("n3"),
+            QStringLiteral("金力永磁：一季度净利润同比增长35.2%，新能源汽车业务表现亮眼"),
+            QStringLiteral("金力永磁(300748)发布2026年一季报，公司实现营业收入15.68亿元，同比增长28.3%；净利润2.15亿元，同比增长35.2%。新能源汽车领域收入占比提升至45%，成为公司最大收入来源。"),
+            QStringLiteral("证券时报"),
+            QStringLiteral("金融"),
+            now.addSecs(-28800),
+            {QStringLiteral("35.2%"), QStringLiteral("15.68亿元"), QStringLiteral("2.15亿元"), QStringLiteral("28.3%"), QStringLiteral("45%")},
+            QStringLiteral("金力永磁(300748)发布2026年一季报，公司实现营业收入15.68亿元，同比增长28.3%；净利润2.15亿元，同比增长35.2%。新能源汽车领域收入占比提升至45%，成为公司最大收入来源。公司表示，将继续加大在新能源汽车、风电等领域的研发投入。")
+        },
+        {
+            QStringLiteral("n4"),
+            QStringLiteral("中际旭创：2025年度权益分派实施公告，每10股派发现金红利8.5元"),
+            QStringLiteral("中际旭创(300308)发布2025年度权益分派实施公告，公司2025年度权益分派方案为：以公司现有总股本8.02亿股为基数，向全体股东每10股派发现金红利8.5元（含税），合计派发现金红利6.82亿元。股权登记日为2026年4月25日，除权除息日为2026年4月26日。"),
+            QStringLiteral("深交所"),
+            QStringLiteral("金融"),
+            now.addSecs(-43200),
+            {QStringLiteral("8.5元"), QStringLiteral("8.02亿股"), QStringLiteral("6.82亿元")},
+            QStringLiteral("中际旭创(300308)发布2025年度权益分派实施公告，公司2025年度权益分派方案为：以公司现有总股本8.02亿股为基数，向全体股东每10股派发现金红利8.5元（含税），合计派发现金红利6.82亿元。股权登记日为2026年4月25日，除权除息日为2026年4月26日。本次权益分派对象为截至2026年4月25日下午深圳证券交易所收市后，在中国证券登记结算有限责任公司深圳分公司登记在册的公司全体股东。")
+        }
+    };
+    
+    updateCards();
+}
+
+void NewsPage::updateCards(const QString& filter)
+{
+    // 清除现有卡片
+    for (auto* card : d->cards) {
+        d->cardsLayout->removeWidget(card);
+        card->deleteLater();
+    }
+    d->cards.clear();
+    
+    // 添加新卡片
+    int index = 0;
+    for (const auto& news : d->allNews) {
+        // 应用分类过滤
+        if (!filter.isEmpty() && filter != QStringLiteral("全部")) {
+            if (news.category != filter) {
+                continue;
+            }
+        }
+        
+        auto* card = new NewsCardWidget(news);
+        connect(card, &NewsCardWidget::clicked, this, &NewsPage::onCardClicked);
+        connect(card, &NewsCardWidget::detailRequested, this, &NewsPage::onDetailRequested);
+        
+        // 插入到 stretch 之前
+        d->cardsLayout->insertWidget(d->cardsLayout->count() - 1, card);
+        d->cards.append(card);
+        
+        ++index;
+    }
+    
+    // 设置最后一张卡片不显示分隔线
+    if (!d->cards.isEmpty()) {
+        d->cards.last()->setLastCard(true);
+    }
+}
+
+void NewsPage::onCategoryClicked(const QString& category)
+{
+    d->currentCategory = category;
+    updateCards(category);
+}
+
+void NewsPage::onCardClicked()
+{
+    auto* card = qobject_cast<NewsCardWidget*>(sender());
+    if (card) {
+        // 可以在这里添加点击效果
+    }
+}
+
+void NewsPage::onDetailRequested(const NewsCardData& data)
+{
+    showDetailDialog(data);
 }
 
 void NewsPage::onNewsReceived(const QVector<NewsItem>& news)
 {
-    d->allNews = news;
-    updateNewsList();
+    d->allNews.clear();
     
-    d->statusLabel->setText(QString(QStringLiteral("华尔街见闻 · %1 条新闻 · %2"))
-        .arg(news.size())
-        .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
+    for (const auto& item : news) {
+        NewsCardData data;
+        data.id = item.id;
+        data.title = item.title;
+        data.summary = item.content.left(200);
+        data.fullContent = item.content;
+        data.source = item.source;
+        data.publishTime = item.publishTime;
+        d->allNews.append(data);
+    }
+    
+    updateCards(d->currentCategory);
 }
 
-void NewsPage::updateNewsList(const QString& category)
+void NewsPage::showDetailDialog(const NewsCardData& data)
 {
-    Q_UNUSED(category);
-    d->newsList->clear();
-    
-    for (const auto& news : d->allNews) {
-        auto* item = new QListWidgetItem();
-        
-        // 显示格式：标题
-        QString displayText = news.title;
-        if (!news.author.isEmpty()) {
-            displayText = QString("%1 [%2]").arg(news.title, news.author);
+    auto* dialog = new QDialog(this);
+    dialog->setWindowTitle(QStringLiteral("新闻详情"));
+    dialog->setMinimumSize(500, 400);
+    dialog->setStyleSheet(QString(R"(
+        QDialog {
+            background-color: %1;
         }
-        
-        item->setText(displayText);
-        item->setData(Qt::UserRole, news.id);
-        item->setToolTip(QString("%1\n来源: %2\n时间: %3")
-            .arg(news.title, news.source, news.publishTime.toString("yyyy-MM-dd HH:mm")));
-        
-        d->newsList->addItem(item);
-    }
-}
-
-void NewsPage::displayNewsDetail(const NewsItem& news)
-{
-    d->titleLabel->setText(news.title);
-    d->sourceLabel->setText(QString(QStringLiteral("来源: %1")).arg(news.source));
-    d->timeLabel->setText(news.publishTime.toString("yyyy-MM-dd HH:mm"));
-    
-    QString content = news.content;
-    
-    // 添加作者信息
-    if (!news.author.isEmpty()) {
-        content = QString(QStringLiteral("作者: %1\n\n%2")).arg(news.author, content);
-    }
-    
-    d->contentBrowser->setText(content);
-    
-    // 显示原文链接按钮
-    d->openUrlBtn->setVisible(!news.url.isEmpty());
-}
-
-// ============================================================================
-// 槽函数
-// ============================================================================
-
-void NewsPage::onNewsSelected(QListWidgetItem* item)
-{
-    QString newsId = item->data(Qt::UserRole).toString();
-    
-    for (const auto& news : d->allNews) {
-        if (news.id == newsId) {
-            d->currentNews = news;
-            displayNewsDetail(news);
-            break;
+        QLabel {
+            color: %2;
         }
-    }
-}
-
-void NewsPage::onFilterChanged(int index)
-{
-    Q_UNUSED(index);
-    requestNews();
-}
-
-void NewsPage::onRefreshNews()
-{
-    requestNews();
-    LOG_INFO("News refreshed");
-}
-
-void NewsPage::onAutoRefresh()
-{
-    requestNews();
-    LOG_DEBUG("News auto-refreshed");
+    )").arg(COLOR_BG_CARD, COLOR_TEXT_TITLE));
+    
+    auto* layout = new QVBoxLayout(dialog);
+    layout->setContentsMargins(20, 20, 20, 20);
+    layout->setSpacing(16);
+    
+    // 标题
+    auto* titleLabel = new QLabel(data.title);
+    titleLabel->setStyleSheet(QString(
+        "QLabel { font-size: 16px; font-weight: bold; color: %1; }"
+    ).arg(COLOR_TEXT_TITLE));
+    titleLabel->setWordWrap(true);
+    layout->addWidget(titleLabel);
+    
+    // 元数据
+    QString metaText = QString("%1 · %2 · %3")
+        .arg(data.source, data.category, data.publishTime.toString("yyyy-MM-dd HH:mm"));
+    auto* metaLabel = new QLabel(metaText);
+    metaLabel->setStyleSheet(QString(
+        "QLabel { font-size: 12px; color: %1; }"
+    ).arg(COLOR_TEXT_META));
+    layout->addWidget(metaLabel);
+    
+    // 内容
+    auto* contentBrowser = new QTextBrowser();
+    contentBrowser->setStyleSheet(QString(R"(
+        QTextBrowser {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 4px;
+            padding: 12px;
+            font-size: 13px;
+            color: %3;
+        }
+    )").arg(COLOR_BG_GLOBAL, COLOR_SEPARATOR, COLOR_TEXT_SUMMARY));
+    contentBrowser->setPlainText(data.fullContent.isEmpty() ? data.summary : data.fullContent);
+    contentBrowser->setOpenExternalLinks(true);
+    layout->addWidget(contentBrowser);
+    
+    // 按钮
+    auto* buttonBox = new QDialogButtonBox(QDialogButtonBox::Close);
+    buttonBox->setStyleSheet(QString(
+        "QPushButton { padding: 8px 24px; border-radius: 4px; background-color: %1; color: white; border: none; }"
+        "QPushButton:hover { background-color: %2; }"
+    ).arg(COLOR_CATEGORY_ACTIVE, "#2563EB"));
+    connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::close);
+    layout->addWidget(buttonBox);
+    
+    dialog->exec();
+    dialog->deleteLater();
 }

@@ -256,6 +256,12 @@ public:
     // 公共接口
     void refreshData();
 
+signals:
+    /**
+     * @brief 导航到股票K线页面信号
+     */
+    void navigateToStockKLine(const QString& symbol, const QString& name);
+
 protected:
     void resizeEvent(QResizeEvent* event) override;
     void showEvent(QShowEvent* event) override;

@@ -17,6 +17,7 @@
 #include "ui/components/KLineChart.h"
 #include "core/types/MarketTypes.h"
 #include "core/config/Tokens.h"
+#include "market/StockDataSource.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -81,6 +82,9 @@ struct StockKLinePage::Impl {
     double low = 0.0;
     qint64 volume = 0;
     double turnover = 0.0;
+    
+    // 数据源
+    StockDataSource* dataSource = nullptr;
 };
 
 // ============================================================================
@@ -222,6 +226,21 @@ void StockKLinePage::initUI()
     // 定时器
     d->refreshTimer = new QTimer(this);
     d->refreshTimer->setInterval(3000);
+    
+    // 初始化数据源
+    d->dataSource = new StockDataSource(StockDataSource::Source::Sina, this);
+    connect(d->dataSource, &StockDataSource::kLineReceived,
+            this, [this](const QString& symbol, const QVector<KLineData>& data) {
+                if (symbol.contains(d->stockCode)) {
+                    d->klineData = data;
+                    if (d->klineChart) {
+                        d->klineChart->setData(d->klineData);
+                        d->klineChart->showLatest(100);
+                    }
+                    calculateIndicators();
+                    LOG_DEBUG(QString("KLine data received: %1, count: %2").arg(symbol).arg(data.size()));
+                }
+            });
 }
 
 void StockKLinePage::initToolBar()
@@ -535,48 +554,30 @@ void StockKLinePage::loadKLineData()
         return;
     }
     
-    // TODO: 调用数据服务加载K线数据
-    // 这里使用模拟数据进行测试
-    
-    d->klineData.clear();
-    
-    // 生成模拟数据
-    QDateTime now = QDateTime::currentDateTime();
-    double basePrice = 10.0 + QRandomGenerator::global()->bounded(100);
-    
-    for (int i = 0; i < 200; ++i) {
-        KLineData kline;
-        kline.time = now.addDays(-200 + i);
+    // 使用数据源请求K线数据
+    if (d->dataSource) {
+        // 根据周期转换
+        KLinePeriod klinePeriod = KLinePeriod::Day1;
+        switch (d->period) {
+        case StockKLinePeriod::Min1: klinePeriod = KLinePeriod::Minute1; break;
+        case StockKLinePeriod::Min5: klinePeriod = KLinePeriod::Minute5; break;
+        case StockKLinePeriod::Min15: klinePeriod = KLinePeriod::Minute15; break;
+        case StockKLinePeriod::Min30: klinePeriod = KLinePeriod::Minute30; break;
+        case StockKLinePeriod::Min60: klinePeriod = KLinePeriod::Hour1; break;
+        case StockKLinePeriod::Day: klinePeriod = KLinePeriod::Day1; break;
+        case StockKLinePeriod::Week: klinePeriod = KLinePeriod::Week1; break;
+        case StockKLinePeriod::Month: klinePeriod = KLinePeriod::Month1; break;
+        }
         
-        // 模拟价格波动
-        double change = (QRandomGenerator::global()->bounded(100) - 50) / 1000.0;  // -5% ~ +5%
-        double open = basePrice * (1 + change);
-        double close = open * (1 + (QRandomGenerator::global()->bounded(100) - 50) / 1000.0);
-        double high = qMax(open, close) * (1 + QRandomGenerator::global()->bounded(50) / 1000.0);
-        double low = qMin(open, close) * (1 - QRandomGenerator::global()->bounded(50) / 1000.0);
+        // 构建完整代码
+        QString fullSymbol = d->exchange == "SH" ? "sh" + d->stockCode : "sz" + d->stockCode;
         
-        kline.open = open;
-        kline.close = close;
-        kline.high = high;
-        kline.low = low;
-        kline.volume = 1000000 + QRandomGenerator::global()->bounded(5000000);
-        kline.turnover = kline.volume * (open + close) / 2;
+        // 请求数据
+        d->dataSource->requestKLine(fullSymbol, klinePeriod, 200);
         
-        d->klineData.append(kline);
-        basePrice = close;
+        LOG_DEBUG(QString("Requesting KLine data for: %1, period: %2")
+            .arg(fullSymbol).arg(static_cast<int>(klinePeriod)));
     }
-    
-    // 更新图表
-    if (d->klineChart) {
-        d->klineChart->setData(d->klineData);
-        d->klineChart->showLatest(100);
-    }
-    
-    // 计算技术指标
-    calculateIndicators();
-    
-    LOG_DEBUG(QString("KLine data loaded: %1, count: %2")
-        .arg(d->stockCode).arg(d->klineData.size()));
 }
 
 void StockKLinePage::loadStockInfo()

@@ -1917,7 +1917,22 @@ void DashboardPage::onMoneyFlowPeriodChanged(int index)
 void DashboardPage::onRowDoubleClicked(const QModelIndex& index)
 {
     if (!index.isValid()) return;
-    LOG_INFO(QString("Row double clicked: %1").arg(index.row()));
+    
+    // 获取发送信号的表格
+    QTableView* senderTable = qobject_cast<QTableView*>(sender());
+    if (!senderTable) return;
+    
+    // 获取模型
+    QAbstractItemModel* model = senderTable->model();
+    
+    // 获取代码和名称列的数据
+    QString code = model->data(model->index(index.row(), StockRankModel::ColCode)).toString();
+    QString name = model->data(model->index(index.row(), StockRankModel::ColName)).toString();
+    
+    LOG_INFO(QString("Dashboard row double clicked: %1 (%2)").arg(code, name));
+    
+    // 发送导航信号
+    emit navigateToStockKLine(code, name);
 }
 
 /**

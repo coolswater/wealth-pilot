@@ -84,6 +84,11 @@ private slots:
      */
     void onNavigateToKLinePage(const QString& instrumentId, const QVariantMap& params);
 
+    /**
+     * @brief 导航到股票K线页面
+     */
+    void onNavigateToStockKLinePage(const QString& symbol, const QString& name);
+
 private:
     /**
      * @brief 构建UI布局

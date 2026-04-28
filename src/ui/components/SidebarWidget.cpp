@@ -109,6 +109,15 @@ QString SidebarWidget::currentItem() const
     return d->currentId;
 }
 
+void SidebarWidget::clearSelection()
+{
+    // 取消当前选中
+    if (!d->currentId.isEmpty() && d->items.contains(d->currentId)) {
+        d->items[d->currentId]->setChecked(false);
+    }
+    d->currentId.clear();
+}
+
 void SidebarWidget::setCollapsed(bool collapsed)
 {
     if (d->collapsed == collapsed) return;

@@ -33,6 +33,9 @@ public:
     // 设置当前选中项
     void setCurrentItem(const QString& id) const;
     QString currentItem() const;
+    
+    // 清除选中状态
+    void clearSelection();
 
     // 折叠/展开
     void setCollapsed(bool collapsed);

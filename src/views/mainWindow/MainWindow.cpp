@@ -19,6 +19,7 @@
 #include "ui/components/AIAssistantPanelWidget.h"
 #include "../dashboard/DashboardPage.h"
 #include "../stock/StockQuotesPage.h"
+#include "../stock/StockKLinePage.h"
 #include "../futures/FuturesQuotesPage.h"
 #include "../futures/FuturesKLinePage.h"
 #include "../../core/base/BasePage.h"
@@ -278,6 +279,33 @@ void MainWindow::onNavigateToKLinePage(const QString& instrumentId, const QVaria
     }
 }
 
+void MainWindow::onNavigateToStockKLinePage(const QString& symbol, const QString& name)
+{
+    LOG_INFO(QString("Navigating to Stock KLine page for: %1 (%2)").arg(symbol, name));
+
+    // Get or create Stock KLine page
+    QWidget* klinePage = getPage("StockKLine");
+    if (klinePage)
+    {
+        // Set stock
+        auto* kline = qobject_cast<StockKLinePage*>(klinePage);
+        if (kline)
+        {
+            // 确定交易所
+            QString exchange = symbol.startsWith("6") ? "SH" : "SZ";
+            
+            // 设置股票
+            kline->setStock(symbol, exchange);
+        }
+        // Switch to KLine page
+        d->contentStack->setCurrentWidget(klinePage);
+        d->currentPageId = "StockKLine";
+        
+        // 更新侧边栏选中状态（取消选中，因为K线页面不在侧边栏）
+        d->sidebar->clearSelection();
+    }
+}
+
 void MainWindow::setupUI()
 {
     // 创建中心控件
@@ -445,11 +473,19 @@ QWidget* MainWindow::getPage(const QString& pageId)
     QWidget* page = nullptr;
     if (pageId == "dashboard")
     {
-        page = new DashboardPage(this);
+        auto* dashboardPage = new DashboardPage(this);
+        page = dashboardPage;
+        // 连接Dashboard的K线导航信号
+        connect(dashboardPage, &DashboardPage::navigateToStockKLine,
+                this, &MainWindow::onNavigateToStockKLinePage);
     }
     else if (pageId == "stock")
     {
-        page = new StockQuotesPage(this);
+        auto* quotesPage = new StockQuotesPage(this);
+        page = quotesPage;
+        // 链接K线页面信号
+        connect(quotesPage, &StockQuotesPage::navigateToKLinePage,
+                this, &MainWindow::onNavigateToStockKLinePage);
     }
     else if (pageId == "futures")
     {
@@ -486,6 +522,10 @@ QWidget* MainWindow::getPage(const QString& pageId)
     else if (pageId == "FuturesKLine")
     {
         page = new FuturesKLinePage(this);
+    }
+    else if (pageId == "StockKLine")
+    {
+        page = new StockKLinePage(this);
     }
     else if (pageId == "account")
     {

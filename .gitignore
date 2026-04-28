@@ -90,3 +90,5 @@ CMakeLists.txt.user*
 *.log
 *.bak
 *.tmp
+/datastorage/WealthPilot.db-shm
+/datastorage/WealthPilot.db-wal
