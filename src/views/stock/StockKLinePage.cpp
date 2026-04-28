@@ -260,10 +260,10 @@ void StockKLinePage::initUI()
 
 void StockKLinePage::initToolBar()
 {
-    // 工具栏 - 雪球风格（周期按钮组）
+    // 工具栏 - 设计建议风格
     auto* toolbar = new QWidget(this);
     toolbar->setFixedHeight(40);
-    toolbar->setStyleSheet("QWidget { background: #161b22; }");
+    toolbar->setStyleSheet("QWidget { background: #0a0a0a; }");
     
     auto* layout = new QHBoxLayout(toolbar);
     layout->setContentsMargins(12, 6, 12, 6);
@@ -415,7 +415,7 @@ void StockKLinePage::initMainArea()
 {
     // 主容器
     auto* container = new QWidget(this);
-    container->setStyleSheet("QWidget { background: #0d1117; }");
+    container->setStyleSheet("QWidget { background: #0a0a0a; }");
     
     auto* containerLayout = new QHBoxLayout(container);
     containerLayout->setContentsMargins(0, 0, 0, 0);
@@ -431,10 +431,10 @@ void StockKLinePage::initMainArea()
     d->klineChart = new KLineChart(chartContainer);
     d->klineChart->setMinimumHeight(350);
     
-    // 设置K线样式（中国习惯：红涨绿跌）
+    // 设置K线样式（设计建议：青绿涨、玫红跌）
     KLineStyle style;
-    style.upColor = QColor("#ff4d4f");      // 红色上涨
-    style.downColor = QColor("#00b578");    // 绿色下跌
+    style.upColor = QColor("#00D4AA");      // 青绿色上涨
+    style.downColor = QColor("#FF3366");    // 玫红色下跌
     style.flatColor = QColor("#888888");    // 灰色平盘
     style.candleWidth = 8;
     style.candleSpacing = 2;
@@ -557,7 +557,7 @@ void StockKLinePage::initMainArea()
     // 右侧：信息面板
     auto* rightPanel = new QWidget();
     rightPanel->setFixedWidth(240);
-    rightPanel->setStyleSheet("QWidget { background: #161b22; border-left: 1px solid #2d3748; }");
+    rightPanel->setStyleSheet("QWidget { background: #0a0a0a; border-left: 1px solid #2a2a2a; }");
     
     auto* rightLayout = new QVBoxLayout(rightPanel);
     rightLayout->setContentsMargins(0, 0, 0, 0);
@@ -565,7 +565,7 @@ void StockKLinePage::initMainArea()
     
     // ========== 顶部信息区域 ==========
     auto* topInfoWidget = new QWidget();
-    topInfoWidget->setStyleSheet("QWidget { background: #1a1f2e; }");
+    topInfoWidget->setStyleSheet("QWidget { background: #0d0d0d; }");
     auto* topInfoLayout = new QVBoxLayout(topInfoWidget);
     topInfoLayout->setContentsMargins(8, 8, 8, 8);
     topInfoLayout->setSpacing(4);
