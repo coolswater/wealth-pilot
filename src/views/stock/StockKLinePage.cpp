@@ -269,6 +269,34 @@ void StockKLinePage::initToolBar()
     layout->setContentsMargins(12, 6, 12, 6);
     layout->setSpacing(4);
     
+    // 搜索框
+    m_searchEdit = new QLineEdit();
+    m_searchEdit->setPlaceholderText(QStringLiteral("搜索股票代码/名称"));
+    m_searchEdit->setFixedWidth(140);
+    m_searchEdit->setFixedHeight(26);
+    m_searchEdit->setStyleSheet(R"(
+        QLineEdit {
+            background: #2d3748;
+            color: #ffffff;
+            border: none;
+            padding: 0 10px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        QLineEdit::placeholder {
+            color: #6b7280;
+        }
+    )");
+    connect(m_searchEdit, &QLineEdit::textChanged, this, &StockKLinePage::onSearchTextChanged);
+    layout->addWidget(m_searchEdit);
+    
+    // 分隔线
+    auto* divider0 = new QFrame();
+    divider0->setFrameShape(QFrame::VLine);
+    divider0->setStyleSheet("QFrame { background: #2d3748; max-width: 1px; }");
+    divider0->setFixedWidth(1);
+    layout->addWidget(divider0);
+    
     // 周期按钮组（分时、日K、五日、周K、月K、季K、年K）
     auto* periodGroup = new QWidget();
     periodGroup->setStyleSheet("QWidget { background: transparent; }");
@@ -1076,6 +1104,148 @@ void StockKLinePage::onShowGroupDialog()
     
     dialog->exec();
     dialog->deleteLater();
+}
+
+void StockKLinePage::onSearchTextChanged(const QString& text)
+{
+    // 如果搜索框为空，隐藏弹窗
+    if (text.isEmpty()) {
+        if (m_searchPopupWidget) {
+            m_searchPopupWidget->hide();
+        }
+        return;
+    }
+    
+    // 创建搜索结果弹窗
+    if (!m_searchPopupWidget) {
+        m_searchPopupWidget = new QWidget(this);
+        m_searchPopupWidget->setWindowFlags(Qt::Popup | Qt::FramelessWindowHint);
+        m_searchPopupWidget->setStyleSheet("QWidget { background: #1a1f2e; border: 1px solid #2d3748; }");
+        
+        auto* popupLayout = new QVBoxLayout(m_searchPopupWidget);
+        popupLayout->setContentsMargins(0, 0, 0, 0);
+        popupLayout->setSpacing(0);
+        
+        m_searchResultPopup = new QTableWidget(m_searchPopupWidget);
+        m_searchResultPopup->setColumnCount(3);
+        m_searchResultPopup->setHorizontalHeaderLabels({QStringLiteral("代码"), QStringLiteral("名称"), QStringLiteral("板块")});
+        m_searchResultPopup->horizontalHeader()->setStretchLastSection(true);
+        m_searchResultPopup->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        m_searchResultPopup->setSelectionBehavior(QAbstractItemView::SelectRows);
+        m_searchResultPopup->setSelectionMode(QAbstractItemView::SingleSelection);
+        m_searchResultPopup->verticalHeader()->setVisible(false);
+        m_searchResultPopup->setShowGrid(false);
+        m_searchResultPopup->setStyleSheet(R"(
+            QTableWidget {
+                background: #1a1f2e;
+                color: #ffffff;
+                border: none;
+                font-size: 12px;
+            }
+            QTableWidget::item {
+                padding: 6px 8px;
+            }
+            QTableWidget::item:selected {
+                background: #3b82f6;
+            }
+            QHeaderView::section {
+                background: #2d3748;
+                color: #6b7280;
+                border: none;
+                padding: 6px;
+                font-size: 11px;
+            }
+        )");
+        m_searchResultPopup->setMinimumWidth(300);
+        m_searchResultPopup->setMinimumHeight(200);
+        
+        connect(m_searchResultPopup, &QTableWidget::cellClicked, this, &StockKLinePage::onSearchResultClicked);
+        
+        popupLayout->addWidget(m_searchResultPopup);
+    }
+    
+    // 模糊匹配股票（模拟数据）
+    QVector<QVector<QString>> results;
+    
+    // 模拟股票数据库
+    static const QVector<QVector<QString>> stockDatabase = {
+        {"300085", QStringLiteral("银之杰"), QStringLiteral("软件服务")},
+        {"300059", QStringLiteral("东方财富"), QStringLiteral("互联网金融")},
+        {"000001", QStringLiteral("平安银行"), QStringLiteral("银行")},
+        {"000002", QStringLiteral("万科A"), QStringLiteral("房地产")},
+        {"600000", QStringLiteral("浦发银行"), QStringLiteral("银行")},
+        {"600036", QStringLiteral("招商银行"), QStringLiteral("银行")},
+        {"600519", QStringLiteral("贵州茅台"), QStringLiteral("白酒")},
+        {"000858", QStringLiteral("五粮液"), QStringLiteral("白酒")},
+        {"002415", QStringLiteral("海康威视"), QStringLiteral("安防")},
+        {"300750", QStringLiteral("宁德时代"), QStringLiteral("新能源")},
+        {"601318", QStringLiteral("中国平安"), QStringLiteral("保险")},
+        {"000333", QStringLiteral("美的集团"), QStringLiteral("家电")},
+        {"002594", QStringLiteral("比亚迪"), QStringLiteral("新能源汽车")},
+        {"600900", QStringLiteral("长江电力"), QStringLiteral("电力")},
+        {"601012", QStringLiteral("隆基绿能"), QStringLiteral("光伏")},
+    };
+    
+    // 模糊匹配
+    for (const auto& stock : stockDatabase) {
+        if (stock[0].contains(text, Qt::CaseInsensitive) || 
+            stock[1].contains(text, Qt::CaseInsensitive)) {
+            results.append(stock);
+        }
+    }
+    
+    // 更新搜索结果表格
+    m_searchResultPopup->setRowCount(results.size());
+    for (int i = 0; i < results.size(); ++i) {
+        for (int j = 0; j < 3; ++j) {
+            auto* item = new QTableWidgetItem(results[i][j]);
+            if (j == 0) {
+                item->setForeground(QColor("#3b82f6"));  // 代码蓝色
+            }
+            m_searchResultPopup->setItem(i, j, item);
+        }
+    }
+    
+    // 显示弹窗在搜索框下方
+    if (results.size() > 0) {
+        QPoint pos = m_searchEdit->mapToGlobal(QPoint(0, m_searchEdit->height()));
+        m_searchPopupWidget->move(pos);
+        m_searchPopupWidget->show();
+        m_searchPopupWidget->setFocus();
+    } else {
+        m_searchPopupWidget->hide();
+    }
+}
+
+void StockKLinePage::onSearchResultClicked(int row, int column)
+{
+    if (!m_searchResultPopup || row < 0) return;
+    
+    // 获取选中的股票代码和名称
+    QString code = m_searchResultPopup->item(row, 0)->text();
+    QString name = m_searchResultPopup->item(row, 1)->text();
+    
+    // 确定交易所
+    QString exchange;
+    if (code.startsWith("6")) {
+        exchange = "SH";
+    } else if (code.startsWith("0") || code.startsWith("3")) {
+        exchange = "SZ";
+    } else {
+        exchange = "SZ";
+    }
+    
+    // 设置股票并加载K线数据
+    setStock(code, exchange);
+    d->stockName = name;
+    updateStockInfo();
+    loadKLineData();
+    
+    // 清空搜索框并隐藏弹窗
+    m_searchEdit->clear();
+    m_searchPopupWidget->hide();
+    
+    LOG_INFO(QString("Selected stock: %1 (%2)").arg(name, code));
 }
 
 void StockKLinePage::onRefresh()

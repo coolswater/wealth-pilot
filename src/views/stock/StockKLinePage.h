@@ -28,6 +28,8 @@
 class QComboBox;
 class QPushButton;
 class QLabel;
+class QLineEdit;
+class QTableWidget;
 class QTabWidget;
 class QSplitter;
 class QTableWidget;
@@ -163,6 +165,10 @@ private slots:
     void onShowMoreMenu();
     void onShowReminderDialog();
     void onShowGroupDialog();
+    
+    // 搜索功能
+    void onSearchTextChanged(const QString& text);
+    void onSearchResultClicked(int row, int column);
 
     /**
      * @brief 刷新数据
@@ -300,6 +306,11 @@ private:
     
     // 状态
     bool m_isInWatchlist = false;                    // 是否已添加自选
+    
+    // 搜索相关
+    QLineEdit* m_searchEdit = nullptr;               // 搜索框
+    QTableWidget* m_searchResultPopup = nullptr;     // 搜索结果弹窗
+    QWidget* m_searchPopupWidget = nullptr;          // 弹窗容器
 };
 
 #endif // STOCKKLINEPAGE_H
