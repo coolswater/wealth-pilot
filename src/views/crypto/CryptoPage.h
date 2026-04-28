@@ -54,8 +54,8 @@ public:
     QString pageId() const override { return QStringLiteral("Crypto"); }
     QString pageName() const override { return QStringLiteral("数字货币"); }
 
-    void initialize() override;
-    void refresh() override;
+    void initializePage() override;
+    void refresh();
 
 signals:
     void cryptoSelected(const QString& symbol, double price);

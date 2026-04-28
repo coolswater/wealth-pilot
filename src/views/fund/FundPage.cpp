@@ -24,6 +24,7 @@
 #include <QSplitter>
 #include <QGroupBox>
 #include <QProgressBar>
+#include <QRandomGenerator>
 
 // ========== PIMPL实现 ==========
 
@@ -71,7 +72,7 @@ FundPage::~FundPage() = default;
 
 // ========== 初始化 ==========
 
-void FundPage::initialize()
+void FundPage::initializePage()
 {
     loadFundList();
 }
@@ -397,19 +398,50 @@ void FundPage::loadFundList()
     d->fundCache.clear();
     
     // ETF基金
-    d->fundCache.append({{"510300", QStringLiteral("沪深300ETF"), FundType::ETF, 4.123, 4.123, 4.125, 0.15, 0.006, 12500, 51500, "张三", "华泰柏瑞", 450.5}});
-    d->fundCache.append({{"510500", QStringLiteral("中证500ETF"), FundType::ETF, 6.234, 6.234, 6.228, -0.12, -0.007, 8500, 53000, "李四", "华夏基金", 380.2}});
-    d->fundCache.append({{"159915", QStringLiteral("创业板ETF"), FundType::ETF, 2.156, 2.156, 2.160, 0.25, 0.005, 6200, 13400, "王五", "易方达", 120.8}});
+    FundQuote fund1;
+    fund1.code = "510300"; fund1.name = QStringLiteral("沪深300ETF"); fund1.type = FundType::ETF;
+    fund1.nav = 4.123; fund1.accNav = 4.123; fund1.lastPrice = 4.125; fund1.changeAmount = 0.15; fund1.changePercent = 0.006;
+    fund1.volume = 12500; fund1.turnover = 51500; fund1.manager = "张三"; fund1.company = "华泰柏瑞"; fund1.scale = 450.5;
+    d->fundCache.append(fund1);
+    
+    FundQuote fund2;
+    fund2.code = "510500"; fund2.name = QStringLiteral("中证500ETF"); fund2.type = FundType::ETF;
+    fund2.nav = 6.234; fund2.accNav = 6.234; fund2.lastPrice = 6.228; fund2.changeAmount = -0.12; fund2.changePercent = -0.007;
+    fund2.volume = 8500; fund2.turnover = 53000; fund2.manager = "李四"; fund2.company = "华夏基金"; fund2.scale = 380.2;
+    d->fundCache.append(fund2);
+    
+    FundQuote fund3;
+    fund3.code = "159915"; fund3.name = QStringLiteral("创业板ETF"); fund3.type = FundType::ETF;
+    fund3.nav = 2.156; fund3.accNav = 2.156; fund3.lastPrice = 2.160; fund3.changeAmount = 0.25; fund3.changePercent = 0.005;
+    fund3.volume = 6200; fund3.turnover = 13400; fund3.manager = "王五"; fund3.company = "易方达"; fund3.scale = 120.8;
+    d->fundCache.append(fund3);
     
     // LOF基金
-    d->fundCache.append({{"161725", QStringLiteral("招商白酒A"), FundType::LOF, 1.234, 2.567, 1.238, 0.32, 0.004, 3200, 3960, "赵六", "招商基金", 85.6}});
+    FundQuote fund4;
+    fund4.code = "161725"; fund4.name = QStringLiteral("招商白酒A"); fund4.type = FundType::LOF;
+    fund4.nav = 1.234; fund4.accNav = 2.567; fund4.lastPrice = 1.238; fund4.changeAmount = 0.32; fund4.changePercent = 0.004;
+    fund4.volume = 3200; fund4.turnover = 3960; fund4.manager = "赵六"; fund4.company = "招商基金"; fund4.scale = 85.6;
+    d->fundCache.append(fund4);
     
     // 开放式基金
-    d->fundCache.append({{"000001", QStringLiteral("华夏成长"), FundType::OpenEnd, 1.567, 3.234, 0, 0, 0, 0, 0, "钱七", "华夏基金", 156.3}});
-    d->fundCache.append({{"110022", QStringLiteral("易方达消费"), FundType::OpenEnd, 2.345, 4.567, 0, 0, 0, 0, 0, "孙八", "易方达", 234.5}});
+    FundQuote fund5;
+    fund5.code = "000001"; fund5.name = QStringLiteral("华夏成长"); fund5.type = FundType::OpenEnd;
+    fund5.nav = 1.567; fund5.accNav = 3.234; fund5.lastPrice = 0; fund5.changeAmount = 0; fund5.changePercent = 0;
+    fund5.volume = 0; fund5.turnover = 0; fund5.manager = "钱七"; fund5.company = "华夏基金"; fund5.scale = 156.3;
+    d->fundCache.append(fund5);
+    
+    FundQuote fund6;
+    fund6.code = "110022"; fund6.name = QStringLiteral("易方达消费"); fund6.type = FundType::OpenEnd;
+    fund6.nav = 2.345; fund6.accNav = 4.567; fund6.lastPrice = 0; fund6.changeAmount = 0; fund6.changePercent = 0;
+    fund6.volume = 0; fund6.turnover = 0; fund6.manager = "孙八"; fund6.company = "易方达"; fund6.scale = 234.5;
+    d->fundCache.append(fund6);
     
     // 货币基金
-    d->fundCache.append({{"511880", QStringLiteral("银华日利"), FundType::Money, 100.0, 100.0, 100.002, 0.002, 0.00002, 50000, 5000000, "周九", "银华基金", 500.0}});
+    FundQuote fund7;
+    fund7.code = "511880"; fund7.name = QStringLiteral("银华日利"); fund7.type = FundType::Money;
+    fund7.nav = 100.0; fund7.accNav = 100.0; fund7.lastPrice = 100.002; fund7.changeAmount = 0.002; fund7.changePercent = 0.00002;
+    fund7.volume = 50000; fund7.turnover = 5000000; fund7.manager = "周九"; fund7.company = "银华基金"; fund7.scale = 500.0;
+    d->fundCache.append(fund7);
     
     // 更新表格
     d->fundListTable->setRowCount(d->fundCache.size());

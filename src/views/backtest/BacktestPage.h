@@ -49,9 +49,9 @@ struct BacktestResult {
 };
 
 /**
- * @brief 交易记录结构
+ * @brief 回测交易记录结构（用于回测结果展示）
  */
-struct TradeRecord {
+struct BacktestTradeRecord {
     QDateTime time;                 ///< 交易时间
     QString action;                 ///< 买卖方向
     double price = 0.0;             ///< 成交价格
@@ -74,29 +74,66 @@ public:
     QString pageId() const override { return QStringLiteral("Backtest"); }
     QString pageName() const override { return QStringLiteral("策略回测"); }
 
-    void initialize() override;
-    void refresh() override;
+    void initializePage() override;
+    void refresh();
 
 signals:
+    /**
+     * @brief 回测完成信号
+     */
     void backtestCompleted(const BacktestResult& result);
 
 private slots:
+    /**
+     * @brief 运行回测
+     */
     void onRunBacktest();
+
+    /**
+     * @brief 停止回测
+     */
     void onStopBacktest();
+
+    /**
+     * @brief 导出报告
+     */
     void onExportReport();
+
+    /**
+     * @brief 策略选择变更
+     */
     void onStrategyChanged(int index);
-    void onSymbolChanged(const QString& symbol);
+
+    /**
+     * @brief 交易记录点击
+     */
+    void onTradeClicked(int row, int column);
 
 private:
+    /**
+     * @brief 初始化UI
+     */
     void setupUI();
-    void initToolBar();
-    void initStrategyEditor();
-    void initResultPanel();
-    void initTradeHistory();
-    void initConnections();
-    void runBacktest(const QString& symbol, const QDate& startDate, const QDate& endDate);
-    void updateResult(const BacktestResult& result);
-    void exportReport(const QString& filePath);
+
+    /**
+     * @brief 初始化策略列表
+     */
+    void initStrategies();
+
+    /**
+     * @brief 更新回测结果
+     */
+    void updateResults(const BacktestResult& result);
+
+    /**
+     * @brief 更新交易记录表格
+     */
+    void updateTradeTable(const QVector<BacktestTradeRecord>& trades);
+
+    /**
+     * @brief 生成模拟回测数据
+     */
+    void generateMockBacktest();
 
     struct Impl;
     std::unique_ptr<Impl> d;

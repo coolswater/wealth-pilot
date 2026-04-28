@@ -23,6 +23,7 @@
 #include <QComboBox>
 #include <QLineEdit>
 #include <QLabel>
+#include <QDateTime>
 #include <memory>
 
 // 前向声明
@@ -107,14 +108,14 @@ public:
     QString pageName() const override { return QStringLiteral("基金"); }
 
     /**
-     * @brief 初始化页面
+     * @brief 初始化页面（BasePage接口）
      */
-    void initialize() override;
+    void initializePage() override;
 
     /**
      * @brief 刷新数据
      */
-    void refresh() override;
+    void refresh();
 
     /**
      * @brief 设置基金代码

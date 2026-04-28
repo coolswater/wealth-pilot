@@ -58,7 +58,7 @@ AlertCenterPage::~AlertCenterPage() = default;
 
 // ========== 初始化 ==========
 
-void AlertCenterPage::initialize()
+void AlertCenterPage::initializePage()
 {
     loadAlertRules();
     loadAlertHistory();

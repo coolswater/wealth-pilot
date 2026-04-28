@@ -43,7 +43,7 @@ CryptoPage::CryptoPage(QWidget *parent)
 
 CryptoPage::~CryptoPage() = default;
 
-void CryptoPage::initialize()
+void CryptoPage::initializePage()
 {
     loadCryptoList();
 }

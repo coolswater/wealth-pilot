@@ -45,6 +45,12 @@
 #include "views/trading/TradeHistoryPage.h"
 #include "views/trading/ConditionOrderPage.h"
 #include "views/settings/RiskSettingsPage.h"
+// 新增模块
+#include "views/fund/FundPage.h"
+#include "views/forex/ForexPage.h"
+#include "views/crypto/CryptoPage.h"
+#include "views/backtest/BacktestPage.h"
+#include "views/alert/AlertCenterPage.h"
 
 // PIMPL 实现
 struct MainWindow::Impl
@@ -338,19 +344,24 @@ void MainWindow::setupUI()
     d->sidebar->setObjectName("sidebar");
     d->sidebar->setFixedWidth(Layout::Width::Sidebar);
 
-    d->sidebar->addItem("dashboard", "全局");
-    d->sidebar->addItem("stock", "股票");
-    d->sidebar->addItem("futures", "期货");
-    d->sidebar->addItem("portfolio", "持仓");
-    d->sidebar->addItem("account", "账户");
-    d->sidebar->addItem("tradeHistory", "成交");
-    d->sidebar->addItem("conditionOrder", "条件单");
-    d->sidebar->addItem("watchlist", "自选");
-    d->sidebar->addItem("signal", "信号");
-    d->sidebar->addItem("news", "资讯");
-    d->sidebar->addItem("riskSettings", "风控");
-    d->sidebar->addItem("settings", "设置");
-    d->sidebar->addItem("about", "关于");
+    d->sidebar->addItem("dashboard", QStringLiteral("全局"));
+    d->sidebar->addItem("stock", QStringLiteral("股票"));
+    d->sidebar->addItem("futures", QStringLiteral("期货"));
+    d->sidebar->addItem("fund", QStringLiteral("基金"));
+    d->sidebar->addItem("forex", QStringLiteral("外汇"));
+    d->sidebar->addItem("crypto", QStringLiteral("数字货币"));
+    d->sidebar->addItem("portfolio", QStringLiteral("持仓"));
+    d->sidebar->addItem("account", QStringLiteral("账户"));
+    d->sidebar->addItem("tradeHistory", QStringLiteral("成交"));
+    d->sidebar->addItem("conditionOrder", QStringLiteral("条件单"));
+    d->sidebar->addItem("watchlist", QStringLiteral("自选"));
+    d->sidebar->addItem("backtest", QStringLiteral("回测"));
+    d->sidebar->addItem("alertCenter", QStringLiteral("预警"));
+    d->sidebar->addItem("signal", QStringLiteral("信号"));
+    d->sidebar->addItem("news", QStringLiteral("资讯"));
+    d->sidebar->addItem("riskSettings", QStringLiteral("风控"));
+    d->sidebar->addItem("settings", QStringLiteral("设置"));
+    d->sidebar->addItem("about", QStringLiteral("关于"));
 
     d->mainLayout->addWidget(d->sidebar);
 
@@ -396,11 +407,16 @@ void MainWindow::createPages() const
         "dashboard",
         "stock",
         "futures",
+        "fund",
+        "forex",
+        "crypto",
         "portfolio",
         "account",
         "tradeHistory",
         "conditionOrder",
         "watchlist",
+        "backtest",
+        "alertCenter",
         "signal",
         "news",
         "riskSettings",
@@ -542,6 +558,27 @@ QWidget* MainWindow::getPage(const QString& pageId)
     else if (pageId == "riskSettings")
     {
         page = new RiskSettingsPage(this);
+    }
+    // ========== 新增模块 ==========
+    else if (pageId == "fund")
+    {
+        page = new FundPage(this);
+    }
+    else if (pageId == "forex")
+    {
+        page = new ForexPage(this);
+    }
+    else if (pageId == "crypto")
+    {
+        page = new CryptoPage(this);
+    }
+    else if (pageId == "backtest")
+    {
+        page = new BacktestPage(this);
+    }
+    else if (pageId == "alertCenter")
+    {
+        page = new AlertCenterPage(this);
     }
 
     if (page)

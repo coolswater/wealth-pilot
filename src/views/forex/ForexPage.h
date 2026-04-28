@@ -22,6 +22,7 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <QComboBox>
+#include <QDateTime>
 #include <memory>
 
 // 前向声明
@@ -60,8 +61,8 @@ public:
     QString pageId() const override { return QStringLiteral("Forex"); }
     QString pageName() const override { return QStringLiteral("外汇"); }
 
-    void initialize() override;
-    void refresh() override;
+    void initializePage() override;
+    void refresh();
 
 signals:
     void forexPairSelected(const QString& pair, double rate);
@@ -70,7 +71,7 @@ private slots:
     void onForexListClicked(int row, int column);
     void onCurrencyFromChanged(int index);
     void onCurrencyToChanged(int index);
-    void onAmountChanged(const QString& amount);
+    void onAmountChanged(double amount);
     void onRefreshData();
 
 private:

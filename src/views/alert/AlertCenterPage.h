@@ -16,6 +16,7 @@
 #define ALERTCENTERPAGE_H
 
 #include "core/base/BasePage.h"
+#include "trading/AlertManager.h"  // 使用已有的预警类型定义
 #include <QWidget>
 #include <QTableWidget>
 #include <QLineEdit>
@@ -24,55 +25,20 @@
 #include <QLabel>
 #include <memory>
 
-/**
- * @brief 预警类型枚举
- */
-enum class AlertType {
-    PriceAbove,     ///< 价格高于
-    PriceBelow,     ///< 价格低于
-    ChangeAbove,    ///< 涨幅高于
-    ChangeBelow,    ///< 跌幅低于
-    VolumeAbove,    ///< 成交量高于
-    TurnoverAbove   ///< 换手率高于
-};
+// 使用 AlertManager.h 中已定义的类型
+// AlertType, AlertRule 已在 AlertManager.h 中定义
 
 /**
- * @brief 预警状态枚举
- */
-enum class AlertStatus {
-    Active,         ///< 激活中
-    Triggered,      ///< 已触发
-    Disabled        ///< 已禁用
-};
-
-/**
- * @brief 预警规则数据结构
- */
-struct AlertRule {
-    QString id;                 ///< 预警ID
-    QString symbol;             ///< 标的代码
-    QString name;               ///< 标的名称
-    AlertType type;             ///< 预警类型
-    double threshold = 0.0;     ///< 阈值
-    AlertStatus status;         ///< 状态
-    QDateTime createTime;       ///< 创建时间
-    QDateTime triggerTime;      ///< 触发时间
-    QString message;            ///< 预警消息
-};
-
-/**
- * @brief 预警记录数据结构
+ * @brief 预警记录数据结构（用于历史显示）
  */
 struct AlertRecord {
-    QString id;                 ///< 记录ID
     QString symbol;             ///< 标的代码
     QString name;               ///< 标的名称
     AlertType type;             ///< 预警类型
     double threshold = 0.0;     ///< 阈值
     double actualValue = 0.0;   ///< 实际值
     QDateTime triggerTime;      ///< 触发时间
-    QString message;            ///< 消息
-    bool isRead = false;        ///< 是否已读
+    QString message;            ///< 预警消息
 };
 
 /**
@@ -83,39 +49,75 @@ class AlertCenterPage : public BasePage
     Q_OBJECT
 
 public:
+    /**
+     * @brief 构造函数
+     * @param parent 父窗口
+     */
     explicit AlertCenterPage(QWidget *parent = nullptr);
+    
+    /**
+     * @brief 析构函数
+     */
     ~AlertCenterPage() override;
 
     QString pageId() const override { return QStringLiteral("AlertCenter"); }
     QString pageName() const override { return QStringLiteral("预警中心"); }
 
-    void initialize() override;
-    void refresh() override;
+    void initializePage() override;
+    void refresh();
 
 signals:
-    void alertTriggered(const AlertRecord& record);
+    /**
+     * @brief 预警选中信号
+     */
+    void alertSelected(const QString& ruleId);
 
 private slots:
+    /**
+     * @brief 添加预警
+     */
     void onAddAlert();
-    void onDeleteAlert();
+
+    /**
+     * @brief 删除预警
+     */
+    void onRemoveAlert();
+
+    /**
+     * @brief 启用/禁用预警
+     */
     void onToggleAlert();
-    void onAlertListClicked(int row, int column);
-    void onRefreshData();
-    void onClearHistory();
+
+    /**
+     * @brief 预警表格点击
+     */
+    void onAlertClicked(int row, int column);
 
 private:
+    /**
+     * @brief 初始化UI
+     */
     void setupUI();
-    void initToolBar();
-    void initAlertList();
-    void initHistoryList();
-    void initConnections();
+
+    /**
+     * @brief 加载预警规则列表
+     */
     void loadAlertRules();
+
+    /**
+     * @brief 加载预警历史记录
+     */
     void loadAlertHistory();
-    void addAlertRule(const AlertRule& rule);
-    void removeAlertRule(const QString& id);
-    void toggleAlertRule(const QString& id);
-    static QString formatAlertType(AlertType type);
-    static QString formatAlertStatus(AlertStatus status);
+
+    /**
+     * @brief 更新预警表格
+     */
+    void updateAlertTable();
+
+    /**
+     * @brief 更新历史表格
+     */
+    void updateHistoryTable();
 
     struct Impl;
     std::unique_ptr<Impl> d;

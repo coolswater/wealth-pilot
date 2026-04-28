@@ -59,7 +59,7 @@ struct BacktestPage::Impl {
     
     // 回测数据
     BacktestResult result;                  ///< 回测结果
-    QVector<TradeRecord> trades;            ///< 交易记录
+    QVector<BacktestTradeRecord> trades;            ///< 交易记录
     bool isRunning = false;                 ///< 是否正在运行
 };
 
@@ -76,7 +76,7 @@ BacktestPage::~BacktestPage() = default;
 
 // ========== 初始化 ==========
 
-void BacktestPage::initialize()
+void BacktestPage::initializePage()
 {
     // 初始化默认策略代码
     d->strategyEditor->setPlainText(R"(
@@ -442,7 +442,7 @@ void BacktestPage::runBacktest(const QString& symbol, const QDate& startDate, co
     double cumProfit = 0;
     
     for (int i = 0; i < 20; ++i) {
-        TradeRecord trade;
+        BacktestTradeRecord trade;
         trade.time = baseTime.addDays(i * 10);
         trade.action = (i % 2 == 0) ? QStringLiteral("买入") : QStringLiteral("卖出");
         trade.price = 1800.0 + QRandomGenerator::global()->bounded(-100, 100);

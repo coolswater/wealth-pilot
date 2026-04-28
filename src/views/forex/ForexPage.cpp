@@ -62,7 +62,7 @@ ForexPage::~ForexPage() = default;
 
 // ========== 初始化 ==========
 
-void ForexPage::initialize()
+void ForexPage::initializePage()
 {
     loadForexList();
 }
@@ -264,22 +264,38 @@ void ForexPage::initConnections()
 
 void ForexPage::loadForexList()
 {
-    d->forexClear();
+    d->forexCache.clear();
     
     // 主要货币对
-    d->forexCash.append({{"USD/CNY", "USD", "CNY", 7.2456, 7.2450, 7.2462, 0.0123, 0.17, 7.2500, 7.2400}});
-    d->forexCash.append({{"EUR/USD", "EUR", "USD", 1.0892, 1.0890, 1.0894, -0.0015, -0.14, 1.0920, 1.0860}});
-    d->forexCash.append({{"GBP/USD", "GBP", "USD", 1.2654, 1.2650, 1.2658, 0.0023, 0.18, 1.2700, 1.2600}});
-    d->forexCash.append({{"USD/JPY", "USD", "JPY", 154.32, 154.30, 154.34, 0.45, 0.29, 155.00, 153.50}});
-    d->forexCash.append({{"EUR/CNY", "EUR", "CNY", 7.8923, 7.8915, 7.8931, 0.0156, 0.20, 7.9000, 7.8800}});
-    d->forexCash.append({{"GBP/CNY", "GBP", "CNY", 9.1723, 9.1715, 9.1731, 0.0234, 0.26, 9.2000, 9.1500}});
-    d->forexCash.append({{"USD/HKD", "USD", "HKD", 7.8234, 7.8230, 7.8238, 0.0012, 0.02, 7.8300, 7.8200}});
-    d->forexCash.append({{"AUD/USD", "AUD", "USD", 0.6523, 0.6520, 0.6526, -0.0034, -0.52, 0.6600, 0.6450}});
+    ForexQuote q1; q1.pair = "USD/CNY"; q1.baseCurrency = "USD"; q1.quoteCurrency = "CNY";
+    q1.rate = 7.2456; q1.bid = 7.2450; q1.ask = 7.2462; q1.change = 0.0123; q1.changePercent = 0.17;
+    q1.high24h = 7.2500; q1.low24h = 7.2400;
+    d->forexCache.append(q1);
     
-    d->forexListTable->setRowCount(d->forexCash.size());
+    ForexQuote q2; q2.pair = "EUR/USD"; q2.baseCurrency = "EUR"; q2.quoteCurrency = "USD";
+    q2.rate = 1.0892; q2.bid = 1.0890; q2.ask = 1.0894; q2.change = -0.0015; q2.changePercent = -0.14;
+    q2.high24h = 1.0920; q2.low24h = 1.0860;
+    d->forexCache.append(q2);
     
-    for (int i = 0; i < d->forexCash.size(); ++i) {
-        const auto& forex = d->forexCash[i];
+    ForexQuote q3; q3.pair = "GBP/USD"; q3.baseCurrency = "GBP"; q3.quoteCurrency = "USD";
+    q3.rate = 1.2654; q3.bid = 1.2650; q3.ask = 1.2658; q3.change = 0.0023; q3.changePercent = 0.18;
+    q3.high24h = 1.2700; q3.low24h = 1.2600;
+    d->forexCache.append(q3);
+    
+    ForexQuote q4; q4.pair = "USD/JPY"; q4.baseCurrency = "USD"; q4.quoteCurrency = "JPY";
+    q4.rate = 154.32; q4.bid = 154.30; q4.ask = 154.34; q4.change = 0.45; q4.changePercent = 0.29;
+    q4.high24h = 155.00; q4.low24h = 153.50;
+    d->forexCache.append(q4);
+    
+    ForexQuote q5; q5.pair = "EUR/CNY"; q5.baseCurrency = "EUR"; q5.quoteCurrency = "CNY";
+    q5.rate = 7.8923; q5.bid = 7.8915; q5.ask = 7.8931; q5.change = 0.0156; q5.changePercent = 0.20;
+    q5.high24h = 7.9000; q5.low24h = 7.8800;
+    d->forexCache.append(q5);
+    
+    d->forexListTable->setRowCount(d->forexCache.size());
+    
+    for (int i = 0; i < d->forexCache.size(); ++i) {
+        const auto& forex = d->forexCache[i];
         
         d->forexListTable->setItem(i, 0, new QTableWidgetItem(forex.pair));
         d->forexListTable->setItem(i, 1, new QTableWidgetItem(QString::number(forex.rate, 'f', 4)));
@@ -329,8 +345,8 @@ void ForexPage::calculateConversion()
 void ForexPage::onForexListClicked(int row, int column)
 {
     Q_UNUSED(column)
-    if (row >= 0 && row < d->forexCash.size()) {
-        const auto& forex = d->forexCash[row];
+    if (row >= 0 && row < d->forexCache.size()) {
+        const auto& forex = d->forexCache[row];
         d->currentPair = forex.pair;
         updateForexDetail(forex);
         loadRateHistory(forex.pair);
@@ -350,7 +366,7 @@ void ForexPage::onCurrencyToChanged(int index)
     calculateConversion();
 }
 
-void ForexPage::onAmountChanged(const QString& amount)
+void ForexPage::onAmountChanged(double amount)
 {
     Q_UNUSED(amount)
     calculateConversion();

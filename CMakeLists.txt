@@ -302,6 +302,19 @@ set(VIEW_SOURCES
         src/views/trading/TradingPanel.h
         src/views/trading/TradingPanel.cpp
         src/views/TradingPagesRegistration.cpp
+        # 新增模块
+        src/views/fund/FundPage.h
+        src/views/fund/FundPage.cpp
+        src/views/forex/ForexPage.h
+        src/views/forex/ForexPage.cpp
+        src/views/crypto/CryptoPage.h
+        src/views/crypto/CryptoPage.cpp
+        src/views/backtest/BacktestPage.h
+        src/views/backtest/BacktestPage.cpp
+        src/views/alert/AlertCenterPage.h
+        src/views/alert/AlertCenterPage.cpp
+        src/utils/DataExporter.h
+        src/utils/DataExporter.cpp
 )
 
 # Trading 交易系统
