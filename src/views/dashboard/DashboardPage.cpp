@@ -1368,7 +1368,11 @@ void DashboardPage::setupConnections()
     // 双击信号
     connect(d->shGainTable, &QTableView::doubleClicked, this, &DashboardPage::onRowDoubleClicked);
     connect(d->szGainTable, &QTableView::doubleClicked, this, &DashboardPage::onRowDoubleClicked);
+    connect(d->sh5MinTable, &QTableView::doubleClicked, this, &DashboardPage::onRowDoubleClicked);
+    connect(d->sz5MinTable, &QTableView::doubleClicked, this, &DashboardPage::onRowDoubleClicked);
     connect(d->watchlistTable, &QTableView::doubleClicked, this, &DashboardPage::onRowDoubleClicked);
+    connect(d->moneyFlowTable, &QTableView::doubleClicked, this, &DashboardPage::onMoneyFlowRowDoubleClicked);
+    connect(d->sectorTable, &QTableView::doubleClicked, this, &DashboardPage::onSectorRowDoubleClicked);
 }
 
 /**
@@ -1933,6 +1937,33 @@ void DashboardPage::onRowDoubleClicked(const QModelIndex& index)
     
     // 发送导航信号
     emit navigateToStockKLine(code, name);
+}
+
+void DashboardPage::onMoneyFlowRowDoubleClicked(const QModelIndex& index)
+{
+    if (!index.isValid()) return;
+    
+    // 获取代码和名称
+    QString code = d->moneyFlowModel->data(d->moneyFlowModel->index(index.row(), MoneyFlowModel::ColCode)).toString();
+    QString name = d->moneyFlowModel->data(d->moneyFlowModel->index(index.row(), MoneyFlowModel::ColName)).toString();
+    
+    LOG_INFO(QString("Money flow row double clicked: %1 (%2)").arg(code, name));
+    
+    // 发送导航信号
+    emit navigateToStockKLine(code, name);
+}
+
+void DashboardPage::onSectorRowDoubleClicked(const QModelIndex& index)
+{
+    if (!index.isValid()) return;
+    
+    // 获取板块名称（板块暂不跳转，只记录日志）
+    QString sectorName = d->sectorModel->data(d->sectorModel->index(index.row(), 0)).toString();
+    
+    LOG_INFO(QString("Sector row double clicked: %1").arg(sectorName));
+    
+    // TODO: 板块点击可以跳转到板块详情页面
+    // 目前板块不支持跳转到K线，因为板块不是单个股票
 }
 
 /**

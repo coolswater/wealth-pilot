@@ -274,6 +274,8 @@ private slots:
     void onWatchlistFilterChanged(int index);
     void onMoneyFlowPeriodChanged(int index);
     void onRowDoubleClicked(const QModelIndex& index);
+    void onMoneyFlowRowDoubleClicked(const QModelIndex& index);
+    void onSectorRowDoubleClicked(const QModelIndex& index);
     void updateRealTimeData();
     void updateTimeDisplay();
     
