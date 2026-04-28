@@ -45,10 +45,15 @@ struct KLineChart::Impl {
     bool showCrosshair = false;
     int crosshairX = 0;
     int crosshairY = 0;
+    int crosshairIndex = -1;        // 当前十字光标对应的K线索引
     
     // 技术指标
     QMap<QString, QVector<double>> indicators;
     QMap<QString, QColor> indicatorColors;
+    
+    // 主图和副图指标
+    MainIndicator mainIndicator = MainIndicator::MA;
+    SubIndicator subIndicator = SubIndicator::MACD;
     
     // 性能优化：压缩数据
     QVector<KLineData> compressedData;
@@ -61,6 +66,10 @@ struct KLineChart::Impl {
     // 图表区域
     QRect chartRect;
     QRect volumeRect;
+    
+    // 十字光标颜色（主题适配）
+    QColor crosshairColor = QColor("#3b82f6");  // 蓝色
+    QColor crosshairTextColor = QColor("#ffffff");  // 白色
     
     /**
      * @brief 计算可见范围
@@ -417,6 +426,8 @@ void KLineChart::paintEvent(QPaintEvent *event)
     // 绘制十字光标
     if (d->showCrosshair) {
         drawCrosshair(painter);
+        // 绘制K线信息（右上角）
+        drawKLineInfo(painter);
     }
     
     // 绘制坐标轴
@@ -467,13 +478,19 @@ void KLineChart::mouseMoveEvent(QMouseEvent *event)
         d->showCrosshair = true;
         d->crosshairX = event->pos().x();
         d->crosshairY = event->pos().y();
+        
+        // 计算当前K线索引
+        int index = d->xToIndex(d->crosshairX);
+        d->crosshairIndex = index;
+        
         update();
         
         // 发送信号
-        int index = d->xToIndex(d->crosshairX);
         if (index >= 0 && index < d->data.size()) {
             double price = d->yToPrice(d->crosshairY);
             emit crosshairMoved(d->data[index].time, price);
+            // 发送K线信息信号
+            emit klineInfoChanged(d->data[index], index);
         }
     }
 }
@@ -710,7 +727,8 @@ void KLineChart::drawIndicators(QPainter& painter)
  */
 void KLineChart::drawCrosshair(QPainter& painter)
 {
-    painter.setPen(QPen(QColor(Tokens::Colors::TextPrimary), 1, Qt::DashLine));
+    // 使用主题适配的十字光标颜色
+    painter.setPen(QPen(d->crosshairColor, 1, Qt::DashLine));
     
     // 垂直线
     painter.drawLine(d->crosshairX, d->chartRect.top(), 
@@ -725,14 +743,22 @@ void KLineChart::drawCrosshair(QPainter& painter)
     if (index >= 0 && index < d->data.size()) {
         double price = d->yToPrice(d->crosshairY);
         
-        // 价格标签
-        painter.setPen(Qt::white);
+        // 价格标签（左侧）
+        painter.setPen(d->crosshairTextColor);
+        painter.setFont(QFont("Microsoft YaHei", 9));
         QString priceText = QString::number(price, 'f', 2);
-        painter.drawText(5, d->crosshairY, priceText);
         
-        // 时间标签
+        // 绘制价格标签背景
+        QFontMetrics fm(painter.font());
+        int textWidth = fm.horizontalAdvance(priceText) + 10;
+        painter.fillRect(0, d->crosshairY - 10, textWidth, 20, QColor("#2d3748"));
+        painter.drawText(5, d->crosshairY + 4, priceText);
+        
+        // 时间标签（底部）
         QString timeText = d->data[index].time.toString("MM-dd hh:mm");
-        painter.drawText(d->crosshairX - 30, height() - 10, timeText);
+        int timeWidth = fm.horizontalAdvance(timeText) + 10;
+        painter.fillRect(d->crosshairX - timeWidth/2, height() - 25, timeWidth, 20, QColor("#2d3748"));
+        painter.drawText(d->crosshairX - timeWidth/2 + 5, height() - 10, timeText);
     }
 }
 
@@ -764,4 +790,359 @@ void KLineChart::drawAxis(QPainter& painter)
             painter.drawText(x - 20, height() - 10, text);
         }
     }
+}
+
+/**
+ * @brief 绘制K线信息（右上角）
+ */
+void KLineChart::drawKLineInfo(QPainter& painter)
+{
+    if (d->crosshairIndex < 0 || d->crosshairIndex >= d->data.size()) {
+        return;
+    }
+    
+    const KLineData& kline = d->data[d->crosshairIndex];
+    
+    // 跳过无效数据
+    if (kline.open <= 0 || kline.close <= 0) {
+        return;
+    }
+    
+    painter.setFont(QFont("Microsoft YaHei", 10));
+    QFontMetrics fm(painter.font());
+    
+    // 计算涨跌
+    double change = kline.close - kline.open;
+    double changePercent = (kline.open > 0) ? (change / kline.open * 100) : 0;
+    
+    // 振幅和换手率
+    double amplitude = (kline.high - kline.low) / kline.open * 100;
+    double turnover = 0;  // 换手率需要额外数据
+    
+    // 构建信息文本
+    QStringList infoParts;
+    infoParts << kline.time.toString("yyyy-MM-dd");
+    infoParts << QString(QStringLiteral("开:%1")).arg(kline.open, 0, 'f', 2);
+    infoParts << QString(QStringLiteral("高:%1")).arg(kline.high, 0, 'f', 2);
+    infoParts << QString(QStringLiteral("低:%1")).arg(kline.low, 0, 'f', 2);
+    infoParts << QString(QStringLiteral("收:%1")).arg(kline.close, 0, 'f', 2);
+    
+    // 涨跌
+    QString changeText = change >= 0 ? QString("+%1").arg(change, 0, 'f', 2) : QString::number(change, 'f', 2);
+    infoParts << QString(QStringLiteral("涨跌:%1")).arg(changeText);
+    
+    // 涨跌幅
+    QString changePercentText = changePercent >= 0 ? QString("+%1%").arg(changePercent, 0, 'f', 2) : QString("%1%").arg(changePercent, 0, 'f', 2);
+    infoParts << QString(QStringLiteral("涨跌幅:%1")).arg(changePercentText);
+    
+    // 成交量
+    if (kline.volume > 0) {
+        double volWan = kline.volume / 10000.0;
+        infoParts << QString(QStringLiteral("量:%1万")).arg(volWan, 0, 'f', 2);
+    }
+    
+    // 成交金额
+    if (kline.turnover > 0) {
+        double amtYi = kline.turnover / 100000000.0;
+        infoParts << QString(QStringLiteral("额:%1亿")).arg(amtYi, 0, 'f', 2);
+    }
+    
+    // 振幅
+    infoParts << QString(QStringLiteral("振幅:%1%")).arg(amplitude, 0, 'f', 2);
+    
+    // 换手率（如果有）
+    if (turnover > 0) {
+        infoParts << QString(QStringLiteral("换手:%1%")).arg(turnover, 0, 'f', 2);
+    }
+    
+    // 合并为一行
+    QString infoText = infoParts.join("  ");
+    
+    // 计算文本宽度
+    int textWidth = fm.horizontalAdvance(infoText) + 20;
+    int textHeight = fm.height() + 8;
+    
+    // 绘制背景（左上角）
+    int infoX = 60;  // 左边距
+    int infoY = 10;
+    
+    painter.fillRect(infoX - 5, infoY - 2, textWidth + 10, textHeight + 4, QColor("#1a1f2e"));
+    painter.fillRect(infoX, infoY, textWidth, textHeight, QColor("#2d3748"));
+    
+    // 绘制文本
+    painter.setPen(QColor("#ffffff"));
+    painter.drawText(infoX + 10, infoY + textHeight - 6, infoText);
+}
+
+/**
+ * @brief 设置主图指标
+ */
+void KLineChart::setMainIndicator(MainIndicator indicator)
+{
+    d->mainIndicator = indicator;
+    
+    // 清除现有主图指标
+    removeIndicator("MA5");
+    removeIndicator("MA10");
+    removeIndicator("MA20");
+    removeIndicator("EMA12");
+    removeIndicator("EMA26");
+    removeIndicator("BOLL_UP");
+    removeIndicator("BOLL_MID");
+    removeIndicator("BOLL_LOW");
+    
+    switch (indicator) {
+        case MainIndicator::MA:
+            calculateMA(5);
+            calculateMA(10);
+            calculateMA(20);
+            break;
+        case MainIndicator::EMA:
+            calculateEMA(12);
+            calculateEMA(26);
+            break;
+        case MainIndicator::BOLL:
+            calculateBOLL(20);
+            break;
+        default:
+            break;
+    }
+    
+    update();
+}
+
+/**
+ * @brief 设置副图指标
+ */
+void KLineChart::setSubIndicator(SubIndicator indicator)
+{
+    d->subIndicator = indicator;
+    
+    // 清除现有副图指标
+    removeIndicator("MACD");
+    removeIndicator("MACD_SIGNAL");
+    removeIndicator("MACD_HIST");
+    removeIndicator("KDJ_K");
+    removeIndicator("KDJ_D");
+    removeIndicator("KDJ_J");
+    removeIndicator("RSI");
+    
+    switch (indicator) {
+        case SubIndicator::MACD:
+            calculateMACD();
+            break;
+        case SubIndicator::KDJ:
+            calculateKDJ();
+            break;
+        case SubIndicator::RSI:
+            calculateRSI(14);
+            break;
+        default:
+            break;
+    }
+    
+    update();
+}
+
+/**
+ * @brief 计算MA移动平均线
+ */
+void KLineChart::calculateMA(int period)
+{
+    if (d->data.size() < period) return;
+    
+    QVector<double> maValues;
+    maValues.resize(d->data.size());
+    
+    for (int i = 0; i < d->data.size(); ++i) {
+        if (i < period - 1) {
+            maValues[i] = 0;
+        } else {
+            double sum = 0;
+            for (int j = 0; j < period; ++j) {
+                sum += d->data[i - j].close;
+            }
+            maValues[i] = sum / period;
+        }
+    }
+    
+    QColor color;
+    switch (period) {
+        case 5: color = QColor("#ffffff"); break;
+        case 10: color = QColor("#ffff00"); break;
+        case 20: color = QColor("#ff00ff"); break;
+        default: color = QColor("#ffffff"); break;
+    }
+    
+    addIndicator(QString("MA%1").arg(period), maValues, color);
+}
+
+/**
+ * @brief 计算EMA指数移动平均
+ */
+void KLineChart::calculateEMA(int period)
+{
+    if (d->data.isEmpty()) return;
+    
+    QVector<double> emaValues;
+    emaValues.resize(d->data.size());
+    
+    double multiplier = 2.0 / (period + 1);
+    emaValues[0] = d->data[0].close;
+    
+    for (int i = 1; i < d->data.size(); ++i) {
+        emaValues[i] = (d->data[i].close - emaValues[i-1]) * multiplier + emaValues[i-1];
+    }
+    
+    QColor color = (period == 12) ? QColor("#00ff00") : QColor("#ff6600");
+    addIndicator(QString("EMA%1").arg(period), emaValues, color);
+}
+
+/**
+ * @brief 计算BOLL布林带
+ */
+void KLineChart::calculateBOLL(int period)
+{
+    if (d->data.size() < period) return;
+    
+    QVector<double> midValues, upValues, lowValues;
+    midValues.resize(d->data.size());
+    upValues.resize(d->data.size());
+    lowValues.resize(d->data.size());
+    
+    for (int i = 0; i < d->data.size(); ++i) {
+        if (i < period - 1) {
+            midValues[i] = upValues[i] = lowValues[i] = 0;
+        } else {
+            // 计算中轨（MA）
+            double sum = 0;
+            for (int j = 0; j < period; ++j) {
+                sum += d->data[i - j].close;
+            }
+            double mid = sum / period;
+            
+            // 计算标准差
+            double variance = 0;
+            for (int j = 0; j < period; ++j) {
+                variance += qPow(d->data[i - j].close - mid, 2);
+            }
+            double stdDev = qSqrt(variance / period);
+            
+            midValues[i] = mid;
+            upValues[i] = mid + 2 * stdDev;
+            lowValues[i] = mid - 2 * stdDev;
+        }
+    }
+    
+    addIndicator("BOLL_MID", midValues, QColor("#ffffff"));
+    addIndicator("BOLL_UP", upValues, QColor("#ff4d4f"));
+    addIndicator("BOLL_LOW", lowValues, QColor("#00b578"));
+}
+
+/**
+ * @brief 计算MACD
+ */
+void KLineChart::calculateMACD()
+{
+    if (d->data.size() < 26) return;
+    
+    QVector<double> difValues, deaValues, macdValues;
+    difValues.resize(d->data.size());
+    deaValues.resize(d->data.size());
+    macdValues.resize(d->data.size());
+    
+    // 计算EMA12和EMA26
+    QVector<double> ema12(d->data.size());
+    QVector<double> ema26(d->data.size());
+    
+    double mult12 = 2.0 / 13;
+    double mult26 = 2.0 / 27;
+    
+    ema12[0] = d->data[0].close;
+    ema26[0] = d->data[0].close;
+    
+    for (int i = 1; i < d->data.size(); ++i) {
+        ema12[i] = (d->data[i].close - ema12[i-1]) * mult12 + ema12[i-1];
+        ema26[i] = (d->data[i].close - ema26[i-1]) * mult26 + ema26[i-1];
+        difValues[i] = ema12[i] - ema26[i];
+    }
+    
+    // 计算DEA（EMA9 of DIF）
+    double mult9 = 2.0 / 10;
+    deaValues[0] = difValues[0];
+    for (int i = 1; i < d->data.size(); ++i) {
+        deaValues[i] = (difValues[i] - deaValues[i-1]) * mult9 + deaValues[i-1];
+        macdValues[i] = (difValues[i] - deaValues[i]) * 2;
+    }
+    
+    addIndicator("MACD_DIF", difValues, QColor("#ffffff"));
+    addIndicator("MACD_DEA", deaValues, QColor("#ffff00"));
+}
+
+/**
+ * @brief 计算KDJ
+ */
+void KLineChart::calculateKDJ()
+{
+    if (d->data.size() < 9) return;
+    
+    QVector<double> kValues, dValues, jValues;
+    kValues.resize(d->data.size());
+    dValues.resize(d->data.size());
+    jValues.resize(d->data.size());
+    
+    for (int i = 0; i < d->data.size(); ++i) {
+        if (i < 8) {
+            kValues[i] = dValues[i] = jValues[i] = 50;
+        } else {
+            // 计算最高价和最低价
+            double highest = d->data[i].high;
+            double lowest = d->data[i].low;
+            for (int j = 1; j < 9; ++j) {
+                highest = qMax(highest, d->data[i-j].high);
+                lowest = qMin(lowest, d->data[i-j].low);
+            }
+            
+            double rsv = (highest == lowest) ? 50 : (d->data[i].close - lowest) / (highest - lowest) * 100;
+            kValues[i] = (2.0 / 3) * kValues[i-1] + (1.0 / 3) * rsv;
+            dValues[i] = (2.0 / 3) * dValues[i-1] + (1.0 / 3) * kValues[i];
+            jValues[i] = 3 * kValues[i] - 2 * dValues[i];
+        }
+    }
+    
+    addIndicator("KDJ_K", kValues, QColor("#ffffff"));
+    addIndicator("KDJ_D", dValues, QColor("#ffff00"));
+    addIndicator("KDJ_J", jValues, QColor("#ff4d4f"));
+}
+
+/**
+ * @brief 计算RSI
+ */
+void KLineChart::calculateRSI(int period)
+{
+    if (d->data.size() < period + 1) return;
+    
+    QVector<double> rsiValues;
+    rsiValues.resize(d->data.size());
+    
+    for (int i = 0; i < d->data.size(); ++i) {
+        if (i < period) {
+            rsiValues[i] = 50;
+        } else {
+            double gain = 0, loss = 0;
+            for (int j = 0; j < period; ++j) {
+                double change = d->data[i - j].close - d->data[i - j - 1].close;
+                if (change > 0) gain += change;
+                else loss -= change;
+            }
+            
+            if (gain + loss == 0) {
+                rsiValues[i] = 50;
+            } else {
+                rsiValues[i] = gain / (gain + loss) * 100;
+            }
+        }
+    }
+    
+    addIndicator("RSI", rsiValues, QColor("#ff6600"));
 }

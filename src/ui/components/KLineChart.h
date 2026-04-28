@@ -25,6 +25,37 @@
 #include "core/types/MarketTypes.h"  // 使用统一的类型定义
 
 /**
+ * @brief 主图指标类型
+ */
+enum class MainIndicator {
+    None,
+    MA,         // 移动平均线
+    SMA,        // 简单移动平均
+    EMA,        // 指数移动平均
+    BOLL,       // 布林带
+    SAR,        // 抛物线转向
+    TD          // 神奇九转
+};
+
+/**
+ * @brief 副图指标类型
+ */
+enum class SubIndicator {
+    None,
+    MACD,
+    KDJ,
+    RSI,
+    VOLUME,
+    OBV,
+    CCI,
+    ATR,
+    WR,
+    PSY,
+    KD,
+    DMA
+};
+
+/**
  * @brief K线样式配置
  */
 struct KLineStyle {
@@ -117,6 +148,16 @@ public:
     // ========== 技术指标 ==========
 
     /**
+     * @brief 设置主图指标
+     */
+    void setMainIndicator(MainIndicator indicator);
+
+    /**
+     * @brief 设置副图指标
+     */
+    void setSubIndicator(SubIndicator indicator);
+
+    /**
      * @brief 添加技术指标
      */
     void addIndicator(const QString& name, const QVector<double>& values, const QColor& color);
@@ -133,9 +174,14 @@ public:
 
 signals:
     /**
-     * @brief 十字光标移动信号
+     * @brief 十字光标移动信号（带完整K线信息）
      */
     void crosshairMoved(const QDateTime& time, double price);
+
+    /**
+     * @brief K线信息信号
+     */
+    void klineInfoChanged(const KLineData& kline, int index);
 
     /**
      * @brief 点击信号
@@ -160,6 +206,15 @@ private:
     void drawIndicators(QPainter& painter);
     void drawCrosshair(QPainter& painter);
     void drawAxis(QPainter& painter);
+    void drawKLineInfo(QPainter& painter);  // 绘制K线信息
+    
+    // 指标计算
+    void calculateMA(int period = 5);
+    void calculateEMA(int period = 12);
+    void calculateBOLL(int period = 20);
+    void calculateMACD();
+    void calculateKDJ();
+    void calculateRSI(int period = 14);
     
     // 坐标转换
     int timeToX(int index) const;

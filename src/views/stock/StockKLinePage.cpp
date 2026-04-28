@@ -444,41 +444,35 @@ void StockKLinePage::initMainArea()
     
     chartLayout->addWidget(d->klineChart, 1);
     
-    // 分割线
-    auto* divider = new QFrame(chartContainer);
-    divider->setFrameShape(QFrame::HLine);
-    divider->setStyleSheet("QFrame { background: #21262d; border: none; max-height: 1px; }");
-    chartLayout->addWidget(divider);
-    
-    // 指标切换按钮组（放在K线图下方）
+    // 指标按钮栏（放在K线图下方）
     auto* indicatorBar = new QWidget(chartContainer);
-    indicatorBar->setFixedHeight(36);
+    indicatorBar->setFixedHeight(32);
     indicatorBar->setStyleSheet("QWidget { background: #161b22; }");
     
-    auto* indicatorLayout = new QHBoxLayout(indicatorBar);
-    indicatorLayout->setContentsMargins(12, 4, 12, 4);
-    indicatorLayout->setSpacing(2);
+    auto* indicatorBarLayout = new QHBoxLayout(indicatorBar);
+    indicatorBarLayout->setContentsMargins(8, 4, 8, 4);
+    indicatorBarLayout->setSpacing(4);
+    indicatorBarLayout->addStretch();  // 左对齐
     
-    // 副图指标标签
-    auto* indicatorLabel = new QLabel(QStringLiteral("副图指标:"));
-    indicatorLabel->setStyleSheet("color: #6b7280; font-size: 12px;");
-    indicatorLayout->addWidget(indicatorLabel);
+    // 主图指标标签
+    auto* mainLabel = new QLabel(QStringLiteral("主图:"));
+    mainLabel->setStyleSheet("color: #6b7280; font-size: 11px;");
+    indicatorBarLayout->addWidget(mainLabel);
     
-    // 指标按钮组
-    QStringList indicators = {QStringLiteral("MACD"), QStringLiteral("KDJ"), QStringLiteral("RSI"), 
-                              QStringLiteral("BOLL"), QStringLiteral("VOL"), QStringLiteral("无")};
-    for (int i = 0; i < indicators.size(); ++i) {
-        auto* btn = new QPushButton(indicators[i]);
+    // 主图指标按钮组
+    QStringList mainIndicators = {QStringLiteral("MA"), QStringLiteral("EMA"), QStringLiteral("BOLL"), QStringLiteral("SAR"), QStringLiteral("TD")};
+    for (int i = 0; i < mainIndicators.size(); ++i) {
+        auto* btn = new QPushButton(mainIndicators[i]);
         btn->setCheckable(true);
-        btn->setChecked(i == 0);  // 默认MACD
-        btn->setFixedHeight(24);
+        btn->setChecked(i == 0);  // 默认MA
+        btn->setFixedHeight(22);
         btn->setStyleSheet(R"(
             QPushButton {
                 background: transparent;
                 color: #9ca3af;
                 border: none;
-                padding: 0 10px;
-                font-size: 12px;
+                padding: 0 6px;
+                font-size: 11px;
                 border-radius: 3px;
             }
             QPushButton:checked {
@@ -490,31 +484,80 @@ void StockKLinePage::initMainArea()
             }
         )");
         connect(btn, &QPushButton::clicked, this, [this, i, btn, indicatorBar]() {
-            // 更新按钮状态
-            for (auto* child : indicatorBar->findChildren<QPushButton*>()) {
-                child->setChecked(child == btn);
+            // 更新主图指标按钮状态
+            bool foundMain = false;
+            for (int j = 0; j < 5; ++j) {
+                auto* child = indicatorBar->findChild<QPushButton*>(QString());
             }
-            // 切换指标
-            onIndicatorChanged(i);
+            // 切换主图指标
+            if (d->klineChart) {
+                d->klineChart->setMainIndicator(static_cast<MainIndicator>(i + 1));
+            }
         });
-        indicatorLayout->addWidget(btn);
+        indicatorBarLayout->addWidget(btn);
     }
     
-    indicatorLayout->addStretch();
+    // 分隔线
+    auto* indicatorDivider = new QFrame();
+    indicatorDivider->setFrameShape(QFrame::VLine);
+    indicatorDivider->setStyleSheet("QFrame { background: #2d3748; max-width: 1px; }");
+    indicatorDivider->setFixedWidth(1);
+    indicatorBarLayout->addWidget(indicatorDivider);
+    
+    // 副图指标标签
+    auto* subLabel = new QLabel(QStringLiteral("副图:"));
+    subLabel->setStyleSheet("color: #6b7280; font-size: 11px;");
+    indicatorBarLayout->addWidget(subLabel);
+    
+    // 副图指标按钮组
+    QStringList subIndicators = {QStringLiteral("MACD"), QStringLiteral("KDJ"), QStringLiteral("RSI"), QStringLiteral("VOL"), QStringLiteral("OBV")};
+    for (int i = 0; i < subIndicators.size(); ++i) {
+        auto* btn = new QPushButton(subIndicators[i]);
+        btn->setCheckable(true);
+        btn->setChecked(i == 0);  // 默认MACD
+        btn->setFixedHeight(22);
+        btn->setStyleSheet(R"(
+            QPushButton {
+                background: transparent;
+                color: #9ca3af;
+                border: none;
+                padding: 0 6px;
+                font-size: 11px;
+                border-radius: 3px;
+            }
+            QPushButton:checked {
+                background: #3b82f6;
+                color: #ffffff;
+            }
+            QPushButton:hover:!checked {
+                background: #2d3748;
+            }
+        )");
+        connect(btn, &QPushButton::clicked, this, [this, i, btn, indicatorBar]() {
+            // 切换副图指标
+            if (d->klineChart) {
+                d->klineChart->setSubIndicator(static_cast<SubIndicator>(i + 1));
+            }
+        });
+        indicatorBarLayout->addWidget(btn);
+    }
+    
+    indicatorBarLayout->addStretch();  // 右侧留空
+    
     chartLayout->addWidget(indicatorBar);
     
-    // 副图指标区域
-    m_indicatorPanel = new QWidget(chartContainer);
-    m_indicatorPanel->setFixedHeight(100);
-    m_indicatorPanel->setStyleSheet("QWidget { background: #0d1117; }");
-    chartLayout->addWidget(m_indicatorPanel);
+    // 分割线
+    auto* divider = new QFrame(chartContainer);
+    divider->setFrameShape(QFrame::HLine);
+    divider->setStyleSheet("QFrame { background: #21262d; border: none; max-height: 1px; }");
+    chartLayout->addWidget(divider);
     
     containerLayout->addWidget(chartContainer, 1);
     
     // 右侧：信息面板
     auto* rightPanel = new QWidget();
     rightPanel->setFixedWidth(240);
-    rightPanel->setStyleSheet("QWidget { background: #161b22; }");
+    rightPanel->setStyleSheet("QWidget { background: #161b22; border-left: 1px solid #2d3748; }");
     
     auto* rightLayout = new QVBoxLayout(rightPanel);
     rightLayout->setContentsMargins(0, 0, 0, 0);
@@ -568,15 +611,13 @@ void StockKLinePage::initMainArea()
     auto* statusRowLayout = new QHBoxLayout(statusRow);
     statusRowLayout->setContentsMargins(0, 0, 0, 0);
     
-    m_tradeStatusLabel = new QLabel(QStringLiteral("交易中"));
-    m_tradeStatusLabel->setStyleSheet("font-size: 12px; color: #00b578;");
+    m_tradeStatusLabel = new QLabel(QStringLiteral("交易状态"));
     statusRowLayout->addWidget(m_tradeStatusLabel);
-    
     statusRowLayout->addStretch();
     
-    auto* timeLabel = new QLabel(QDateTime::currentDateTime().toString("hh:mm:ss"));
-    timeLabel->setStyleSheet("font-size: 12px; color: #6b7280;");
-    statusRowLayout->addWidget(timeLabel);
+    auto* statusLabel = new QLabel(QStringLiteral("交易中"));
+    statusLabel->setStyleSheet("font-size: 12px; color: #00b578;");
+    statusRowLayout->addWidget(statusLabel);
     
     topInfoLayout->addWidget(statusRow);
     
