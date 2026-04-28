@@ -190,9 +190,9 @@ protected:
 private:
     // UI 初始化
     void initUI();
+    void initTopBar();
     void initToolBar();
     void initMainArea();
-    void initInfoPanel();
     void initConnections();
 
     // 数据加载
@@ -217,10 +217,56 @@ private:
     void updateStockInfo();
     void updateIndicatorPanel();
     void updateInfoPanel(const QDateTime& time, double price, double volume);
+    
+    // 辅助函数
+    static QString formatVolume(qint64 volume);
+    static QString formatMoney(double value);
 
     // PIMPL 实现
     struct Impl;
     std::unique_ptr<Impl> d;
+    
+    // 信息标签（用于上方信息栏）
+    QLabel* m_openLabel = nullptr;
+    QLabel* m_highLabel = nullptr;
+    QLabel* m_lowLabel = nullptr;
+    QLabel* m_closeLabel = nullptr;
+    QLabel* m_preCloseLabel = nullptr;
+    QLabel* m_volumeLabel = nullptr;
+    QLabel* m_turnoverLabel = nullptr;
+    QLabel* m_turnoverRateLabel = nullptr;
+    QLabel* m_amplitudeLabel = nullptr;
+    QLabel* m_peLabel = nullptr;
+    QLabel* m_pbLabel = nullptr;
+    QLabel* m_totalValueLabel = nullptr;
+    QLabel* m_circulationValueLabel = nullptr;
+    QLabel* m_codeLabel = nullptr;
+    
+    // 新增信息标签
+    QLabel* m_limitUpLabel = nullptr;           // 涨停
+    QLabel* m_limitDownLabel = nullptr;         // 跌停
+    QLabel* m_afterHoursVolumeLabel = nullptr;  // 盘后量
+    QLabel* m_volumeRatioLabel = nullptr;       // 量比
+    QLabel* m_afterHoursAmountLabel = nullptr;  // 盘后额
+    QLabel* m_orderRatioLabel = nullptr;        // 委比
+    QLabel* m_peTTMLabel = nullptr;             // 市盈率(TTM)
+    QLabel* m_peDynamicLabel = nullptr;         // 市盈率(动)
+    QLabel* m_peStaticLabel = nullptr;          // 市盈率(静)
+    QLabel* m_epsLabel = nullptr;               // 每股收益
+    QLabel* m_dividendLabel = nullptr;          // 股息(TTM)
+    QLabel* m_bpsLabel = nullptr;               // 每股净资产
+    QLabel* m_dividendYieldLabel = nullptr;     // 股息率(TTM)
+    QLabel* m_week52HighLabel = nullptr;        // 52周最高
+    QLabel* m_week52LowLabel = nullptr;         // 52周最低
+    QLabel* m_totalSharesLabel = nullptr;       // 总股本
+    QLabel* m_floatSharesLabel = nullptr;       // 流通股
+    QLabel* m_pledgeRatioLabel = nullptr;       // 质押率
+    QLabel* m_registrationLabel = nullptr;      // 注册制
+    QLabel* m_goodwillRatioLabel = nullptr;     // 商誉/净资产
+    QLabel* m_currencyLabel = nullptr;          // 货币单位
+    
+    // 副图指标面板
+    QWidget* m_indicatorPanel = nullptr;
 };
 
 #endif // STOCKKLINEPAGE_H
