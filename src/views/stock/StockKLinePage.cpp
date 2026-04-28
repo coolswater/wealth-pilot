@@ -35,6 +35,18 @@
 #include <QKeyEvent>
 #include <QRandomGenerator>
 #include <QtMath>
+#include <QMenu>
+#include <QDialog>
+#include <QCheckBox>
+#include <QCursor>
+#include <algorithm>
+#include <QTableWidget>
+#include <QHeaderView>
+#include <QTimer>
+#include <QPainter>
+#include <QKeyEvent>
+#include <QRandomGenerator>
+#include <QtMath>
 #include <algorithm>
 
 // ============================================================================
@@ -57,7 +69,6 @@ struct StockKLinePage::Impl {
     QMap<TechnicalIndicator, QVector<double>> indicatorValues;
     
     // UI 组件
-    QLineEdit* searchEdit = nullptr;
     QComboBox* adjustCombo = nullptr;
     QPushButton* refreshBtn = nullptr;
     
@@ -212,13 +223,10 @@ void StockKLinePage::initUI()
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
     
-    // 1. 顶部信息栏（股票名称、价格、涨跌幅）
-    initTopBar();
-    
-    // 2. 工具栏（周期、指标切换）
+    // 1. 工具栏（周期、指标切换）
     initToolBar();
     
-    // 3. 主区域（K线图 + 右侧信息面板）
+    // 2. 主区域（K线图 + 右侧信息面板）
     initMainArea();
     
     // 定时器
@@ -248,157 +256,6 @@ void StockKLinePage::initUI()
                     LOG_DEBUG(QString("Real KLine data received: %1 items").arg(data.size()));
                 }
             });
-}
-
-void StockKLinePage::initTopBar()
-{
-    // 顶部信息栏 - 雪球风格（详细数据）
-    auto* topBar = new QWidget(this);
-    topBar->setStyleSheet("QWidget { background: #1a1f2e; }");
-    
-    auto* mainLayout = new QVBoxLayout(topBar);
-    mainLayout->setContentsMargins(16, 12, 16, 12);
-    mainLayout->setSpacing(8);
-    
-    // 第一行：股票名称、价格、涨跌幅
-    auto* row1 = new QWidget();
-    auto* row1Layout = new QHBoxLayout(row1);
-    row1Layout->setContentsMargins(0, 0, 0, 0);
-    row1Layout->setSpacing(16);
-    
-    // 股票名称
-    d->stockNameLabel = new QLabel(QStringLiteral("--"));
-    d->stockNameLabel->setStyleSheet("font-size: 20px; font-weight: bold; color: #ffffff;");
-    row1Layout->addWidget(d->stockNameLabel);
-    
-    // 股票代码
-    m_codeLabel = new QLabel(QStringLiteral("--"));
-    m_codeLabel->setStyleSheet("font-size: 14px; color: #6b7280;");
-    row1Layout->addWidget(m_codeLabel);
-    
-    // 当前价格
-    d->priceLabel = new QLabel("--");
-    d->priceLabel->setStyleSheet("font-size: 28px; font-weight: bold; color: #ff4d4f;");
-    row1Layout->addWidget(d->priceLabel);
-    
-    // 涨跌幅
-    d->changeLabel = new QLabel("--");
-    d->changeLabel->setStyleSheet("font-size: 14px; color: #ff4d4f;");
-    row1Layout->addWidget(d->changeLabel);
-    
-    row1Layout->addStretch();
-    
-    // 搜索框
-    d->searchEdit = new QLineEdit();
-    d->searchEdit->setPlaceholderText(QStringLiteral("搜索股票"));
-    d->searchEdit->setFixedWidth(140);
-    d->searchEdit->setStyleSheet("QLineEdit { background: #2d3748; color: #ffffff; padding: 6px 12px; border: none; border-radius: 4px; }");
-    row1Layout->addWidget(d->searchEdit);
-    
-    mainLayout->addWidget(row1);
-    
-    // 分隔线
-    auto* divider = new QFrame();
-    divider->setFrameShape(QFrame::HLine);
-    divider->setStyleSheet("QFrame { background: #2d3748; max-height: 1px; }");
-    mainLayout->addWidget(divider);
-    
-    // 详细信息网格（8列x4行）
-    auto* gridWidget = new QWidget();
-    auto* gridLayout = new QGridLayout(gridWidget);
-    gridLayout->setContentsMargins(0, 0, 0, 0);
-    gridLayout->setSpacing(4);
-    
-    // 创建信息项的辅助函数
-    auto createInfoItem = [](const QString& label, QLabel*& valueLabel, const QString& color = "#ffffff") {
-        auto* w = new QWidget();
-        auto* l = new QHBoxLayout(w);
-        l->setContentsMargins(0, 0, 0, 0);
-        l->setSpacing(4);
-        
-        auto* lbl = new QLabel(label);
-        lbl->setStyleSheet("font-size: 12px; color: #6b7280;");
-        l->addWidget(lbl);
-        
-        valueLabel = new QLabel("--");
-        valueLabel->setStyleSheet(QString("font-size: 12px; color: %1;").arg(color));
-        l->addWidget(valueLabel);
-        l->addStretch();
-        
-        return w;
-    };
-    
-    // 创建带颜色值的信息项
-    auto createColorItem = [](const QString& label, QLabel*& valueLabel) {
-        auto* w = new QWidget();
-        auto* l = new QHBoxLayout(w);
-        l->setContentsMargins(0, 0, 0, 0);
-        l->setSpacing(4);
-        
-        auto* lbl = new QLabel(label);
-        lbl->setStyleSheet("font-size: 12px; color: #6b7280;");
-        l->addWidget(lbl);
-        
-        valueLabel = new QLabel("--");
-        valueLabel->setStyleSheet("font-size: 12px; color: #ffffff;");
-        l->addWidget(valueLabel);
-        l->addStretch();
-        
-        return w;
-    };
-    
-    // 第1行：最高、今开、涨停、成交量
-    gridLayout->addWidget(createColorItem(QStringLiteral("最高"), m_highLabel), 0, 0);
-    gridLayout->addWidget(createColorItem(QStringLiteral("今开"), m_openLabel), 0, 1);
-    gridLayout->addWidget(createInfoItem(QStringLiteral("涨停"), m_limitUpLabel, "#ff4d4f"), 0, 2);
-    gridLayout->addWidget(createColorItem(QStringLiteral("成交量"), m_volumeLabel), 0, 3);
-    
-    // 第2行：最低、昨收、跌停、成交额
-    gridLayout->addWidget(createColorItem(QStringLiteral("最低"), m_lowLabel), 1, 0);
-    gridLayout->addWidget(createColorItem(QStringLiteral("昨收"), m_preCloseLabel), 1, 1);
-    gridLayout->addWidget(createInfoItem(QStringLiteral("跌停"), m_limitDownLabel, "#00b578"), 1, 2);
-    gridLayout->addWidget(createColorItem(QStringLiteral("成交额"), m_turnoverLabel), 1, 3);
-    
-    // 第3行：换手、盘后量、量比、总市值
-    gridLayout->addWidget(createColorItem(QStringLiteral("换手"), m_turnoverRateLabel), 2, 0);
-    gridLayout->addWidget(createColorItem(QStringLiteral("盘后量"), m_afterHoursVolumeLabel), 2, 1);
-    gridLayout->addWidget(createColorItem(QStringLiteral("量比"), m_volumeRatioLabel), 2, 2);
-    gridLayout->addWidget(createColorItem(QStringLiteral("总市值"), m_totalValueLabel), 2, 3);
-    
-    // 第4行：振幅、盘后额、委比、流通值
-    gridLayout->addWidget(createColorItem(QStringLiteral("振幅"), m_amplitudeLabel), 3, 0);
-    gridLayout->addWidget(createColorItem(QStringLiteral("盘后额"), m_afterHoursAmountLabel), 3, 1);
-    gridLayout->addWidget(createColorItem(QStringLiteral("委比"), m_orderRatioLabel), 3, 2);
-    gridLayout->addWidget(createColorItem(QStringLiteral("流通值"), m_circulationValueLabel), 3, 3);
-    
-    // 第5行：市盈率(动)、市盈率(TTM)、每股收益、股息(TTM)
-    gridLayout->addWidget(createColorItem(QStringLiteral("市盈率(动)"), m_peTTMLabel), 4, 0);
-    gridLayout->addWidget(createColorItem(QStringLiteral("市盈率(TTM)"), m_peDynamicLabel), 4, 1);
-    gridLayout->addWidget(createColorItem(QStringLiteral("每股收益"), m_epsLabel), 4, 2);
-    gridLayout->addWidget(createColorItem(QStringLiteral("股息(TTM)"), m_dividendLabel), 4, 3);
-    
-    // 第6行：市盈率(静)、市净率、每股净资产、股息率(TTM)
-    gridLayout->addWidget(createColorItem(QStringLiteral("市盈率(静)"), m_peStaticLabel), 5, 0);
-    gridLayout->addWidget(createColorItem(QStringLiteral("市净率"), m_pbLabel), 5, 1);
-    gridLayout->addWidget(createColorItem(QStringLiteral("每股净资产"), m_bpsLabel), 5, 2);
-    gridLayout->addWidget(createColorItem(QStringLiteral("股息率(TTM)"), m_dividendYieldLabel), 5, 3);
-    
-    // 第7行：52周最高、总股本、质押率、注册制
-    gridLayout->addWidget(createColorItem(QStringLiteral("52周最高"), m_week52HighLabel), 6, 0);
-    gridLayout->addWidget(createColorItem(QStringLiteral("总股本"), m_totalSharesLabel), 6, 1);
-    gridLayout->addWidget(createColorItem(QStringLiteral("质押率"), m_pledgeRatioLabel), 6, 2);
-    gridLayout->addWidget(createColorItem(QStringLiteral("注册制"), m_registrationLabel), 6, 3);
-    
-    // 第8行：52周最低、流通股、商誉/净资产、货币单位
-    gridLayout->addWidget(createColorItem(QStringLiteral("52周最低"), m_week52LowLabel), 7, 0);
-    gridLayout->addWidget(createColorItem(QStringLiteral("流通股"), m_floatSharesLabel), 7, 1);
-    gridLayout->addWidget(createColorItem(QStringLiteral("商誉/净资产"), m_goodwillRatioLabel), 7, 2);
-    gridLayout->addWidget(createColorItem(QStringLiteral("货币单位"), m_currencyLabel), 7, 3);
-    
-    mainLayout->addWidget(gridWidget);
-    
-    auto* layout = qobject_cast<QVBoxLayout*>(this->layout());
-    layout->addWidget(topBar);
 }
 
 void StockKLinePage::initToolBar()
@@ -656,39 +513,140 @@ void StockKLinePage::initMainArea()
     
     // 右侧：信息面板
     auto* rightPanel = new QWidget();
-    rightPanel->setFixedWidth(220);
+    rightPanel->setFixedWidth(240);
     rightPanel->setStyleSheet("QWidget { background: #161b22; }");
     
     auto* rightLayout = new QVBoxLayout(rightPanel);
-    rightLayout->setContentsMargins(8, 8, 8, 8);
-    rightLayout->setSpacing(8);
+    rightLayout->setContentsMargins(0, 0, 0, 0);
+    rightLayout->setSpacing(0);
     
-    // 五档盘口标题
+    // ========== 顶部信息区域 ==========
+    auto* topInfoWidget = new QWidget();
+    topInfoWidget->setStyleSheet("QWidget { background: #1a1f2e; }");
+    auto* topInfoLayout = new QVBoxLayout(topInfoWidget);
+    topInfoLayout->setContentsMargins(8, 8, 8, 8);
+    topInfoLayout->setSpacing(4);
+    
+    // 第一行：品种名称和代码（水平居中）
+    d->stockNameLabel = new QLabel(QStringLiteral("--(--)"));
+    d->stockNameLabel->setAlignment(Qt::AlignCenter);
+    d->stockNameLabel->setStyleSheet("font-size: 15px; font-weight: bold; color: #ffffff;");
+    topInfoLayout->addWidget(d->stockNameLabel);
+    
+    // 第二行：当前股价 + 涨跌额/涨跌幅（水平居中）
+    auto* priceRow = new QWidget();
+    auto* priceRowLayout = new QHBoxLayout(priceRow);
+    priceRowLayout->setContentsMargins(0, 0, 0, 0);
+    priceRowLayout->setSpacing(8);
+    
+    d->priceLabel = new QLabel("--");
+    d->priceLabel->setAlignment(Qt::AlignCenter);
+    d->priceLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: #ff4d4f;");
+    priceRowLayout->addWidget(d->priceLabel);
+    
+    auto* changeWidget = new QWidget();
+    auto* changeLayout = new QVBoxLayout(changeWidget);
+    changeLayout->setContentsMargins(0, 0, 0, 0);
+    changeLayout->setSpacing(0);
+    
+    d->changeLabel = new QLabel("--");
+    d->changeLabel->setStyleSheet("font-size: 12px; color: #ff4d4f;");
+    changeLayout->addWidget(d->changeLabel);
+    
+    auto* changePercentLabel = new QLabel("--");
+    changePercentLabel->setStyleSheet("font-size: 12px; color: #ff4d4f;");
+    changeLayout->addWidget(changePercentLabel);
+    m_changePercentLabel = changePercentLabel;
+    
+    priceRowLayout->addWidget(changeWidget);
+    priceRowLayout->addStretch();
+    
+    topInfoLayout->addWidget(priceRow);
+    
+    // 第三行：交易状态（两端对齐）
+    auto* statusRow = new QWidget();
+    auto* statusRowLayout = new QHBoxLayout(statusRow);
+    statusRowLayout->setContentsMargins(0, 0, 0, 0);
+    
+    m_tradeStatusLabel = new QLabel(QStringLiteral("交易中"));
+    m_tradeStatusLabel->setStyleSheet("font-size: 12px; color: #00b578;");
+    statusRowLayout->addWidget(m_tradeStatusLabel);
+    
+    statusRowLayout->addStretch();
+    
+    auto* timeLabel = new QLabel(QDateTime::currentDateTime().toString("hh:mm:ss"));
+    timeLabel->setStyleSheet("font-size: 12px; color: #6b7280;");
+    statusRowLayout->addWidget(timeLabel);
+    
+    topInfoLayout->addWidget(statusRow);
+    
+    // 第四行：委比 + 委差
+    auto* orderRow = new QWidget();
+    auto* orderRowLayout = new QHBoxLayout(orderRow);
+    orderRowLayout->setContentsMargins(0, 0, 0, 0);
+    orderRowLayout->setSpacing(16);
+    
+    auto* orderRatioWidget = new QWidget();
+    auto* orderRatioLayout = new QHBoxLayout(orderRatioWidget);
+    orderRatioLayout->setContentsMargins(0, 0, 0, 0);
+    orderRatioLayout->setSpacing(4);
+    auto* orderRatioLabel = new QLabel(QStringLiteral("委比"));
+    orderRatioLabel->setStyleSheet("font-size: 12px; color: #6b7280;");
+    orderRatioLayout->addWidget(orderRatioLabel);
+    m_orderRatioValue = new QLabel("--");
+    m_orderRatioValue->setStyleSheet("font-size: 12px; color: #ffffff;");
+    orderRatioLayout->addWidget(m_orderRatioValue);
+    orderRowLayout->addWidget(orderRatioWidget);
+    
+    orderRowLayout->addStretch();
+    
+    auto* orderDiffWidget = new QWidget();
+    auto* orderDiffLayout = new QHBoxLayout(orderDiffWidget);
+    orderDiffLayout->setContentsMargins(0, 0, 0, 0);
+    orderDiffLayout->setSpacing(4);
+    auto* orderDiffLabel = new QLabel(QStringLiteral("委差"));
+    orderDiffLabel->setStyleSheet("font-size: 12px; color: #6b7280;");
+    orderDiffLayout->addWidget(orderDiffLabel);
+    m_orderDiffValue = new QLabel("--");
+    m_orderDiffValue->setStyleSheet("font-size: 12px; color: #ffffff;");
+    orderDiffLayout->addWidget(m_orderDiffValue);
+    orderRowLayout->addWidget(orderDiffWidget);
+    
+    topInfoLayout->addWidget(orderRow);
+    
+    rightLayout->addWidget(topInfoWidget);
+    
+    // 分隔线
+    auto* divider1 = new QFrame();
+    divider1->setFrameShape(QFrame::HLine);
+    divider1->setStyleSheet("QFrame { background: #2d3748; max-height: 1px; }");
+    rightLayout->addWidget(divider1);
+    
+    // ========== 五档盘口 ==========
     auto* depthTitle = new QLabel(QStringLiteral("五档盘口"));
-    depthTitle->setStyleSheet("color: #ffffff; font-size: 13px; font-weight: bold;");
+    depthTitle->setStyleSheet("color: #ffffff; font-size: 13px; font-weight: bold; padding: 4px 8px;");
     rightLayout->addWidget(depthTitle);
     
-    // 五档盘口
     auto* depthWidget = new QWidget();
     auto* depthLayout = new QVBoxLayout(depthWidget);
-    depthLayout->setContentsMargins(0, 0, 0, 0);
+    depthLayout->setContentsMargins(4, 0, 4, 0);
     depthLayout->setSpacing(1);
     
-    auto createDepthRow = [](const QString& label, const QString& price, const QString& volume, bool isSell) {
+    auto createDepthRow = [](const QString& label, QLabel*& priceLbl, QLabel*& volLbl, bool isSell) {
         auto* row = new QWidget();
         auto* rowLayout = new QHBoxLayout(row);
-        rowLayout->setContentsMargins(4, 2, 4, 2);
-        rowLayout->setSpacing(8);
+        rowLayout->setContentsMargins(0, 1, 0, 1);
+        rowLayout->setSpacing(4);
         
         auto* lbl = new QLabel(label);
         lbl->setStyleSheet(QString("color: %1; font-size: 12px; min-width: 28px;").arg(isSell ? "#00b578" : "#ff4d4f"));
         rowLayout->addWidget(lbl);
         
-        auto* priceLbl = new QLabel(price);
-        priceLbl->setStyleSheet(QString("color: %1; font-size: 12px; min-width: 55px;").arg(isSell ? "#00b578" : "#ff4d4f"));
+        priceLbl = new QLabel("--");
+        priceLbl->setStyleSheet(QString("color: %1; font-size: 12px; min-width: 50px;").arg(isSell ? "#00b578" : "#ff4d4f"));
         rowLayout->addWidget(priceLbl);
         
-        auto* volLbl = new QLabel(volume);
+        volLbl = new QLabel("--");
         volLbl->setStyleSheet("color: #9ca3af; font-size: 12px;");
         volLbl->setAlignment(Qt::AlignRight);
         rowLayout->addWidget(volLbl);
@@ -698,7 +656,11 @@ void StockKLinePage::initMainArea()
     
     // 卖5-1
     for (int i = 5; i >= 1; --i) {
-        depthLayout->addWidget(createDepthRow(QStringLiteral("卖%1").arg(i), "--", "--", true));
+        QLabel* priceLbl = nullptr;
+        QLabel* volLbl = nullptr;
+        depthLayout->addWidget(createDepthRow(QStringLiteral("卖%1").arg(i), priceLbl, volLbl, true));
+        m_sellPriceLabels.append(priceLbl);
+        m_sellVolLabels.append(volLbl);
     }
     
     // 分隔线
@@ -709,51 +671,84 @@ void StockKLinePage::initMainArea()
     
     // 买1-5
     for (int i = 1; i <= 5; ++i) {
-        depthLayout->addWidget(createDepthRow(QStringLiteral("买%1").arg(i), "--", "--", false));
+        QLabel* priceLbl = nullptr;
+        QLabel* volLbl = nullptr;
+        depthLayout->addWidget(createDepthRow(QStringLiteral("买%1").arg(i), priceLbl, volLbl, false));
+        m_buyPriceLabels.append(priceLbl);
+        m_buyVolLabels.append(volLbl);
     }
     
     rightLayout->addWidget(depthWidget);
     
     // 分隔线
-    auto* panelDivider = new QFrame();
-    panelDivider->setFrameShape(QFrame::HLine);
-    panelDivider->setStyleSheet("QFrame { background: #2d3748; max-height: 1px; }");
-    rightLayout->addWidget(panelDivider);
+    auto* divider2 = new QFrame();
+    divider2->setFrameShape(QFrame::HLine);
+    divider2->setStyleSheet("QFrame { background: #2d3748; max-height: 1px; }");
+    rightLayout->addWidget(divider2);
     
-    // 成交明细标题
-    auto* tradeTitle = new QLabel(QStringLiteral("成交明细"));
-    tradeTitle->setStyleSheet("color: #ffffff; font-size: 13px; font-weight: bold;");
-    rightLayout->addWidget(tradeTitle);
-    
-    // 成交明细表格
-    m_tradeDetailTable = new QTableWidget();
-    m_tradeDetailTable->setColumnCount(3);
-    m_tradeDetailTable->setHorizontalHeaderLabels({QStringLiteral("时间"), QStringLiteral("价格"), QStringLiteral("成交量")});
-    m_tradeDetailTable->horizontalHeader()->setStretchLastSection(true);
-    m_tradeDetailTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_tradeDetailTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_tradeDetailTable->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_tradeDetailTable->verticalHeader()->setVisible(false);
-    m_tradeDetailTable->setStyleSheet(R"(
+    // ========== 详细信息表格（14行4列） ==========
+    m_detailTable = new QTableWidget();
+    m_detailTable->setRowCount(14);
+    m_detailTable->setColumnCount(4);
+    m_detailTable->horizontalHeader()->setVisible(false);
+    m_detailTable->verticalHeader()->setVisible(false);
+    m_detailTable->setShowGrid(false);
+    m_detailTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_detailTable->setSelectionMode(QAbstractItemView::NoSelection);
+    m_detailTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    m_detailTable->setStyleSheet(R"(
         QTableWidget {
-            background: #0d1117;
+            background: #161b22;
             color: #ffffff;
             border: none;
             font-size: 11px;
         }
         QTableWidget::item {
-            padding: 2px;
-        }
-        QHeaderView::section {
-            background: #21262d;
-            color: #6b7280;
-            border: none;
-            padding: 4px;
-            font-size: 11px;
+            padding: 2px 4px;
         }
     )");
-    m_tradeDetailTable->setMinimumHeight(150);
-    rightLayout->addWidget(m_tradeDetailTable, 1);
+    
+    // 设置表格数据
+    QStringList rowLabels = {
+        QStringLiteral("最新"), QStringLiteral("涨幅"), QStringLiteral("总手"), QStringLiteral("换手"),
+        QStringLiteral("最高"), QStringLiteral("今开"), QStringLiteral("涨停"), QStringLiteral("外盘"),
+        QStringLiteral("盘后量"), QStringLiteral("净资产"), QStringLiteral("收益"), QStringLiteral("股息"),
+        QStringLiteral("总股本"), QStringLiteral("流通股")
+    };
+    
+    QStringList rowLabels2 = {
+        QStringLiteral("价格"), QStringLiteral("涨跌"), QStringLiteral("金额"), QStringLiteral("量比"),
+        QStringLiteral("最低"), QStringLiteral("昨收"), QStringLiteral("跌停"), QStringLiteral("内盘"),
+        QStringLiteral("盘后额"), QStringLiteral("ROE"), QStringLiteral("PE(动)"), QStringLiteral("股息率"),
+        QStringLiteral("总值"), QStringLiteral("流值")
+    };
+    
+    for (int row = 0; row < 14; ++row) {
+        // 第一列：标签
+        auto* labelItem1 = new QTableWidgetItem(rowLabels[row]);
+        labelItem1->setForeground(QColor("#6b7280"));
+        labelItem1->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+        m_detailTable->setItem(row, 0, labelItem1);
+        
+        // 第二列：值
+        auto* valueItem1 = new QTableWidgetItem("--");
+        valueItem1->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        m_detailTable->setItem(row, 1, valueItem1);
+        
+        // 第三列：标签
+        auto* labelItem2 = new QTableWidgetItem(rowLabels2[row]);
+        labelItem2->setForeground(QColor("#6b7280"));
+        labelItem2->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+        m_detailTable->setItem(row, 2, labelItem2);
+        
+        // 第四列：值
+        auto* valueItem2 = new QTableWidgetItem("--");
+        valueItem2->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        m_detailTable->setItem(row, 3, valueItem2);
+    }
+    
+    m_detailTable->setMinimumHeight(280);
+    rightLayout->addWidget(m_detailTable);
     
     containerLayout->addWidget(rightPanel);
     
@@ -771,12 +766,6 @@ void StockKLinePage::initConnections()
     // 刷新按钮
     connect(d->refreshBtn, &QPushButton::clicked,
             this, &StockKLinePage::onRefresh);
-    
-    // 搜索框
-    connect(d->searchEdit, &QLineEdit::returnPressed,
-            this, [this]() {
-                onSearchStock(d->searchEdit->text());
-            });
     
     // K线图十字光标
     connect(d->klineChart, &KLineChart::crosshairMoved,
@@ -840,6 +829,253 @@ void StockKLinePage::onIndicatorChanged(int index)
     if (index >= 0 && index < mapping.size()) {
         addIndicator(mapping[index]);
     }
+}
+
+void StockKLinePage::onAddToWatchlist()
+{
+    // 添加到自选
+    m_isInWatchlist = true;
+    m_addToWatchlistBtn->setVisible(false);
+    m_addedToWatchlistLabel->setVisible(true);
+    
+    LOG_INFO(QString("Added to watchlist: %1").arg(d->stockCode));
+}
+
+void StockKLinePage::onRemoveFromWatchlist()
+{
+    // 从自选移除
+    m_isInWatchlist = false;
+    m_addToWatchlistBtn->setVisible(true);
+    m_addedToWatchlistLabel->setVisible(false);
+    
+    LOG_INFO(QString("Removed from watchlist: %1").arg(d->stockCode));
+}
+
+void StockKLinePage::onShowMoreMenu()
+{
+    // 显示更多操作菜单
+    QMenu menu(this);
+    menu.setStyleSheet(R"(
+        QMenu {
+            background: #2d3748;
+            color: #ffffff;
+            border: 1px solid #3d4a5c;
+            padding: 4px;
+        }
+        QMenu::item {
+            padding: 8px 24px;
+            border-radius: 4px;
+        }
+        QMenu::item:selected {
+            background: #3b82f6;
+        }
+    )");
+    
+    if (m_isInWatchlist) {
+        auto* removeAction = menu.addAction(QStringLiteral("取消自选"));
+        connect(removeAction, &QAction::triggered, this, &StockKLinePage::onRemoveFromWatchlist);
+    }
+    
+    auto* groupAction = menu.addAction(QStringLiteral("分组管理"));
+    connect(groupAction, &QAction::triggered, this, &StockKLinePage::onShowGroupDialog);
+    
+    menu.exec(QCursor::pos());
+}
+
+void StockKLinePage::onShowReminderDialog()
+{
+    // 显示股价提醒弹窗
+    auto* dialog = new QDialog(this);
+    dialog->setWindowTitle(QStringLiteral("股价提醒"));
+    dialog->setFixedSize(450, 320);
+    dialog->setStyleSheet(R"(
+        QDialog {
+            background: #1a1f2e;
+        }
+        QLabel {
+            color: #ffffff;
+        }
+        QLineEdit {
+            background: #2d3748;
+            color: #ffffff;
+            border: 1px solid #3d4a5c;
+            padding: 6px;
+            border-radius: 4px;
+        }
+        QComboBox {
+            background: #2d3748;
+            color: #ffffff;
+            border: 1px solid #3d4a5c;
+            padding: 4px;
+            border-radius: 4px;
+        }
+        QCheckBox {
+            color: #ffffff;
+        }
+        QPushButton {
+            background: #3b82f6;
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+        }
+        QPushButton:hover {
+            background: #2563eb;
+        }
+    )");
+    
+    auto* layout = new QVBoxLayout(dialog);
+    layout->setSpacing(16);
+    layout->setContentsMargins(20, 20, 20, 20);
+    
+    // 第一行：品种名称和代码，右侧股价和涨幅
+    auto* row1 = new QWidget();
+    auto* row1Layout = new QHBoxLayout(row1);
+    
+    auto* nameLabel = new QLabel(d->stockNameLabel->text());
+    nameLabel->setStyleSheet("font-size: 16px; font-weight: bold;");
+    row1Layout->addWidget(nameLabel);
+    
+    row1Layout->addStretch();
+    
+    auto* priceLabel = new QLabel(d->priceLabel->text() + " " + d->changeLabel->text());
+    priceLabel->setStyleSheet("font-size: 14px; color: #ff4d4f;");
+    row1Layout->addWidget(priceLabel);
+    
+    layout->addWidget(row1);
+    
+    // 分隔线
+    auto* divider = new QFrame();
+    divider->setFrameShape(QFrame::HLine);
+    divider->setStyleSheet("background: #2d3748;");
+    layout->addWidget(divider);
+    
+    // 创建提醒行的辅助函数
+    auto createReminderRow = [](const QString& label, QWidget* parent) {
+        auto* row = new QWidget();
+        auto* rowLayout = new QHBoxLayout(row);
+        rowLayout->setSpacing(8);
+        
+        auto* lbl = new QLabel(label);
+        lbl->setFixedWidth(80);
+        rowLayout->addWidget(lbl);
+        
+        auto* input = new QLineEdit();
+        input->setFixedWidth(100);
+        input->setPlaceholderText(QStringLiteral("输入值"));
+        rowLayout->addWidget(input);
+        
+        auto* combo = new QComboBox();
+        combo->addItems({QStringLiteral("仅提醒一次"), QStringLiteral("每日一次")});
+        combo->setFixedWidth(100);
+        rowLayout->addWidget(combo);
+        
+        auto* checkbox = new QCheckBox(QStringLiteral("开启"));
+        rowLayout->addWidget(checkbox);
+        
+        rowLayout->addStretch();
+        return row;
+    };
+    
+    // 第二行：股价涨到
+    layout->addWidget(createReminderRow(QStringLiteral("股价涨到:"), dialog));
+    
+    // 第三行：股价跌到
+    layout->addWidget(createReminderRow(QStringLiteral("股价跌到:"), dialog));
+    
+    // 第四行：涨跌幅超过
+    layout->addWidget(createReminderRow(QStringLiteral("涨跌幅超过:"), dialog));
+    
+    layout->addStretch();
+    
+    // 保存按钮
+    auto* saveBtn = new QPushButton(QStringLiteral("保存"));
+    saveBtn->setFixedWidth(100);
+    connect(saveBtn, &QPushButton::clicked, dialog, &QDialog::accept);
+    layout->addWidget(saveBtn, 0, Qt::AlignRight);
+    
+    dialog->exec();
+    dialog->deleteLater();
+}
+
+void StockKLinePage::onShowGroupDialog()
+{
+    // 显示分组管理弹窗
+    auto* dialog = new QDialog(this);
+    dialog->setWindowTitle(QStringLiteral("自定义分组"));
+    dialog->setFixedSize(350, 400);
+    dialog->setStyleSheet(R"(
+        QDialog {
+            background: #1a1f2e;
+        }
+        QLabel {
+            color: #ffffff;
+        }
+        QLineEdit {
+            background: #2d3748;
+            color: #ffffff;
+            border: 1px solid #3d4a5c;
+            padding: 6px;
+            border-radius: 4px;
+        }
+        QCheckBox {
+            color: #ffffff;
+        }
+        QPushButton {
+            background: #3b82f6;
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+        }
+        QPushButton:hover {
+            background: #2563eb;
+        }
+    )");
+    
+    auto* layout = new QVBoxLayout(dialog);
+    layout->setSpacing(12);
+    layout->setContentsMargins(20, 20, 20, 20);
+    
+    // 已有分组列表
+    auto* groupList = new QWidget();
+    auto* groupListLayout = new QVBoxLayout(groupList);
+    groupListLayout->setSpacing(8);
+    
+    // 模拟已有分组
+    QStringList groups = {QStringLiteral("默认分组"), QStringLiteral("科技股"), QStringLiteral("金融股")};
+    for (const auto& group : groups) {
+        auto* checkbox = new QCheckBox(group);
+        groupListLayout->addWidget(checkbox);
+    }
+    
+    layout->addWidget(groupList);
+    
+    layout->addStretch();
+    
+    // 新建分组区域
+    auto* newGroupWidget = new QWidget();
+    auto* newGroupLayout = new QHBoxLayout(newGroupWidget);
+    
+    auto* newGroupInput = new QLineEdit();
+    newGroupInput->setPlaceholderText(QStringLiteral("新建分组（不超过8个字）"));
+    newGroupInput->setMaxLength(8);
+    newGroupLayout->addWidget(newGroupInput);
+    
+    auto* addBtn = new QPushButton(QStringLiteral("添加"));
+    addBtn->setFixedWidth(60);
+    newGroupLayout->addWidget(addBtn);
+    
+    layout->addWidget(newGroupWidget);
+    
+    // 保存按钮
+    auto* saveBtn = new QPushButton(QStringLiteral("保存"));
+    saveBtn->setFixedWidth(100);
+    connect(saveBtn, &QPushButton::clicked, dialog, &QDialog::accept);
+    layout->addWidget(saveBtn, 0, Qt::AlignRight);
+    
+    dialog->exec();
+    dialog->deleteLater();
 }
 
 void StockKLinePage::onRefresh()
@@ -1282,7 +1518,12 @@ QVector<double> StockKLinePage::calculateRSI(const QVector<double>& prices, int 
 void StockKLinePage::updateStockInfo()
 {
     if (d->stockNameLabel) {
-        d->stockNameLabel->setText(d->stockName);
+        // 格式：银之杰(SZ:300085)
+        QString displayText = QString("%1(%2:%3)")
+            .arg(d->stockName)
+            .arg(d->exchange)
+            .arg(d->stockCode);
+        d->stockNameLabel->setText(displayText);
     }
     
     if (d->priceLabel) {

@@ -156,6 +156,13 @@ private slots:
      * @brief 指标切换
      */
     void onIndicatorChanged(int index);
+    
+    // 自选和提醒操作
+    void onAddToWatchlist();
+    void onRemoveFromWatchlist();
+    void onShowMoreMenu();
+    void onShowReminderDialog();
+    void onShowGroupDialog();
 
     /**
      * @brief 刷新数据
@@ -190,7 +197,6 @@ protected:
 private:
     // UI 初始化
     void initUI();
-    void initTopBar();
     void initToolBar();
     void initMainArea();
     void initConnections();
@@ -270,6 +276,30 @@ private:
     
     // 成交明细表格
     QTableWidget* m_tradeDetailTable = nullptr;
+    
+    // 详细信息表格
+    QTableWidget* m_detailTable = nullptr;
+    
+    // 五档盘口标签
+    QVector<QLabel*> m_sellPriceLabels;
+    QVector<QLabel*> m_sellVolLabels;
+    QVector<QLabel*> m_buyPriceLabels;
+    QVector<QLabel*> m_buyVolLabels;
+    
+    // 新增信息标签
+    QLabel* m_changePercentLabel = nullptr;    // 涨跌幅
+    QLabel* m_tradeStatusLabel = nullptr;      // 交易状态
+    QLabel* m_orderRatioValue = nullptr;       // 委比值
+    QLabel* m_orderDiffValue = nullptr;        // 委差值
+    
+    // 操作按钮
+    QPushButton* m_addToWatchlistBtn = nullptr;      // 加自选按钮
+    QLabel* m_addedToWatchlistLabel = nullptr;       // 已添加标签
+    QPushButton* m_moreBtn = nullptr;                // 更多操作按钮
+    QPushButton* m_reminderBtn = nullptr;            // 提醒按钮
+    
+    // 状态
+    bool m_isInWatchlist = false;                    // 是否已添加自选
 };
 
 #endif // STOCKKLINEPAGE_H
