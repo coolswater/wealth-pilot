@@ -372,7 +372,103 @@ cmake --build build --config Release
 
 ---
 
-## 九、版本历史
+## 九、新增模块说明（2024-04更新）
+
+### 9.1 基金模块 (FundPage)
+
+**文件位置**：`src/views/fund/`
+
+**功能**：
+- 基金列表展示（ETF、LOF、开放式、货币、债券）
+- 基金详情查看
+- 持仓明细展示
+- K线图（场内基金）
+- 搜索筛选
+- 加自选
+
+### 9.2 外汇模块 (ForexPage)
+
+**文件位置**：`src/views/forex/`
+
+**功能**：
+- 主要货币对行情
+- 汇率走势图
+- 汇率换算工具
+- 历史汇率查询
+
+### 9.3 数字货币模块 (CryptoPage)
+
+**文件位置**：`src/views/crypto/`
+
+**功能**：
+- 主流加密货币行情
+- 市值排名
+- 24小时涨跌幅
+- K线图表
+
+### 9.4 策略回测模块 (BacktestPage) ✨新增
+
+**文件位置**：`src/views/backtest/`
+
+**功能**：
+- 策略编写与编辑
+- 历史数据回测
+- 回测结果展示（收益曲线、最大回撤、夏普比率）
+- 策略参数优化
+- 回测报告导出
+
+**数据结构**：
+```cpp
+struct BacktestResult {
+    double totalReturn;     // 总收益率
+    double annualReturn;    // 年化收益率
+    double maxDrawdown;     // 最大回撤
+    double sharpeRatio;     // 夏普比率
+    double winRate;         // 胜率
+    double profitFactor;    // 盈亏比
+    int totalTrades;        // 总交易次数
+};
+```
+
+### 9.5 预警中心模块 (AlertCenterPage) ✨新增
+
+**文件位置**：`src/views/alert/`
+
+**功能**：
+- 价格预警设置（涨跌幅、价格突破）
+- 预警触发记录
+- 消息推送设置
+- 预警历史查询
+
+**预警类型**：
+- 价格高于/低于
+- 涨幅高于/跌幅高于
+- 成交量高于
+- 换手率高于
+
+### 9.6 数据导出工具 (DataExporter) ✨新增
+
+**文件位置**：`src/utils/DataExporter.h/cpp`
+
+**功能**：
+- 导出K线数据
+- 导出交易记录
+- 导出回测报告（PDF）
+- 导出预警记录
+
+**导出格式**：
+```cpp
+enum class ExportFormat {
+    CSV,        // CSV格式
+    Excel,      // Excel格式
+    PDF,        // PDF格式
+    JSON        // JSON格式
+};
+```
+
+---
+
+## 十、版本历史
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
