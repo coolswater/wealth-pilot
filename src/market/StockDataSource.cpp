@@ -306,7 +306,14 @@ QString StockDataSource::normalizeSymbol(const QString &symbol)
 
 QString StockDataSource::toSinaSymbol(const QString &symbol)
 {
-    // 添加前缀
+    // 如果已经有前缀，直接返回
+    if (symbol.startsWith("sh") || symbol.startsWith("sz") || 
+        symbol.startsWith("SH") || symbol.startsWith("SZ")) {
+        return symbol.toLower();
+    }
+    
+    // 根据代码第一位判断市场
+    // 6开头是上海，其他是深圳
     if (symbol.startsWith("6")) {
         return "sh" + symbol;
     } else {

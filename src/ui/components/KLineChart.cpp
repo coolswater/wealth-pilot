@@ -276,6 +276,11 @@ KLineStyle KLineChart::style() const
  */
 void KLineChart::zoom(double factor)
 {
+    // 如果没有数据，不执行缩放
+    if (d->data.isEmpty()) {
+        return;
+    }
+    
     int newCount = static_cast<int>(d->visibleCount / factor);
     newCount = qBound(10, newCount, d->data.size());
     
@@ -294,6 +299,11 @@ void KLineChart::zoom(double factor)
  */
 void KLineChart::pan(int dx)
 {
+    // 如果没有数据，不执行平移
+    if (d->data.isEmpty()) {
+        return;
+    }
+    
     int candleWidth = d->style.candleWidth + d->style.candleSpacing;
     int indexDelta = dx / candleWidth;
     

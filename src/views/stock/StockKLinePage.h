@@ -199,6 +199,7 @@ private:
     void loadKLineData();
     void loadStockInfo();
     void calculateIndicators();
+    void generateMockData();  ///< 生成模拟数据
 
     // 技术指标计算
     QVector<double> calculateMA(const QVector<double>& prices, int period);
