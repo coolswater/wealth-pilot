@@ -267,6 +267,9 @@ private:
     
     // 副图指标面板
     QWidget* m_indicatorPanel = nullptr;
+    
+    // 成交明细表格
+    QTableWidget* m_tradeDetailTable = nullptr;
 };
 
 #endif // STOCKKLINEPAGE_H
