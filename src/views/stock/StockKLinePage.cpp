@@ -269,34 +269,6 @@ void StockKLinePage::initToolBar()
     layout->setContentsMargins(12, 6, 12, 6);
     layout->setSpacing(4);
     
-    // 搜索框
-    m_searchEdit = new QLineEdit();
-    m_searchEdit->setPlaceholderText(QStringLiteral("搜索股票代码/名称"));
-    m_searchEdit->setFixedWidth(140);
-    m_searchEdit->setFixedHeight(26);
-    m_searchEdit->setStyleSheet(R"(
-        QLineEdit {
-            background: #2d3748;
-            color: #ffffff;
-            border: none;
-            padding: 0 10px;
-            font-size: 12px;
-            border-radius: 4px;
-        }
-        QLineEdit::placeholder {
-            color: #6b7280;
-        }
-    )");
-    connect(m_searchEdit, &QLineEdit::textChanged, this, &StockKLinePage::onSearchTextChanged);
-    layout->addWidget(m_searchEdit);
-    
-    // 分隔线
-    auto* divider0 = new QFrame();
-    divider0->setFrameShape(QFrame::VLine);
-    divider0->setStyleSheet("QFrame { background: #2d3748; max-width: 1px; }");
-    divider0->setFixedWidth(1);
-    layout->addWidget(divider0);
-    
     // 周期按钮组（分时、日K、五日、周K、月K、季K、年K）
     auto* periodGroup = new QWidget();
     periodGroup->setStyleSheet("QWidget { background: transparent; }");
@@ -752,6 +724,9 @@ void StockKLinePage::initMainArea()
     };
     
     for (int row = 0; row < 14; ++row) {
+        // 设置行高为紧凑模式
+        m_detailTable->setRowHeight(row, 18);
+        
         // 第一列：标签
         auto* labelItem1 = new QTableWidgetItem(rowLabels[row]);
         labelItem1->setForeground(QColor("#6b7280"));
@@ -777,6 +752,71 @@ void StockKLinePage::initMainArea()
     
     m_detailTable->setMinimumHeight(280);
     rightLayout->addWidget(m_detailTable);
+    
+    // 分隔线
+    auto* divider3 = new QFrame();
+    divider3->setFrameShape(QFrame::HLine);
+    divider3->setStyleSheet("QFrame { background: #2d3748; max-height: 1px; }");
+    rightLayout->addWidget(divider3);
+    
+    // ========== 成交记录（无标题无表头） ==========
+    m_tradeRecordTable = new QTableWidget();
+    m_tradeRecordTable->setColumnCount(4);
+    m_tradeRecordTable->horizontalHeader()->setVisible(false);  // 隐藏表头
+    m_tradeRecordTable->verticalHeader()->setVisible(false);
+    m_tradeRecordTable->setShowGrid(false);
+    m_tradeRecordTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_tradeRecordTable->setSelectionMode(QAbstractItemView::NoSelection);
+    m_tradeRecordTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    m_tradeRecordTable->setStyleSheet(R"(
+        QTableWidget {
+            background: transparent;
+            color: #ffffff;
+            border: none;
+            font-size: 11px;
+        }
+        QTableWidget::item {
+            padding: 1px 2px;
+        }
+    )");
+    m_tradeRecordTable->setMinimumHeight(150);
+    
+    // 添加模拟数据
+    m_tradeRecordTable->setRowCount(12);
+    QStringList times = {"09:30", "09:31", "09:32", "09:33", "09:34", "09:35", "09:36", "09:37", "09:38", "09:39", "09:40", "09:41"};
+    QStringList prices = {"35.08", "35.10", "35.12", "35.09", "35.11", "35.13", "35.10", "35.08", "35.06", "35.04", "35.02", "35.00"};
+    QStringList volumes = {"1234", "567", "890", "432", "654", "789", "321", "456", "678", "234", "567", "890"};
+    QStringList counts = {"12", "5", "8", "4", "6", "7", "3", "4", "6", "2", "5", "8"};
+    
+    for (int i = 0; i < 12; ++i) {
+        m_tradeRecordTable->setRowHeight(i, 16);  // 紧凑行高
+        
+        auto* timeItem = new QTableWidgetItem(times[i]);
+        timeItem->setTextAlignment(Qt::AlignCenter);
+        m_tradeRecordTable->setItem(i, 0, timeItem);
+        
+        auto* priceItem = new QTableWidgetItem(prices[i]);
+        priceItem->setTextAlignment(Qt::AlignCenter);
+        // 根据价格变化设置颜色
+        if (i > 0 && prices[i].toDouble() > prices[i-1].toDouble()) {
+            priceItem->setForeground(QColor("#ff4d4f"));  // 红色
+        } else if (i > 0 && prices[i].toDouble() < prices[i-1].toDouble()) {
+            priceItem->setForeground(QColor("#00b578"));  // 绿色
+        }
+        m_tradeRecordTable->setItem(i, 1, priceItem);
+        
+        auto* volItem = new QTableWidgetItem(volumes[i]);
+        volItem->setTextAlignment(Qt::AlignCenter);
+        volItem->setForeground(QColor("#9ca3af"));
+        m_tradeRecordTable->setItem(i, 2, volItem);
+        
+        auto* countItem = new QTableWidgetItem(counts[i]);
+        countItem->setTextAlignment(Qt::AlignCenter);
+        countItem->setForeground(QColor("#9ca3af"));
+        m_tradeRecordTable->setItem(i, 3, countItem);
+    }
+    
+    rightLayout->addWidget(m_tradeRecordTable);
     
     containerLayout->addWidget(rightPanel);
     

@@ -286,6 +286,9 @@ private:
     // 详细信息表格
     QTableWidget* m_detailTable = nullptr;
     
+    // 成交记录表格
+    QTableWidget* m_tradeRecordTable = nullptr;
+    
     // 五档盘口标签
     QVector<QLabel*> m_sellPriceLabels;
     QVector<QLabel*> m_sellVolLabels;
