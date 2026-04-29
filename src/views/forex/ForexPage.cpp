@@ -88,11 +88,11 @@ void ForexPage::setupUI()
     
     // 主内容区域
     auto* splitter = new QSplitter(Qt::Horizontal, this);
-    splitter->setStyleSheet("QSplitter::handle { background: #2a2a2a; width: 1px; }");
+    splitter->setStyleSheet(QString("QSplitter::handle { background: %1; width: 1px; }").arg(Tokens::Colors::Border));
     
     // 左侧：外汇列表
     auto* listWidget = new QWidget();
-    listWidget->setStyleSheet("QWidget { background: #0a0a0a; }");
+    listWidget->setStyleSheet(QString("QWidget { background: %1; }").arg(Tokens::Colors::BgBase));
     auto* listLayout = new QVBoxLayout(listWidget);
     listLayout->setContentsMargins(0, 0, 0, 0);
     
@@ -102,10 +102,10 @@ void ForexPage::setupUI()
     
     // 右侧：详情和换算
     auto* rightWidget = new QWidget();
-    rightWidget->setStyleSheet("QWidget { background: #0a0a0a; }");
+    rightWidget->setStyleSheet(QString("QWidget { background: %1; }").arg(Tokens::Colors::BgBase));
     auto* rightLayout = new QVBoxLayout(rightWidget);
-    rightLayout->setContentsMargins(12, 12, 12, 12);
-    rightLayout->setSpacing(12);
+    rightLayout->setContentsMargins(Tokens::Spacing::MD, Tokens::Spacing::MD, Tokens::Spacing::MD, Tokens::Spacing::MD);
+    rightLayout->setSpacing(Tokens::Spacing::MD);
     
     initRateChart();
     rightLayout->addWidget(d->rateChart, 1);
@@ -125,10 +125,10 @@ void ForexPage::initToolBar()
 {
     auto* toolbar = new QWidget(this);
     toolbar->setFixedHeight(40);
-    toolbar->setStyleSheet("QWidget { background: #0a0a0a; }");
+    toolbar->setStyleSheet(QString("QWidget { background: %1; }").arg(Tokens::Colors::BgBase));
     
     auto* layout = new QHBoxLayout(toolbar);
-    layout->setContentsMargins(12, 6, 12, 6);
+    layout->setContentsMargins(Tokens::Spacing::MD, 6, Tokens::Spacing::MD, 6);
     
     auto* refreshBtn = new QPushButton(QStringLiteral("刷新"));
     refreshBtn->setFixedSize(60, 26);
