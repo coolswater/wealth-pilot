@@ -763,6 +763,10 @@ void FuturesKLinePage::onMainIndicatorChanged(const QString& indicator)
         mainIndicator = MainIndicator::EMA;
     } else if (indicator == "BOLL") {
         mainIndicator = MainIndicator::BOLL;
+    } else if (indicator == "DMI") {
+        mainIndicator = MainIndicator::DMI;
+    } else if (indicator == "ENE") {
+        mainIndicator = MainIndicator::ENE;
     }
     
     if (d->klineChart) {
@@ -782,6 +786,8 @@ void FuturesKLinePage::onSubIndicatorChanged(const QString& indicator)
         subIndicator = SubIndicator::KDJ;
     } else if (indicator == "RSI") {
         subIndicator = SubIndicator::RSI;
+    } else if (indicator == "EXPMA") {
+        subIndicator = SubIndicator::EXPMA;
     }
     
     if (d->klineChart) {

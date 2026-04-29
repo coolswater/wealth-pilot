@@ -32,6 +32,8 @@ enum class MainIndicator {
     MA,         // 移动平均线组合（MA5, MA10, MA20）
     EMA,        // 指数移动平均组合（EMA12, EMA26）
     BOLL,       // 布林带
+    DMI,        // DMI指标（趋向指标）
+    ENE,        // ENE轨道线
     SAR,        // 抛物线转向
     TD          // 神奇九转
 };
@@ -44,6 +46,7 @@ enum class SubIndicator {
     MACD,       // MACD指标
     KDJ,        // KDJ指标
     RSI,        // RSI指标
+    EXPMA,      // EXPMA指标（指数平均数）
     VOLUME,     // 成交量（默认显示）
     OBV,        // OBV指标
     CCI,        // CCI指标
@@ -224,9 +227,12 @@ private:
     void calculateMA(int period = 5);
     void calculateEMA(int period = 12);
     void calculateBOLL(int period = 20);
+    void calculateDMI(int period = 14);       // DMI指标
+    void calculateENE(int period = 10);      // ENE轨道线
     void calculateMACD();
     void calculateKDJ();
     void calculateRSI(int period = 14);
+    void calculateEXPMA(int period = 12);    // EXPMA指标
     
     // 坐标转换
     int timeToX(int index) const;

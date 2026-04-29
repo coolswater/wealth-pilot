@@ -56,8 +56,8 @@ struct KLineChart::Impl {
     QMap<QString, QColor> subIndicatorColors;
     
     // 主图和副图指标类型
-    MainIndicator currentMainIndicator = MainIndicator::MA;
-    SubIndicator currentSubIndicator = SubIndicator::None;
+    MainIndicator currentMainIndicator = MainIndicator::MA;    // 默认MA均线
+    SubIndicator currentSubIndicator = SubIndicator::MACD;     // 默认MACD
     
     // 副图区域参数
     double subMinValue = 0;         // 副图最小值
@@ -261,7 +261,7 @@ KLineChart::KLineChart(QWidget *parent)
     d->style.candleWidth = 8;                  // 蜡烛宽度
     d->style.candleSpacing = 2;                // 蜡烛间距
     d->style.showVolume = true;                // 显示成交量
-    d->style.volumeHeightRatio = 0.2;          // 成交量高度比例
+    d->style.volumeHeightRatio = 0.1;          // 成交量高度比例（减少一半）
     
     // 启用鼠标追踪
     setMouseTracking(true);
@@ -290,6 +290,19 @@ void KLineChart::setData(const QVector<KLineData>& data)
 {
     d->data = data;
     d->calculateVisibleRange();
+    
+    // 自动计算默认指标
+    if (!data.isEmpty()) {
+        // 计算默认主图指标（MA）
+        if (d->mainIndicatorLines.isEmpty()) {
+            setMainIndicator(d->currentMainIndicator);
+        }
+        // 计算默认副图指标（MACD）
+        if (d->subIndicatorLines.isEmpty()) {
+            setSubIndicator(d->currentSubIndicator);
+        }
+    }
+    
     update();
     
     LOG_DEBUG(QString("KLine data set: %1 items").arg(data.size()));
@@ -542,25 +555,26 @@ void KLineChart::resizeEvent(QResizeEvent *event)
     // 布局结构：主图区域 + 成交量区域 + 副图指标区域
     int volumeHeight = height() * d->style.volumeHeightRatio;
     int subChartHeight = 80;  // 副图指标区域高度（固定80像素）
-    int axisWidth = 60;       // 右侧坐标轴宽度
-    int topMargin = 30;       // 顶部边距
-    int bottomMargin = 30;    // 底部边距
+    int leftMargin = 5;       // 左侧边距（减少空白）
+    int rightAxisWidth = 55;  // 右侧坐标轴宽度
+    int topMargin = 25;       // 顶部边距
+    int bottomMargin = 25;    // 底部边距
     
     // 主图区域（K线）
-    d->chartRect = QRect(axisWidth, topMargin, 
-                         width() - axisWidth * 2, 
+    d->chartRect = QRect(leftMargin, topMargin, 
+                         width() - leftMargin - rightAxisWidth, 
                          height() - topMargin - bottomMargin - volumeHeight - subChartHeight);
     
     // 成交量区域
-    d->volumeRect = QRect(axisWidth, 
-                          d->chartRect.bottom() + 5, 
-                          width() - axisWidth * 2, 
+    d->volumeRect = QRect(leftMargin, 
+                          d->chartRect.bottom() + 3, 
+                          width() - leftMargin - rightAxisWidth, 
                           volumeHeight);
     
     // 副图指标区域
-    d->subChartRect = QRect(axisWidth, 
-                            d->volumeRect.bottom() + 5, 
-                            width() - axisWidth * 2, 
+    d->subChartRect = QRect(leftMargin, 
+                            d->volumeRect.bottom() + 3, 
+                            width() - leftMargin - rightAxisWidth, 
                             subChartHeight);
     
     d->calculateVisibleRange();
@@ -953,17 +967,29 @@ void KLineChart::drawCrosshair(QPainter& painter)
  */
 void KLineChart::drawAxis(QPainter& painter)
 {
-    painter.setPen(Qt::white);
+    painter.setPen(QColor(Tokens::Colors::TextSecondary));
     painter.setFont(QFont("Microsoft YaHei", 9));
     
     // 价格轴（右侧）
     int priceSteps = 5;
+    int axisX = width() - 50;  // 右侧坐标轴位置
     for (int i = 0; i <= priceSteps; ++i) {
         double price = d->minPrice + i * (d->maxPrice - d->minPrice) / priceSteps;
         int y = d->priceToY(price);
         
         QString text = QString::number(price, 'f', 2);
-        painter.drawText(width() - 55, y + 4, text);
+        painter.drawText(axisX, y + 4, text);
+    }
+    
+    // 副图指标轴（右侧）
+    if (d->subChartRect.height() > 0 && !d->subIndicatorLines.isEmpty()) {
+        int subSteps = 2;
+        for (int i = 0; i <= subSteps; ++i) {
+            double value = d->subMinValue + i * (d->subMaxValue - d->subMinValue) / subSteps;
+            int y = d->subValueToY(value);
+            QString text = QString::number(value, 'f', 1);
+            painter.drawText(axisX, y + 4, text);
+        }
     }
     
     // 时间轴（底部）
@@ -973,7 +999,7 @@ void KLineChart::drawAxis(QPainter& painter)
         if (index < d->data.size()) {
             int x = d->indexToX(index);
             QString text = d->data[index].time.toString("MM-dd");
-            painter.drawText(x - 20, height() - 10, text);
+            painter.drawText(x - 20, height() - 8, text);
         }
     }
 }
@@ -1048,15 +1074,15 @@ void KLineChart::drawKLineInfo(QPainter& painter)
     int textWidth = fm.horizontalAdvance(infoText) + 20;
     int textHeight = fm.height() + 8;
     
-    // 绘制背景（左上角）
-    int infoX = 60;  // 左边距
-    int infoY = 10;
+    // 绘制背景（左上角，适配新布局）
+    int infoX = 10;  // 左边距（减少空白）
+    int infoY = 5;
     
-    painter.fillRect(infoX - 5, infoY - 2, textWidth + 10, textHeight + 4, QColor("#1a1f2e"));
-    painter.fillRect(infoX, infoY, textWidth, textHeight, QColor("#2d3748"));
+    painter.fillRect(infoX - 5, infoY - 2, textWidth + 10, textHeight + 4, QColor(Tokens::Colors::BgSurface));
+    painter.fillRect(infoX, infoY, textWidth, textHeight, QColor(Tokens::Colors::BgElevated));
     
     // 绘制文本
-    painter.setPen(QColor("#ffffff"));
+    painter.setPen(QColor(Tokens::Colors::TextPrimary));
     painter.drawText(infoX + 10, infoY + textHeight - 6, infoText);
 }
 
@@ -1083,6 +1109,12 @@ void KLineChart::setMainIndicator(MainIndicator indicator)
             break;
         case MainIndicator::BOLL:
             calculateBOLL(20);
+            break;
+        case MainIndicator::DMI:
+            calculateDMI(14);
+            break;
+        case MainIndicator::ENE:
+            calculateENE(10);
             break;
         case MainIndicator::None:
         default:
@@ -1121,6 +1153,9 @@ void KLineChart::setSubIndicator(SubIndicator indicator)
             break;
         case SubIndicator::RSI:
             calculateRSI(14);
+            break;
+        case SubIndicator::EXPMA:
+            calculateEXPMA(12);
             break;
         case SubIndicator::None:
         default:
@@ -1360,4 +1395,149 @@ void KLineChart::calculateRSI(int period)
     // 添加到副图指标
     d->subIndicatorLines["RSI"] = rsiValues;
     d->subIndicatorColors["RSI"] = QColor("#ff6600");
+}
+
+/**
+ * @brief 计算DMI趋向指标（主图指标）
+ * @param period 周期，默认14
+ */
+void KLineChart::calculateDMI(int period)
+{
+    if (d->data.size() < period + 1) return;
+    
+    QVector<double> pdmValues, mdmValues, trValues;
+    QVector<double> pdiValues, mdiValues, adxValues;
+    pdmValues.resize(d->data.size());
+    mdmValues.resize(d->data.size());
+    trValues.resize(d->data.size());
+    pdiValues.resize(d->data.size());
+    mdiValues.resize(d->data.size());
+    adxValues.resize(d->data.size());
+    
+    // 计算PDM、MDM、TR
+    for (int i = 1; i < d->data.size(); ++i) {
+        double upMove = d->data[i].high - d->data[i-1].high;
+        double downMove = d->data[i-1].low - d->data[i].low;
+        
+        double pdm = (upMove > downMove && upMove > 0) ? upMove : 0;
+        double mdm = (downMove > upMove && downMove > 0) ? downMove : 0;
+        
+        double tr = qMax(qMax(d->data[i].high - d->data[i].low,
+                             d->data[i].high - d->data[i-1].close),
+                        d->data[i-1].close - d->data[i].low);
+        
+        pdmValues[i] = pdm;
+        mdmValues[i] = mdm;
+        trValues[i] = tr;
+    }
+    
+    // 计算PDI、MDI（使用EMA平滑）
+    double smoothPDM = 0, smoothMDM = 0, smoothTR = 0;
+    for (int i = 1; i < d->data.size(); ++i) {
+        if (i <= period) {
+            smoothPDM += pdmValues[i];
+            smoothMDM += mdmValues[i];
+            smoothTR += trValues[i];
+            pdiValues[i] = 0;
+            mdiValues[i] = 0;
+        } else {
+            smoothPDM = smoothPDM - smoothPDM / period + pdmValues[i];
+            smoothMDM = smoothMDM - smoothMDM / period + mdmValues[i];
+            smoothTR = smoothTR - smoothTR / period + trValues[i];
+            
+            pdiValues[i] = (smoothTR > 0) ? (smoothPDM / smoothTR * 100) : 0;
+            mdiValues[i] = (smoothTR > 0) ? (smoothMDM / smoothTR * 100) : 0;
+        }
+    }
+    
+    // 计算ADX
+    double smoothDX = 0;
+    for (int i = period + 1; i < d->data.size(); ++i) {
+        double diSum = pdiValues[i] + mdiValues[i];
+        double dx = (diSum > 0) ? (qAbs(pdiValues[i] - mdiValues[i]) / diSum * 100) : 0;
+        
+        if (i <= period * 2) {
+            smoothDX += dx;
+            adxValues[i] = 0;
+        } else {
+            smoothDX = smoothDX - smoothDX / period + dx;
+            adxValues[i] = smoothDX;
+        }
+    }
+    
+    // 添加到主图指标（PDI、MDI、ADX）
+    d->mainIndicatorLines["PDI"] = pdiValues;
+    d->mainIndicatorColors["PDI"] = QColor("#00ff00");
+    d->mainIndicatorLines["MDI"] = mdiValues;
+    d->mainIndicatorColors["MDI"] = QColor("#ff4d4f");
+    d->mainIndicatorLines["ADX"] = adxValues;
+    d->mainIndicatorColors["ADX"] = QColor("#ffff00");
+}
+
+/**
+ * @brief 计算ENE轨道线（主图指标）
+ * @param period 周期，默认10
+ */
+void KLineChart::calculateENE(int period)
+{
+    if (d->data.size() < period) return;
+    
+    QVector<double> upperValues, midValues, lowerValues;
+    upperValues.resize(d->data.size());
+    midValues.resize(d->data.size());
+    lowerValues.resize(d->data.size());
+    
+    // ENE参数
+    double n1 = 11.0 / 100.0;  // 上轨系数
+    double n2 = 9.0 / 100.0;   // 下轨系数
+    
+    for (int i = 0; i < d->data.size(); ++i) {
+        if (i < period - 1) {
+            upperValues[i] = midValues[i] = lowerValues[i] = 0;
+        } else {
+            // 计算中间价
+            double sum = 0;
+            for (int j = 0; j < period; ++j) {
+                sum += (d->data[i - j].high + d->data[i - j].low) / 2.0;
+            }
+            double mid = sum / period;
+            
+            midValues[i] = mid;
+            upperValues[i] = mid * (1 + n1);
+            lowerValues[i] = mid * (1 - n2);
+        }
+    }
+    
+    // 添加到主图指标
+    d->mainIndicatorLines["ENE_UPPER"] = upperValues;
+    d->mainIndicatorColors["ENE_UPPER"] = QColor("#ff4d4f");
+    d->mainIndicatorLines["ENE_MID"] = midValues;
+    d->mainIndicatorColors["ENE_MID"] = QColor("#ffffff");
+    d->mainIndicatorLines["ENE_LOWER"] = lowerValues;
+    d->mainIndicatorColors["ENE_LOWER"] = QColor("#00b578");
+}
+
+/**
+ * @brief 计算EXPMA指数平均数（副图指标）
+ * @param period 周期，默认12
+ */
+void KLineChart::calculateEXPMA(int period)
+{
+    if (d->data.isEmpty()) return;
+    
+    QVector<double> expmaValues;
+    expmaValues.resize(d->data.size());
+    
+    // EXPMA计算公式：EXPMA = (C - EXPMA_prev) * K + EXPMA_prev
+    // K = 2 / (N + 1)
+    double k = 2.0 / (period + 1);
+    expmaValues[0] = d->data[0].close;
+    
+    for (int i = 1; i < d->data.size(); ++i) {
+        expmaValues[i] = (d->data[i].close - expmaValues[i-1]) * k + expmaValues[i-1];
+    }
+    
+    // 添加到副图指标
+    d->subIndicatorLines["EXPMA"] = expmaValues;
+    d->subIndicatorColors["EXPMA"] = QColor("#00b578");
 }
