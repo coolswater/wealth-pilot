@@ -49,14 +49,14 @@
 #include <QChartView>
 
 // ============================================================================
-// 图表专用颜色
+// 图表专用颜色 - 使用 Tokens
 // ============================================================================
 
 namespace PortfolioColors {
-    constexpr const char* Stock = "#FF9500";   // 橙色
-    constexpr const char* Futures = "#5856D6"; // 紫色
-    constexpr const char* MyProfit = "#FF3B30";  // 红色
-    constexpr const char* Benchmark = "#007AFF"; // 蓝色
+    const QString Stock = Tokens::Colors::ChartOrange;   // 橙色
+    const QString Futures = Tokens::Colors::ChartPurple; // 紫色
+    const QString MyProfit = Tokens::Colors::Danger;  // 红色
+    const QString Benchmark = Tokens::Colors::Primary; // 蓝色
 }
 
 // ============================================================================
@@ -701,7 +701,7 @@ void PortfolioPage::setupNetValueChart()
     axisY->setLabelFormat("%.1f万");
     axisY->setLabelsColor(QColor(Tokens::Colors::TextTertiary));
     axisY->setGridLineVisible(true);
-    axisY->setGridLineColor(QColor("#2A2B31"));
+    axisY->setGridLineColor(QColor(Tokens::Colors::Border));
     chart->addAxis(axisY, Qt::AlignLeft);
     d->profitSeries->attachAxis(axisY);
     d->benchmarkSeries->attachAxis(axisY);

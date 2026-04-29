@@ -44,7 +44,7 @@ void AssetPieChart::setData(const QVector<std::pair<QString, double>>& assets) c
 
     static const QColor colors[] = {
         QColor(Tokens::Colors::Primary), QColor(Tokens::Colors::Success), QColor(Tokens::Colors::Warning),
-        QColor(Tokens::Colors::Secondary), QColor("#EC4899")
+        QColor(Tokens::Colors::Secondary), QColor(Tokens::Colors::Danger)
     };
 
     int i = 0;
@@ -118,14 +118,14 @@ void NetValueChart::setupChart()
 
     auto* axisX = new QValueAxis();
     axisX->setLabelsColor(QColor(Tokens::Colors::TextSecondary));
-    axisX->setGridLineColor(QColor("#2A3142"));
-    axisX->setLinePenColor(QColor("#2A3142"));
+    axisX->setGridLineColor(QColor(Tokens::Colors::Border));
+    axisX->setLinePenColor(QColor(Tokens::Colors::Border));
     axisX->setLabelFormat("%d日");
 
     auto* axisY = new QValueAxis();
     axisY->setLabelsColor(QColor(Tokens::Colors::TextSecondary));
-    axisY->setGridLineColor(QColor("#2A3142"));
-    axisY->setLinePenColor(QColor("#2A3142"));
+    axisY->setGridLineColor(QColor(Tokens::Colors::Border));
+    axisY->setLinePenColor(QColor(Tokens::Colors::Border));
     axisY->setLabelFormat("%+.1f%%");
 
     chart->addAxis(axisX, Qt::AlignBottom);

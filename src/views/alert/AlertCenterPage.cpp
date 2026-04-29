@@ -300,9 +300,9 @@ void AlertCenterPage::loadAlertRules()
         QString statusText = rule.isActive ? QStringLiteral("激活中") : (rule.isTriggered ? QStringLiteral("已触发") : QStringLiteral("已禁用"));
         auto* statusItem = new QTableWidgetItem(statusText);
         if (rule.isActive) {
-            statusItem->setForeground(QColor("#00D4AA"));
+            statusItem->setForeground(QColor(Tokens::Colors::Success));
         } else if (rule.isTriggered) {
-            statusItem->setForeground(QColor("#FF3366"));
+            statusItem->setForeground(QColor(Tokens::Colors::Danger));
         }
         d->alertTable->setItem(i, 4, statusItem);
         

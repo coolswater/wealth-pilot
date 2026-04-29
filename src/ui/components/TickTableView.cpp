@@ -15,11 +15,11 @@ struct TickTableView::Impl {
     int maxRows = 500;              ///< 最大行数
     int currentRow = 0;             ///< 当前行索引
 
-    // 颜色定义
-    QColor buyColor{"#EF4444"};     ///< 买入红色
-    QColor sellColor{"#10B981"};    ///< 卖出绿色
-    QColor textColor{"#F3F4F6"};    ///< 文字颜色
-    QColor altRowColor{"#1F2937"};  ///< 交替行颜色
+    // 颜色定义（使用主题令牌）
+    QColor buyColor{Tokens::Colors::Danger};     ///< 买入红色
+    QColor sellColor{Tokens::Colors::Success};    ///< 卖出绿色
+    QColor textColor{Tokens::Colors::TextPrimary};    ///< 文字颜色
+    QColor altRowColor{Tokens::Colors::BgElevated};  ///< 交替行颜色
 };
 
 // ========== 构造与析构 ==========

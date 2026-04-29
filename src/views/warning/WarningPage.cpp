@@ -1,4 +1,5 @@
 #include "WarningPage.h"
+#include "core/config/Tokens.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -108,8 +109,8 @@ void WarningPage::setupUI()
         QHBoxLayout* itemLayout = new QHBoxLayout(item);
         itemLayout->setContentsMargins(16, 12, 16, 12);
 
-        QString borderColor = alert.type == "risk" ? "#EF4444" :
-                                  alert.type == "price" ? "#3B82F6" : "#9CA3AF";
+        QString borderColor = alert.type == "risk" ? Tokens::Colors::Danger :
+                                  alert.type == "price" ? Tokens::Colors::Primary : Tokens::Colors::TextSecondary;
         item->setStyleSheet(QString(R"(
             QWidget {
                 background-color: rgba(255, 255, 255, 0.03);

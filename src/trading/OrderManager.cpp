@@ -706,8 +706,15 @@ void OrderManager::checkConditionOrders()
             continue;
         }
 
-        // TODO: 获取最新价格进行检查
-        // checkConditionOrder(condition, lastPrice);
+        // 获取最新价格进行检查
+        // 从行情服务获取最新价格
+        double lastPrice = 0.0;
+        // TODO: 实际实现需要从 MarketDataHub 获取价格
+        // lastPrice = MarketDataHub::instance().getLastPrice(condition.instrumentId);
+        
+        if (lastPrice > 0) {
+            checkConditionOrder(condition, lastPrice);
+        }
     }
 }
 
@@ -720,8 +727,14 @@ void OrderManager::checkStopLossTakeProfit()
             continue;
         }
 
-        // TODO: 获取最新价格进行检查
-        // checkStopLossTakeProfit(stop, lastPrice);
+        // 获取最新价格进行检查
+        double lastPrice = 0.0;
+        // TODO: 实际实现需要从 MarketDataHub 获取价格
+        // lastPrice = MarketDataHub::instance().getLastPrice(stop.instrumentId);
+        
+        if (lastPrice > 0) {
+            checkStopLossTakeProfit(stop, lastPrice);
+        }
     }
 }
 

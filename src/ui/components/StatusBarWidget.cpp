@@ -255,7 +255,7 @@ void StatusBarWidget::onSearchTextChanged(const QString& text)
         for (int j = 0; j < 3; ++j) {
             auto* item = new QTableWidgetItem(results[i][j]);
             if (j == 0) {
-                item->setForeground(QColor("#3b82f6"));  // 代码蓝色
+                item->setForeground(QColor(Tokens::Colors::Primary));  // 代码蓝色
             }
             d->searchResultPopup->setItem(i, j, item);
         }

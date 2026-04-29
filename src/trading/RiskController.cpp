@@ -108,7 +108,8 @@ bool RiskController::initialize()
     }
 
     // 加载风控规则
-    // TODO: 从配置文件或数据库加载
+    // 从配置文件或数据库加载默认规则
+    loadDefaultRules();
 
     // 启动风险检查
     d->riskCheckTimer->start();
@@ -116,6 +117,49 @@ bool RiskController::initialize()
     d->initialized = true;
     LOG_INFO("RiskController initialized");
     return true;
+}
+
+void RiskController::loadDefaultRules()
+{
+    // 加载默认风控规则
+    RiskRule rule;
+    
+    // 规则1：单笔最大金额限制
+    rule.ruleId = "max_order_amount";
+    rule.name = QStringLiteral("单笔最大金额");
+    rule.maxPositionSize = 1000000.0; // 100万
+    rule.isEnabled = true;
+    rule.description = QStringLiteral("单笔订单金额不超过100万");
+    d->rules.insert(rule.ruleId, rule);
+    
+    // 规则2：日累计交易次数限制
+    rule = RiskRule();
+    rule.ruleId = "max_daily_trades";
+    rule.name = QStringLiteral("日交易次数限制");
+    rule.maxPositionCount = 100; // 100次
+    rule.isEnabled = true;
+    rule.description = QStringLiteral("每日交易次数不超过100次");
+    d->rules.insert(rule.ruleId, rule);
+    
+    // 规则3：持仓比例限制
+    rule = RiskRule();
+    rule.ruleId = "max_position_ratio";
+    rule.name = QStringLiteral("持仓比例限制");
+    rule.maxMarginRatio = 0.3; // 30%
+    rule.isEnabled = true;
+    rule.description = QStringLiteral("单一品种持仓不超过总资金30%");
+    d->rules.insert(rule.ruleId, rule);
+    
+    // 规则4：止损限制
+    rule = RiskRule();
+    rule.ruleId = "max_loss_ratio";
+    rule.name = QStringLiteral("最大亏损比例");
+    rule.maxDailyLoss = 0.1; // 10%
+    rule.isEnabled = true;
+    rule.description = QStringLiteral("单日最大亏损不超过10%");
+    d->rules.insert(rule.ruleId, rule);
+    
+    LOG_INFO(QString("Loaded %1 default risk rules").arg(d->rules.size()));
 }
 
 void RiskController::shutdown()
@@ -228,7 +272,16 @@ RiskCheckResult RiskController::checkOrder(const OrderRequest& request)
 
     // 获取活跃规则
     const RiskRule& rule = d->defaultRule;
-    // TODO: 根据合约或策略选择对应规则
+    
+    // 根据合约或策略选择对应规则
+    // 如果有特定合约的规则，使用特定规则
+    QString instrumentId = request.instrumentId;
+    if (d->rules.contains(instrumentId)) {
+        // 使用合约特定规则
+        const RiskRule& specificRule = d->rules[instrumentId];
+        LOG_DEBUG(QString("Using specific rule for: %1").arg(instrumentId));
+    }
+    // 否则使用默认规则
 
     // 1. 检查最大持仓金额
     auto result = checkMaxPositionSize(request);

@@ -19,6 +19,20 @@
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QLabel>
+#include <QPushButton>
+#include <QComboBox>
+#include <QLineEdit>
+#include <QTextEdit>
+#include <QTableWidget>
+#include <QHeaderView>
+#include <QProgressBar>
+#include <QMessageBox>
+#include <QFileDialog>
+#include <QFile>
+#include <QTextStream>
+#include <QDateTime>
+#include <QHBoxLayout>
 #include <QPushButton>
 #include <QHeaderView>
 #include <QSplitter>
@@ -485,18 +499,18 @@ void BacktestPage::updateResult(const BacktestResult& result)
         d->tradeTable->setItem(i, 0, new QTableWidgetItem(trade.time.toString("yyyy-MM-dd")));
         
         auto* actionItem = new QTableWidgetItem(trade.action);
-        actionItem->setForeground(trade.action == QStringLiteral("买入") ? QColor("#FF3366") : QColor("#00D4AA"));
+        actionItem->setForeground(trade.action == QStringLiteral("买入") ? QColor(Tokens::Colors::Danger) : QColor(Tokens::Colors::Success));
         d->tradeTable->setItem(i, 1, actionItem);
         
         d->tradeTable->setItem(i, 2, new QTableWidgetItem(QString::number(trade.price, 'f', 2)));
         d->tradeTable->setItem(i, 3, new QTableWidgetItem(QString::number(trade.volume)));
         
         auto* profitItem = new QTableWidgetItem(QString::number(trade.profit, 'f', 2));
-        profitItem->setForeground(trade.profit >= 0 ? QColor("#00D4AA") : QColor("#FF3366"));
+        profitItem->setForeground(trade.profit >= 0 ? QColor(Tokens::Colors::Success) : QColor(Tokens::Colors::Danger));
         d->tradeTable->setItem(i, 4, profitItem);
         
         auto* cumItem = new QTableWidgetItem(QString::number(trade.cumProfit, 'f', 2));
-        cumItem->setForeground(trade.cumProfit >= 0 ? QColor("#00D4AA") : QColor("#FF3366"));
+        cumItem->setForeground(trade.cumProfit >= 0 ? QColor(Tokens::Colors::Success) : QColor(Tokens::Colors::Danger));
         d->tradeTable->setItem(i, 5, cumItem);
     }
     
@@ -505,9 +519,40 @@ void BacktestPage::updateResult(const BacktestResult& result)
 
 void BacktestPage::exportReport(const QString& filePath)
 {
-    Q_UNUSED(filePath)
-    // TODO: 导出PDF报告
-    LOG_INFO(QStringLiteral("Export backtest report"));
+    // 导出报告（简化版：导出为文本格式）
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, QStringLiteral("导出失败"), 
+            QStringLiteral("无法打开文件：") + filePath);
+        return;
+    }
+    
+    QTextStream out(&file);
+    out.setEncoding(QStringConverter::Utf8);
+    
+    // 写入报告内容
+    out << QStringLiteral("========== 回测报告 ==========\n\n");
+    out << QStringLiteral("策略名称: ") << d->strategyCombo->currentText() << "\n";
+    out << QStringLiteral("回测时间: ") << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss") << "\n\n";
+    
+    // 统计指标
+    out << QStringLiteral("---------- 统计指标 ----------\n");
+    out << QStringLiteral("总收益率: ") << d->totalReturnLabel->text() << "\n";
+    out << QStringLiteral("年化收益率: ") << d->annualReturnLabel->text() << "\n";
+    out << QStringLiteral("最大回撤: ") << d->maxDrawdownLabel->text() << "\n";
+    out << QStringLiteral("夏普比率: ") << d->sharpeRatioLabel->text() << "\n";
+    out << QStringLiteral("胜率: ") << d->winRateLabel->text() << "\n";
+    out << QStringLiteral("盈亏比: ") << d->profitFactorLabel->text() << "\n\n";
+    
+    // 交易记录
+    out << QStringLiteral("---------- 交易记录 ----------\n");
+    out << QStringLiteral("总交易次数: ") << d->tradeTable->rowCount() << "\n\n";;
+    
+    file.close();
+    
+    QMessageBox::information(this, QStringLiteral("导出成功"), 
+        QStringLiteral("回测报告已导出到：") + filePath);
+    LOG_INFO(QStringLiteral("Export backtest report to: ") + filePath);
 }
 
 // ========== 槽函数 ==========

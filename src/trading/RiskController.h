@@ -75,8 +75,13 @@ public:
      */
     void shutdown();
 
-    // ========== 风控规则管理 ==========
+private:
+    /**
+     * @brief 加载默认风控规则
+     */
+    void loadDefaultRules();
 
+public:
     /**
      * @brief 添加风控规则
      * @param rule 风控规则

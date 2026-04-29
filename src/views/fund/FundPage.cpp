@@ -16,8 +16,17 @@
 #include "ui/components/KLineChart.h"
 #include "core/config/Tokens.h"
 #include "utils/Logger.h"
+#include "market/FavoritesManager.h"
 
 #include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QPushButton>
+#include <QComboBox>
+#include <QLineEdit>
+#include <QTableWidget>
+#include <QHeaderView>
+#include <QMessageBox>
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QHeaderView>
@@ -460,9 +469,9 @@ void FundPage::loadFundList()
         // 涨跌幅
         auto* changeItem = new QTableWidgetItem(QString::number(fund.changePercent, 'f', 2) + "%");
         if (fund.changePercent > 0) {
-            changeItem->setForeground(QColor("#00D4AA"));
+            changeItem->setForeground(QColor(Tokens::Colors::Success));
         } else if (fund.changePercent < 0) {
-            changeItem->setForeground(QColor("#FF3366"));
+            changeItem->setForeground(QColor(Tokens::Colors::Danger));
         }
         d->fundListTable->setItem(i, 4, changeItem);
         
@@ -541,9 +550,9 @@ void FundPage::loadFundHolding(const QString& code)
         
         auto* changeItem = new QTableWidgetItem(QString::number(h.change, 'f', 2) + "%");
         if (h.change > 0) {
-            changeItem->setForeground(QColor("#00D4AA"));
+            changeItem->setForeground(QColor(Tokens::Colors::Success));
         } else if (h.change < 0) {
-            changeItem->setForeground(QColor("#FF3366"));
+            changeItem->setForeground(QColor(Tokens::Colors::Danger));
         }
         d->holdingTable->setItem(i, 4, changeItem);
     }
@@ -592,9 +601,21 @@ void FundPage::loadFundKLine(const QString& code)
 
 void FundPage::onFundTypeChanged(int index)
 {
-    Q_UNUSED(index)
-    // TODO: 根据类型筛选基金列表
-    loadFundList();
+    // 根据类型筛选基金列表
+    // 0: 全部, 1: ETF, 2: LOF, 3: 开放式, 4: 货币, 5: 债券
+    FundType selectedType = static_cast<FundType>(index - 1); // -1 表示全部
+    
+    for (int i = 0; i < d->fundListTable->rowCount(); ++i) {
+        bool shouldHide = false;
+        
+        if (index > 0 && i < d->fundCache.size()) {
+            // 根据选择的类型过滤
+            FundType fundType = d->fundCache[i].type;
+            shouldHide = (fundType != selectedType);
+        }
+        
+        d->fundListTable->setRowHidden(i, shouldHide);
+    }
 }
 
 void FundPage::onSearchTextChanged(const QString& text)
@@ -630,11 +651,26 @@ void FundPage::onFundListClicked(int row, int column)
 void FundPage::onAddToWatchlist()
 {
     if (d->currentFundCode.isEmpty()) {
+        QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("请先选择一个基金"));
         return;
     }
     
-    // TODO: 添加到自选
-    LOG_INFO(QString("Add fund to watchlist: %1").arg(d->currentFundCode));
+    // 添加到自选
+    if (FavoritesManager::instance()->addFavorite(d->currentFundCode)) {
+        // 查找基金名称
+        QString fundName;
+        for (const auto& fund : d->fundCache) {
+            if (fund.code == d->currentFundCode) {
+                fundName = fund.name;
+                break;
+            }
+        }
+        QMessageBox::information(this, QStringLiteral("成功"), 
+            QStringLiteral("已将 %1 (%2) 添加到自选").arg(fundName, d->currentFundCode));
+        LOG_INFO(QString("Added fund to watchlist: %1").arg(d->currentFundCode));
+    } else {
+        QMessageBox::information(this, QStringLiteral("提示"), QStringLiteral("该基金已在自选列表中"));
+    }
 }
 
 void FundPage::onRefreshData()

@@ -78,8 +78,8 @@ struct KLineChart::Impl {
     QRect subChartRect;     // 副图指标区域
     
     // 十字光标颜色（主题适配）
-    QColor crosshairColor = QColor("#3b82f6");  // 蓝色
-    QColor crosshairTextColor = QColor("#ffffff");  // 白色
+    QColor crosshairColor = QColor(Tokens::Colors::Primary);  // 蓝色
+    QColor crosshairTextColor = QColor(Tokens::Colors::TextPrimary);  // 白色
     
     /**
      * @brief 计算可见范围
@@ -951,13 +951,13 @@ void KLineChart::drawCrosshair(QPainter& painter)
         // 绘制价格标签背景
         QFontMetrics fm(painter.font());
         int textWidth = fm.horizontalAdvance(priceText) + 10;
-        painter.fillRect(0, d->crosshairY - 10, textWidth, 20, QColor("#2d3748"));
+        painter.fillRect(0, d->crosshairY - 10, textWidth, 20, QColor(Tokens::Colors::BgElevated));
         painter.drawText(5, d->crosshairY + 4, priceText);
         
         // 时间标签（底部）
         QString timeText = d->data[index].time.toString("MM-dd hh:mm");
         int timeWidth = fm.horizontalAdvance(timeText) + 10;
-        painter.fillRect(d->crosshairX - timeWidth/2, height() - 25, timeWidth, 20, QColor("#2d3748"));
+        painter.fillRect(d->crosshairX - timeWidth/2, height() - 25, timeWidth, 20, QColor(Tokens::Colors::BgElevated));
         painter.drawText(d->crosshairX - timeWidth/2 + 5, height() - 10, timeText);
     }
 }
@@ -1200,10 +1200,10 @@ void KLineChart::calculateMA(int period)
     
     QColor color;
     switch (period) {
-        case 5: color = QColor("#ffffff"); break;
-        case 10: color = QColor("#ffff00"); break;
-        case 20: color = QColor("#ff00ff"); break;
-        default: color = QColor("#ffffff"); break;
+        case 5: color = QColor(Tokens::Colors::TextPrimary); break;
+        case 10: color = QColor(Tokens::Colors::ChartYellow); break;
+        case 20: color = QColor(Tokens::Colors::ChartPurple); break;
+        default: color = QColor(Tokens::Colors::TextPrimary); break;
     }
     
     // 添加到主图指标
@@ -1228,7 +1228,7 @@ void KLineChart::calculateEMA(int period)
         emaValues[i] = (d->data[i].close - emaValues[i-1]) * multiplier + emaValues[i-1];
     }
     
-    QColor color = (period == 12) ? QColor("#00ff00") : QColor("#ff6600");
+    QColor color = (period == 12) ? QColor(Tokens::Colors::ChartGreen) : QColor(Tokens::Colors::ChartOrange);
     
     // 添加到主图指标
     d->mainIndicatorLines[QString("EMA%1").arg(period)] = emaValues;
@@ -1273,11 +1273,11 @@ void KLineChart::calculateBOLL(int period)
     
     // 添加到主图指标
     d->mainIndicatorLines["BOLL_MID"] = midValues;
-    d->mainIndicatorColors["BOLL_MID"] = QColor("#ffffff");
+    d->mainIndicatorColors["BOLL_MID"] = QColor(Tokens::Colors::TextPrimary);
     d->mainIndicatorLines["BOLL_UP"] = upValues;
-    d->mainIndicatorColors["BOLL_UP"] = QColor("#ff4d4f");
+    d->mainIndicatorColors["BOLL_UP"] = QColor(Tokens::Colors::Danger);
     d->mainIndicatorLines["BOLL_LOW"] = lowValues;
-    d->mainIndicatorColors["BOLL_LOW"] = QColor("#00b578");
+    d->mainIndicatorColors["BOLL_LOW"] = QColor(Tokens::Colors::Success);
 }
 
 /**
@@ -1318,9 +1318,9 @@ void KLineChart::calculateMACD()
     
     // 添加到副图指标
     d->subIndicatorLines["MACD_DIF"] = difValues;
-    d->subIndicatorColors["MACD_DIF"] = QColor("#ffffff");
+    d->subIndicatorColors["MACD_DIF"] = QColor(Tokens::Colors::TextPrimary);
     d->subIndicatorLines["MACD_DEA"] = deaValues;
-    d->subIndicatorColors["MACD_DEA"] = QColor("#ffff00");
+    d->subIndicatorColors["MACD_DEA"] = QColor(Tokens::Colors::ChartYellow);
 }
 
 /**
@@ -1356,11 +1356,11 @@ void KLineChart::calculateKDJ()
     
     // 添加到副图指标
     d->subIndicatorLines["KDJ_K"] = kValues;
-    d->subIndicatorColors["KDJ_K"] = QColor("#ffffff");
+    d->subIndicatorColors["KDJ_K"] = QColor(Tokens::Colors::TextPrimary);
     d->subIndicatorLines["KDJ_D"] = dValues;
-    d->subIndicatorColors["KDJ_D"] = QColor("#ffff00");
+    d->subIndicatorColors["KDJ_D"] = QColor(Tokens::Colors::ChartYellow);
     d->subIndicatorLines["KDJ_J"] = jValues;
-    d->subIndicatorColors["KDJ_J"] = QColor("#ff4d4f");
+    d->subIndicatorColors["KDJ_J"] = QColor(Tokens::Colors::Danger);
 }
 
 /**
@@ -1394,7 +1394,7 @@ void KLineChart::calculateRSI(int period)
     
     // 添加到副图指标
     d->subIndicatorLines["RSI"] = rsiValues;
-    d->subIndicatorColors["RSI"] = QColor("#ff6600");
+    d->subIndicatorColors["RSI"] = QColor(Tokens::Colors::ChartOrange);
 }
 
 /**
@@ -1467,11 +1467,11 @@ void KLineChart::calculateDMI(int period)
     
     // 添加到主图指标（PDI、MDI、ADX）
     d->mainIndicatorLines["PDI"] = pdiValues;
-    d->mainIndicatorColors["PDI"] = QColor("#00ff00");
+    d->mainIndicatorColors["PDI"] = QColor(Tokens::Colors::Success);
     d->mainIndicatorLines["MDI"] = mdiValues;
-    d->mainIndicatorColors["MDI"] = QColor("#ff4d4f");
+    d->mainIndicatorColors["MDI"] = QColor(Tokens::Colors::Danger);
     d->mainIndicatorLines["ADX"] = adxValues;
-    d->mainIndicatorColors["ADX"] = QColor("#ffff00");
+    d->mainIndicatorColors["ADX"] = QColor(Tokens::Colors::ChartYellow);
 }
 
 /**
@@ -1510,11 +1510,11 @@ void KLineChart::calculateENE(int period)
     
     // 添加到主图指标
     d->mainIndicatorLines["ENE_UPPER"] = upperValues;
-    d->mainIndicatorColors["ENE_UPPER"] = QColor("#ff4d4f");
+    d->mainIndicatorColors["ENE_UPPER"] = QColor(Tokens::Colors::Danger);
     d->mainIndicatorLines["ENE_MID"] = midValues;
-    d->mainIndicatorColors["ENE_MID"] = QColor("#ffffff");
+    d->mainIndicatorColors["ENE_MID"] = QColor(Tokens::Colors::TextPrimary);
     d->mainIndicatorLines["ENE_LOWER"] = lowerValues;
-    d->mainIndicatorColors["ENE_LOWER"] = QColor("#00b578");
+    d->mainIndicatorColors["ENE_LOWER"] = QColor(Tokens::Colors::Success);
 }
 
 /**
@@ -1539,5 +1539,5 @@ void KLineChart::calculateEXPMA(int period)
     
     // 添加到副图指标
     d->subIndicatorLines["EXPMA"] = expmaValues;
-    d->subIndicatorColors["EXPMA"] = QColor("#00b578");
+    d->subIndicatorColors["EXPMA"] = QColor(Tokens::Colors::Success);
 }

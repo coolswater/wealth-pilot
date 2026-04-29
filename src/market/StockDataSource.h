@@ -115,6 +115,7 @@ private:
     void parseTencentQuotes(const QByteArray &data);
     void parseEastMoneyQuotes(const QByteArray &data);
     void parseSinaKLine(const QByteArray &data, const QString &symbol);
+    void parseSinaStockList(const QByteArray &data);
 
     // URL构建
     QString buildQuotesUrl(const QStringList &symbols) const;

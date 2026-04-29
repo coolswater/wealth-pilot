@@ -9,6 +9,9 @@
 #include <QUrl>
 #include <QUrlQuery>
 #include <QRegularExpression>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 StockDataSource::StockDataSource(Source source, QObject *parent)
     : QObject(parent)
@@ -132,8 +135,37 @@ void StockDataSource::onNetworkReply(QNetworkReply *reply)
         break;
 
     case RequestType::StockList:
-        // TODO: 解析股票列表
+        // 解析股票列表
+        parseSinaStockList(data);
         break;
+    }
+}
+
+void StockDataSource::parseSinaStockList(const QByteArray &data)
+{
+    // 解析股票列表数据
+    QString response = QString::fromLocal8Bit(data);
+    
+    // 解析格式：每行一个股票信息
+    QStringList lines = response.split('\n', Qt::SkipEmptyParts);
+    QStringList symbols;
+    
+    for (const QString& line : lines) {
+        // 格式：代码,名称,行业,市值等
+        QStringList fields = line.split(',');
+        if (fields.size() >= 1) {
+            QString symbol = fields[0].trimmed();
+            
+            // 验证股票代码格式
+            if (symbol.length() == 6 && symbol.toInt() > 0) {
+                symbols.append(symbol);
+            }
+        }
+    }
+    
+    if (!symbols.isEmpty()) {
+        emit stockListReceived(symbols);
+        LOG_INFO(QString("Parsed %1 stocks from list").arg(symbols.size()));
     }
 }
 
@@ -207,15 +239,95 @@ void StockDataSource::parseSinaQuotes(const QByteArray &data)
 void StockDataSource::parseTencentQuotes(const QByteArray &data)
 {
     // 腾讯行情格式: v_sh600000="51~浦发银行~600000~12.34~..."
-    Q_UNUSED(data)
-    // TODO: 实现腾讯行情解析
+    QString response = QString::fromLocal8Bit(data);
+    QVector<StockQuote> quotes;
+    
+    // 解析腾讯行情格式
+    QRegularExpression re("v_(\\w+)=\"([^\"]*)\"");
+    QRegularExpressionMatchIterator it = re.globalMatch(response);
+    
+    while (it.hasNext()) {
+        QRegularExpressionMatch match = it.next();
+        QString symbol = match.captured(1);
+        QString content = match.captured(2);
+        
+        if (content.isEmpty()) continue;
+        
+        // 腾讯格式：用~分隔
+        QStringList fields = content.split('~');
+        if (fields.size() >= 10) {
+            StockQuote quote;
+            quote.symbol = fields[2];  // 股票代码
+            quote.name = fields[1];    // 股票名称
+            quote.lastPrice = fields[3].toDouble();  // 当前价
+            quote.preClose = fields[4].toDouble();   // 昨收
+            quote.openPrice = fields[5].toDouble();  // 今开
+            quote.volume = fields[6].toLongLong();   // 成交量
+            quote.turnover = fields[37].toDouble();  // 成交额
+            quote.highPrice = fields[33].toDouble(); // 最高
+            quote.lowPrice = fields[34].toDouble();  // 最低
+            
+            if (quote.preClose > 0) {
+                quote.changeAmount = quote.lastPrice - quote.preClose;
+                quote.changePercent = quote.changeAmount / quote.preClose * 100.0;
+            }
+            
+            quote.updateTime = QDateTime::currentDateTime();
+            m_quoteCache[symbol] = quote;
+            quotes.append(quote);
+        }
+    }
+    
+    if (!quotes.isEmpty()) {
+        emit quotesReceived(quotes);
+        LOG_DEBUG(QString("Tencent: parsed %1 quotes").arg(quotes.size()));
+    }
 }
 
 void StockDataSource::parseEastMoneyQuotes(const QByteArray &data)
 {
     // 东方财富返回JSON格式
-    Q_UNUSED(data)
-    // TODO: 实现东方财富行情解析
+    QString response = QString::fromLocal8Bit(data);
+    QVector<StockQuote> quotes;
+    
+    // 解析JSON格式
+    QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+    if (doc.isNull() || !doc.isObject()) {
+        LOG_WARNING("Invalid EastMoney JSON response");
+        return;
+    }
+    
+    QJsonObject root = doc.object();
+    QJsonArray dataArray = root["data"].toArray();
+    
+    for (const auto& item : dataArray) {
+        QJsonObject obj = item.toObject();
+        StockQuote quote;
+        
+        quote.symbol = obj["code"].toString();
+        quote.name = obj["name"].toString();
+        quote.lastPrice = obj["price"].toDouble();
+        quote.preClose = obj["pc"].toDouble();
+        quote.openPrice = obj["open"].toDouble();
+        quote.highPrice = obj["high"].toDouble();
+        quote.lowPrice = obj["low"].toDouble();
+        quote.volume = obj["volume"].toVariant().toLongLong();
+        quote.turnover = obj["amount"].toDouble();
+        
+        if (quote.preClose > 0) {
+            quote.changeAmount = quote.lastPrice - quote.preClose;
+            quote.changePercent = quote.changeAmount / quote.preClose * 100.0;
+        }
+        
+        quote.updateTime = QDateTime::currentDateTime();
+        m_quoteCache[quote.symbol] = quote;
+        quotes.append(quote);
+    }
+    
+    if (!quotes.isEmpty()) {
+        emit quotesReceived(quotes);
+        LOG_DEBUG(QString("EastMoney: parsed %1 quotes").arg(quotes.size()));
+    }
 }
 
 void StockDataSource::parseSinaKLine(const QByteArray &data, const QString &symbol)

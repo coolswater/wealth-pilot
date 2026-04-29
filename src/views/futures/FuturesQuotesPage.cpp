@@ -13,6 +13,7 @@
 #include "FuturesQuotesPage.h"
 #include "utils/Logger.h"
 #include "models/FuturesQuoteModel.h"
+#include "core/config/Tokens.h"
 #include "models/FuturesQuoteDelegate.h"
 
 #include <QVBoxLayout>
@@ -251,13 +252,13 @@ void FuturesQuotesPage::setupCtpConnections()
     connect(d->m_CTPService.get(), &CTP::CTPService::marketConnected, this, [this]() {
         d->m_isCtpConnected.store(true);
 
-        updateConnectionStatus("Quotes Connected", "#4CAF50");
+        updateConnectionStatus("Quotes Connected", Tokens::Colors::Success);
     });
 
     connect(d->m_CTPService.get(), &CTP::CTPService::marketDisconnected, this,
             [this](int reason) {
                 d->m_isCtpConnected.store(false);
-                updateConnectionStatus(QString("行情断开 (代码:%1)").arg(reason), "#F44336");
+                updateConnectionStatus(QString("行情断开 (代码:%1)").arg(reason), Tokens::Colors::Danger);
                 LOG_WARNING(QString("CTP Market disconnected, reason: %1").arg(reason));
             });
 

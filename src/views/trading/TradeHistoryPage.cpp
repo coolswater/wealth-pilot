@@ -72,7 +72,7 @@ void TradeHistoryPage::initUI()
     m_lossCountLabel = lossCard->findChildren<QLabel*>().last();
     statsLayout->addWidget(lossCard);
     
-    QFrame *winRateCard = createStatCard("胜率", "#5856D6");
+    QFrame *winRateCard = createStatCard("胜率", Tokens::Colors::ChartPurple);
     m_winRateLabel = winRateCard->findChildren<QLabel*>().last();
     statsLayout->addWidget(winRateCard);
     

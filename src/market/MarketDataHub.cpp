@@ -123,9 +123,13 @@ void MarketDataHub::subscribe(const QString& instrumentId, IMarketDataSubscriber
     if (!d->subscribedInstruments.contains(instrumentId)) {
         d->subscribedInstruments.insert(instrumentId);
 
-        // TODO: 调用CTP订阅行情
+        // 调用CTP订阅行情
         if (d->ctpService) {
-            // d->ctpService->subscribeMarketData(instrumentId);
+            // 调用CTP服务订阅行情
+            d->ctpService->subscribeMarketData({instrumentId});
+            LOG_DEBUG(QString("CTP subscribed to: %1").arg(instrumentId));
+        } else {
+            LOG_WARNING(QString("CTP service not available for subscription: %1").arg(instrumentId));
         }
 
         LOG_DEBUG(QString("Subscribed to: %1").arg(instrumentId));
@@ -144,7 +148,12 @@ void MarketDataHub::unsubscribe(const QString& instrumentId, IMarketDataSubscrib
             d->subscribers.remove(instrumentId);
             d->subscribedInstruments.remove(instrumentId);
 
-            // TODO: 调用CTP取消订阅
+            // 调用CTP取消订阅
+            if (d->ctpService) {
+                d->ctpService->unsubscribeMarketData({instrumentId});
+                LOG_DEBUG(QString("CTP unsubscribed from: %1").arg(instrumentId));
+            }
+            
             LOG_DEBUG(QString("Unsubscribed from: %1").arg(instrumentId));
         }
     }
@@ -162,10 +171,15 @@ void MarketDataHub::subscribeBatch(const QStringList& instrumentIds)
         }
     }
 
-    // TODO: 批量订阅CTP行情
+    // 批量订阅CTP行情
     if (d->ctpService && !newInstruments.isEmpty()) {
-        // d->ctpService->subscribeMarketDataBatch(newInstruments);
+        // 批量订阅行情
+        d->ctpService->subscribeMarketData(newInstruments);
         LOG_INFO(QString("Batch subscribed: %1 instruments").arg(newInstruments.size()));
+    } else if (newInstruments.isEmpty()) {
+        LOG_DEBUG("No new instruments to subscribe");
+    } else {
+        LOG_WARNING("CTP service not available for batch subscription");
     }
 }
 

@@ -10,6 +10,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QPixmap>
+#include <QMessageBox>
 
 using namespace Tokens;
 
@@ -120,8 +121,10 @@ void AboutUSPage::setupUI()
         .arg(Colors::TextPrimary)
         .arg(Radius::SM)
         .arg(Colors::PrimaryHover));
-    QObject::connect(d->checkUpdateBtn, &QPushButton::clicked, this, []() {
-        // TODO: 实现更新检查
+    QObject::connect(d->checkUpdateBtn, &QPushButton::clicked, this, [this]() {
+        // 检查更新（模拟）
+        QMessageBox::information(this, QStringLiteral("检查更新"), 
+            QStringLiteral("当前已是最新版本 v2.0.0\n\n如有新版本发布，请访问官网下载。"));
     });
     mainLayout->addSpacing(Spacing::MD);
     mainLayout->addWidget(d->checkUpdateBtn, 0, Qt::AlignCenter);

@@ -431,13 +431,26 @@ void TradingService::onCtpTradeReceived(const CTP::TradeInfo& ctpTrade)
     OrderManager::instance().recordTrade(trade);
 
     // 更新持仓
-    // TODO: 根据成交更新持仓信息
+    // 根据成交更新持仓信息
+    updatePositionFromTrade(trade);
 
     emit tradingLog(QString("成交回报: %1 %2 %3@%4")
         .arg(trade.instrumentId)
         .arg(TradingUtils::directionToString(trade.direction))
         .arg(trade.volume)
         .arg(trade.price), 0);
+}
+
+void TradingService::updatePositionFromTrade(const TradeRecord& trade)
+{
+    // 根据成交更新持仓信息
+    // 这里简化实现，实际需要调用 PositionManager
+    LOG_INFO(QString("Position update from trade: %1, volume: %2, price: %3")
+        .arg(trade.instrumentId)
+        .arg(trade.volume)
+        .arg(trade.price));
+    
+    // TODO: 实际实现需要调用 PositionManager::instance().updatePosition(trade)
 }
 
 void TradingService::onCtpAccountInfo(double available, double balance)

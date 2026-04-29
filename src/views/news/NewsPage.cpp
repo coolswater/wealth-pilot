@@ -22,19 +22,19 @@
 #include <QRegularExpression>
 
 // ============================================================================
-// 颜色常量 - 深色主题（与整体界面统一）
+// 颜色常量 - 使用 Tokens 主题令牌
 // ============================================================================
 namespace {
-    // 使用 Tokens 中定义的颜色（直接使用字符串）
-    const QString COLOR_BG_GLOBAL = QStringLiteral("#1A1F2E");        // 全局背景
-    const QString COLOR_BG_CARD = QStringLiteral("#242937");          // 卡片背景
-    const QString COLOR_TEXT_TITLE = QStringLiteral("#FFFFFF");       // 标题文字
-    const QString COLOR_TEXT_META = QStringLiteral("#9CA3AF");        // 元数据文字
-    const QString COLOR_TEXT_SUMMARY = QStringLiteral("#FFFFFF");     // 摘要文字
-    const QString COLOR_HIGHLIGHT = QStringLiteral("#F97316");        // 强调色（数字）
-    const QString COLOR_CATEGORY_ACTIVE = QStringLiteral("#3B82F6");  // 分类标签高亮
-    const QString COLOR_SEPARATOR = QStringLiteral("#14FFFFFF");      // 分隔线
-    const QString COLOR_HOVER_BG = QStringLiteral("rgba(255, 255, 255, 0.05)"); // 悬停背景
+    // 使用 Tokens 中定义的颜色
+    const QString COLOR_BG_GLOBAL = Tokens::Colors::BgBase;        // 全局背景
+    const QString COLOR_BG_CARD = Tokens::Colors::BgElevated;          // 卡片背景
+    const QString COLOR_TEXT_TITLE = Tokens::Colors::TextPrimary;       // 标题文字
+    const QString COLOR_TEXT_META = Tokens::Colors::TextSecondary;        // 元数据文字
+    const QString COLOR_TEXT_SUMMARY = Tokens::Colors::TextPrimary;     // 摘要文字
+    const QString COLOR_HIGHLIGHT = Tokens::Colors::Warning;        // 强调色（数字）
+    const QString COLOR_CATEGORY_ACTIVE = Tokens::Colors::Primary;  // 分类标签高亮
+    const QString COLOR_SEPARATOR = Tokens::Colors::Border;      // 分隔线
+    const QString COLOR_HOVER_BG = Tokens::Colors::BgHover; // 悬停背景
 }
 
 // ============================================================================

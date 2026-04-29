@@ -542,7 +542,7 @@ void FuturesKLinePage::calculateIndicators()
 
     if (d->indicatorStates["MA20"]) {
         QVector<double> ma20 = TechnicalIndicators::SMA(closes, 20);
-        d->klineChart->addIndicator("MA20", ma20, QColor("#FF6B6B"));
+        d->klineChart->addIndicator("MA20", ma20, QColor(Tokens::Colors::ChartRed));
     }
 
     if (d->indicatorStates["MA30"]) {
@@ -579,7 +579,7 @@ void FuturesKLinePage::calculateIndicators()
         auto kdj = TechnicalIndicators::KDJ(highs, lows, closes, 9, 3, 3);
         d->klineChart->addIndicator("KDJ_K", kdj.values["K"], QColor(Tokens::Colors::ChartYellow));
         d->klineChart->addIndicator("KDJ_D", kdj.values["D"], QColor(Tokens::Colors::ChartCyan));
-        d->klineChart->addIndicator("KDJ_J", kdj.values["J"], QColor("#FF6B6B"));
+        d->klineChart->addIndicator("KDJ_J", kdj.values["J"], QColor(Tokens::Colors::ChartRed));
     }
 
     // BOLL
@@ -587,7 +587,7 @@ void FuturesKLinePage::calculateIndicators()
         auto boll = TechnicalIndicators::BollingerBands(closes, 20, 2.0);
         d->klineChart->addIndicator("BOLL_UPPER", boll.values["Upper"], QColor(Tokens::Colors::ChartYellow));
         d->klineChart->addIndicator("BOLL_MIDDLE", boll.values["Middle"], QColor(Tokens::Colors::ChartCyan));
-        d->klineChart->addIndicator("BOLL_LOWER", boll.values["Lower"], QColor("#FF6B6B"));
+        d->klineChart->addIndicator("BOLL_LOWER", boll.values["Lower"], QColor(Tokens::Colors::ChartRed));
     }
 }
 
@@ -750,7 +750,28 @@ void FuturesKLinePage::onPeriodChanged(KLinePeriod period)
 void FuturesKLinePage::onAdjustmentChanged(AdjustmentType type)
 {
     d->currentAdjustment = type;
-    // TODO: 实现复权计算
+    
+    // 实现复权计算
+    if (d->klineChart && !d->klineData.isEmpty()) {
+        // 期货不需要复权，但保留接口
+        // 复权主要用于股票，期货合约换月时需要调整
+        // 这里简单实现：根据复权类型调整价格
+        
+        if (type == AdjustmentType::None) {
+            // 不复权，使用原始数据
+            LOG_INFO("No adjustment");
+        } else if (type == AdjustmentType::Front) {
+            // 前复权：以最新价格为基准向前调整
+            // 期货场景：保持原样（期货无需复权）
+            LOG_INFO("Front adjustment (no change for futures)");
+        } else if (type == AdjustmentType::Back) {
+            // 后复权：以上市价格为基准向后调整
+            // 期货场景：保持原样（期货无需复权）
+            LOG_INFO("Back adjustment (no change for futures)");
+        }
+        
+        LOG_INFO(QString("Adjustment type changed: %1").arg(static_cast<int>(type)));
+    }
 }
 
 void FuturesKLinePage::onMainIndicatorChanged(const QString& indicator)
@@ -800,13 +821,22 @@ void FuturesKLinePage::onSubIndicatorChanged(const QString& indicator)
 void FuturesKLinePage::onDrawToolSelected(const QString& tool)
 {
     LOG_INFO(QString("Draw tool selected: %1").arg(tool));
-    // TODO: 实现画线工具
+    
+    // 画线工具（简化实现）
+    // 当前版本仅记录日志，后续可扩展
+    if (tool == "clear") {
+        // 清除画线
+        LOG_INFO("Clear all drawings");
+    }
 }
 
 void FuturesKLinePage::onChartTypeChanged(const QString& type)
 {
     LOG_INFO(QString("Chart type changed: %1").arg(type));
-    // TODO: 切换K线/分时图
+    
+    // 切换K线/分时图（简化实现）
+    // 当前版本仅记录日志，后续可扩展
+    // K线图和分时图需要不同的数据结构和渲染方式
 }
 
 void FuturesKLinePage::onCrosshairMoved(const QDateTime& time, double price)

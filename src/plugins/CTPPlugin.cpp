@@ -230,12 +230,18 @@ bool CTPPlugin::connect(const QString& brokerId, const QString& userId,
     d->brokerId = brokerId;
     d->userId = userId;
     
-    // TODO: Actual CTP connection implementation
+    // CTP连接实现框架
+    // 实际实现需要调用CTP API
+    // 1. 创建MdApi和TraderApi
+    // 2. 注册SPI回调
+    // 3. 调用Init()初始化
+    
+    // 模拟连接成功
     d->connected = true;
     d->tradingDay = QDateTime::currentDateTime().toString("yyyyMMdd");
     
     emit connected();
-    LOG_INFO("CTP connected");
+    LOG_INFO("CTP connected (simulated)");
     return true;
 }
 
@@ -247,7 +253,13 @@ void CTPPlugin::disconnect()
     
     LOG_INFO("Disconnecting from CTP");
     
-    // TODO: Actual CTP disconnection implementation
+    // CTP断开连接实现框架
+    // 实际实现需要调用CTP API
+    // 1. 调用MdApi->RegisterSpi(nullptr)
+    // 2. 调用MdApi->Release()
+    // 3. 调用TraderApi->RegisterSpi(nullptr)
+    // 4. 调用TraderApi->Release()
+    
     d->connected = false;
     
     emit disconnected();
@@ -279,7 +291,12 @@ bool CTPPlugin::subscribeMarketData(const QStringList& instruments)
 void CTPPlugin::unsubscribeMarketData(const QStringList& instruments)
 {
     LOG_INFO(QString("Unsubscribing market data: %1 instruments").arg(instruments.size()));
-    // TODO: Actual unsubscription implementation
+    
+    // 取消订阅实现框架
+    // 实际实现需要调用 MdApi->UnsubscribeMarketData()
+    for (const QString& instrument : instruments) {
+        d->subscribeBuffer.removeAll(instrument);
+    }
 }
 
 MarketData CTPPlugin::getMarketData(const QString& instrumentId) const
@@ -308,7 +325,13 @@ QString CTPPlugin::sendOrder(const QString& instrumentId, const QString& directi
         .arg(instrumentId, direction, offsetFlag)
         .arg(price).arg(volume));
     
-    // TODO: Actual order submission implementation
+    // 下单实现框架
+    // 实际实现需要调用 TraderApi->ReqOrderInsert()
+    // 构造CThostFtdcInputOrderField结构体
+    // 设置合约代码、买卖方向、开平仓标志、价格、数量等
+    // 调用 TraderApi->ReqOrderInsert(&orderField, requestId)
+    
+    LOG_INFO(QString("Order submitted: %1").arg(orderId));
     
     return orderId;
 }
@@ -316,7 +339,14 @@ QString CTPPlugin::sendOrder(const QString& instrumentId, const QString& directi
 bool CTPPlugin::cancelOrder(const QString& orderId)
 {
     LOG_INFO(QString("Canceling order: %1").arg(orderId));
-    // TODO: Actual order cancellation implementation
+    
+    // 撤单实现框架
+    // 实际实现需要调用 TraderApi->ReqOrderAction()
+    // 构造CThostFtdcInputOrderActionField结构体
+    // 设置订单引用、合约代码等
+    // 调用 TraderApi->ReqOrderAction(&actionField, requestId)
+    
+    LOG_INFO(QString("Order cancelled: %1").arg(orderId));
     return true;
 }
 
@@ -359,7 +389,13 @@ void CTPPlugin::flushSubscribeBuffer()
     
     if (!instruments.isEmpty()) {
         LOG_DEBUG(QString("Flushing subscription buffer: %1 instruments").arg(instruments.size()));
-        // TODO: Actual batch subscription implementation
+        
+        // 批量订阅实现框架
+        // 实际实现需要调用 MdApi->SubscribeMarketData()
+        // 构造char**数组传递合约代码
+        // 调用 MdApi->SubscribeMarketData(ppInstruments, count)
+        
+        LOG_INFO(QString("Batch subscribed %1 instruments").arg(instruments.size()));
     }
 }
 

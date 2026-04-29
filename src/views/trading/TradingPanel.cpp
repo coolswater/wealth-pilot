@@ -71,7 +71,7 @@ void TradingPanel::initUI()
         QPushButton:hover {
             background-color: %2;
         }
-    )").arg("#EF4444", "#DC2626"));
+    )").arg(Tokens::Colors::Danger, Tokens::Colors::DangerLight));
 
     m_sellOpenBtn = new QPushButton("卖出开仓", this);
     m_sellOpenBtn->setMinimumHeight(50);
@@ -87,7 +87,7 @@ void TradingPanel::initUI()
         QPushButton:hover {
             background-color: %2;
         }
-    )").arg("#22C55E", "#16A34A"));
+    )").arg(Tokens::Colors::Success, Tokens::Colors::SuccessLight));
 
     m_buyCloseBtn = new QPushButton("买入平仓", this);
     m_buyCloseBtn->setMinimumHeight(50);

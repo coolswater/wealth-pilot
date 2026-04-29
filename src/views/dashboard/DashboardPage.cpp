@@ -40,6 +40,7 @@
 #include <QFrame>
 #include <QListWidget>
 #include <QProgressBar>
+#include <QMessageBox>
 #include <algorithm>
 
 // ============================================================================
@@ -1957,13 +1958,16 @@ void DashboardPage::onSectorRowDoubleClicked(const QModelIndex& index)
 {
     if (!index.isValid()) return;
     
-    // 获取板块名称（板块暂不跳转，只记录日志）
+    // 获取板块名称
     QString sectorName = d->sectorModel->data(d->sectorModel->index(index.row(), 0)).toString();
     
     LOG_INFO(QString("Sector row double clicked: %1").arg(sectorName));
     
-    // TODO: 板块点击可以跳转到板块详情页面
-    // 目前板块不支持跳转到K线，因为板块不是单个股票
+    // 板块点击跳转到板块详情页面
+    // 由于没有专门的板块详情页面，这里显示板块成分股
+    // 可以通过信号通知主窗口跳转
+    QMessageBox::information(nullptr, QStringLiteral("板块详情"), 
+        QStringLiteral("板块：%1\n\n该功能将在后续版本中实现，届时将显示板块成分股和相关分析。").arg(sectorName));
 }
 
 /**

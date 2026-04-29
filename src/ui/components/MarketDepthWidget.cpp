@@ -42,10 +42,10 @@ struct MarketDepthWidget::Impl {
     // 昨收价（用于计算涨跌）
     double preClosePrice = 0.0;
 
-    // 颜色定义
-    QColor upColor{"#EF4444"};      // 上涨红色
-    QColor downColor{"#10B981"};    // 下跌绿色
-    QColor flatColor{"#9CA3AF"};    // 平盘灰色
+    // 颜色定义（使用主题令牌）
+    QColor upColor{Tokens::Colors::Danger};      // 上涨红色
+    QColor downColor{Tokens::Colors::Success};    // 下跌绿色
+    QColor flatColor{Tokens::Colors::TextSecondary};    // 平盘灰色
 };
 
 // ========== 构造与析构 ==========

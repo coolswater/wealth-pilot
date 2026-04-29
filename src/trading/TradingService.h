@@ -256,6 +256,7 @@ private:
     void disconnectSignals();
     OrderRequest convertToOrderRequest(const CTP::OrderInfo& ctpOrder);
     PositionInfo convertToPositionInfo(const QString& instrument, int longPos, int shortPos);
+    void updatePositionFromTrade(const TradeRecord& trade);
 
     // PIMPL 实现
     struct Impl;

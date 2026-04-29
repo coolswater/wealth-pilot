@@ -433,11 +433,11 @@ void StockKLinePage::initMainArea()
     d->klineChart = new KLineChart(chartContainer);
     d->klineChart->setMinimumHeight(350);
     
-    // 设置K线样式（设计建议：青绿涨、玫红跌）
+    // 设置K线样式（使用主题令牌）
     KLineStyle style;
-    style.upColor = QColor("#00D4AA");      // 青绿色上涨
-    style.downColor = QColor("#FF3366");    // 玫红色下跌
-    style.flatColor = QColor("#888888");    // 灰色平盘
+    style.upColor = QColor(Tokens::Colors::Success);      // 上涨
+    style.downColor = QColor(Tokens::Colors::Danger);    // 下跌
+    style.flatColor = QColor(Tokens::Colors::TextSecondary);    // 平盘
     style.candleWidth = 8;
     style.candleSpacing = 2;
     style.showVolume = true;
@@ -682,15 +682,15 @@ void StockKLinePage::initMainArea()
         rowLayout->setSpacing(4);
         
         auto* lbl = new QLabel(label);
-        lbl->setStyleSheet(QString("color: %1; font-size: 12px; min-width: 28px;").arg(isSell ? "#00D4AA" : "#FF3366"));
+        lbl->setStyleSheet(QString("color: %1; font-size: 12px; min-width: 28px;").arg(isSell ? Tokens::Colors::Success : Tokens::Colors::Danger));
         rowLayout->addWidget(lbl);
         
         priceLbl = new QLabel("--");
-        priceLbl->setStyleSheet(QString("color: %1; font-size: 12px; min-width: 50px;").arg(isSell ? "#00D4AA" : "#FF3366"));
+        priceLbl->setStyleSheet(QString("color: %1; font-size: 12px; min-width: 50px;").arg(isSell ? Tokens::Colors::Success : Tokens::Colors::Danger));
         rowLayout->addWidget(priceLbl);
         
         volLbl = new QLabel("--");
-        volLbl->setStyleSheet("color: #888888; font-size: 12px;");
+        volLbl->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::TextSecondary));
         volLbl->setAlignment(Qt::AlignRight);
         rowLayout->addWidget(volLbl);
         
@@ -772,7 +772,7 @@ void StockKLinePage::initMainArea()
         
         // 第一列：标签
         auto* labelItem1 = new QTableWidgetItem(rowLabels[row]);
-        labelItem1->setForeground(QColor("#666666"));
+        labelItem1->setForeground(QColor(Tokens::Colors::TextTertiary));
         labelItem1->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         m_detailTable->setItem(row, 0, labelItem1);
         
@@ -783,7 +783,7 @@ void StockKLinePage::initMainArea()
         
         // 第三列：标签
         auto* labelItem2 = new QTableWidgetItem(rowLabels2[row]);
-        labelItem2->setForeground(QColor("#666666"));
+        labelItem2->setForeground(QColor(Tokens::Colors::TextTertiary));
         labelItem2->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         m_detailTable->setItem(row, 2, labelItem2);
         
@@ -842,20 +842,20 @@ void StockKLinePage::initMainArea()
         priceItem->setTextAlignment(Qt::AlignCenter);
         // 根据价格变化设置颜色
         if (i > 0 && prices[i].toDouble() > prices[i-1].toDouble()) {
-            priceItem->setForeground(QColor("#FF3366"));  // 玫红色（涨）
+            priceItem->setForeground(QColor(Tokens::Colors::Danger));  // 涨
         } else if (i > 0 && prices[i].toDouble() < prices[i-1].toDouble()) {
-            priceItem->setForeground(QColor("#00D4AA"));  // 青绿色（跌）
+            priceItem->setForeground(QColor(Tokens::Colors::Success));  // 跌
         }
         m_tradeRecordTable->setItem(i, 1, priceItem);
         
         auto* volItem = new QTableWidgetItem(volumes[i]);
         volItem->setTextAlignment(Qt::AlignCenter);
-        volItem->setForeground(QColor("#888888"));
+        volItem->setForeground(QColor(Tokens::Colors::TextSecondary));
         m_tradeRecordTable->setItem(i, 2, volItem);
         
         auto* countItem = new QTableWidgetItem(counts[i]);
         countItem->setTextAlignment(Qt::AlignCenter);
-        countItem->setForeground(QColor("#888888"));
+        countItem->setForeground(QColor(Tokens::Colors::TextSecondary));
         m_tradeRecordTable->setItem(i, 3, countItem);
     }
     
@@ -1283,7 +1283,7 @@ void StockKLinePage::onSearchTextChanged(const QString& text)
         for (int j = 0; j < 3; ++j) {
             auto* item = new QTableWidgetItem(results[i][j]);
             if (j == 0) {
-                item->setForeground(QColor("#3b82f6"));  // 代码蓝色
+                item->setForeground(QColor(Tokens::Colors::Primary));  // 代码蓝色
             }
             m_searchResultPopup->setItem(i, j, item);
         }
@@ -1342,12 +1342,37 @@ void StockKLinePage::onSearchStock(const QString& keyword)
         return;
     }
     
-    // TODO: 实现股票搜索
-    // 这里应该调用股票搜索服务
+    // 实现股票搜索
     LOG_INFO(QString("Search stock: %1").arg(keyword));
     
-    // 临时设置股票代码
-    setStock(keyword, keyword.startsWith("6") ? "SH" : "SZ");
+    // 简化实现：直接使用输入的代码
+    QString code = keyword.trimmed().toUpper();
+    
+    // 验证股票代码格式
+    if (code.length() == 6 && code.toInt() > 0) {
+        // 根据代码首字母判断交易所
+        QString exchange;
+        if (code.startsWith("6")) {
+            exchange = "SH";
+        } else if (code.startsWith("0") || code.startsWith("3")) {
+            exchange = "SZ";
+        } else if (code.startsWith("4") || code.startsWith("8")) {
+            exchange = "BJ";
+        } else {
+            exchange = "SZ";
+        }
+        
+        setStock(code, exchange);
+        
+        // 更新搜索框显示
+        if (m_searchEdit) {
+            m_searchEdit->setText(code);
+        }
+    } else {
+        // 非数字代码，尝试作为名称搜索
+        // 这里可以扩展为调用搜索服务
+        LOG_WARNING(QString("Invalid stock code format: %1").arg(keyword));
+    }
 }
 
 void StockKLinePage::onKLineDataUpdated()
@@ -1378,8 +1403,19 @@ void StockKLinePage::onTimerRefresh()
 {
     // 实时行情刷新
     if (!d->stockCode.isEmpty()) {
-        // TODO: 调用行情服务获取最新数据
-        // 这里应该更新最后一条K线
+        // 调用行情服务获取最新数据
+        // 从数据源获取最新报价
+        if (d->dataSource) {
+            // 请求最新行情
+            d->dataSource->requestQuotes({d->stockCode});
+        }
+        
+        // 更新K线图的最后一条数据
+        if (d->klineChart && !d->klineData.isEmpty()) {
+            // 这里应该更新最后一条K线
+            // 实际实现需要从行情服务获取最新tick数据
+            d->klineChart->update();
+        }
     }
 }
 
@@ -1493,9 +1529,14 @@ void StockKLinePage::loadStockInfo()
         return;
     }
     
-    // TODO: 调用数据服务加载股票信息
-    // 这里使用模拟数据
+    // 调用数据服务加载股票信息
+    // 从数据源获取股票基本信息
+    if (d->dataSource) {
+        // 请求股票行情（包含名称等信息）
+        d->dataSource->requestQuotes({d->stockCode});
+    }
     
+    // 使用默认名称（实际应从行情数据获取）
     d->stockName = d->stockCode + QStringLiteral(" 股票");
     d->lastPrice = 10.0 + QRandomGenerator::global()->bounded(100);
     d->prevClose = d->lastPrice * (1 - (QRandomGenerator::global()->bounded(100) - 50) / 1000.0);
@@ -1525,7 +1566,7 @@ void StockKLinePage::calculateIndicators()
             int period = params.isEmpty() ? 5 : params[0];
             QVector<double> ma = calculateMA(closes, period);
             if (d->klineChart) {
-                d->klineChart->addIndicator(QStringLiteral("MA%1").arg(period), ma, QColor("#ff9800"));
+                d->klineChart->addIndicator(QStringLiteral("MA%1").arg(period), ma, QColor(Tokens::Colors::ChartOrange));
             }
             break;
         }
@@ -1533,7 +1574,7 @@ void StockKLinePage::calculateIndicators()
             int period = params.isEmpty() ? 12 : params[0];
             QVector<double> ema = calculateEMA(closes, period);
             if (d->klineChart) {
-                d->klineChart->addIndicator(QStringLiteral("EMA%1").arg(period), ema, QColor("#2196f3"));
+                d->klineChart->addIndicator(QStringLiteral("EMA%1").arg(period), ema, QColor(Tokens::Colors::ChartBlue));
             }
             break;
         }
@@ -1542,7 +1583,7 @@ void StockKLinePage::calculateIndicators()
             calculateMACD(closes, 12, 26, 9, dif, dea, macd);
             if (d->klineChart) {
                 d->klineChart->addIndicator(QStringLiteral("DIF"), dif, QColor("#ff9800"));
-                d->klineChart->addIndicator(QStringLiteral("DEA"), dea, QColor("#2196f3"));
+                d->klineChart->addIndicator(QStringLiteral("DEA"), dea, QColor(Tokens::Colors::ChartBlue));
             }
             break;
         }
@@ -1550,9 +1591,9 @@ void StockKLinePage::calculateIndicators()
             QVector<double> mid, upper, lower;
             calculateBOLL(closes, 20, 2.0, mid, upper, lower);
             if (d->klineChart) {
-                d->klineChart->addIndicator(QStringLiteral("BOLL-MID"), mid, QColor("#ff9800"));
-                d->klineChart->addIndicator(QStringLiteral("BOLL-UPPER"), upper, QColor("#4caf50"));
-                d->klineChart->addIndicator(QStringLiteral("BOLL-LOWER"), lower, QColor("#f44336"));
+                d->klineChart->addIndicator(QStringLiteral("BOLL-MID"), mid, QColor(Tokens::Colors::ChartOrange));
+                d->klineChart->addIndicator(QStringLiteral("BOLL-UPPER"), upper, QColor(Tokens::Colors::Success));
+                d->klineChart->addIndicator(QStringLiteral("BOLL-LOWER"), lower, QColor(Tokens::Colors::Danger));
             }
             break;
         }
@@ -1560,7 +1601,7 @@ void StockKLinePage::calculateIndicators()
             int period = params.isEmpty() ? 14 : params[0];
             QVector<double> rsi = calculateRSI(closes, period);
             if (d->klineChart) {
-                d->klineChart->addIndicator(QStringLiteral("RSI%1").arg(period), rsi, QColor("#9c27b0"));
+                d->klineChart->addIndicator(QStringLiteral("RSI%1").arg(period), rsi, QColor(Tokens::Colors::ChartPurple));
             }
             break;
         }

@@ -63,16 +63,19 @@ bool AIService::initialize()
 {
     if (m_initialized) return m_initialized;
 
-    QString apiKey = ConfigManager::instance()->getSecure(ConfigKeys::SecureApiKey);
-    QString provider = ConfigManager::instance()->getString(ConfigKeys::AiProvider, "openai");
-    QString model = ConfigManager::instance()->getString(ConfigKeys::AiModel, "gpt-4");
+    // 使用新的配置键
+    QString apiKey = ConfigManager::instance()->getSecure("secure/ai_api_key");
+    QString provider = ConfigManager::instance()->getString("ai/provider", "openai");
+    QString model = ConfigManager::instance()->getString("ai/model", "gpt-4");
+    QString apiUrl = ConfigManager::instance()->getString("ai/api_url", "https://api.openai.com/v1");
 
     if (!apiKey.isEmpty()) {
         m_config.apiKey = apiKey;
         m_config.provider = (provider == "openai") ? AIProvider::OpenAI :
-                           (provider == "claude") ? AIProvider::Claude :
+                           (provider == "claude" || provider == "anthropic") ? AIProvider::Claude :
                            (provider == "local") ? AIProvider::Local : AIProvider::Custom;
         m_config.model = model;
+        m_config.baseUrl = apiUrl;
     }
 
     m_systemPrompt = DEFAULT_SYSTEM_PROMPT;
@@ -116,7 +119,10 @@ void AIService::setConfig(const AIConfig& config)
     m_config = config;
 
     if (!config.apiKey.isEmpty()) {
-        ConfigManager::instance()->setSecure(ConfigKeys::SecureApiKey, config.apiKey);
+        ConfigManager::instance()->setSecure("secure/ai_api_key", config.apiKey);
+    }
+    if (!config.model.isEmpty()) {
+        ConfigManager::instance()->set("ai/model", config.model);
     }
 }
 
