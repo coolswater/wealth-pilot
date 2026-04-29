@@ -27,6 +27,9 @@
 #include <QProgressBar>
 #include <QDateTime>
 #include <QRandomGenerator>
+#include <QLineEdit>
+#include <QThread>
+#include <QCoreApplication>
 
 // ========== PIMPL实现 ==========
 
@@ -438,7 +441,7 @@ void BacktestPage::runBacktest(const QString& symbol, const QDate& startDate, co
     
     // 生成模拟交易记录
     d->trades.clear();
-    QDateTime baseTime = QDateTime(startDate);
+    QDateTime baseTime(startDate.startOfDay());
     double cumProfit = 0;
     
     for (int i = 0; i < 20; ++i) {
@@ -563,4 +566,11 @@ void BacktestPage::onSymbolChanged(const QString& symbol)
 {
     Q_UNUSED(symbol)
     // 更新标的信息
+}
+
+void BacktestPage::onTradeClicked(int row, int column)
+{
+    Q_UNUSED(row)
+    Q_UNUSED(column)
+    // 显示交易详情
 }

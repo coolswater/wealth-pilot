@@ -278,24 +278,30 @@ void AlertCenterPage::loadAlertRules()
     d->alertRules.clear();
     
     // 模拟数据
-    d->alertRules.append({QUuid::createUuid().toString(), "600519", QStringLiteral("贵州茅台"), AlertType::PriceAbove, 1800.0, AlertStatus::Active, QDateTime::currentDateTime()});
-    d->alertRules.append({QUuid::createUuid().toString(), "000858", QStringLiteral("五粮液"), AlertType::ChangeBelow, -5.0, AlertStatus::Active, QDateTime::currentDateTime()});
-    d->alertRules.append({QUuid::createUuid().toString(), "000001", QStringLiteral("平安银行"), AlertType::VolumeAbove, 10000000, AlertStatus::Triggered, QDateTime::currentDateTime().addDays(-1), QDateTime::currentDateTime()});
+    AlertRule r1; r1.ruleId = QUuid::createUuid().toString(); r1.instrumentId = "600519"; r1.type = AlertType::PriceAbove; r1.threshold = 1800.0; r1.isActive = true; r1.createTime = QDateTime::currentDateTime();
+    d->alertRules.append(r1);
+    
+    AlertRule r2; r2.ruleId = QUuid::createUuid().toString(); r2.instrumentId = "000858"; r2.type = AlertType::ChangePercentBelow; r2.threshold = -5.0; r2.isActive = true; r2.createTime = QDateTime::currentDateTime();
+    d->alertRules.append(r2);
+    
+    AlertRule r3; r3.ruleId = QUuid::createUuid().toString(); r3.instrumentId = "000001"; r3.type = AlertType::MarginWarning; r3.threshold = 10000000; r3.isActive = false; r3.isTriggered = true; r3.createTime = QDateTime::currentDateTime().addDays(-1); r3.triggerTime = QDateTime::currentDateTime();
+    d->alertRules.append(r3);
     
     d->alertTable->setRowCount(d->alertRules.size());
     
     for (int i = 0; i < d->alertRules.size(); ++i) {
         const auto& rule = d->alertRules[i];
         
-        d->alertTable->setItem(i, 0, new QTableWidgetItem(rule.symbol));
-        d->alertTable->setItem(i, 1, new QTableWidgetItem(rule.name));
+        d->alertTable->setItem(i, 0, new QTableWidgetItem(rule.instrumentId));
+        d->alertTable->setItem(i, 1, new QTableWidgetItem(rule.instrumentId));
         d->alertTable->setItem(i, 2, new QTableWidgetItem(formatAlertType(rule.type)));
         d->alertTable->setItem(i, 3, new QTableWidgetItem(QString::number(rule.threshold)));
         
-        auto* statusItem = new QTableWidgetItem(formatAlertStatus(rule.status));
-        if (rule.status == AlertStatus::Active) {
+        QString statusText = rule.isActive ? QStringLiteral("激活中") : (rule.isTriggered ? QStringLiteral("已触发") : QStringLiteral("已禁用"));
+        auto* statusItem = new QTableWidgetItem(statusText);
+        if (rule.isActive) {
             statusItem->setForeground(QColor("#00D4AA"));
-        } else if (rule.status == AlertStatus::Triggered) {
+        } else if (rule.isTriggered) {
             statusItem->setForeground(QColor("#FF3366"));
         }
         d->alertTable->setItem(i, 4, statusItem);
@@ -310,8 +316,17 @@ void AlertCenterPage::loadAlertHistory()
     d->alertHistory.clear();
     
     // 模拟数据
-    d->alertHistory.append({QUuid::createUuid().toString(), "600519", QStringLiteral("贵州茅台"), AlertType::PriceAbove, 1800.0, 1805.5, QDateTime::currentDateTime().addHours(-2), QStringLiteral("价格突破1800元"), true});
-    d->alertHistory.append({QUuid::createUuid().toString(), "000858", QStringLiteral("五粮液"), AlertType::ChangeBelow, -5.0, -6.2, QDateTime::currentDateTime().addDays(-1), QStringLiteral("跌幅超过5%"), true});
+    AlertRecord rec1;
+    rec1.symbol = "600519"; rec1.name = QStringLiteral("贵州茅台"); rec1.type = AlertType::PriceAbove;
+    rec1.threshold = 1800.0; rec1.actualValue = 1805.5; rec1.triggerTime = QDateTime::currentDateTime().addSecs(-2*3600);
+    rec1.message = QStringLiteral("价格突破1800元");
+    d->alertHistory.append(rec1);
+    
+    AlertRecord rec2;
+    rec2.symbol = "000858"; rec2.name = QStringLiteral("五粮液"); rec2.type = AlertType::ChangePercentBelow;
+    rec2.threshold = -5.0; rec2.actualValue = -6.2; rec2.triggerTime = QDateTime::currentDateTime().addDays(-1);
+    rec2.message = QStringLiteral("跌幅超过5%");
+    d->alertHistory.append(rec2);
     
     d->historyTable->setRowCount(d->alertHistory.size());
     
@@ -331,13 +346,13 @@ void AlertCenterPage::addAlertRule(const AlertRule& rule)
 {
     d->alertRules.append(rule);
     loadAlertRules();
-    LOG_INFO(QString("Alert rule added: %1 %2").arg(rule.symbol, formatAlertType(rule.type)));
+    LOG_INFO(QString("Alert rule added: %1 %2").arg(rule.instrumentId, formatAlertType(rule.type)));
 }
 
-void AlertCenterPage::removeAlertRule(const QString& id)
+void AlertCenterPage::removeAlertRule(const QString& ruleId)
 {
     for (int i = 0; i < d->alertRules.size(); ++i) {
-        if (d->alertRules[i].id == id) {
+        if (d->alertRules[i].ruleId == ruleId) {
             d->alertRules.removeAt(i);
             break;
         }
@@ -345,15 +360,11 @@ void AlertCenterPage::removeAlertRule(const QString& id)
     loadAlertRules();
 }
 
-void AlertCenterPage::toggleAlertRule(const QString& id)
+void AlertCenterPage::toggleAlertRule(const QString& ruleId)
 {
     for (auto& rule : d->alertRules) {
-        if (rule.id == id) {
-            if (rule.status == AlertStatus::Active) {
-                rule.status = AlertStatus::Disabled;
-            } else if (rule.status == AlertStatus::Disabled) {
-                rule.status = AlertStatus::Active;
-            }
+        if (rule.ruleId == ruleId) {
+            rule.isActive = !rule.isActive;
             break;
         }
     }
@@ -394,11 +405,11 @@ void AlertCenterPage::onAddAlert()
     
     if (dialog->exec() == QDialog::Accepted) {
         AlertRule rule;
-        rule.id = QUuid::createUuid().toString();
-        rule.symbol = symbolEdit->text();
+        rule.ruleId = QUuid::createUuid().toString();
+        rule.instrumentId = symbolEdit->text();
         rule.type = static_cast<AlertType>(typeCombo->currentIndex());
         rule.threshold = thresholdSpin->value();
-        rule.status = AlertStatus::Active;
+        rule.isActive = true;
         rule.createTime = QDateTime::currentDateTime();
         addAlertRule(rule);
     }
@@ -426,7 +437,7 @@ void AlertCenterPage::onAlertListClicked(int row, int column)
 {
     Q_UNUSED(column)
     if (row >= 0 && row < d->alertRules.size()) {
-        d->currentAlertId = d->alertRules[row].id;
+        d->currentAlertId = d->alertRules[row].ruleId;
     }
 }
 
@@ -443,20 +454,22 @@ void AlertCenterPage::onClearHistory()
 
 // ========== 辅助函数 ==========
 
-QString AlertCenterPage::formatAlertType(AlertType type)
+QString AlertCenterPage::formatAlertType(AlertType type) const
 {
     switch (type) {
         case AlertType::PriceAbove: return QStringLiteral("价格高于");
         case AlertType::PriceBelow: return QStringLiteral("价格低于");
-        case AlertType::ChangeAbove: return QStringLiteral("涨幅高于");
-        case AlertType::ChangeBelow: return QStringLiteral("跌幅高于");
-        case AlertType::VolumeAbove: return QStringLiteral("成交量高于");
-        case AlertType::TurnoverAbove: return QStringLiteral("换手率高于");
+        case AlertType::ChangePercentAbove: return QStringLiteral("涨幅高于");
+        case AlertType::ChangePercentBelow: return QStringLiteral("跌幅高于");
+        case AlertType::ProfitAbove: return QStringLiteral("盈利高于");
+        case AlertType::LossAbove: return QStringLiteral("亏损高于");
+        case AlertType::MarginWarning: return QStringLiteral("保证金预警");
+        case AlertType::DrawdownWarning: return QStringLiteral("回撤预警");
         default: return QStringLiteral("未知");
     }
 }
 
-QString AlertCenterPage::formatAlertStatus(AlertStatus status)
+QString AlertCenterPage::formatAlertStatus(AlertStatus status) const
 {
     switch (status) {
         case AlertStatus::Active: return QStringLiteral("激活中");

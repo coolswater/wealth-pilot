@@ -149,16 +149,25 @@ void CryptoPage::loadCryptoList()
     d->cryptoCache.clear();
     
     // 模拟数据
-    d->cryptoCache.append({{"BTC", "Bitcoin", 67890.50, 492345.67, 2.35, 28500000000, 1340000000000, 69500.00, 66200.00, 1}});
-    d->cryptoCache.append({{"ETH", "Ethereum", 3456.78, 25056.23, 1.89, 15600000000, 415000000000, 3520.00, 3380.00, 2}});
-    d->cryptoCache.append({{"BNB", "BNB", 567.89, 4116.23, -0.56, 1200000000, 87000000000, 580.00, 555.00, 3}});
-    d->cryptoCache.append({{"SOL", "Solana", 145.67, 1056.23, 5.23, 2300000000, 67000000000, 150.00, 138.00, 4}});
-    d->cryptoCache.append({{"XRP", "XRP", 0.5234, 3.79, -1.23, 1500000000, 29000000000, 0.5400, 0.5100, 5}});
-    d->cryptoCache.append({{"ADA", "Cardano", 0.4567, 3.31, 0.89, 450000000, 16000000000, 0.4700, 0.4400, 6}});
-    d->cryptoCache.append({{"DOGE", "Dogecoin", 0.1234, 0.89, 3.45, 890000000, 18000000000, 0.1300, 0.1180, 7}});
-    d->cryptoCache.append({{"DOT", "Polkadot", 7.89, 57.18, -0.78, 320000000, 10000000000, 8.20, 7.50, 8}});
-    d->cryptoCache.append({{"MATIC", "Polygon", 0.7890, 5.72, 2.12, 280000000, 7800000000, 0.8200, 0.7600, 9}});
-    d->cryptoCache.append({{"LINK", "Chainlink", 14.56, 105.56, 1.56, 450000000, 8600000000, 15.00, 14.00, 10}});
+    CryptoQuote c1; c1.symbol = "BTC"; c1.name = "Bitcoin"; c1.price = 67890.50; c1.change24h = 2.35;
+    c1.volume24h = 28500000000; c1.marketCap = 1340000000000; c1.high24h = 69500.00; c1.low24h = 66200.00; c1.rank = 1;
+    d->cryptoCache.append(c1);
+    
+    CryptoQuote c2; c2.symbol = "ETH"; c2.name = "Ethereum"; c2.price = 3456.78; c2.change24h = 1.89;
+    c2.volume24h = 15600000000; c2.marketCap = 415000000000; c2.high24h = 3520.00; c2.low24h = 3380.00; c2.rank = 2;
+    d->cryptoCache.append(c2);
+    
+    CryptoQuote c3; c3.symbol = "BNB"; c3.name = "BNB"; c3.price = 567.89; c3.change24h = -0.56;
+    c3.volume24h = 1200000000; c3.marketCap = 87000000000; c3.high24h = 580.00; c3.low24h = 555.00; c3.rank = 3;
+    d->cryptoCache.append(c3);
+    
+    CryptoQuote c4; c4.symbol = "SOL"; c4.name = "Solana"; c4.price = 145.67; c4.change24h = 5.23;
+    c4.volume24h = 2300000000; c4.marketCap = 67000000000; c4.high24h = 150.00; c4.low24h = 138.00; c4.rank = 4;
+    d->cryptoCache.append(c4);
+    
+    CryptoQuote c5; c5.symbol = "XRP"; c5.name = "XRP"; c5.price = 0.5234; c5.change24h = -1.23;
+    c5.volume24h = 1500000000; c5.marketCap = 29000000000; c5.high24h = 0.5400; c5.low24h = 0.5100; c5.rank = 5;
+    d->cryptoCache.append(c5);
     
     d->cryptoListTable->setRowCount(d->cryptoCache.size());
     

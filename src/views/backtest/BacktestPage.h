@@ -23,6 +23,7 @@
 #include <QComboBox>
 #include <QDateEdit>
 #include <QLabel>
+#include <QDateTime>
 #include <memory>
 
 // 前向声明
@@ -84,56 +85,26 @@ signals:
     void backtestCompleted(const BacktestResult& result);
 
 private slots:
-    /**
-     * @brief 运行回测
-     */
     void onRunBacktest();
-
-    /**
-     * @brief 停止回测
-     */
     void onStopBacktest();
-
-    /**
-     * @brief 导出报告
-     */
     void onExportReport();
-
-    /**
-     * @brief 策略选择变更
-     */
     void onStrategyChanged(int index);
-
-    /**
-     * @brief 交易记录点击
-     */
+    void onSymbolChanged(const QString& symbol);
     void onTradeClicked(int row, int column);
 
 private:
-    /**
-     * @brief 初始化UI
-     */
     void setupUI();
-
-    /**
-     * @brief 初始化策略列表
-     */
+    void initToolBar();
+    void initStrategyEditor();
+    void initResultPanel();
+    void initTradeHistory();
+    void initConnections();
     void initStrategies();
-
-    /**
-     * @brief 更新回测结果
-     */
-    void updateResults(const BacktestResult& result);
-
-    /**
-     * @brief 更新交易记录表格
-     */
+    void updateResult(const BacktestResult& result);
     void updateTradeTable(const QVector<BacktestTradeRecord>& trades);
-
-    /**
-     * @brief 生成模拟回测数据
-     */
     void generateMockBacktest();
+    void runBacktest(const QString& symbol, const QDate& startDate, const QDate& endDate);
+    void exportReport(const QString& filePath);
 
     struct Impl;
     std::unique_ptr<Impl> d;

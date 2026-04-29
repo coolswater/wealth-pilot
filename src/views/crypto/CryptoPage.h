@@ -20,6 +20,7 @@
 #include <QWidget>
 #include <QTableWidget>
 #include <QLabel>
+#include <QDateTime>
 #include <memory>
 
 class KLineChart;
