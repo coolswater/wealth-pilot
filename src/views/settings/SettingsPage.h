@@ -12,6 +12,7 @@
 
 class QComboBox;
 class QSlider;
+class QLineEdit;
 
 /**
  * @brief 设置页面
@@ -34,12 +35,14 @@ private slots:
     void onNotificationChanged();
     void onClearCacheClicked();
     void onExportDataClicked();
+    void onAIConfigChanged();
 
 private:
     void setupUI();
     void createAppearanceSection();
     void createNotificationSection();
     void createSecuritySection();
+    void createAISection();
     void createAboutSection();
     void loadSettings();
     void saveSettings();

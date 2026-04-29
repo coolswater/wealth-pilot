@@ -176,7 +176,7 @@ void ChartConfig::load()
     m_showGrid = m_settings->value("showGrid", true).toBool();
     m_showCrosshair = m_settings->value("showCrosshair", true).toBool();
     m_showVolume = m_settings->value("showVolume", true).toBool();
-    m_volumeHeightRatio = m_settings->value("volumeHeightRatio", 0.2).toDouble();
+    m_volumeHeightRatio = m_settings->value("volumeHeightRatio", 0.1).toDouble();
 
     m_settings->endGroup();
 

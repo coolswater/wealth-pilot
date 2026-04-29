@@ -84,6 +84,8 @@ private:
     void setupHeader();
     void setupQuickActions();
     void setupMessagesArea();
+    void checkAIConfiguration();
+    void showConfigurationGuide();
     void setupInputArea();
     void addMessage(const QString& text, bool isUser) const;
     void addTypingIndicator() const;

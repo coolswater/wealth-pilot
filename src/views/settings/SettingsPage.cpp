@@ -13,6 +13,7 @@
 #include <QComboBox>
 #include <QSlider>
 #include <QCheckBox>
+#include <QLineEdit>
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QApplication>
@@ -38,6 +39,13 @@ struct SettingsPage::Impl {
 
     QCheckBox* twoFactorCheck = nullptr;
     QCheckBox* bioCheck = nullptr;
+    
+    // AI 配置
+    QCheckBox* aiEnabledCheck = nullptr;
+    QComboBox* aiProviderCombo = nullptr;
+    QLineEdit* aiApiUrlEdit = nullptr;
+    QLineEdit* aiApiKeyEdit = nullptr;
+    QLineEdit* aiModelEdit = nullptr;
 };
 
 SettingsPage::SettingsPage(QWidget *parent)
@@ -76,6 +84,7 @@ void SettingsPage::setupUI()
     createAppearanceSection();
     createNotificationSection();
     createSecuritySection();
+    createAISection();
     createAboutSection();
 
     mainLayout->addStretch();
@@ -221,6 +230,106 @@ void SettingsPage::createAboutSection()
     mainLayout->addWidget(card);
 }
 
+void SettingsPage::createAISection()
+{
+    QVBoxLayout* mainLayout = qobject_cast<QVBoxLayout*>(layout());
+
+    CardWidget* card = new CardWidget("AI Configuration", this);
+
+    QWidget* content = new QWidget(card);
+    QVBoxLayout* layout = new QVBoxLayout(content);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(Spacing::MD);
+
+    // AI 启用开关
+    d->aiEnabledCheck = new QCheckBox("Enable AI Assistant", content);
+    QObject::connect(d->aiEnabledCheck, &QCheckBox::toggled, this, &SettingsPage::onAIConfigChanged);
+    layout->addWidget(d->aiEnabledCheck);
+
+    // AI 提供商选择
+    QHBoxLayout* providerLayout = new QHBoxLayout();
+    providerLayout->addWidget(new QLabel("AI Provider:", content));
+    
+    d->aiProviderCombo = new QComboBox(content);
+    d->aiProviderCombo->addItem("OpenAI", "openai");
+    d->aiProviderCombo->addItem("Azure OpenAI", "azure");
+    d->aiProviderCombo->addItem("Anthropic", "anthropic");
+    d->aiProviderCombo->addItem("Local LLM", "local");
+    d->aiProviderCombo->addItem("Custom", "custom");
+    providerLayout->addWidget(d->aiProviderCombo);
+    providerLayout->addStretch();
+    
+    QObject::connect(d->aiProviderCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &SettingsPage::onAIConfigChanged);
+    
+    layout->addLayout(providerLayout);
+
+    // API 地址
+    QHBoxLayout* urlLayout = new QHBoxLayout();
+    urlLayout->addWidget(new QLabel("API URL:", content));
+    
+    d->aiApiUrlEdit = new QLineEdit(content);
+    d->aiApiUrlEdit->setPlaceholderText("https://api.openai.com/v1");
+    d->aiApiUrlEdit->setMinimumWidth(300);
+    urlLayout->addWidget(d->aiApiUrlEdit);
+    urlLayout->addStretch();
+    
+    QObject::connect(d->aiApiUrlEdit, &QLineEdit::textChanged, this, &SettingsPage::onAIConfigChanged);
+    
+    layout->addLayout(urlLayout);
+
+    // API Key
+    QHBoxLayout* keyLayout = new QHBoxLayout();
+    keyLayout->addWidget(new QLabel("API Key:", content));
+    
+    d->aiApiKeyEdit = new QLineEdit(content);
+    d->aiApiKeyEdit->setPlaceholderText("Enter your API key");
+    d->aiApiKeyEdit->setEchoMode(QLineEdit::Password);
+    d->aiApiKeyEdit->setMinimumWidth(300);
+    keyLayout->addWidget(d->aiApiKeyEdit);
+    
+    QPushButton* toggleKeyBtn = new QPushButton("Show", content);
+    toggleKeyBtn->setFixedWidth(60);
+    QObject::connect(toggleKeyBtn, &QPushButton::clicked, this, [this, toggleKeyBtn]() {
+        if (d->aiApiKeyEdit->echoMode() == QLineEdit::Password) {
+            d->aiApiKeyEdit->setEchoMode(QLineEdit::Normal);
+            toggleKeyBtn->setText("Hide");
+        } else {
+            d->aiApiKeyEdit->setEchoMode(QLineEdit::Password);
+            toggleKeyBtn->setText("Show");
+        }
+    });
+    keyLayout->addWidget(toggleKeyBtn);
+    keyLayout->addStretch();
+    
+    QObject::connect(d->aiApiKeyEdit, &QLineEdit::textChanged, this, &SettingsPage::onAIConfigChanged);
+    
+    layout->addLayout(keyLayout);
+
+    // 模型名称
+    QHBoxLayout* modelLayout = new QHBoxLayout();
+    modelLayout->addWidget(new QLabel("Model:", content));
+    
+    d->aiModelEdit = new QLineEdit(content);
+    d->aiModelEdit->setPlaceholderText("gpt-4, gpt-3.5-turbo, claude-3, etc.");
+    d->aiModelEdit->setMinimumWidth(300);
+    modelLayout->addWidget(d->aiModelEdit);
+    modelLayout->addStretch();
+    
+    QObject::connect(d->aiModelEdit, &QLineEdit::textChanged, this, &SettingsPage::onAIConfigChanged);
+    
+    layout->addLayout(modelLayout);
+
+    // 提示信息
+    QLabel* hintLabel = new QLabel(
+        "<i>Note: API Key is stored securely using Windows DPAPI encryption.</i>", content);
+    hintLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Colors::TextTertiary));
+    layout->addWidget(hintLabel);
+
+    card->setContent(content);
+    mainLayout->addWidget(card);
+}
+
 void SettingsPage::loadSettings()
 {
     // Load theme
@@ -241,6 +350,22 @@ void SettingsPage::loadSettings()
     d->dailySummaryCheck->setChecked(ConfigManager::instance()->getBool("notifications/dailySummary", false));
     d->twoFactorCheck->setChecked(ConfigManager::instance()->getBool("security/twoFactor", false));
     d->bioCheck->setChecked(ConfigManager::instance()->getBool("security/biometric", false));
+    
+    // Load AI settings
+    d->aiEnabledCheck->setChecked(ConfigManager::instance()->getBool("ai/enabled", false));
+    
+    QString provider = ConfigManager::instance()->getString("ai/provider", "openai");
+    int providerIndex = d->aiProviderCombo->findData(provider);
+    if (providerIndex >= 0) {
+        d->aiProviderCombo->setCurrentIndex(providerIndex);
+    }
+    
+    d->aiApiUrlEdit->setText(ConfigManager::instance()->getString("ai/api_url", "https://api.openai.com/v1"));
+    d->aiModelEdit->setText(ConfigManager::instance()->getString("ai/model", "gpt-4"));
+    
+    // Load API key securely
+    QString apiKey = ConfigManager::instance()->getSecure("secure/ai_api_key");
+    d->aiApiKeyEdit->setText(apiKey);
 }
 
 void SettingsPage::saveSettings()
@@ -255,6 +380,15 @@ void SettingsPage::saveSettings()
     ConfigManager::instance()->set("notifications/dailySummary", d->dailySummaryCheck->isChecked());
     ConfigManager::instance()->set("security/twoFactor", d->twoFactorCheck->isChecked());
     ConfigManager::instance()->set("security/biometric", d->bioCheck->isChecked());
+    
+    // Save AI settings
+    ConfigManager::instance()->set("ai/enabled", d->aiEnabledCheck->isChecked());
+    ConfigManager::instance()->set("ai/provider", d->aiProviderCombo->currentData().toString());
+    ConfigManager::instance()->set("ai/api_url", d->aiApiUrlEdit->text());
+    ConfigManager::instance()->set("ai/model", d->aiModelEdit->text());
+    
+    // Save API key securely
+    ConfigManager::instance()->setSecure("secure/ai_api_key", d->aiApiKeyEdit->text());
 }
 
 void SettingsPage::onThemeChanged(int index)
@@ -308,4 +442,10 @@ void SettingsPage::onNotificationChanged()
 {
     // Notification setting changed
     // TODO: Implement notification settings
+}
+
+void SettingsPage::onAIConfigChanged()
+{
+    saveSettings();
+    LOG_INFO("AI configuration changed");
 }

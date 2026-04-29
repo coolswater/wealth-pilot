@@ -38,11 +38,14 @@ constexpr auto CtpTradeFront = "ctp/trade_front";       ///< 交易前置
 // AI
 constexpr auto AiProvider = "ai/provider";              ///< AI提供商
 constexpr auto AiModel = "ai/model";                    ///< AI模型
+constexpr auto AiApiUrl = "ai/api_url";                  ///< AI API地址
+constexpr auto AiEnabled = "ai/enabled";                ///< AI是否启用
 
 // 安全存储（加密保存）
 constexpr auto SecureCtpUserId = "secure/ctp_user_id";   ///< CTP用户ID
 constexpr auto SecureCtpPassword = "secure/ctp_password"; ///< CTP密码
 constexpr auto SecureApiKey = "secure/api_key";          ///< API密钥
+constexpr auto SecureAiApiKey = "secure/ai_api_key";     ///< AI API密钥
 }
 
 /**

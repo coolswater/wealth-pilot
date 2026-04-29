@@ -6,7 +6,9 @@
 #include "../../ui/animation/AnimationManager.h"
 #include "../../ui/ThemeManager.h"
 #include "../../core/config/Tokens.h"
+#include "../../core/config/ConfigManager.h"
 #include "../../utils/Logger.h"
+#include "../../core/navigation/PageNavigator.h"
 
 #include <QHBoxLayout>
 #include <QLabel>
@@ -184,8 +186,86 @@ void AIAssistantPanelWidget::setupMessagesArea()
     d->scrollArea->setWidget(d->messagesContainer);
     mainLayout->addWidget(d->scrollArea, 1);
 
-    // Welcome message
-    addMessage("Hello! I am WealthPilot AI, your investment assistant.\\n\\nI can help you:\\n- Analyze portfolio and investment decisions\\n- Provide market insights and trends\\n- Offer investment advice and risk warnings\\n- Price alerts and forecasts\\n\\nWhat would you like to know?", false);
+    // 检查 AI 配置
+    checkAIConfiguration();
+}
+
+void AIAssistantPanelWidget::checkAIConfiguration()
+{
+    // 检查是否已配置 API Key
+    QString apiKey = ConfigManager::instance()->getSecure("secure/ai_api_key");
+    bool aiEnabled = ConfigManager::instance()->getBool("ai/enabled", false);
+    
+    if (apiKey.isEmpty() || !aiEnabled) {
+        // 显示配置引导
+        showConfigurationGuide();
+    } else {
+        // 显示欢迎消息
+        addMessage("Hello! I am WealthPilot AI, your investment assistant.\\n\\nI can help you:\\n- Analyze portfolio and investment decisions\\n- Provide market insights and trends\\n- Offer investment advice and risk warnings\\n- Price alerts and forecasts\\n\\nWhat would you like to know?", false);
+    }
+}
+
+void AIAssistantPanelWidget::showConfigurationGuide()
+{
+    // 创建配置引导消息
+    QWidget* guideWidget = new QWidget(d->messagesContainer);
+    QVBoxLayout* guideLayout = new QVBoxLayout(guideWidget);
+    guideLayout->setContentsMargins(Spacing::MD, Spacing::MD, Spacing::MD, Spacing::MD);
+    guideLayout->setSpacing(Spacing::SM);
+    
+    // 背景
+    guideWidget->setStyleSheet(QString(
+        "background-color: %1; border-radius: %2px;")
+        .arg(Colors::BgElevated)
+        .arg(Radius::MD));
+    
+    // 标题
+    QLabel* titleLabel = new QLabel("AI Configuration Required", guideWidget);
+    titleLabel->setStyleSheet(QString("color: %1; font-weight: bold; font-size: 14px;")
+        .arg(Colors::TextPrimary));
+    guideLayout->addWidget(titleLabel);
+    
+    // 说明文字
+    QLabel* descLabel = new QLabel(
+        "To use the AI assistant, please configure your AI API settings:\n\n"
+        "1. Go to Settings\n"
+        "2. Find 'AI Configuration' section\n"
+        "3. Enter your API Key and other settings\n\n"
+        "Your API key will be securely stored using Windows DPAPI encryption.",
+        guideWidget);
+    descLabel->setWordWrap(true);
+    descLabel->setStyleSheet(QString("color: %1; font-size: 13px;")
+        .arg(Colors::TextSecondary));
+    guideLayout->addWidget(descLabel);
+    
+    // 跳转按钮
+    QPushButton* gotoSettingsBtn = new QPushButton("Go to Settings", guideWidget);
+    gotoSettingsBtn->setStyleSheet(QString(
+        "QPushButton {"
+        "  background-color: %1;"
+        "  color: %2;"
+        "  border: none;"
+        "  border-radius: %3px;"
+        "  padding: 8px 16px;"
+        "  font-weight: bold;"
+        "}"
+        "QPushButton:hover {"
+        "  background-color: %4;"
+        "}")
+        .arg(Colors::Primary)
+        .arg(Colors::TextPrimary)
+        .arg(Radius::SM)
+        .arg(Colors::PrimaryHover));
+    
+    connect(gotoSettingsBtn, &QPushButton::clicked, this, []() {
+        // 跳转到设置页面
+        PageNavigator::instance().navigateTo("SettingsPage");
+    });
+    
+    guideLayout->addWidget(gotoSettingsBtn);
+    
+    // 添加到消息区域
+    d->messagesLayout->insertWidget(d->messagesLayout->count() - 1, guideWidget);
 }
 
 void AIAssistantPanelWidget::setupInputArea()
