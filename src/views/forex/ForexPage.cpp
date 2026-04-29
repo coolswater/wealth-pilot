@@ -288,7 +288,8 @@ void ForexPage::loadForexList()
             d->forexListTable->setItem(i, 3, new QTableWidgetItem(QString::number(forex.ask, 'f', 4)));
             
             auto* changeItem = new QTableWidgetItem(QString::number(forex.changePercent, 'f', 2) + "%");
-            changeItem->setForeground(forex.changePercent >= 0 ? QColor(Tokens::Colors::Success) : QColor(Tokens::Colors::Danger));
+            // 中国市场：红涨绿跌
+            changeItem->setForeground(forex.changePercent >= 0 ? QColor(Tokens::Colors::Danger) : QColor(Tokens::Colors::Success));
             d->forexListTable->setItem(i, 4, changeItem);
             
             d->forexListTable->setItem(i, 5, new QTableWidgetItem(forex.updateTime.toString("hh:mm:ss")));

@@ -283,9 +283,18 @@ namespace ZIndex {
 // ==================== 辅助函数 ====================
 
 /**
- * @brief 根据涨跌获取颜色
+ * @brief 根据涨跌获取颜色（中国市场：红涨绿跌）
  */
 inline QString getTrendColor(double change) {
+    if (change > 0.0001) return Colors::Danger;   // 上涨用红色
+    if (change < -0.0001) return Colors::Success; // 下跌用绿色
+    return Colors::TextSecondary;
+}
+
+/**
+ * @brief 根据涨跌获取颜色（国际惯例：绿涨红跌）
+ */
+inline QString getTrendColorInternational(double change) {
     if (change > 0.0001) return Colors::Success;
     if (change < -0.0001) return Colors::Danger;
     return Colors::TextSecondary;

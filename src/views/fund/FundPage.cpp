@@ -426,10 +426,11 @@ void FundPage::loadFundList()
             
             // 涨跌幅
             auto* changeItem = new QTableWidgetItem(QString::number(fund.changePercent, 'f', 2) + "%");
+            // 中国市场：红涨绿跌
             if (fund.changePercent > 0) {
-                changeItem->setForeground(QColor(Tokens::Colors::Success));
+                changeItem->setForeground(QColor(Tokens::Colors::Danger));  // 上涨红色
             } else if (fund.changePercent < 0) {
-                changeItem->setForeground(QColor(Tokens::Colors::Danger));
+                changeItem->setForeground(QColor(Tokens::Colors::Success));  // 下跌绿色
             }
             d->fundListTable->setItem(i, 4, changeItem);
             

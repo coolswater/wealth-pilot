@@ -255,8 +255,8 @@ KLineChart::KLineChart(QWidget *parent)
     , d(std::make_unique<Impl>())
 {
     // 设置默认样式
-    d->style.upColor = QColor(Tokens::Colors::Success);      // 上涨颜色（绿色）
-    d->style.downColor = QColor(Tokens::Colors::Danger);    // 下跌颜色（红色）
+    d->style.upColor = QColor(Tokens::Colors::Danger);     // 上涨颜色（红色）- 中国市场
+    d->style.downColor = QColor(Tokens::Colors::Success);   // 下跌颜色（绿色）- 中国市场
     d->style.flatColor = QColor(Tokens::Colors::TextSecondary);    // 平盘颜色（灰色）
     d->style.candleWidth = 8;                  // 蜡烛宽度
     d->style.candleSpacing = 2;                // 蜡烛间距

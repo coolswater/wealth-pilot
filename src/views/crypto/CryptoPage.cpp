@@ -165,7 +165,8 @@ void CryptoPage::loadCryptoList()
             d->cryptoListTable->setItem(i, 4, new QTableWidgetItem(QString::number(crypto.priceCny, 'f', 2)));
             
             auto* changeItem = new QTableWidgetItem(QString::number(crypto.change24h, 'f', 2) + "%");
-            changeItem->setForeground(crypto.change24h >= 0 ? QColor(Tokens::Colors::Success) : QColor(Tokens::Colors::Danger));
+            // 中国市场：红涨绿跌
+            changeItem->setForeground(crypto.change24h >= 0 ? QColor(Tokens::Colors::Danger) : QColor(Tokens::Colors::Success));
             d->cryptoListTable->setItem(i, 5, changeItem);
             
             d->cryptoListTable->setItem(i, 6, new QTableWidgetItem(QString::number(crypto.marketCap / 100000000, 'f', 1)));
