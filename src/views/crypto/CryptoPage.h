@@ -57,6 +57,7 @@ private:
     void initDetailPanel();
     void initConnections();
     void loadCryptoList();
+    void updateCryptoTable();
     void updateCryptoDetail(const CryptoQuote& quote);
     void loadCryptoKLine(const QString& symbol);
 

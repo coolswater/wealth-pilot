@@ -431,7 +431,7 @@ void StockKLinePage::initMainArea()
     
     // K线图（主图，成交量已内置在下方）
     d->klineChart = new KLineChart(chartContainer);
-    d->klineChart->setMinimumHeight(350);
+    d->klineChart->setMinimumHeight(200);
     
     // 设置K线样式（使用主题令牌）
     KLineStyle style;
