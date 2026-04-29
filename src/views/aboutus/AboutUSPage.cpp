@@ -1,6 +1,6 @@
 /**
  * @file AboutUSPage.cpp
- * @brief About Page Implementation
+ * @brief 关于页面实现
  */
 
 #include "AboutUSPage.h"
@@ -11,12 +11,15 @@
 #include <QPushButton>
 #include <QPixmap>
 
+using namespace Tokens;
+
 struct AboutUSPage::Impl {
     QLabel* logoLabel = nullptr;
     QLabel* titleLabel = nullptr;
     QLabel* versionLabel = nullptr;
     QLabel* infoLabel = nullptr;
     QLabel* devLabel = nullptr;
+    QLabel* qtLabel = nullptr;
     QPushButton* checkUpdateBtn = nullptr;
 };
 
@@ -42,64 +45,85 @@ void AboutUSPage::setupUI()
 {
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setAlignment(Qt::AlignCenter);
-    mainLayout->setSpacing(20);
+    mainLayout->setSpacing(Spacing::MD);
+    mainLayout->setContentsMargins(Spacing::XL, Spacing::XL, Spacing::XL, Spacing::XL);
 
     // Logo
     d->logoLabel = new QLabel(this);
-    d->logoLabel->setFixedSize(120, 120);
-    d->logoLabel->setStyleSheet(
-        "QLabel {"
-        "  background: qlineargradient(x1:0, y1:0, x2:1, y2:1, "
-        "    stop:0 #4A90D9, stop:1 #357ABD);"
-        "  border-radius: 20px;"
-        "}"
-    );
-    d->logoLabel->setText("WP");
+    d->logoLabel->setFixedSize(100, 100);
+    d->logoLabel->setText(QStringLiteral("WP"));
     d->logoLabel->setAlignment(Qt::AlignCenter);
-    d->logoLabel->setStyleSheet(
+    d->logoLabel->setStyleSheet(QString(
         "QLabel {"
-        "  font-size: 48px; font-weight: bold; color: white;"
+        "  font-size: 40px; font-weight: bold; color: white;"
         "  background: qlineargradient(x1:0, y1:0, x2:1, y2:1, "
-        "    stop:0 #4A90D9, stop:1 #357ABD);"
+        "    stop:0 %1, stop:2 %2);"
         "  border-radius: 20px;"
-        "}"
-    );
+        "}")
+        .arg(Colors::Primary)
+        .arg(Colors::PrimaryDark));
     mainLayout->addWidget(d->logoLabel, 0, Qt::AlignCenter);
 
-    // Title
-    d->titleLabel = new QLabel("WealthPilot", this);
-    d->titleLabel->setStyleSheet("font-size: 28px; font-weight: bold;");
+    // 标题
+    d->titleLabel = new QLabel(QStringLiteral("WealthPilot"), this);
+    d->titleLabel->setStyleSheet(QString("font-size: 28px; font-weight: bold; color: %1;")
+        .arg(Colors::TextPrimary));
     mainLayout->addWidget(d->titleLabel, 0, Qt::AlignCenter);
 
-    // Version
-    d->versionLabel = new QLabel("Version 2.0.0", this);
-    d->versionLabel->setStyleSheet("font-size: 14px; color: #888;");
+    // 版本
+    d->versionLabel = new QLabel(QStringLiteral("版本 2.0.0"), this);
+    d->versionLabel->setStyleSheet(QString("font-size: 14px; color: %1;")
+        .arg(Colors::TextSecondary));
     mainLayout->addWidget(d->versionLabel, 0, Qt::AlignCenter);
 
-    // Info
+    // 简介
     d->infoLabel = new QLabel(
-        "WealthPilot is a financial information analysis platform designed for PC users. "
-        "Built with Qt framework, it provides real-time stock and futures tracking, "
-        "watchlist management, and comprehensive market analysis.",
+        QStringLiteral("WealthPilot 是一款专为 PC 用户设计的金融信息分析平台。"
+        "基于 Qt 框架开发，提供实时股票期货行情追踪、自选股管理、"
+        "市场全景分析等功能，助您把握投资先机。"),
         this);
     d->infoLabel->setWordWrap(true);
     d->infoLabel->setAlignment(Qt::AlignCenter);
     d->infoLabel->setMaximumWidth(500);
-    d->infoLabel->setProperty("secondary", true);
+    d->infoLabel->setStyleSheet(QString("font-size: 13px; color: %1; line-height: 1.6;")
+        .arg(Colors::TextSecondary));
     mainLayout->addWidget(d->infoLabel, 0, Qt::AlignCenter);
 
-    // Developer
-    d->devLabel = new QLabel("Developed by WealthPilot Team", this);
-    d->devLabel->setStyleSheet("font-size: 12px; color: #888;");
-    d->devLabel->setProperty("secondary", true);
+    // Qt版本
+    d->qtLabel = new QLabel(QString(QStringLiteral("基于 Qt %1 构建")).arg(qVersion()), this);
+    d->qtLabel->setStyleSheet(QString("font-size: 12px; color: %1;")
+        .arg(Colors::TextTertiary));
+    mainLayout->addWidget(d->qtLabel, 0, Qt::AlignCenter);
+
+    // 开发团队
+    d->devLabel = new QLabel(QStringLiteral("WealthPilot 团队出品"), this);
+    d->devLabel->setStyleSheet(QString("font-size: 12px; color: %1;")
+        .arg(Colors::TextTertiary));
     mainLayout->addWidget(d->devLabel, 0, Qt::AlignCenter);
 
-    // Check update button
-    d->checkUpdateBtn = new QPushButton("Check for Updates", this);
-    d->checkUpdateBtn->setFixedWidth(150);
+    // 检查更新按钮
+    d->checkUpdateBtn = new QPushButton(QStringLiteral("检查更新"), this);
+    d->checkUpdateBtn->setFixedWidth(120);
+    d->checkUpdateBtn->setStyleSheet(QString(
+        "QPushButton {"
+        "  background-color: %1;"
+        "  color: %2;"
+        "  border: none;"
+        "  border-radius: %3px;"
+        "  padding: 8px 16px;"
+        "  font-size: 13px;"
+        "}"
+        "QPushButton:hover {"
+        "  background-color: %4;"
+        "}")
+        .arg(Colors::Primary)
+        .arg(Colors::TextPrimary)
+        .arg(Radius::SM)
+        .arg(Colors::PrimaryHover));
     QObject::connect(d->checkUpdateBtn, &QPushButton::clicked, this, []() {
-        // TODO: Implement update check
+        // TODO: 实现更新检查
     });
+    mainLayout->addSpacing(Spacing::MD);
     mainLayout->addWidget(d->checkUpdateBtn, 0, Qt::AlignCenter);
 
     mainLayout->addStretch();

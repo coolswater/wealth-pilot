@@ -258,9 +258,9 @@ void AIAssistantPanelWidget::showConfigurationGuide()
         .arg(Colors::PrimaryHover));
     
     connect(gotoSettingsBtn, &QPushButton::clicked, this, [this]() {
-        // 跳转到设置页面
-        LOG_INFO("Navigating to SettingsPage from AI panel");
-        PageNavigator::instance().navigateTo(QStringLiteral("SettingsPage"));
+        // 跳转到设置页面（页面ID是 "settings"）
+        LOG_INFO("Navigating to settings page from AI panel");
+        PageNavigator::instance().navigateTo(QStringLiteral("settings"));
     });
     
     guideLayout->addWidget(gotoSettingsBtn);

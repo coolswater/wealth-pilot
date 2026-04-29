@@ -77,6 +77,7 @@ void SettingsPage::setupUI()
     mainLayout->setContentsMargins(Spacing::LG, Spacing::LG, Spacing::LG, Spacing::LG);
     mainLayout->setSpacing(Spacing::MD);
 
+    // 页面标题
     QLabel* titleLabel = new QLabel(QStringLiteral("设置"), this);
     titleLabel->setStyleSheet(QString("font-size: %1px; font-weight: 700; color: %2;")
                                   .arg(Font::Size::H1).arg(Colors::TextPrimary));
@@ -89,6 +90,7 @@ void SettingsPage::setupUI()
     scrollArea->setStyleSheet(QString("background: transparent; border: none;"));
     
     QWidget* scrollContent = new QWidget();
+    scrollContent->setStyleSheet(QString("background: transparent;"));
     QVBoxLayout* contentLayout = new QVBoxLayout(scrollContent);
     contentLayout->setContentsMargins(0, 0, Spacing::MD, 0);
     contentLayout->setSpacing(Spacing::MD);
