@@ -332,10 +332,10 @@ void BacktestPage::initResultPanel()
     int row = 0;
     auto createResultRow = [&](const QString& label, QLabel*& valueLabel) {
         auto* lbl = new QLabel(label);
-        lbl->setStyleSheet("color: #888888; font-size: 12px;");
+        lbl->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::TextSecondary));
         resultLayout->addWidget(lbl, row, 0);
         valueLabel = new QLabel(QStringLiteral("--"));
-        valueLabel->setStyleSheet("color: #ffffff; font-size: 14px; font-weight: bold;");
+        valueLabel->setStyleSheet(QString("color: %1; font-size: 14px; font-weight: bold;").arg(Tokens::Colors::TextPrimary));
         resultLayout->addWidget(valueLabel, row, 1);
         row++;
     };
@@ -484,11 +484,11 @@ void BacktestPage::updateResult(const BacktestResult& result)
     d->profitFactorLabel->setText(QString::number(result.profitFactor, 'f', 2));
     d->totalTradesLabel->setText(QString::number(result.totalTrades));
     
-    // 颜色设置
+    // 颜色设置（中国市场：红涨绿跌）
     if (result.totalReturn > 0) {
-        d->totalReturnLabel->setStyleSheet("color: #00D4AA; font-size: 14px; font-weight: bold;");
+        d->totalReturnLabel->setStyleSheet(QString("color: %1; font-size: 14px; font-weight: bold;").arg(Tokens::Colors::Danger));
     } else {
-        d->totalReturnLabel->setStyleSheet("color: #FF3366; font-size: 14px; font-weight: bold;");
+        d->totalReturnLabel->setStyleSheet(QString("color: %1; font-size: 14px; font-weight: bold;").arg(Tokens::Colors::Success));
     }
     
     // 更新交易记录表格

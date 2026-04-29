@@ -1050,7 +1050,7 @@ void StockKLinePage::onShowReminderDialog()
     row1Layout->addStretch();
     
     auto* priceLabel = new QLabel(d->priceLabel->text() + " " + d->changeLabel->text());
-    priceLabel->setStyleSheet("font-size: 14px; color: #ff4d4f;");
+    priceLabel->setStyleSheet(QString("font-size: 14px; color: %1;").arg(Tokens::Colors::Danger));
     row1Layout->addWidget(priceLabel);
     
     layout->addWidget(row1);
