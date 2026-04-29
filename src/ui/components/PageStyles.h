@@ -252,6 +252,38 @@ public:
     static QString warningColor() { return Tokens::Colors::Warning; }
     static QString errorColor() { return Tokens::Colors::Danger; }
     static QString successColor() { return Tokens::Colors::Success; }
+    
+    // ========== 主题样式 ==========
+    
+    // 浅色主题样式
+    static QString lightPageBackground() {
+        return QString("background-color: %1;").arg(Tokens::LightColors::BgBase);
+    }
+    
+    static QString lightCardContainer() {
+        return QString("background-color: %1; border: 1px solid %2; border-radius: 8px; padding: 12px;")
+            .arg(Tokens::LightColors::BgCard, Tokens::LightColors::Border);
+    }
+    
+    static QString lightTitleText() {
+        return QString("font-size: 20px; font-weight: bold; color: %1;")
+            .arg(Tokens::LightColors::TextPrimary);
+    }
+    
+    // 护眼主题样式
+    static QString eyeCarePageBackground() {
+        return QString("background-color: %1;").arg(Tokens::EyeCareColors::BgBase);
+    }
+    
+    static QString eyeCareCardContainer() {
+        return QString("background-color: %1; border: 1px solid %2; border-radius: 8px; padding: 12px;")
+            .arg(Tokens::EyeCareColors::BgCard, Tokens::EyeCareColors::Border);
+    }
+    
+    static QString eyeCareTitleText() {
+        return QString("font-size: 20px; font-weight: bold; color: %1;")
+            .arg(Tokens::EyeCareColors::TextPrimary);
+    }
 };
 
 #endif // PAGESTYLES_H

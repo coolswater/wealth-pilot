@@ -92,6 +92,60 @@ namespace Colors {
     inline const QString GradientSurface = "linear-gradient(135deg, #1A1F2E 0%, #0F1419 100%)";
 }
 
+// ==================== 浅色主题颜色 ====================
+namespace LightColors {
+    // ========== 背景色 ==========
+    inline const QString BgBase = "#F8FAFC";
+    inline const QString BgSurface = "#FFFFFF";
+    inline const QString BgElevated = "#FFFFFF";
+    inline const QString BgHover = "#F1F5F9";
+    inline const QString BgCard = "#FFFFFF";
+
+    // ========== 文字色 ==========
+    inline const QString TextPrimary = "#1E293B";
+    inline const QString TextSecondary = "#64748B";
+    inline const QString TextTertiary = "#94A3B8";
+    inline const QString TextDisabled = "#CBD5E1";
+
+    // ========== 边框色 ==========
+    inline const QString Border = "#E2E8F0";
+    inline const QString BorderLight = "#F1F5F9";
+    inline const QString BorderFocus = "#3B82F6";
+
+    // ========== 功能色 ==========
+    inline const QString Primary = "#3B82F6";
+    inline const QString Success = "#10B981";
+    inline const QString Danger = "#EF4444";
+    inline const QString Warning = "#F97316";
+}
+
+// ==================== 护眼主题颜色 ====================
+namespace EyeCareColors {
+    // ========== 背景色（暖色调） ==========
+    inline const QString BgBase = "#1E1A14";
+    inline const QString BgSurface = "#2A251E";
+    inline const QString BgElevated = "#352F26";
+    inline const QString BgHover = "#3D372D";
+    inline const QString BgCard = "#352F26";
+
+    // ========== 文字色（暖白） ==========
+    inline const QString TextPrimary = "#E8DCC8";
+    inline const QString TextSecondary = "#A89B85";
+    inline const QString TextTertiary = "#8B7D66";
+    inline const QString TextDisabled = "#6B5F4F";
+
+    // ========== 边框色 ==========
+    inline const QString Border = "#3D372D";
+    inline const QString BorderLight = "#2A251E";
+    inline const QString BorderFocus = "#D4A574";
+
+    // ========== 功能色（暖色调） ==========
+    inline const QString Primary = "#D4A574";
+    inline const QString Success = "#7CB342";
+    inline const QString Danger = "#E57373";
+    inline const QString Warning = "#FFB74D";
+}
+
 // QColor 版本（用于代码中）
 namespace Color {
     inline QColor primary() { return QColor(Colors::Primary); }
