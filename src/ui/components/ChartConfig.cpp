@@ -236,7 +236,7 @@ void ChartConfig::reset()
     m_showGrid = true;
     m_showCrosshair = true;
     m_showVolume = true;
-    m_volumeHeightRatio = 0.2;
+    m_volumeHeightRatio = 0.1;
 
     initDefaultIndicators();
 

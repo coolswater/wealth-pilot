@@ -441,7 +441,7 @@ void StockKLinePage::initMainArea()
     style.candleWidth = 8;
     style.candleSpacing = 2;
     style.showVolume = true;
-    style.volumeHeightRatio = 0.22;
+    style.volumeHeightRatio = 0.1;
     d->klineChart->setStyle(style);
     
     chartLayout->addWidget(d->klineChart, 1);

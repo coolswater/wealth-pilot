@@ -261,7 +261,7 @@ KLineChart::KLineChart(QWidget *parent)
     d->style.candleWidth = 8;                  // 蜡烛宽度
     d->style.candleSpacing = 2;                // 蜡烛间距
     d->style.showVolume = true;                // 显示成交量
-    d->style.volumeHeightRatio = 0.1;          // 成交量高度比例（减少一半）
+    d->style.volumeHeightRatio = 0.05;         // 成交量高度比例（减少一半）
     
     // 启用鼠标追踪
     setMouseTracking(true);

@@ -239,7 +239,7 @@ private:
     bool m_showGrid = true;
     bool m_showCrosshair = true;
     bool m_showVolume = true;
-    double m_volumeHeightRatio = 0.2;
+    double m_volumeHeightRatio = 0.1;
 
     // 指标配置
     QMap<QString, int> m_indicatorPeriods;
