@@ -7,6 +7,7 @@
 #include "../../app/ApplicationInitializer.h"
 #include "../../core/di/ServiceLocator.h"
 #include "../../core/config/EnvironmentConfig.h"
+#include "../../core/navigation/PageNavigator.h"
 #include "../../ui/components/ThemeEngine.h"
 #include "../../ui/components/LayoutConstants.h"
 #include "../../ui/components/ChartStyles.h"
@@ -449,6 +450,13 @@ void MainWindow::connectSignals()
     // 链接主题管理信号
     connect(&ThemeEngine::instance(), &ThemeEngine::themeChanged,
             this, &MainWindow::onThemeChanged);
+    
+    // 链接页面导航信号
+    connect(&PageNavigator::instance(), &PageNavigator::navigating,
+            this, [this](const QString& pageId, const QVariantMap& params) {
+        Q_UNUSED(params);
+        onSidebarItemClicked(pageId);
+    });
 }
 
 void MainWindow::adjustLayout()
