@@ -76,7 +76,7 @@ void SettingsPage::setupUI()
     mainLayout->setContentsMargins(Spacing::LG, Spacing::LG, Spacing::LG, Spacing::LG);
     mainLayout->setSpacing(Spacing::LG);
 
-    QLabel* titleLabel = new QLabel("Settings", this);
+    QLabel* titleLabel = new QLabel(QStringLiteral("设置"), this);
     titleLabel->setStyleSheet(QString("font-size: %1px; font-weight: 700; color: %2;")
                                   .arg(Font::Size::H1).arg(Colors::TextPrimary));
     mainLayout->addWidget(titleLabel);
@@ -94,7 +94,7 @@ void SettingsPage::createAppearanceSection()
 {
     QVBoxLayout* mainLayout = qobject_cast<QVBoxLayout*>(layout());
 
-    CardWidget* card = new CardWidget("Appearance", this);
+    CardWidget* card = new CardWidget(QStringLiteral("外观"), this);
 
     QWidget* content = new QWidget(card);
     QVBoxLayout* layout = new QVBoxLayout(content);
@@ -103,12 +103,12 @@ void SettingsPage::createAppearanceSection()
 
     // Theme selection
     QHBoxLayout* themeLayout = new QHBoxLayout();
-    themeLayout->addWidget(new QLabel("Theme:", content));
+    themeLayout->addWidget(new QLabel(QStringLiteral("主题:"), content));
     
     d->themeCombo = new QComboBox(content);
-    d->themeCombo->addItem("Light", 0);
-    d->themeCombo->addItem("Dark", 1);
-    d->themeCombo->addItem("Auto", 2);
+    d->themeCombo->addItem(QStringLiteral("浅色"), 0);
+    d->themeCombo->addItem(QStringLiteral("深色"), 1);
+    d->themeCombo->addItem(QStringLiteral("自动"), 2);
     themeLayout->addWidget(d->themeCombo);
     themeLayout->addStretch();
     
@@ -119,7 +119,7 @@ void SettingsPage::createAppearanceSection()
 
     // Font size
     QHBoxLayout* fontLayout = new QHBoxLayout();
-    fontLayout->addWidget(new QLabel("Font Size:", content));
+    fontLayout->addWidget(new QLabel(QStringLiteral("字体大小:"), content));
     
     d->fontSlider = new QSlider(Qt::Horizontal, content);
     d->fontSlider->setRange(10, 20);
@@ -136,7 +136,7 @@ void SettingsPage::createAppearanceSection()
     layout->addLayout(fontLayout);
 
     // Color blind mode
-    d->colorBlindCheck = new QCheckBox("Color Blind Mode", content);
+    d->colorBlindCheck = new QCheckBox(QStringLiteral("色盲模式"), content);
     QObject::connect(d->colorBlindCheck, &QCheckBox::toggled, this, [this]() { saveSettings(); });
     layout->addWidget(d->colorBlindCheck);
 
@@ -148,18 +148,18 @@ void SettingsPage::createNotificationSection()
 {
     QVBoxLayout* mainLayout = qobject_cast<QVBoxLayout*>(layout());
 
-    CardWidget* card = new CardWidget("Notifications", this);
+    CardWidget* card = new CardWidget(QStringLiteral("通知"), this);
 
     QWidget* content = new QWidget(card);
     QVBoxLayout* layout = new QVBoxLayout(content);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(Spacing::SM);
 
-    d->priceAlertCheck = new QCheckBox("Price Alerts", content);
-    d->riskAlertCheck = new QCheckBox("Risk Alerts", content);
-    d->tradeNotifyCheck = new QCheckBox("Trade Notifications", content);
-    d->systemNotifyCheck = new QCheckBox("System Notifications", content);
-    d->dailySummaryCheck = new QCheckBox("Daily Summary", content);
+    d->priceAlertCheck = new QCheckBox(QStringLiteral("价格提醒"), content);
+    d->riskAlertCheck = new QCheckBox(QStringLiteral("风险预警"), content);
+    d->tradeNotifyCheck = new QCheckBox(QStringLiteral("交易通知"), content);
+    d->systemNotifyCheck = new QCheckBox(QStringLiteral("系统通知"), content);
+    d->dailySummaryCheck = new QCheckBox(QStringLiteral("每日汇总"), content);
 
     layout->addWidget(d->priceAlertCheck);
     layout->addWidget(d->riskAlertCheck);
@@ -175,15 +175,15 @@ void SettingsPage::createSecuritySection()
 {
     QVBoxLayout* mainLayout = qobject_cast<QVBoxLayout*>(layout());
 
-    CardWidget* card = new CardWidget("Security", this);
+    CardWidget* card = new CardWidget(QStringLiteral("安全"), this);
 
     QWidget* content = new QWidget(card);
     QVBoxLayout* layout = new QVBoxLayout(content);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(Spacing::SM);
 
-    d->twoFactorCheck = new QCheckBox("Two-Factor Authentication", content);
-    d->bioCheck = new QCheckBox("Biometric Authentication", content);
+    d->twoFactorCheck = new QCheckBox(QStringLiteral("双因素认证"), content);
+    d->bioCheck = new QCheckBox(QStringLiteral("生物识别认证"), content);
 
     layout->addWidget(d->twoFactorCheck);
     layout->addWidget(d->bioCheck);
@@ -191,8 +191,8 @@ void SettingsPage::createSecuritySection()
     // Buttons
     QHBoxLayout* btnLayout = new QHBoxLayout();
     
-    QPushButton* clearCacheBtn = new QPushButton("Clear Cache", content);
-    QPushButton* exportDataBtn = new QPushButton("Export Data", content);
+    QPushButton* clearCacheBtn = new QPushButton(QStringLiteral("清除缓存"), content);
+    QPushButton* exportDataBtn = new QPushButton(QStringLiteral("导出数据"), content);
     
     QObject::connect(clearCacheBtn, &QPushButton::clicked, this, &SettingsPage::onClearCacheClicked);
     QObject::connect(exportDataBtn, &QPushButton::clicked, this, &SettingsPage::onExportDataClicked);
@@ -211,16 +211,16 @@ void SettingsPage::createAboutSection()
 {
     QVBoxLayout* mainLayout = qobject_cast<QVBoxLayout*>(layout());
 
-    CardWidget* card = new CardWidget("About", this);
+    CardWidget* card = new CardWidget(QStringLiteral("关于"), this);
 
     QWidget* content = new QWidget(card);
     QVBoxLayout* layout = new QVBoxLayout(content);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(Spacing::SM);
 
-    QLabel* versionLabel = new QLabel(QString("Version: %1").arg("2.0.0"), content);
-    QLabel* buildLabel = new QLabel(QString("Build: %1").arg(__DATE__), content);
-    QLabel* qtLabel = new QLabel(QString("Qt Version: %1").arg(qVersion()), content);
+    QLabel* versionLabel = new QLabel(QString(QStringLiteral("版本: %1")).arg("2.0.0"), content);
+    QLabel* buildLabel = new QLabel(QString(QStringLiteral("构建日期: %1")).arg(__DATE__), content);
+    QLabel* qtLabel = new QLabel(QString(QStringLiteral("Qt 版本: %1")).arg(qVersion()), content);
 
     layout->addWidget(versionLabel);
     layout->addWidget(buildLabel);
@@ -234,7 +234,7 @@ void SettingsPage::createAISection()
 {
     QVBoxLayout* mainLayout = qobject_cast<QVBoxLayout*>(layout());
 
-    CardWidget* card = new CardWidget("AI Configuration", this);
+    CardWidget* card = new CardWidget(QStringLiteral("AI 配置"), this);
 
     QWidget* content = new QWidget(card);
     QVBoxLayout* layout = new QVBoxLayout(content);
@@ -242,20 +242,20 @@ void SettingsPage::createAISection()
     layout->setSpacing(Spacing::MD);
 
     // AI 启用开关
-    d->aiEnabledCheck = new QCheckBox("Enable AI Assistant", content);
+    d->aiEnabledCheck = new QCheckBox(QStringLiteral("启用 AI 助手"), content);
     QObject::connect(d->aiEnabledCheck, &QCheckBox::toggled, this, &SettingsPage::onAIConfigChanged);
     layout->addWidget(d->aiEnabledCheck);
 
     // AI 提供商选择
     QHBoxLayout* providerLayout = new QHBoxLayout();
-    providerLayout->addWidget(new QLabel("AI Provider:", content));
+    providerLayout->addWidget(new QLabel(QStringLiteral("AI 提供商:"), content));
     
     d->aiProviderCombo = new QComboBox(content);
-    d->aiProviderCombo->addItem("OpenAI", "openai");
-    d->aiProviderCombo->addItem("Azure OpenAI", "azure");
-    d->aiProviderCombo->addItem("Anthropic", "anthropic");
-    d->aiProviderCombo->addItem("Local LLM", "local");
-    d->aiProviderCombo->addItem("Custom", "custom");
+    d->aiProviderCombo->addItem(QStringLiteral("OpenAI"), "openai");
+    d->aiProviderCombo->addItem(QStringLiteral("Azure OpenAI"), "azure");
+    d->aiProviderCombo->addItem(QStringLiteral("Anthropic"), "anthropic");
+    d->aiProviderCombo->addItem(QStringLiteral("本地模型"), "local");
+    d->aiProviderCombo->addItem(QStringLiteral("自定义"), "custom");
     providerLayout->addWidget(d->aiProviderCombo);
     providerLayout->addStretch();
     
@@ -266,10 +266,10 @@ void SettingsPage::createAISection()
 
     // API 地址
     QHBoxLayout* urlLayout = new QHBoxLayout();
-    urlLayout->addWidget(new QLabel("API URL:", content));
+    urlLayout->addWidget(new QLabel(QStringLiteral("API 地址:"), content));
     
     d->aiApiUrlEdit = new QLineEdit(content);
-    d->aiApiUrlEdit->setPlaceholderText("https://api.openai.com/v1");
+    d->aiApiUrlEdit->setPlaceholderText(QStringLiteral("https://api.openai.com/v1"));
     d->aiApiUrlEdit->setMinimumWidth(300);
     urlLayout->addWidget(d->aiApiUrlEdit);
     urlLayout->addStretch();
@@ -280,23 +280,23 @@ void SettingsPage::createAISection()
 
     // API Key
     QHBoxLayout* keyLayout = new QHBoxLayout();
-    keyLayout->addWidget(new QLabel("API Key:", content));
+    keyLayout->addWidget(new QLabel(QStringLiteral("API 密钥:"), content));
     
     d->aiApiKeyEdit = new QLineEdit(content);
-    d->aiApiKeyEdit->setPlaceholderText("Enter your API key");
+    d->aiApiKeyEdit->setPlaceholderText(QStringLiteral("请输入您的 API 密钥"));
     d->aiApiKeyEdit->setEchoMode(QLineEdit::Password);
     d->aiApiKeyEdit->setMinimumWidth(300);
     keyLayout->addWidget(d->aiApiKeyEdit);
     
-    QPushButton* toggleKeyBtn = new QPushButton("Show", content);
+    QPushButton* toggleKeyBtn = new QPushButton(QStringLiteral("显示"), content);
     toggleKeyBtn->setFixedWidth(60);
     QObject::connect(toggleKeyBtn, &QPushButton::clicked, this, [this, toggleKeyBtn]() {
         if (d->aiApiKeyEdit->echoMode() == QLineEdit::Password) {
             d->aiApiKeyEdit->setEchoMode(QLineEdit::Normal);
-            toggleKeyBtn->setText("Hide");
+            toggleKeyBtn->setText(QStringLiteral("隐藏"));
         } else {
             d->aiApiKeyEdit->setEchoMode(QLineEdit::Password);
-            toggleKeyBtn->setText("Show");
+            toggleKeyBtn->setText(QStringLiteral("显示"));
         }
     });
     keyLayout->addWidget(toggleKeyBtn);
@@ -308,10 +308,10 @@ void SettingsPage::createAISection()
 
     // 模型名称
     QHBoxLayout* modelLayout = new QHBoxLayout();
-    modelLayout->addWidget(new QLabel("Model:", content));
+    modelLayout->addWidget(new QLabel(QStringLiteral("模型名称:"), content));
     
     d->aiModelEdit = new QLineEdit(content);
-    d->aiModelEdit->setPlaceholderText("gpt-4, gpt-3.5-turbo, claude-3, etc.");
+    d->aiModelEdit->setPlaceholderText(QStringLiteral("gpt-4, gpt-3.5-turbo, claude-3 等"));
     d->aiModelEdit->setMinimumWidth(300);
     modelLayout->addWidget(d->aiModelEdit);
     modelLayout->addStretch();
@@ -322,7 +322,7 @@ void SettingsPage::createAISection()
 
     // 提示信息
     QLabel* hintLabel = new QLabel(
-        "<i>Note: API Key is stored securely using Windows DPAPI encryption.</i>", content);
+        QStringLiteral("<i>提示：API 密钥使用 Windows DPAPI 加密安全存储</i>"), content);
     hintLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Colors::TextTertiary));
     layout->addWidget(hintLabel);
 
@@ -412,8 +412,8 @@ void SettingsPage::onFontSizeChanged(int size)
 
 void SettingsPage::onClearCacheClicked()
 {
-    int ret = QMessageBox::question(this, "Confirm",
-                                    "Are you sure you want to clear all cache data?",
+    int ret = QMessageBox::question(this, QStringLiteral("确认"),
+                                    QStringLiteral("确定要清除所有缓存数据吗？"),
                                     QMessageBox::Yes | QMessageBox::No);
 
     if (ret == QMessageBox::Yes) {
@@ -422,19 +422,19 @@ void SettingsPage::onClearCacheClicked()
         // DatabaseManager::instance()->clearBrowseHistory();
 
         LOG_INFO("Cache cleared");
-        QMessageBox::information(this, "Done", "Cache has been cleared.");
+        QMessageBox::information(this, QStringLiteral("完成"), QStringLiteral("缓存已清除。"));
     }
 }
 
 void SettingsPage::onExportDataClicked()
 {
     QString filePath = QFileDialog::getSaveFileName(this,
-                                                    "Export Data", "", "JSON Files (*.json)");
+                                                    QStringLiteral("导出数据"), "", QStringLiteral("JSON 文件 (*.json)"));
 
     if (!filePath.isEmpty()) {
         ConfigManager::instance()->exportToFile(filePath, false);
         LOG_INFO(QString("Data exported to: %1").arg(filePath));
-        QMessageBox::information(this, "Done", "Data has been exported.");
+        QMessageBox::information(this, QStringLiteral("完成"), QStringLiteral("数据已导出。"));
     }
 }
 

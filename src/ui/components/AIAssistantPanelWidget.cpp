@@ -201,7 +201,7 @@ void AIAssistantPanelWidget::checkAIConfiguration()
         showConfigurationGuide();
     } else {
         // 显示欢迎消息
-        addMessage("Hello! I am WealthPilot AI, your investment assistant.\\n\\nI can help you:\\n- Analyze portfolio and investment decisions\\n- Provide market insights and trends\\n- Offer investment advice and risk warnings\\n- Price alerts and forecasts\\n\\nWhat would you like to know?", false);
+        addMessage(QStringLiteral("您好！我是 WealthPilot AI，您的投资助手。\\n\\n我可以帮您：\\n- 分析投资组合和投资决策\\n- 提供市场洞察和趋势\\n- 提供投资建议和风险提示\\n- 价格预警和预测\\n\\n请问有什么可以帮您的？"), false);
     }
 }
 
@@ -220,18 +220,18 @@ void AIAssistantPanelWidget::showConfigurationGuide()
         .arg(Radius::MD));
     
     // 标题
-    QLabel* titleLabel = new QLabel("AI Configuration Required", guideWidget);
+    QLabel* titleLabel = new QLabel(QStringLiteral("AI 配置未完成"), guideWidget);
     titleLabel->setStyleSheet(QString("color: %1; font-weight: bold; font-size: 14px;")
         .arg(Colors::TextPrimary));
     guideLayout->addWidget(titleLabel);
     
     // 说明文字
     QLabel* descLabel = new QLabel(
-        "To use the AI assistant, please configure your AI API settings:\n\n"
-        "1. Go to Settings\n"
-        "2. Find 'AI Configuration' section\n"
-        "3. Enter your API Key and other settings\n\n"
-        "Your API key will be securely stored using Windows DPAPI encryption.",
+        QStringLiteral("要使用 AI 助手，请先完成以下配置：\n\n"
+        "1. 进入设置页面\n"
+        "2. 找到 'AI 配置' 部分\n"
+        "3. 输入您的 API 密钥和其他设置\n\n"
+        "您的 API 密钥将使用 Windows DPAPI 加密安全存储。"),
         guideWidget);
     descLabel->setWordWrap(true);
     descLabel->setStyleSheet(QString("color: %1; font-size: 13px;")
@@ -239,7 +239,7 @@ void AIAssistantPanelWidget::showConfigurationGuide()
     guideLayout->addWidget(descLabel);
     
     // 跳转按钮
-    QPushButton* gotoSettingsBtn = new QPushButton("Go to Settings", guideWidget);
+    QPushButton* gotoSettingsBtn = new QPushButton(QStringLiteral("前往设置"), guideWidget);
     gotoSettingsBtn->setStyleSheet(QString(
         "QPushButton {"
         "  background-color: %1;"
@@ -257,9 +257,10 @@ void AIAssistantPanelWidget::showConfigurationGuide()
         .arg(Radius::SM)
         .arg(Colors::PrimaryHover));
     
-    connect(gotoSettingsBtn, &QPushButton::clicked, this, []() {
+    connect(gotoSettingsBtn, &QPushButton::clicked, this, [this]() {
         // 跳转到设置页面
-        PageNavigator::instance().navigateTo("SettingsPage");
+        LOG_INFO("Navigating to SettingsPage from AI panel");
+        PageNavigator::instance().navigateTo(QStringLiteral("SettingsPage"));
     });
     
     guideLayout->addWidget(gotoSettingsBtn);
