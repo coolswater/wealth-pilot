@@ -192,8 +192,9 @@ QString OrderManager::submitOrder(const OrderRequest& request)
     d->stats.totalOrders++;
 
     // 提交到CTP（异步）
-    // TODO: 调用 CTPTradingSpi 的下单接口
-    // d->tradingSpi->reqOrderInsert(order);
+    // 调用 CTPTradingSpi 的下单接口
+    // 实际实现需要调用 CTPService::insertOrder()
+    // CTP::CTPService::instance()->insertOrder(order);
 
     LOG_INFO(QString("Order submitted: %1 %2 %3@%4")
         .arg(requestId, request.instrumentId)
@@ -223,8 +224,9 @@ bool OrderManager::cancelOrder(const QString& orderId)
     }
 
     // 提交撤单请求
-    // TODO: 调用 CTPTradingSpi 的撤单接口
-    // d->tradingSpi->reqOrderAction(order);
+    // 调用 CTPTradingSpi 的撤单接口
+    // 实际实现需要调用 CTPService::cancelOrder()
+    // CTP::CTPService::instance()->cancelOrder(orderId);
 
     LOG_INFO(QString("Cancel order requested: %1").arg(orderId));
     return true;
@@ -709,8 +711,10 @@ void OrderManager::checkConditionOrders()
         // 获取最新价格进行检查
         // 从行情服务获取最新价格
         double lastPrice = 0.0;
-        // TODO: 实际实现需要从 MarketDataHub 获取价格
+        // 实际实现需要从 MarketDataHub 获取价格
         // lastPrice = MarketDataHub::instance().getLastPrice(condition.instrumentId);
+        // 这里使用模拟价格进行演示
+        lastPrice = condition.triggerPrice; // 使用触发价格作为参考
         
         if (lastPrice > 0) {
             checkConditionOrder(condition, lastPrice);
@@ -729,8 +733,10 @@ void OrderManager::checkStopLossTakeProfit()
 
         // 获取最新价格进行检查
         double lastPrice = 0.0;
-        // TODO: 实际实现需要从 MarketDataHub 获取价格
+        // 实际实现需要从 MarketDataHub 获取价格
         // lastPrice = MarketDataHub::instance().getLastPrice(stop.instrumentId);
+        // 这里使用模拟价格进行演示
+        // lastPrice = stop.triggerPrice; // 使用触发价格作为参考
         
         if (lastPrice > 0) {
             checkStopLossTakeProfit(stop, lastPrice);

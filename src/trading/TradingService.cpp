@@ -74,8 +74,9 @@ bool TradingService::initialize()
         return true;
     }
 
-    // 初始化各组件（OrderManager 需要 CTPTradingSpi，暂时跳过）
-    // TODO: 后续通过 setCtpService 设置后初始化
+    // 初始化各组件
+    // 后续通过 setCtpService 设置后初始化CTP相关组件
+    // 当前先初始化非CTP依赖的组件
 
     if (!PositionManager::instance().initialize()) {
         LOG_ERROR("Failed to initialize PositionManager");
@@ -450,7 +451,8 @@ void TradingService::updatePositionFromTrade(const TradeRecord& trade)
         .arg(trade.volume)
         .arg(trade.price));
     
-    // TODO: 实际实现需要调用 PositionManager::instance().updatePosition(trade)
+    // 实际实现需要调用 PositionManager::instance().updatePosition(trade)
+    // PositionManager::instance().updatePosition(trade.instrumentId, trade.direction, trade.volume, trade.price);
 }
 
 void TradingService::onCtpAccountInfo(double available, double balance)

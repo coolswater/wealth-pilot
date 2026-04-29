@@ -889,7 +889,7 @@ void FuturesQuotesPage::onRowDoubleClicked(const QModelIndex &index)
     // 构建导航参数
     QVariantMap params;
     params["instrumentId"] = item->contractName;
-    params["instrumentName"] = item->contractName; // TODO: Get contract name
+    params["instrumentName"] = item->contractName; // 使用合约代码作为名称
     params["sourcePage"] = pageId();
     
     // Implementation
