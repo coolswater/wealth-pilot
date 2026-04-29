@@ -60,6 +60,8 @@ set(CORE_CONFIG_SOURCES
 set(CORE_CACHE_SOURCES
         src/core/cache/CacheManager.h
         src/core/cache/CacheManager.cpp
+        src/core/cache/DataCacheManager.h
+        src/core/cache/DataCacheManager.cpp
 )
 
 # Core - Database 数据库
@@ -82,6 +84,12 @@ set(CORE_TASK_SOURCES
 set(CORE_DI_SOURCES
         src/core/di/ServiceLocator.h
         src/core/di/ServiceLocator.cpp
+)
+
+# Core - Data 数据管理
+set(CORE_DATA_SOURCES
+        src/core/data/DataSourceManager.h
+        src/core/data/DataSourceManager.cpp
 )
 
 # Core - Navigation 页面导航
@@ -138,6 +146,12 @@ set(MARKET_SOURCES
         src/market/MarketDataHub.cpp
         src/market/StockDataSource.h
         src/market/StockDataSource.cpp
+        src/market/ForexDataSource.h
+        src/market/ForexDataSource.cpp
+        src/market/CryptoDataSource.h
+        src/market/CryptoDataSource.cpp
+        src/market/FundDataSource.h
+        src/market/FundDataSource.cpp
         src/market/NewsDataSource.h
         src/market/NewsDataSource.cpp
 )
@@ -346,6 +360,7 @@ set(SOURCES
         ${CORE_DATABASE_SOURCES}
         ${CORE_TASK_SOURCES}
         ${CORE_DI_SOURCES}
+        ${CORE_DATA_SOURCES}
         ${CORE_NAVIGATION_SOURCES}
         ${CTP_API_SOURCES}
         ${CTP_CONFIG_SOURCES}

@@ -15,6 +15,7 @@
 #include "FundPage.h"
 #include "ui/components/KLineChart.h"
 #include "core/config/Tokens.h"
+#include "market/FundDataSource.h"
 #include "utils/Logger.h"
 #include "market/FavoritesManager.h"
 
@@ -403,87 +404,53 @@ void FundPage::initConnections()
 
 void FundPage::loadFundList()
 {
-    // 模拟数据
     d->fundCache.clear();
     
-    // ETF基金
-    FundQuote fund1;
-    fund1.code = "510300"; fund1.name = QStringLiteral("沪深300ETF"); fund1.type = FundType::ETF;
-    fund1.nav = 4.123; fund1.accNav = 4.123; fund1.lastPrice = 4.125; fund1.changeAmount = 0.15; fund1.changePercent = 0.006;
-    fund1.volume = 12500; fund1.turnover = 51500; fund1.manager = "张三"; fund1.company = "华泰柏瑞"; fund1.scale = 450.5;
-    d->fundCache.append(fund1);
-    
-    FundQuote fund2;
-    fund2.code = "510500"; fund2.name = QStringLiteral("中证500ETF"); fund2.type = FundType::ETF;
-    fund2.nav = 6.234; fund2.accNav = 6.234; fund2.lastPrice = 6.228; fund2.changeAmount = -0.12; fund2.changePercent = -0.007;
-    fund2.volume = 8500; fund2.turnover = 53000; fund2.manager = "李四"; fund2.company = "华夏基金"; fund2.scale = 380.2;
-    d->fundCache.append(fund2);
-    
-    FundQuote fund3;
-    fund3.code = "159915"; fund3.name = QStringLiteral("创业板ETF"); fund3.type = FundType::ETF;
-    fund3.nav = 2.156; fund3.accNav = 2.156; fund3.lastPrice = 2.160; fund3.changeAmount = 0.25; fund3.changePercent = 0.005;
-    fund3.volume = 6200; fund3.turnover = 13400; fund3.manager = "王五"; fund3.company = "易方达"; fund3.scale = 120.8;
-    d->fundCache.append(fund3);
-    
-    // LOF基金
-    FundQuote fund4;
-    fund4.code = "161725"; fund4.name = QStringLiteral("招商白酒A"); fund4.type = FundType::LOF;
-    fund4.nav = 1.234; fund4.accNav = 2.567; fund4.lastPrice = 1.238; fund4.changeAmount = 0.32; fund4.changePercent = 0.004;
-    fund4.volume = 3200; fund4.turnover = 3960; fund4.manager = "赵六"; fund4.company = "招商基金"; fund4.scale = 85.6;
-    d->fundCache.append(fund4);
-    
-    // 开放式基金
-    FundQuote fund5;
-    fund5.code = "000001"; fund5.name = QStringLiteral("华夏成长"); fund5.type = FundType::OpenEnd;
-    fund5.nav = 1.567; fund5.accNav = 3.234; fund5.lastPrice = 0; fund5.changeAmount = 0; fund5.changePercent = 0;
-    fund5.volume = 0; fund5.turnover = 0; fund5.manager = "钱七"; fund5.company = "华夏基金"; fund5.scale = 156.3;
-    d->fundCache.append(fund5);
-    
-    FundQuote fund6;
-    fund6.code = "110022"; fund6.name = QStringLiteral("易方达消费"); fund6.type = FundType::OpenEnd;
-    fund6.nav = 2.345; fund6.accNav = 4.567; fund6.lastPrice = 0; fund6.changeAmount = 0; fund6.changePercent = 0;
-    fund6.volume = 0; fund6.turnover = 0; fund6.manager = "孙八"; fund6.company = "易方达"; fund6.scale = 234.5;
-    d->fundCache.append(fund6);
-    
-    // 货币基金
-    FundQuote fund7;
-    fund7.code = "511880"; fund7.name = QStringLiteral("银华日利"); fund7.type = FundType::Money;
-    fund7.nav = 100.0; fund7.accNav = 100.0; fund7.lastPrice = 100.002; fund7.changeAmount = 0.002; fund7.changePercent = 0.00002;
-    fund7.volume = 50000; fund7.turnover = 5000000; fund7.manager = "周九"; fund7.company = "银华基金"; fund7.scale = 500.0;
-    d->fundCache.append(fund7);
-    
-    // 更新表格
-    d->fundListTable->setRowCount(d->fundCache.size());
-    
-    for (int i = 0; i < d->fundCache.size(); ++i) {
-        const auto& fund = d->fundCache[i];
+    // 使用真实数据源获取基金列表
+    FundDataSource::instance()->requestFundList(FundType::ETF, "changePercent", 20, [this](const QVector<FundQuote>& quotes) {
+        d->fundCache = quotes;
         
-        d->fundListTable->setItem(i, 0, new QTableWidgetItem(fund.code));
-        d->fundListTable->setItem(i, 1, new QTableWidgetItem(fund.name));
-        d->fundListTable->setItem(i, 2, new QTableWidgetItem(formatFundType(fund.type)));
+        // 更新表格
+        d->fundListTable->setRowCount(d->fundCache.size());
         
-        // 最新价（场内基金才有）
-        auto* priceItem = new QTableWidgetItem(fund.lastPrice > 0 ? QString::number(fund.lastPrice, 'f', 3) : "--");
-        d->fundListTable->setItem(i, 3, priceItem);
-        
-        // 涨跌幅
-        auto* changeItem = new QTableWidgetItem(QString::number(fund.changePercent, 'f', 2) + "%");
-        if (fund.changePercent > 0) {
-            changeItem->setForeground(QColor(Tokens::Colors::Success));
-        } else if (fund.changePercent < 0) {
-            changeItem->setForeground(QColor(Tokens::Colors::Danger));
+        for (int i = 0; i < d->fundCache.size(); ++i) {
+            const auto& fund = d->fundCache[i];
+            
+            d->fundListTable->setItem(i, 0, new QTableWidgetItem(fund.code));
+            d->fundListTable->setItem(i, 1, new QTableWidgetItem(fund.name));
+            d->fundListTable->setItem(i, 2, new QTableWidgetItem(formatFundType(fund.type)));
+            
+            // 最新价（场内基金才有）
+            auto* priceItem = new QTableWidgetItem(fund.lastPrice > 0 ? QString::number(fund.lastPrice, 'f', 3) : "--");
+            d->fundListTable->setItem(i, 3, priceItem);
+            
+            // 涨跌幅
+            auto* changeItem = new QTableWidgetItem(QString::number(fund.changePercent, 'f', 2) + "%");
+            if (fund.changePercent > 0) {
+                changeItem->setForeground(QColor(Tokens::Colors::Success));
+            } else if (fund.changePercent < 0) {
+                changeItem->setForeground(QColor(Tokens::Colors::Danger));
+            }
+            d->fundListTable->setItem(i, 4, changeItem);
+            
+            // 净值
+            d->fundListTable->setItem(i, 5, new QTableWidgetItem(QString::number(fund.nav, 'f', 4)));
+            
+            // 累计净值
+            d->fundListTable->setItem(i, 6, new QTableWidgetItem(QString::number(fund.accNav, 'f', 4)));
+            
+            // 规模
+            d->fundListTable->setItem(i, 7, new QTableWidgetItem(QString::number(fund.scale, 'f', 1)));
         }
-        d->fundListTable->setItem(i, 4, changeItem);
         
-        // 净值
-        d->fundListTable->setItem(i, 5, new QTableWidgetItem(QString::number(fund.nav, 'f', 4)));
-        
-        // 累计净值
-        d->fundListTable->setItem(i, 6, new QTableWidgetItem(QString::number(fund.accNav, 'f', 4)));
-        
-        // 规模
-        d->fundListTable->setItem(i, 7, new QTableWidgetItem(QString::number(fund.scale, 'f', 1)));
-    }
+        // 默认选中第一个
+        if (!d->fundCache.isEmpty()) {
+            updateFundDetail(d->fundCache[0]);
+        }
+    });
+    
+    // 启动自动刷新
+    FundDataSource::instance()->startAutoRefresh(60000);
 }
 
 void FundPage::updateFundDetail(const FundQuote& quote)

@@ -29,42 +29,7 @@
 // 前向声明
 class KLineChart;
 
-/**
- * @brief 基金类型枚举
- */
-enum class FundType {
-    ETF,            ///< 交易型开放式指数基金
-    LOF,            ///< 上市型开放式基金
-    OpenEnd,        ///< 开放式基金（场外）
-    ClosedEnd,      ///< 封闭式基金
-    Money,          ///< 货币基金
-    Bond            ///< 债券基金
-};
-
-/**
- * @brief 基金行情数据结构
- */
-struct FundQuote {
-    QString code;               ///< 基金代码
-    QString name;               ///< 基金名称
-    FundType type;              ///< 基金类型
-    double nav = 0.0;           ///< 单位净值
-    double accNav = 0.0;        ///< 累计净值
-    double lastPrice = 0.0;     ///< 最新价（场内）
-    double changePercent = 0.0; ///< 涨跌幅
-    double changeAmount = 0.0;  ///< 涨跌额
-    double volume = 0.0;        ///< 成交量（万）
-    double turnover = 0.0;      ///< 成交额（万）
-    QString manager;            ///< 基金经理
-    QString company;            ///< 基金公司
-    double scale = 0.0;         ///< 基金规模（亿）
-    QDateTime updateTime;       ///< 更新时间
-    
-    /**
-     * @brief 判断数据是否有效
-     */
-    bool isValid() const { return !code.isEmpty() && nav > 0; }
-};
+#include "market/FundDataSource.h"
 
 /**
  * @brief 基金持仓结构

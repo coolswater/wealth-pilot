@@ -28,21 +28,7 @@ class KLineChart;
 /**
  * @brief 加密货币行情数据
  */
-struct CryptoQuote {
-    QString symbol;             ///< 代币符号（BTC）
-    QString name;               ///< 名称（Bitcoin）
-    double price = 0.0;         ///< 当前价格（USD）
-    double priceCny = 0.0;      ///< 当前价格（CNY）
-    double change24h = 0.0;     ///< 24小时涨跌幅
-    double volume24h = 0.0;     ///< 24小时成交量
-    double marketCap = 0.0;     ///< 市值
-    double high24h = 0.0;       ///< 24小时最高
-    double low24h = 0.0;        ///< 24小时最低
-    int rank = 0;               ///< 排名
-    QDateTime updateTime;       ///< 更新时间
-    
-    bool isValid() const { return !symbol.isEmpty() && price > 0; }
-};
+#include "market/CryptoDataSource.h"
 
 class CryptoPage : public BasePage
 {

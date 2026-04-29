@@ -28,24 +28,7 @@
 // 前向声明
 class KLineChart;
 
-/**
- * @brief 外汇行情数据结构
- */
-struct ForexQuote {
-    QString pair;               ///< 货币对（如 USD/CNY）
-    QString baseCurrency;       ///< 基础货币
-    QString quoteCurrency;      ///< 计价货币
-    double rate = 0.0;          ///< 当前汇率
-    double bid = 0.0;           ///< 买入价
-    double ask = 0.0;           ///< 卖出价
-    double change = 0.0;        ///< 涨跌额
-    double changePercent = 0.0; ///< 涨跌幅
-    double high24h = 0.0;       ///< 24小时最高
-    double low24h = 0.0;        ///< 24小时最低
-    QDateTime updateTime;       ///< 更新时间
-    
-    bool isValid() const { return !pair.isEmpty() && rate > 0; }
-};
+#include "market/ForexDataSource.h"
 
 /**
  * @brief 外汇页面类
