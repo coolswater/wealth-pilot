@@ -180,20 +180,17 @@ KLinePeriod FuturesKLinePage::period() const
 
 void FuturesKLinePage::setIndicatorEnabled(const QString& indicator, bool enabled)
 {
-    d->indicatorStates[indicator] = enabled;
-
-    // 更新工具栏
-    if (d->toolBar) {
-        d->toolBar->setIndicatorEnabled(indicator, enabled);
-    }
-
-    // 重新计算指标
-    calculateIndicators();
+    // 已弃用：现在使用 onMainIndicatorChanged/onSubIndicatorChanged
+    // 保留此方法以保持向后兼容
+    Q_UNUSED(indicator);
+    Q_UNUSED(enabled);
 }
 
 bool FuturesKLinePage::isIndicatorEnabled(const QString& indicator) const
 {
-    return d->indicatorStates.value(indicator, false);
+    // 已弃用：现在使用新的指标系统
+    Q_UNUSED(indicator);
+    return false;
 }
 
 void FuturesKLinePage::onPageActivated(const QVariantMap& params)
@@ -285,8 +282,10 @@ void FuturesKLinePage::setupConnections()
             this, &FuturesKLinePage::onPeriodChanged);
     connect(d->toolBar, &ChartToolBar::adjustmentChanged,
             this, &FuturesKLinePage::onAdjustmentChanged);
-    connect(d->toolBar, &ChartToolBar::indicatorToggled,
-            this, &FuturesKLinePage::onIndicatorToggled);
+    connect(d->toolBar, &ChartToolBar::mainIndicatorChanged,
+            this, &FuturesKLinePage::onMainIndicatorChanged);
+    connect(d->toolBar, &ChartToolBar::subIndicatorChanged,
+            this, &FuturesKLinePage::onSubIndicatorChanged);
     connect(d->toolBar, &ChartToolBar::drawToolSelected,
             this, &FuturesKLinePage::onDrawToolSelected);
     connect(d->toolBar, &ChartToolBar::chartTypeChanged,
@@ -752,12 +751,44 @@ void FuturesKLinePage::onAdjustmentChanged(AdjustmentType type)
 {
     d->currentAdjustment = type;
     // TODO: 实现复权计算
-    calculateIndicators();
 }
 
-void FuturesKLinePage::onIndicatorToggled(const QString& indicator, bool enabled)
+void FuturesKLinePage::onMainIndicatorChanged(const QString& indicator)
 {
-    setIndicatorEnabled(indicator, enabled);
+    // 转换为主图指标类型
+    MainIndicator mainIndicator = MainIndicator::None;
+    if (indicator == "MA") {
+        mainIndicator = MainIndicator::MA;
+    } else if (indicator == "EMA") {
+        mainIndicator = MainIndicator::EMA;
+    } else if (indicator == "BOLL") {
+        mainIndicator = MainIndicator::BOLL;
+    }
+    
+    if (d->klineChart) {
+        d->klineChart->setMainIndicator(mainIndicator);
+    }
+    
+    LOG_INFO(QString("Main indicator changed: %1").arg(indicator));
+}
+
+void FuturesKLinePage::onSubIndicatorChanged(const QString& indicator)
+{
+    // 转换为副图指标类型
+    SubIndicator subIndicator = SubIndicator::None;
+    if (indicator == "MACD") {
+        subIndicator = SubIndicator::MACD;
+    } else if (indicator == "KDJ") {
+        subIndicator = SubIndicator::KDJ;
+    } else if (indicator == "RSI") {
+        subIndicator = SubIndicator::RSI;
+    }
+    
+    if (d->klineChart) {
+        d->klineChart->setSubIndicator(subIndicator);
+    }
+    
+    LOG_INFO(QString("Sub indicator changed: %1").arg(indicator));
 }
 
 void FuturesKLinePage::onDrawToolSelected(const QString& tool)

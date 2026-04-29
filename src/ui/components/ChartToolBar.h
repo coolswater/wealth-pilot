@@ -89,18 +89,28 @@ public:
     AdjustmentType currentAdjustment() const;
 
     /**
-     * @brief 设置指标启用状态
-     * @param indicator 指标名称
-     * @param enabled 是否启用
+     * @brief 设置当前主图指标
+     * @param indicator 主图指标名称
      */
-    void setIndicatorEnabled(const QString& indicator, bool enabled);
+    void setCurrentMainIndicator(const QString& indicator);
 
     /**
-     * @brief 获取指标启用状态
-     * @param indicator 指标名称
-     * @return 是否启用
+     * @brief 获取当前主图指标
+     * @return 当前主图指标名称
      */
-    bool isIndicatorEnabled(const QString& indicator) const;
+    QString currentMainIndicator() const;
+
+    /**
+     * @brief 设置当前副图指标
+     * @param indicator 副图指标名称
+     */
+    void setCurrentSubIndicator(const QString& indicator);
+
+    /**
+     * @brief 获取当前副图指标
+     * @return 当前副图指标名称
+     */
+    QString currentSubIndicator() const;
 
 signals:
     // ========== 信号 ==========
@@ -118,11 +128,16 @@ signals:
     void adjustmentChanged(AdjustmentType type);
 
     /**
-     * @brief 指标开关信号
-     * @param indicator 指标名称
-     * @param enabled 是否启用
+     * @brief 主图指标切换信号（单选）
+     * @param indicator 主图指标名称
      */
-    void indicatorToggled(const QString& indicator, bool enabled);
+    void mainIndicatorChanged(const QString& indicator);
+
+    /**
+     * @brief 副图指标切换信号（单选）
+     * @param indicator 副图指标名称
+     */
+    void subIndicatorChanged(const QString& indicator);
 
     /**
      * @brief 画线工具选择信号
@@ -141,7 +156,8 @@ private slots:
 
     void onPeriodComboChanged(int index);
     void onAdjustmentMenuTriggered(QAction* action);
-    void onIndicatorMenuTriggered(QAction* action);
+    void onMainIndicatorMenuTriggered(QAction* action);
+    void onSubIndicatorMenuTriggered(QAction* action);
     void onDrawToolMenuTriggered(QAction* action);
     void onChartTypeMenuTriggered(QAction* action);
 
@@ -153,11 +169,6 @@ private:
     void setupToolButtons();
     void setupMenus();
     QFrame* createSeparator();
-
-    /**
-     * @brief 更新指标菜单项的选中状态
-     */
-    void updateIndicatorMenuState();
 
     // ========== PIMPL ==========
 

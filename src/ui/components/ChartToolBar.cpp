@@ -12,6 +12,7 @@
 #include <QButtonGroup>
 #include <QMenu>
 #include <QAction>
+#include <QActionGroup>
 #include <QLabel>
 #include <QFrame>
 #include <QStyle>
@@ -24,13 +25,15 @@ struct ChartToolBar::Impl {
 
     // 工具按钮
     QToolButton* adjustmentBtn = nullptr;
-    QToolButton* indicatorBtn = nullptr;
+    QToolButton* mainIndicatorBtn = nullptr;    // 主图指标按钮
+    QToolButton* subIndicatorBtn = nullptr;     // 副图指标按钮
     QToolButton* drawToolBtn = nullptr;
     QToolButton* chartTypeBtn = nullptr;
 
     // 菜单
     QMenu* adjustmentMenu = nullptr;
-    QMenu* indicatorMenu = nullptr;
+    QMenu* mainIndicatorMenu = nullptr;         // 主图指标菜单
+    QMenu* subIndicatorMenu = nullptr;          // 副图指标菜单
     QMenu* drawToolMenu = nullptr;
     QMenu* chartTypeMenu = nullptr;
 
@@ -38,19 +41,11 @@ struct ChartToolBar::Impl {
     KLinePeriod currentPeriod = KLinePeriod::Minute15;
     AdjustmentType currentAdjustment = AdjustmentType::None;
 
-    // 指标状态
-    QMap<QString, bool> indicatorStates = {
-        {"MA5", true},
-        {"MA10", true},
-        {"MA20", true},
-        {"MA30", false},
-        {"MA60", false},
-        {"MACD", false},
-        {"RSI", false},
-        {"KDJ", false},
-        {"BOLL", false},
-        {"VOL", true}
-    };
+    // 主图指标状态（单选）
+    QString currentMainIndicator = "MA";  // 当前主图指标
+    
+    // 副图指标状态（单选）
+    QString currentSubIndicator = "None";  // 当前副图指标
 };
 
 // ========== 构造与析构 ==========
@@ -93,15 +88,36 @@ AdjustmentType ChartToolBar::currentAdjustment() const
     return d->currentAdjustment;
 }
 
-void ChartToolBar::setIndicatorEnabled(const QString& indicator, bool enabled)
+void ChartToolBar::setCurrentMainIndicator(const QString& indicator)
 {
-    d->indicatorStates[indicator] = enabled;
-    updateIndicatorMenuState();
+    d->currentMainIndicator = indicator;
+    // 更新菜单选中状态
+    if (d->mainIndicatorMenu) {
+        for (QAction* action : d->mainIndicatorMenu->actions()) {
+            action->setChecked(action->data().toString() == indicator);
+        }
+    }
 }
 
-bool ChartToolBar::isIndicatorEnabled(const QString& indicator) const
+QString ChartToolBar::currentMainIndicator() const
 {
-    return d->indicatorStates.value(indicator, false);
+    return d->currentMainIndicator;
+}
+
+void ChartToolBar::setCurrentSubIndicator(const QString& indicator)
+{
+    d->currentSubIndicator = indicator;
+    // 更新菜单选中状态
+    if (d->subIndicatorMenu) {
+        for (QAction* action : d->subIndicatorMenu->actions()) {
+            action->setChecked(action->data().toString() == indicator);
+        }
+    }
+}
+
+QString ChartToolBar::currentSubIndicator() const
+{
+    return d->currentSubIndicator;
 }
 
 // ========== 私有槽函数 ==========
@@ -127,14 +143,30 @@ void ChartToolBar::onAdjustmentMenuTriggered(QAction* action)
     emit adjustmentChanged(d->currentAdjustment);
 }
 
-void ChartToolBar::onIndicatorMenuTriggered(QAction* action)
+void ChartToolBar::onMainIndicatorMenuTriggered(QAction* action)
 {
-    QString indicator = action->text();
-    bool enabled = !action->isChecked();
-    action->setChecked(enabled);
+    QString indicator = action->data().toString();
+    d->currentMainIndicator = indicator;
+    
+    // 更新菜单选中状态（单选）
+    for (QAction* a : d->mainIndicatorMenu->actions()) {
+        a->setChecked(a == action);
+    }
+    
+    emit mainIndicatorChanged(indicator);
+}
 
-    d->indicatorStates[indicator] = enabled;
-    emit indicatorToggled(indicator, enabled);
+void ChartToolBar::onSubIndicatorMenuTriggered(QAction* action)
+{
+    QString indicator = action->data().toString();
+    d->currentSubIndicator = indicator;
+    
+    // 更新菜单选中状态（单选）
+    for (QAction* a : d->subIndicatorMenu->actions()) {
+        a->setChecked(a == action);
+    }
+    
+    emit subIndicatorChanged(indicator);
 }
 
 void ChartToolBar::onDrawToolMenuTriggered(QAction* action)
@@ -168,7 +200,9 @@ void ChartToolBar::setupUI()
     setupToolButtons();
     layout->addWidget(d->adjustmentBtn);
     layout->addWidget(createSeparator());
-    layout->addWidget(d->indicatorBtn);
+    layout->addWidget(d->mainIndicatorBtn);
+    layout->addWidget(createSeparator());
+    layout->addWidget(d->subIndicatorBtn);
     layout->addWidget(createSeparator());
     layout->addWidget(d->drawToolBtn);
     layout->addWidget(createSeparator());
@@ -218,12 +252,19 @@ void ChartToolBar::setupToolButtons()
     d->adjustmentBtn->setToolButtonStyle(Qt::ToolButtonTextOnly);
     d->adjustmentBtn->setFixedWidth(60);
 
-    // 指标按钮
-    d->indicatorBtn = new QToolButton(this);
-    d->indicatorBtn->setText(QStringLiteral("指标"));
-    d->indicatorBtn->setPopupMode(QToolButton::InstantPopup);
-    d->indicatorBtn->setToolButtonStyle(Qt::ToolButtonTextOnly);
-    d->indicatorBtn->setFixedWidth(60);
+    // 主图指标按钮
+    d->mainIndicatorBtn = new QToolButton(this);
+    d->mainIndicatorBtn->setText(QStringLiteral("主图"));
+    d->mainIndicatorBtn->setPopupMode(QToolButton::InstantPopup);
+    d->mainIndicatorBtn->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    d->mainIndicatorBtn->setFixedWidth(60);
+
+    // 副图指标按钮
+    d->subIndicatorBtn = new QToolButton(this);
+    d->subIndicatorBtn->setText(QStringLiteral("副图"));
+    d->subIndicatorBtn->setPopupMode(QToolButton::InstantPopup);
+    d->subIndicatorBtn->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    d->subIndicatorBtn->setFixedWidth(60);
 
     // 画线按钮
     d->drawToolBtn = new QToolButton(this);
@@ -252,17 +293,41 @@ void ChartToolBar::setupMenus()
     connect(d->adjustmentMenu, &QMenu::triggered,
             this, &ChartToolBar::onAdjustmentMenuTriggered);
 
-    // 指标菜单
-    d->indicatorMenu = new QMenu(this);
-    for (auto it = d->indicatorStates.begin(); it != d->indicatorStates.end(); ++it) {
-        QAction* action = d->indicatorMenu->addAction(it.key());
+    // 主图指标菜单（单选）
+    d->mainIndicatorMenu = new QMenu(this);
+    QActionGroup* mainGroup = new QActionGroup(this);
+    mainGroup->setExclusive(true);
+    
+    QStringList mainIndicators = {"MA", "EMA", "BOLL"};
+    for (const QString& indicator : mainIndicators) {
+        QAction* action = d->mainIndicatorMenu->addAction(indicator);
         action->setCheckable(true);
-        action->setChecked(it.value());
+        action->setData(indicator);
+        action->setChecked(indicator == d->currentMainIndicator);
+        mainGroup->addAction(action);
     }
-    d->indicatorBtn->setMenu(d->indicatorMenu);
+    d->mainIndicatorBtn->setMenu(d->mainIndicatorMenu);
 
-    connect(d->indicatorMenu, &QMenu::triggered,
-            this, &ChartToolBar::onIndicatorMenuTriggered);
+    connect(d->mainIndicatorMenu, &QMenu::triggered,
+            this, &ChartToolBar::onMainIndicatorMenuTriggered);
+
+    // 副图指标菜单（单选）
+    d->subIndicatorMenu = new QMenu(this);
+    QActionGroup* subGroup = new QActionGroup(this);
+    subGroup->setExclusive(true);
+    
+    QStringList subIndicators = {"None", "MACD", "KDJ", "RSI"};
+    for (const QString& indicator : subIndicators) {
+        QAction* action = d->subIndicatorMenu->addAction(indicator);
+        action->setCheckable(true);
+        action->setData(indicator);
+        action->setChecked(indicator == d->currentSubIndicator);
+        subGroup->addAction(action);
+    }
+    d->subIndicatorBtn->setMenu(d->subIndicatorMenu);
+
+    connect(d->subIndicatorMenu, &QMenu::triggered,
+            this, &ChartToolBar::onSubIndicatorMenuTriggered);
 
     // 画线菜单
     d->drawToolMenu = new QMenu(this);
@@ -296,16 +361,4 @@ QFrame* ChartToolBar::createSeparator()
     separator->setFrameShadow(QFrame::Sunken);
     separator->setFixedWidth(2);
     return separator;
-}
-
-void ChartToolBar::updateIndicatorMenuState()
-{
-    if (!d->indicatorMenu) {
-        return;
-    }
-
-    for (QAction* action : d->indicatorMenu->actions()) {
-        QString indicator = action->text();
-        action->setChecked(d->indicatorStates.value(indicator, false));
-    }
 }

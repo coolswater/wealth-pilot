@@ -205,7 +205,8 @@ private slots:
 
     void onPeriodChanged(KLinePeriod period);
     void onAdjustmentChanged(AdjustmentType type);
-    void onIndicatorToggled(const QString& indicator, bool enabled);
+    void onMainIndicatorChanged(const QString& indicator);
+    void onSubIndicatorChanged(const QString& indicator);
     void onDrawToolSelected(const QString& tool);
     void onChartTypeChanged(const QString& type);
 

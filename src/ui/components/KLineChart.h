@@ -28,10 +28,9 @@
  * @brief 主图指标类型
  */
 enum class MainIndicator {
-    None,
-    MA,         // 移动平均线
-    SMA,        // 简单移动平均
-    EMA,        // 指数移动平均
+    None,       // 无指标
+    MA,         // 移动平均线组合（MA5, MA10, MA20）
+    EMA,        // 指数移动平均组合（EMA12, EMA26）
     BOLL,       // 布林带
     SAR,        // 抛物线转向
     TD          // 神奇九转
@@ -41,18 +40,18 @@ enum class MainIndicator {
  * @brief 副图指标类型
  */
 enum class SubIndicator {
-    None,
-    MACD,
-    KDJ,
-    RSI,
-    VOLUME,
-    OBV,
-    CCI,
-    ATR,
-    WR,
-    PSY,
-    KD,
-    DMA
+    None,       // 无指标
+    MACD,       // MACD指标
+    KDJ,        // KDJ指标
+    RSI,        // RSI指标
+    VOLUME,     // 成交量（默认显示）
+    OBV,        // OBV指标
+    CCI,        // CCI指标
+    ATR,        // ATR指标
+    WR,         // WR指标
+    PSY,        // PSY指标
+    KD,         // KD指标
+    DMA         // DMA指标
 };
 
 /**
@@ -148,14 +147,26 @@ public:
     // ========== 技术指标 ==========
 
     /**
-     * @brief 设置主图指标
+     * @brief 设置主图指标（仅显示一个）
+     * @param indicator 主图指标类型
      */
     void setMainIndicator(MainIndicator indicator);
 
     /**
+     * @brief 获取当前主图指标
+     */
+    MainIndicator mainIndicator() const;
+
+    /**
      * @brief 设置副图指标
+     * @param indicator 副图指标类型
      */
     void setSubIndicator(SubIndicator indicator);
+
+    /**
+     * @brief 获取当前副图指标
+     */
+    SubIndicator subIndicator() const;
 
     /**
      * @brief 添加技术指标
@@ -203,7 +214,8 @@ private:
     void drawGrid(QPainter& painter);
     void drawCandles(QPainter& painter);
     void drawVolume(QPainter& painter);
-    void drawIndicators(QPainter& painter);
+    void drawMainIndicators(QPainter& painter);      // 绘制主图指标
+    void drawSubIndicators(QPainter& painter);       // 绘制副图指标
     void drawCrosshair(QPainter& painter);
     void drawAxis(QPainter& painter);
     void drawKLineInfo(QPainter& painter);  // 绘制K线信息
