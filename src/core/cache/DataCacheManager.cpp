@@ -214,3 +214,20 @@ template void DataCacheManager::set<int>(const QString&, const int&, qint64);
 template bool DataCacheManager::get<QString>(const QString&, QString&);
 template bool DataCacheManager::get<double>(const QString&, double&);
 template bool DataCacheManager::get<int>(const QString&, int&);
+
+// 市场数据类型实例化
+#include "market/StockDataSource.h"
+#include "market/ForexDataSource.h"
+#include "market/CryptoDataSource.h"
+#include "market/FundDataSource.h"
+
+template void DataCacheManager::set<StockQuote>(const QString&, const StockQuote&, qint64);
+template bool DataCacheManager::get<StockQuote>(const QString&, StockQuote&);
+template void DataCacheManager::set<ForexQuote>(const QString&, const ForexQuote&, qint64);
+template bool DataCacheManager::get<ForexQuote>(const QString&, ForexQuote&);
+template void DataCacheManager::set<CryptoQuote>(const QString&, const CryptoQuote&, qint64);
+template bool DataCacheManager::get<CryptoQuote>(const QString&, CryptoQuote&);
+template void DataCacheManager::set<FundQuote>(const QString&, const FundQuote&, qint64);
+template bool DataCacheManager::get<FundQuote>(const QString&, FundQuote&);
+template void DataCacheManager::set<QVariantMap>(const QString&, const QVariantMap&, qint64);
+template bool DataCacheManager::get<QVariantMap>(const QString&, QVariantMap&);

@@ -72,6 +72,8 @@ set(CORE_DATABASE_SOURCES
         src/data/DataStorage.cpp
         src/data/DataStorageService.h
         src/data/DataStorageService.cpp
+        src/data/MarketDataStorage.h
+        src/data/MarketDataStorage.cpp
 )
 
 # Core - Task 异步任务
