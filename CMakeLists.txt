@@ -207,6 +207,17 @@ set(PLUGIN_SOURCES
         src/plugins/CTPPlugin.cpp
 )
 
+# Analysis - ChanLun 缠论分析模块
+set(ANALYSIS_SOURCES
+        src/analysis/chanlun/ChanLunTypes.h
+        src/analysis/chanlun/ChanLunAnalyzer.h
+        src/analysis/chanlun/ChanLunAnalyzer.cpp
+        src/analysis/chanlun/ChanLunIndicator.h
+        src/analysis/chanlun/ChanLunIndicator.cpp
+        src/analysis/chanlun/ChanLunIntegration.h
+        src/analysis/chanlun/ChanLunIntegration.cpp
+)
+
 # UI Components UI组件库
 set(UI_COMPONENT_SOURCES
         src/ui/components/UIComponents.h
@@ -378,6 +389,7 @@ set(SOURCES
         ${UTIL_SOURCES}
         ${NETWORK_SOURCES}
         ${PLUGIN_SOURCES}
+        ${ANALYSIS_SOURCES}
         ${UI_COMPONENT_SOURCES}
         ${UI_ANIMATION_SOURCES}
         ${WIDGET_SOURCES}

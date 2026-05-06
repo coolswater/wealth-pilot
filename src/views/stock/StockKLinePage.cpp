@@ -305,6 +305,7 @@ void StockKLinePage::setupUI()
     m_mainIndicatorCombo->addItem(QStringLiteral("MA"), static_cast<int>(MainIndicator::MA));
     m_mainIndicatorCombo->addItem(QStringLiteral("EMA"), static_cast<int>(MainIndicator::EMA));
     m_mainIndicatorCombo->addItem(QStringLiteral("BOLL"), static_cast<int>(MainIndicator::BOLL));
+    m_mainIndicatorCombo->addItem(QStringLiteral("缠论"), static_cast<int>(MainIndicator::CHANLUN));
     m_mainIndicatorCombo->addItem(QStringLiteral("无"), static_cast<int>(MainIndicator::None));
     toolbarLayout->addWidget(m_mainIndicatorCombo);
 
@@ -340,6 +341,9 @@ void StockKLinePage::setupUI()
     // K线图
     m_klineChart = new KLineChart(chartContainer);
     chartLayout->addWidget(m_klineChart);
+    
+    // 初始化缠论分析集成
+    m_chanLun = new WealthPilot::ChanLun::ChanLunIntegration(m_klineChart, this);
 
     // 分时图（初始隐藏）
     m_timeShareWidget = new TimeShareChart(chartContainer);
@@ -451,7 +455,23 @@ void StockKLinePage::onPeriodChanged(int index)
 void StockKLinePage::onMainIndicatorChanged(int index)
 {
     MainIndicator indicator = static_cast<MainIndicator>(m_mainIndicatorCombo->currentData().toInt());
-    m_klineChart->setMainIndicator(indicator);
+    
+    // 处理缠论指标
+    if (indicator == MainIndicator::CHANLUN) {
+        // 启用缠论分析
+        if (m_chanLun) {
+            m_chanLun->setEnabled(true);
+        }
+        // 同时设置基础指标为无，避免重叠
+        m_klineChart->setMainIndicator(MainIndicator::None);
+    } else {
+        // 禁用缠论分析
+        if (m_chanLun) {
+            m_chanLun->setEnabled(false);
+        }
+        m_klineChart->setMainIndicator(indicator);
+    }
+    
     LOG_DEBUG(QString("Main indicator changed: %1").arg(index));
 }
 
@@ -508,6 +528,11 @@ void StockKLinePage::onKLineReceived(const QString& symbol, const QVector<KLineD
     // 设置默认指标
     m_klineChart->setMainIndicator(MainIndicator::MA);
     m_klineChart->setSubIndicator(SubIndicator::MACD);
+    
+    // 更新缠论分析数据
+    if (m_chanLun) {
+        m_chanLun->setKLineData(data);
+    }
     
     // 保存到缓存和数据库
     saveToCache();

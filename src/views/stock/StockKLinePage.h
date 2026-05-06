@@ -10,6 +10,7 @@
 #include "ui/components/KLineChart.h"
 #include "market/StockDataSource.h"
 #include "core/types/MarketTypes.h"
+#include "analysis/chanlun/ChanLunIntegration.h"
 #include <QWidget>
 #include <QVector>
 #include <QDateTime>
@@ -127,6 +128,9 @@ private:
     
     // 数据源
     StockDataSource* m_dataSource = nullptr;
+    
+    // 缠论分析
+    WealthPilot::ChanLun::ChanLunIntegration* m_chanLun = nullptr;
     
     struct Impl;
     std::unique_ptr<Impl> d;

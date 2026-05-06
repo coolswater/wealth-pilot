@@ -395,6 +395,7 @@ void KLineChart::zoom(double factor)
     
     d->calculateVisibleRange();
     update();
+    emit visibleRangeChanged(d->visibleStart, d->visibleCount);
 }
 
 /**
@@ -417,6 +418,7 @@ void KLineChart::pan(int dx)
     
     d->calculateVisibleRange();
     update();
+    emit visibleRangeChanged(d->visibleStart, d->visibleCount);
 }
 
 /**
@@ -428,6 +430,7 @@ void KLineChart::resetView()
     d->visibleCount = qMin(100, d->data.size());
     d->calculateVisibleRange();
     update();
+    emit visibleRangeChanged(d->visibleStart, d->visibleCount);
 }
 
 /**
@@ -439,6 +442,7 @@ void KLineChart::showRange(int startIndex, int count)
     d->visibleCount = qBound(10, count, d->data.size() - d->visibleStart);
     d->calculateVisibleRange();
     update();
+    emit visibleRangeChanged(d->visibleStart, d->visibleCount);
 }
 
 /**
@@ -450,6 +454,17 @@ void KLineChart::showLatest(int count)
     d->visibleStart = d->data.size() - d->visibleCount;
     d->calculateVisibleRange();
     update();
+    emit visibleRangeChanged(d->visibleStart, d->visibleCount);
+}
+
+int KLineChart::visibleStartIndex() const
+{
+    return d->visibleStart;
+}
+
+int KLineChart::visibleCount() const
+{
+    return d->visibleCount;
 }
 
 // ========== 技术指标 ==========

@@ -35,7 +35,8 @@ enum class MainIndicator {
     DMI,        // DMI指标（趋向指标）
     ENE,        // ENE轨道线
     SAR,        // 抛物线转向
-    TD          // 神奇九转
+    TD,         // 神奇九转
+    CHANLUN     // 缠论指标（笔、线段、中枢、买卖点）
 };
 
 /**
@@ -146,6 +147,16 @@ public:
      * @brief 显示最新数据
      */
     void showLatest(int count = 100);
+    
+    /**
+     * @brief 获取可见起始索引
+     */
+    int visibleStartIndex() const;
+    
+    /**
+     * @brief 获取可见数量
+     */
+    int visibleCount() const;
 
     // ========== 技术指标 ==========
 
@@ -201,6 +212,11 @@ signals:
      * @brief 点击信号
      */
     void clicked(const QDateTime& time, double price);
+    
+    /**
+     * @brief 可见范围变化信号（用于主图副图联动）
+     */
+    void visibleRangeChanged(int startIndex, int count);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
