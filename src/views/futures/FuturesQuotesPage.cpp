@@ -1,149 +1,185 @@
 ﻿/**
  * @file FuturesQuotesPage.cpp
- * @brief Futures Quotes Page - CTP real-time quotes implementation with Active Contracts filter
- * @note Key features:
- *   1. Auto query and subscribe all contracts
- *   2. Zero-copy optimization: CTP data directly converted to FuturesQuoteItem
- *   3. Connection Status management: auto reconnect, contract subscription, disconnect recovery
- *   4. Thread safe: all CTP callbacks switch to UI thread via QueuedConnection
- *   5. Smart contract filter: auto filter expired contracts
- *   6. Main Contracts identification and priority display
+ * @brief 期货行情页面实现
+ * @details 实现CTP实时行情数据展示、主力合约识别、活跃度筛选等功能
+ * @author WealthPilot Team
+ * @version 1.0.0
+ * 
+ * @note 关键特性:
+ *   1. 自动查询并订阅所有合约
+ *   2. 零拷贝优化：CTP数据直接转换为FuturesQuoteItem
+ *   3. 连接状态管理：自动重连、合约订阅、断线恢复
+ *   4. 线程安全：所有CTP回调通过QueuedConnection切换到UI线程
+ *   5. 智能合约筛选：自动过滤过期合约
+ *   6. 主力合约识别和优先显示
  */
 
 #include "FuturesQuotesPage.h"
+#include "ui/components/PageStyles.h"
+#include "core/config/Tokens.h"
 #include "utils/Logger.h"
 #include "models/FuturesQuoteModel.h"
-#include "core/config/Tokens.h"
 #include "models/FuturesQuoteDelegate.h"
+#include "ctp/service/CTPService.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QLabel>
 #include <QLineEdit>
-#include <QHeaderView>
-#include <QMessageBox>
-#include <QTimer>
-#include <QSortFilterProxyModel>
 #include <QComboBox>
+#include <QTableView>
+#include <QHeaderView>
+#include <QSortFilterProxyModel>
+#include <QTimer>
 #include <QMenu>
 #include <QAction>
-#include <QHeaderView>
+#include <QMessageBox>
 #include <QApplication>
-#include <QStyle>
 #include <QDate>
 
-#include <ctp/service/CTPService.h>
+using namespace Tokens;
 
-// Activity thresholds
+namespace WealthPilot {
+
+// ============================================================================
+// 常量定义
+// ============================================================================
 namespace {
-    constexpr int MIN_VOLUME = 10;
-    constexpr int MIN_OPEN_INTEREST = 50;
-    constexpr int MIN_DAILY_VOLUME = 100;
-    constexpr int EXPIRY_MONTHS_AHEAD = 3;
+    // 活跃度阈值
+    constexpr int MIN_VOLUME = 10;           ///< 最小成交量
+    constexpr int MIN_OPEN_INTEREST = 50;    ///< 最小持仓量
+    constexpr int MIN_DAILY_VOLUME = 100;    ///< 最小日成交量
+    constexpr int EXPIRY_MONTHS_AHEAD = 3;   ///< 到期月数阈值
 
-    // Active contract proxy model with activity filter
-    // Active contract proxy model with activity filter
+    /**
+     * @brief 活跃合约代理模型
+     * @details 根据活跃度状态筛选合约
+     */
     class ActiveContractProxyModel : public QSortFilterProxyModel {
     public:
+        /**
+         * @brief 构造函数
+         */
         explicit ActiveContractProxyModel(QObject* parent = nullptr)
-            : QSortFilterProxyModel(parent), m_filterMode(1) {}
+            : QSortFilterProxyModel(parent)
+            , m_filterMode(1)  // 默认显示活跃合约
+        {}
 
+        /**
+         * @brief 设置筛选模式
+         * @param mode 筛选模式（0:全部, 1:活跃, 2:高流动性, 3:低流动性）
+         */
         void setFilterMode(int mode) {
             m_filterMode = mode;
-            // 使用新的 API 替代弃用的 invalidateFilter()
             beginFilterChange();
             endFilterChange();
         }
 
+        /**
+         * @brief 获取筛选模式
+         */
         int filterMode() const { return m_filterMode; }
 
     protected:
+        /**
+         * @brief 判断行是否接受筛选
+         */
         bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override {
-            if (m_filterMode == 0) return true;
+            // 全部显示模式
+            if (m_filterMode == 0) {
+                return true;
+            }
 
             QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
             int activityStatus = sourceModel()->data(index, Qt::UserRole + 1).toInt();
 
             switch (m_filterMode) {
-                case 1: return activityStatus > 0;
-                case 2: return activityStatus >= 2;
-                case 3: return activityStatus == 1;
+                case 1: return activityStatus > 0;    // 活跃合约
+                case 2: return activityStatus >= 2;  // 高流动性
+                case 3: return activityStatus == 1;  // 低流动性
                 default: return true;
             }
         }
 
     private:
-        int m_filterMode;  // 0: All, 1: Active, 2: High Liquidity, 3: Low Liquidity
+        int m_filterMode;  ///< 筛选模式
     };
 }
 
+// ============================================================================
+// FuturesQuotesPage::Impl - 私有实现
+// ============================================================================
 class FuturesQuotesPage::Impl {
 public:
-    // UI components
-    QTableView *m_tableView = nullptr;
-    FuturesQuoteModel *m_model = nullptr;
-    ActiveContractProxyModel *m_proxyModel = nullptr;  // 【Modify】使用自定义代理模型
-    QLabel *m_statusLabel = nullptr;
-    QLineEdit *m_contractInput = nullptr;
-    QLineEdit *m_filterInput = nullptr;
-    QPushButton *m_subscribeBtn = nullptr;
-    QComboBox *m_activityFilter = nullptr;
+    // ========== UI 组件 ==========
+    QTableView* m_tableView = nullptr;           ///< 表格视图
+    FuturesQuoteModel* m_model = nullptr;        ///< 数据模型
+    ActiveContractProxyModel* m_proxyModel = nullptr; ///< 代理模型
+    QLabel* m_statusLabel = nullptr;             ///< 状态标签
+    QLineEdit* m_contractInput = nullptr;        ///< 合约输入框
+    QLineEdit* m_filterInput = nullptr;          ///< 筛选输入框
+    QPushButton* m_subscribeBtn = nullptr;       ///< 订阅按钮
+    QComboBox* m_activityFilter = nullptr;       ///< 活跃度筛选下拉框
 
-    // CTP client
-    std::unique_ptr<CTP::CTPService> m_CTPService;
+    // ========== CTP 客户端 ==========
+    std::unique_ptr<CTP::CTPService> m_CTPService; ///< CTP服务
 
-    // Implementation
-    std::atomic<bool> m_isCtpConnected{false};
-    std::atomic<bool> m_isProcessing{false};
-    std::atomic<int> m_tickCount{0};
-    std::atomic<int> m_instrumentCount{0};
+    // ========== 状态标志 ==========
+    std::atomic<bool> m_isCtpConnected{false};   ///< CTP连接状态
+    std::atomic<bool> m_isProcessing{false};     ///< 处理中标志
+    std::atomic<int> m_tickCount{0};             ///< Tick计数
+    std::atomic<int> m_instrumentCount{0};       ///< 合约计数
 
-    // 数据缓存
-    QVector<FuturesQuoteItem> m_pendingUpdates;
-    QMutex m_pendingMutex;
+    // ========== 数据缓存 ==========
+    QVector<FuturesQuoteItem> m_pendingUpdates;  ///< 待更新数据
+    QMutex m_pendingMutex;                       ///< 待更新数据互斥锁
 
-    // Implementation
-    QSet<QString> m_subscribedContracts;
-    QMutex m_contractMutex;
+    // ========== 订阅管理 ==========
+    QSet<QString> m_subscribedContracts;         ///< 已订阅合约
+    QMutex m_contractMutex;                      ///< 合约互斥锁
 
-    // Contract info cache
+    // ========== 合约信息缓存 ==========
+    /**
+     * @brief 合约信息结构
+     */
     struct InstrumentInfo {
-        QString instrumentId;
-        QString exchangeId;
-        QString instrumentName;
-        double priceTick{};
-        int volumeMultiple{};
-        QDate expiryDate;
-        QString underlyingProduct;
-        bool isMainContract = false;
+        QString instrumentId;                    ///< 合约ID
+        QString exchangeId;                      ///< 交易所ID
+        QString instrumentName;                  ///< 合约名称
+        double priceTick = 0.0;                  ///< 最小变动价位
+        int volumeMultiple = 0;                  ///< 合约乘数
+        QDate expiryDate;                        ///< 到期日
+        QString underlyingProduct;               ///< 标的产品
+        bool isMainContract = false;             ///< 是否主力合约
     };
-    QMap<QString, InstrumentInfo> m_instruments;
-    QMutex m_instrumentsMutex;
+    QMap<QString, InstrumentInfo> m_instruments; ///< 合约信息映射
+    QMutex m_instrumentsMutex;                   ///< 合约信息互斥锁
 
-    // Implementation
+    // ========== 活跃度数据 ==========
+    /**
+     * @brief 合约活跃度结构
+     */
     struct ContractActivity {
-        qint64 lastUpdateTime = 0;
-        int totalVolume = 0;
-        int openInterest = 0;
-        double turnover = 0.0;
-        int updateCount = 0;
-        bool isExpired = false;
-        bool isActive = false;
+        qint64 lastUpdateTime = 0;               ///< 最后更新时间
+        int totalVolume = 0;                     ///< 总成交量
+        int openInterest = 0;                    ///< 持仓量
+        double turnover = 0.0;                   ///< 成交额
+        int updateCount = 0;                     ///< 更新次数
+        bool isExpired = false;                  ///< 是否已过期
+        bool isActive = false;                   ///< 是否活跃
     };
-    QMap<QString, ContractActivity> m_activityMap;
-    QMutex m_activityMutex;
+    QMap<QString, ContractActivity> m_activityMap; ///< 活跃度映射
+    QMutex m_activityMutex;                     ///< 活跃度互斥锁
 
-    // 品种Main Contracts映射
-    QMap<QString, QString> m_mainContracts;
-    QMutex m_mainContractMutex;
+    // ========== 主力合约 ==========
+    QMap<QString, QString> m_mainContracts;      ///< 品种主力合约映射
+    QMutex m_mainContractMutex;                  ///< 主力合约互斥锁
 
-    // 性能监控
-    QTimer *m_flushTimer = nullptr;
-    std::atomic<int> m_quoteSequence{0};
-
-    // Implementation
-    std::atomic<bool> m_isVisible{true};
+    // ========== 性能监控 ==========
+    QTimer* m_flushTimer = nullptr;              ///< 刷新定时器
+    std::atomic<int> m_quoteSequence{0};         ///< 行情序列号
+    std::atomic<bool> m_isVisible{true};         ///< 页面可见性
 };
 
 FuturesQuotesPage::FuturesQuotesPage(QWidget* parent)
@@ -960,49 +996,82 @@ void FuturesQuotesPage::flushPendingUpdates() const
 
 void FuturesQuotesPage::setupUI()
 {
-    auto* mainLayout = qobject_cast<QVBoxLayout*>(layout());
+    // 主布局
+    QVBoxLayout* mainLayout = qobject_cast<QVBoxLayout*>(layout());
     if (!mainLayout) {
         mainLayout = new QVBoxLayout(this);
-        mainLayout->setSpacing(0);
-        mainLayout->setContentsMargins(10, 10, 10, 10);
+        mainLayout->setSpacing(16);
+        mainLayout->setContentsMargins(24, 16, 24, 16);
     }
 
-    auto *toolbarLayout = new QHBoxLayout;
+    // ========== 标题栏 ==========
+    QHBoxLayout* headerLayout = new QHBoxLayout();
+    headerLayout->setSpacing(12);
 
-    auto *refreshBtn = new QPushButton("刷新");
-    refreshBtn->setProperty("ghost", true);
+    QLabel* titleLabel = new QLabel(QStringLiteral("期货行情"), this);
+    titleLabel->setStyleSheet(PageStyles::titleText());
+    headerLayout->addWidget(titleLabel);
 
-    d->m_contractInput = new QLineEdit();
-    // Implementation
-    d->m_contractInput->setMaximumWidth(150);
+    headerLayout->addStretch();
 
-    d->m_subscribeBtn = new QPushButton("订阅");
-    d->m_subscribeBtn->setObjectName("subscribeBtn");
-    d->m_subscribeBtn->setProperty("primary", true);
+    // 状态标签
+    d->m_statusLabel = new QLabel(QStringLiteral("正在连接CTP..."), this);
+    d->m_statusLabel->setStyleSheet(PageStyles::labelText());
+    headerLayout->addWidget(d->m_statusLabel);
+
+    mainLayout->addLayout(headerLayout);
+
+    // ========== 工具栏 ==========
+    QHBoxLayout* toolbarLayout = new QHBoxLayout();
+    toolbarLayout->setSpacing(8);
+
+    // 刷新按钮
+    QPushButton* refreshBtn = new QPushButton(QStringLiteral("刷新"), this);
+    refreshBtn->setStyleSheet(PageStyles::secondaryButton());
+    refreshBtn->setFixedWidth(80);
+    toolbarLayout->addWidget(refreshBtn);
+
+    // 合约输入框
+    d->m_contractInput = new QLineEdit(this);
+    d->m_contractInput->setPlaceholderText(QStringLiteral("合约代码"));
+    d->m_contractInput->setStyleSheet(PageStyles::inputField());
+    d->m_contractInput->setFixedWidth(150);
+    toolbarLayout->addWidget(d->m_contractInput);
+
+    // 订阅按钮
+    d->m_subscribeBtn = new QPushButton(QStringLiteral("订阅"), this);
+    d->m_subscribeBtn->setStyleSheet(PageStyles::primaryButton());
+    d->m_subscribeBtn->setFixedWidth(80);
+    toolbarLayout->addWidget(d->m_subscribeBtn);
+
+    toolbarLayout->addSpacing(10);
+
+    // 活跃度筛选
+    QLabel* activityLabel = new QLabel(QStringLiteral("显示:"), this);
+    activityLabel->setStyleSheet(PageStyles::labelText());
+    toolbarLayout->addWidget(activityLabel);
 
     d->m_activityFilter = new QComboBox(this);
-    d->m_activityFilter->addItem("Show All", 0);
-    d->m_activityFilter->addItem("Active Only", 1);
-    d->m_activityFilter->addItem("High Liquidity", 2);
-    d->m_activityFilter->addItem("Low Liquidity", 3);
+    d->m_activityFilter->addItem(QStringLiteral("全部"), 0);
+    d->m_activityFilter->addItem(QStringLiteral("活跃合约"), 1);
+    d->m_activityFilter->addItem(QStringLiteral("高流动性"), 2);
+    d->m_activityFilter->addItem(QStringLiteral("低流动性"), 3);
     d->m_activityFilter->setCurrentIndex(1);
-    d->m_activityFilter->setMaximumWidth(120);
-
-    auto *filterLabel = new QLabel("筛选：");
-    filterLabel->setProperty("secondary", true);
-    d->m_filterInput = new QLineEdit();
-    // Implementation
-    d->m_filterInput->setMaximumWidth(120);
-
-    toolbarLayout->addWidget(refreshBtn);
-    toolbarLayout->addSpacing(10);
-    toolbarLayout->addWidget(d->m_contractInput);
-    toolbarLayout->addWidget(d->m_subscribeBtn);
-    toolbarLayout->addSpacing(10);
-    toolbarLayout->addWidget(new QLabel("显示:"));
+    d->m_activityFilter->setStyleSheet(PageStyles::comboBox());
+    d->m_activityFilter->setFixedWidth(120);
     toolbarLayout->addWidget(d->m_activityFilter);
+
     toolbarLayout->addStretch();
+
+    // 筛选输入框
+    QLabel* filterLabel = new QLabel(QStringLiteral("筛选:"), this);
+    filterLabel->setStyleSheet(PageStyles::labelText());
     toolbarLayout->addWidget(filterLabel);
+
+    d->m_filterInput = new QLineEdit(this);
+    d->m_filterInput->setPlaceholderText(QStringLiteral("输入合约代码"));
+    d->m_filterInput->setStyleSheet(PageStyles::inputField());
+    d->m_filterInput->setFixedWidth(120);
     toolbarLayout->addWidget(d->m_filterInput);
 
     mainLayout->addLayout(toolbarLayout);
@@ -1010,6 +1079,8 @@ void FuturesQuotesPage::setupUI()
     d->m_tableView = new QTableView(this);
     d->m_tableView->setModel(d->m_proxyModel);
 
+    // ========== 表格视图 ==========
+    d->m_tableView->setStyleSheet(PageStyles::table());
     d->m_tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     d->m_tableView->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     d->m_tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -1024,15 +1095,12 @@ void FuturesQuotesPage::setupUI()
     d->m_tableView->horizontalHeader()->setDefaultAlignment(Qt::AlignCenter);
     d->m_tableView->setItemDelegate(new FuturesQuoteDelegate(this));
 
+    // 设置列宽
     d->m_tableView->setColumnWidth(0, 50);
     d->m_tableView->setColumnWidth(1, 80);
     d->m_tableView->setColumnWidth(2, 80);
 
     mainLayout->addWidget(d->m_tableView);
-
-    d->m_statusLabel = new QLabel("正在连接CTP...", this);
-    d->m_statusLabel->setObjectName("statusLabel");
-    mainLayout->addWidget(d->m_statusLabel);
 
     connect(refreshBtn, &QPushButton::clicked, this, [this]() {
         d->m_model->clear();
@@ -1068,7 +1136,7 @@ void FuturesQuotesPage::setupConnections()
     mainContractTimer->start(5 * 60 * 1000);
 }
 
-void FuturesQuotesPage::initializeSampleData() const
+void FuturesQuotesPage::initializeSampleData()
 {
     LOG_INFO("Initializing sample data for FuturesQuotesPage");
 
@@ -1114,10 +1182,5 @@ void FuturesQuotesPage::initializeSampleData() const
     }
 }
 
-void FuturesQuotesPage::setActivityFilterMode(int mode) const
-{
-    // Set activity filter mode
-    if (d->m_proxyModel) {
-        d->m_proxyModel->setFilterMode(mode);
-    }
-}
+
+} // namespace WealthPilot

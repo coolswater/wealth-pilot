@@ -21,12 +21,13 @@
 
 // 使用 WealthPilot 命名空间中的类
 using WealthPilot::BasePage;
+using WealthPilot::FuturesQuotesPage;
 
 // ========== FuturesPageIntegration::Impl 实现 ==========
 
 struct FuturesPageIntegration::Impl {
     QStackedWidget* stackedWidget = nullptr;
-    FuturesQuotesPage* quotesPage = nullptr;
+    WealthPilot::FuturesQuotesPage* quotesPage = nullptr;
     FuturesKLinePage* klinePage = nullptr;
     PageNavigator* navigator = nullptr;
 };
@@ -69,7 +70,7 @@ void FuturesPageIntegration::initialize(QStackedWidget* stackedWidget)
     d->navigator = &PageNavigator::instance();
     
     // 创建页面
-    d->quotesPage = new FuturesQuotesPage(d->stackedWidget);
+    d->quotesPage = new WealthPilot::FuturesQuotesPage(d->stackedWidget);
     d->klinePage = new FuturesKLinePage(d->stackedWidget);
     
     // 添加到容�?    d->stackedWidget->addWidget(d->quotesPage);

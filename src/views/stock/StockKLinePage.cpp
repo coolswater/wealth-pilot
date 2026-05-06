@@ -132,9 +132,11 @@ protected:
         fillPath.lineTo(margin, baseY);
         fillPath.closeSubpath();
         
+        // 使用 Tokens 颜色（红涨绿跌）
         QColor fillColor = m_prices.last().second >= m_basePrice 
-            ? QColor(239, 68, 68, 30)  // 红色
-            : QColor(16, 185, 129, 30); // 绿色
+            ? QColor(Tokens::Colors::Danger)  // 红色 - 上涨
+            : QColor(Tokens::Colors::Success); // 绿色 - 下跌
+        fillColor.setAlpha(30);  // 设置透明度
         painter.fillPath(fillPath, fillColor);
         
         // 绘制成交量
@@ -145,10 +147,10 @@ protected:
                     int x = margin + i * chartWidth / (m_prices.size() - 1);
                     int volHeight = static_cast<int>(m_volumes[i] * volumeHeight / maxVol);
                     
-                    // 根据价格涨跌设置颜色
+                    // 根据价格涨跌设置颜色（使用 Tokens）
                     QColor barColor = m_prices[i].second >= m_basePrice 
-                        ? QColor(239, 68, 68)  // 红色
-                        : QColor(16, 185, 129); // 绿色
+                        ? QColor(Tokens::Colors::Danger)  // 红色 - 上涨
+                        : QColor(Tokens::Colors::Success); // 绿色 - 下跌
                     
                     painter.fillRect(x - 2, height() - 40 - volHeight, 4, volHeight, barColor);
                 }
@@ -156,7 +158,7 @@ protected:
         }
         
         // 绘制价格轴标签
-        painter.setPen(QColor("#9CA3AF"));
+        painter.setPen(QColor(Tokens::Colors::TextSecondary));
         painter.setFont(QFont("Microsoft YaHei", 9));
         painter.drawText(5, 45, QString::number(maxPrice, 'f', 2));
         painter.drawText(5, baseY + 5, QString::number(m_basePrice, 'f', 2));

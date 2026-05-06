@@ -1,3 +1,17 @@
+/**
+ * @file RiskSettingsPage.cpp
+ * @brief 风控设置页面实现 - 风控参数配置
+ *
+ * @details 功能：
+ * - 止损止盈设置
+ * - 仓位控制
+ * - 交易限制
+ * - 预警配置
+ *
+ * @author WealthPilot Team
+ * @version 1.0.0
+ */
+
 #include "RiskSettingsPage.h"
 #include "ui/components/PageStyles.h"
 #include <QVBoxLayout>

@@ -20,7 +20,10 @@
 #include <memory>
 
 // 前向声明
+namespace WealthPilot {
 class FuturesQuotesPage;
+}
+
 class FuturesKLinePage;
 class PageNavigator;
 
@@ -68,7 +71,7 @@ public:
     /**
      * @brief 获取行情列表页
      */
-    FuturesQuotesPage* quotesPage() const;
+    WealthPilot::FuturesQuotesPage* quotesPage() const;
 
     /**
      * @brief 获取K线详情页

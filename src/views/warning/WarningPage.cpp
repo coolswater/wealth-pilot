@@ -1,3 +1,17 @@
+/**
+ * @file WarningPage.cpp
+ * @brief 预警页面实现 - 预警通知管理
+ *
+ * @details 功能：
+ * - 预警消息列表
+ * - 预警类型分类
+ * - 预警处理状态
+ * - 预警历史记录
+ *
+ * @author WealthPilot Team
+ * @version 1.0.0
+ */
+
 #include "WarningPage.h"
 #include "core/config/Tokens.h"
 
@@ -38,20 +52,20 @@ void WarningPage::setupUI()
     // 头部
     QHBoxLayout* headerLayout = new QHBoxLayout();
     QLabel* titleLabel = new QLabel("预警通知", this);
-    titleLabel->setStyleSheet("font-size: 28px; font-weight: 700; color: white;");
+    titleLabel->setStyleSheet(QString("font-size: 28px; font-weight: 700; color: %1;").arg(Tokens::Colors::TextPrimary));
     headerLayout->addWidget(titleLabel);
     headerLayout->addStretch();
 
     QPushButton* markAllBtn = new QPushButton("全部已读", this);
-    markAllBtn->setStyleSheet(R"(
+    markAllBtn->setStyleSheet(QString(R"(
         QPushButton {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
+            background-color: %1;
+            color: %2;
             border: none;
             border-radius: 8px;
             padding: 10px 20px;
         }
-    )");
+    )").arg(Tokens::Colors::BgHover, Tokens::Colors::TextPrimary));
     headerLayout->addWidget(markAllBtn);
     mainLayout->addLayout(headerLayout);
 
@@ -62,19 +76,19 @@ void WarningPage::setupUI()
         QPushButton* btn = new QPushButton(t);
         btn->setCheckable(true);
         btn->setFixedHeight(36);
-        btn->setStyleSheet(R"(
+        btn->setStyleSheet(QString(R"(
             QPushButton {
                 background-color: transparent;
-                color: #9CA3AF;
+                color: %1;
                 border: none;
                 border-bottom: 2px solid transparent;
                 padding: 0 20px;
             }
             QPushButton:checked {
-                color: #3B82F6;
-                border-bottom: 2px solid #3B82F6;
+                color: %2;
+                border-bottom: 2px solid %2;
             }
-        )");
+        )").arg(Tokens::Colors::TextSecondary, Tokens::Colors::Primary));
         filterLayout->addWidget(btn);
     }
     filterLayout->addStretch();
@@ -119,17 +133,17 @@ void WarningPage::setupUI()
 
         QVBoxLayout* textLayout = new QVBoxLayout();
         QLabel* titleLabel = new QLabel(alert.title);
-        titleLabel->setStyleSheet("font-weight: 600; color: white;");
+        titleLabel->setStyleSheet(QString("font-weight: 600; color: %1;").arg(Tokens::Colors::TextPrimary));
         textLayout->addWidget(titleLabel);
 
         QLabel* contentLabel = new QLabel(alert.content);
-        contentLabel->setStyleSheet("color: #9CA3AF; font-size: 13px;");
+        contentLabel->setStyleSheet(QString("color: %1; font-size: 13px;").arg(Tokens::Colors::TextSecondary));
         textLayout->addWidget(contentLabel);
 
         itemLayout->addLayout(textLayout, 1);
 
         QLabel* timeLabel = new QLabel(alert.time);
-        timeLabel->setStyleSheet("color: #6B7280; font-size: 12px;");
+        timeLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::TextTertiary));
         itemLayout->addWidget(timeLabel);
 
         listLayout->addWidget(item);

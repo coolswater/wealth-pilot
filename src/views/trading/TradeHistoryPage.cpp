@@ -5,6 +5,7 @@
 
 #include "TradeHistoryPage.h"
 #include "core/config/Tokens.h"
+#include "ui/components/PageStyles.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -54,8 +55,8 @@ void TradeHistoryPage::initializePage()
 void TradeHistoryPage::setupUI()
 {
     auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(16, 16, 16, 16);
-    mainLayout->setSpacing(12);
+    mainLayout->setContentsMargins(Tokens::Spacing::MD, Tokens::Spacing::MD, Tokens::Spacing::MD, Tokens::Spacing::MD);
+    mainLayout->setSpacing(Tokens::Spacing::SM);
 
     // 顶部工具栏
     auto* toolbarLayout = new QHBoxLayout();
@@ -100,46 +101,33 @@ void TradeHistoryPage::setupUI()
     mainLayout->addWidget(m_table);
 
     // 设置样式
-    setStyleSheet(R"(
+    m_table->setStyleSheet(QString(R"(
         QTableWidget {
-            background-color: #0F1419;
-            alternate-background-color: #1A1F2E;
-            gridline-color: #2D3748;
-            border: 1px solid #2D3748;
+            background-color: %1;
+            alternate-background-color: %2;
+            gridline-color: %3;
+            border: 1px solid %3;
             border-radius: 4px;
         }
         QTableWidget::item {
             padding: 4px;
         }
         QHeaderView::section {
-            background-color: #1A1F2E;
-            color: #A0AEC0;
+            background-color: %2;
+            color: %4;
             padding: 6px;
             border: none;
-            border-bottom: 1px solid #2D3748;
+            border-bottom: 1px solid %3;
             font-weight: bold;
         }
-        QPushButton {
-            background-color: #3B82F6;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 12px;
-        }
-        QPushButton:hover {
-            background-color: #2563EB;
-        }
-        QComboBox, QDateEdit {
-            background-color: #1A1F2E;
-            color: #E2E8F0;
-            border: 1px solid #2D3748;
-            border-radius: 4px;
-            padding: 4px 8px;
-        }
-        QLabel {
-            color: #A0AEC0;
-        }
-    )");
+    )").arg(Tokens::Colors::BgSurface, Tokens::Colors::BgBase, Tokens::Colors::Border, Tokens::Colors::TextSecondary));
+
+    m_refreshBtn->setStyleSheet(PageStyles::primaryButton());
+    m_exportBtn->setStyleSheet(PageStyles::secondaryButton());
+
+    m_filterCombo->setStyleSheet(PageStyles::comboBox());
+    m_startDate->setStyleSheet(PageStyles::dateEdit());
+    m_endDate->setStyleSheet(PageStyles::dateEdit());
 }
 
 void TradeHistoryPage::setupConnections()

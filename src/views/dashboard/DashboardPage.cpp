@@ -63,7 +63,7 @@ public:
         // 先绘制背景
         painter->save();
         if (option.state & QStyle::State_Selected) {
-            painter->fillRect(option.rect, QColor(59, 130, 246));
+            painter->fillRect(option.rect, Tokens::Color::primary());
         } else if (option.state & QStyle::State_MouseOver) {
             painter->fillRect(option.rect, QColor(255, 255, 255, 13));
         }
@@ -73,14 +73,14 @@ public:
         double value = index.data(Qt::UserRole).toDouble();
         QString text = index.data(Qt::DisplayRole).toString();
         
-        // 确定颜色（红涨绿跌）
+        // 确定颜色（红涨绿跌）- 使用 Tokens::Color
         QColor textColor;
         if (value > 0.0) {
-            textColor = QColor(239, 68, 68);  // 红色 #EF4444
+            textColor = Tokens::Color::danger();   // 红色 - 上涨
         } else if (value < 0.0) {
-            textColor = QColor(16, 185, 129);  // 绿色 #10B981
+            textColor = Tokens::Color::success();  // 绿色 - 下跌
         } else {
-            textColor = QColor(156, 163, 175);  // 灰色 #9CA3AF
+            textColor = Tokens::Color::textSecondary(); // 灰色 - 平盘
         }
 
         // 绘制文字
@@ -108,7 +108,7 @@ public:
         // 先绘制背景
         painter->save();
         if (option.state & QStyle::State_Selected) {
-            painter->fillRect(option.rect, QColor(59, 130, 246));
+            painter->fillRect(option.rect, Tokens::Color::primary());
         } else if (option.state & QStyle::State_MouseOver) {
             painter->fillRect(option.rect, QColor(255, 255, 255, 13));
         }
@@ -118,10 +118,10 @@ public:
         double value = index.data(Qt::UserRole).toDouble();
         QString text = index.data(Qt::DisplayRole).toString();
         
-        // 确定颜色（红涨绿跌）
+        // 确定颜色（红涨绿跌）- 使用 Tokens::Color
         QColor textColor = value >= 0 
-            ? QColor(239, 68, 68)   // 红色
-            : QColor(16, 185, 129);  // 绿色
+            ? Tokens::Color::danger()   // 红色 - 上涨
+            : Tokens::Color::success();  // 绿色 - 下跌
 
         // 绘制文字
         painter->save();
@@ -148,7 +148,7 @@ public:
         // 先绘制背景
         painter->save();
         if (option.state & QStyle::State_Selected) {
-            painter->fillRect(option.rect, QColor(59, 130, 246));
+            painter->fillRect(option.rect, Tokens::Color::primary());
         } else if (option.state & QStyle::State_MouseOver) {
             painter->fillRect(option.rect, QColor(255, 255, 255, 13));
         }
@@ -158,14 +158,14 @@ public:
         double changePercent = index.data(Qt::UserRole).toDouble();
         QString text = index.data(Qt::DisplayRole).toString();
         
-        // 确定颜色（红涨绿跌）
+        // 确定颜色（红涨绿跌）- 使用 Tokens::Color
         QColor textColor;
         if (changePercent > 0.0) {
-            textColor = QColor(239, 68, 68);  // 红色
+            textColor = Tokens::Color::danger();    // 红色 - 上涨
         } else if (changePercent < 0.0) {
-            textColor = QColor(16, 185, 129);  // 绿色
+            textColor = Tokens::Color::success();   // 绿色 - 下跌
         } else {
-            textColor = QColor(255, 255, 255);  // 白色
+            textColor = Tokens::Color::textPrimary(); // 白色 - 平盘
         }
 
         // 绘制文字

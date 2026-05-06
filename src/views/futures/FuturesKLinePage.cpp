@@ -232,7 +232,7 @@ void FuturesKLinePage::setupUI()
 
     // 右侧：盘口 + 分笔成交
     QWidget* rightPanel = new QWidget(d->mainSplitter);
-    rightPanel->setStyleSheet("background-color: #0F1419;");
+    rightPanel->setStyleSheet(QString("background-color: %1;").arg(Tokens::Colors::BgSurface));
     QVBoxLayout* rightLayout = new QVBoxLayout(rightPanel);
     rightLayout->setContentsMargins(0, 0, 0, 0);
     rightLayout->setSpacing(0);
@@ -267,12 +267,12 @@ void FuturesKLinePage::setupUI()
     d->statusBar->setStyleSheet(ChartStyles::StyleSheets::chartStatusBarStyle());
     mainLayout->addWidget(d->statusBar);
 
-    // 设置整体样式
-    setStyleSheet(R"(
+    // 设置整体样式（使用 Tokens）
+    setStyleSheet(QString(R"(
         FuturesKLinePage {
-            background-color: #0F1419;
+            background-color: %1;
         }
-    )");
+    )").arg(Tokens::Colors::BgSurface));
 }
 
 void FuturesKLinePage::setupConnections()

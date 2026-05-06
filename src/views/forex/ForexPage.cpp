@@ -132,16 +132,16 @@ void ForexPage::initToolBar()
     
     auto* refreshBtn = new QPushButton(QStringLiteral("刷新"));
     refreshBtn->setFixedSize(60, 26);
-    refreshBtn->setStyleSheet(R"(
+    refreshBtn->setStyleSheet(QString(R"(
         QPushButton {
-            background: #2a2a2a;
-            color: #ffffff;
+            background: %1;
+            color: %2;
             border: none;
             font-size: 12px;
             border-radius: 4px;
         }
-        QPushButton:hover { background: #3a3a3a; }
-    )");
+        QPushButton:hover { background: %3; }
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary, Tokens::Colors::BgHover));
     connect(refreshBtn, &QPushButton::clicked, this, &ForexPage::onRefreshData);
     layout->addWidget(refreshBtn);
     
@@ -164,23 +164,23 @@ void ForexPage::initForexList()
         QStringLiteral("更新时间")
     });
     
-    d->forexListTable->setStyleSheet(R"(
+    d->forexListTable->setStyleSheet(QString(R"(
         QTableWidget {
-            background: #0a0a0a;
-            color: #ffffff;
+            background: %1;
+            color: %2;
             border: none;
-            gridline-color: #1a1a1a;
+            gridline-color: %3;
             font-size: 12px;
         }
-        QTableWidget::item:selected { background: #2a2a2a; }
+        QTableWidget::item:selected { background: %4; }
         QHeaderView::section {
-            background: #0d0d0d;
-            color: #888888;
+            background: %5;
+            color: %6;
             border: none;
             padding: 6px;
             font-size: 11px;
         }
-    )");
+    )").arg(Tokens::Colors::BgSurface, Tokens::Colors::TextPrimary, Tokens::Colors::Border, Tokens::Colors::BgElevated, Tokens::Colors::BgBase, Tokens::Colors::TextTertiary));
     
     d->forexListTable->horizontalHeader()->setStretchLastSection(true);
     d->forexListTable->verticalHeader()->setVisible(false);
@@ -197,12 +197,12 @@ void ForexPage::initRateChart()
 void ForexPage::initConverter()
 {
     auto* converterGroup = new QGroupBox(QStringLiteral("汇率换算"));
-    converterGroup->setStyleSheet(R"(
+    converterGroup->setStyleSheet(QString(R"(
         QGroupBox {
-            color: #ffffff;
+            color: %1;
             font-size: 13px;
             font-weight: bold;
-            border: 1px solid #2a2a2a;
+            border: 1px solid %2;
             border-radius: 4px;
             margin-top: 8px;
             padding-top: 8px;
@@ -211,7 +211,7 @@ void ForexPage::initConverter()
             subcontrol-origin: margin;
             left: 10px;
         }
-    )");
+    )").arg(Tokens::Colors::TextPrimary, Tokens::Colors::Border));
     
     auto* layout = new QGridLayout(converterGroup);
     
@@ -219,14 +219,14 @@ void ForexPage::initConverter()
     layout->addWidget(new QLabel(QStringLiteral("从:")), 0, 0);
     d->currencyFromCombo = new QComboBox();
     d->currencyFromCombo->addItems({"CNY", "USD", "EUR", "GBP", "JPY", "HKD"});
-    d->currencyFromCombo->setStyleSheet("background: #1a1a1a; color: #ffffff; padding: 4px;");
+    d->currencyFromCombo->setStyleSheet(QString("background: %1; color: %2; padding: 4px;").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary));
     layout->addWidget(d->currencyFromCombo, 0, 1);
     
     // 目标货币
     layout->addWidget(new QLabel(QStringLiteral("到:")), 1, 0);
     d->currencyToCombo = new QComboBox();
     d->currencyToCombo->addItems({"USD", "CNY", "EUR", "GBP", "JPY", "HKD"});
-    d->currencyToCombo->setStyleSheet("background: #1a1a1a; color: #ffffff; padding: 4px;");
+    d->currencyToCombo->setStyleSheet(QString("background: %1; color: %2; padding: 4px;").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary));
     layout->addWidget(d->currencyToCombo, 1, 1);
     
     // 金额
@@ -234,13 +234,13 @@ void ForexPage::initConverter()
     d->amountSpinBox = new QDoubleSpinBox();
     d->amountSpinBox->setRange(0, 100000000);
     d->amountSpinBox->setValue(100);
-    d->amountSpinBox->setStyleSheet("background: #1a1a1a; color: #ffffff; padding: 4px;");
+    d->amountSpinBox->setStyleSheet(QString("background: %1; color: %2; padding: 4px;").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary));
     layout->addWidget(d->amountSpinBox, 2, 1);
     
     // 结果
     layout->addWidget(new QLabel(QStringLiteral("结果:")), 3, 0);
     d->resultLabel = new QLabel(QStringLiteral("--"));
-    d->resultLabel->setStyleSheet("color: #00D4AA; font-size: 16px; font-weight: bold;");
+    d->resultLabel->setStyleSheet(QString("color: %1; font-size: 16px; font-weight: bold;").arg(Tokens::Colors::Success));
     layout->addWidget(d->resultLabel, 3, 1);
     
     auto* rightLayout = qobject_cast<QVBoxLayout*>(d->rateChart->parentWidget()->layout());

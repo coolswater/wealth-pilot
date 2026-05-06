@@ -81,26 +81,26 @@ void AlertCenterPage::setupUI()
     
     // 主内容区域
     auto* splitter = new QSplitter(Qt::Vertical, this);
-    splitter->setStyleSheet("QSplitter::handle { background: #2a2a2a; height: 1px; }");
+    splitter->setStyleSheet(QString("QSplitter::handle { background: %1; height: 1px; }").arg(Tokens::Colors::Border));
     
     // 上部：预警规则
     auto* topWidget = new QWidget();
-    topWidget->setStyleSheet("QWidget { background: #0a0a0a; }");
+    topWidget->setStyleSheet(QString("QWidget { background: %1; }").arg(Tokens::Colors::BgSurface));
     auto* topLayout = new QVBoxLayout(topWidget);
     topLayout->setContentsMargins(8, 8, 8, 8);
     
     auto* ruleGroup = new QGroupBox(QStringLiteral("预警规则"));
-    ruleGroup->setStyleSheet(R"(
+    ruleGroup->setStyleSheet(QString(R"(
         QGroupBox {
-            color: #ffffff;
+            color: %1;
             font-size: 13px;
             font-weight: bold;
-            border: 1px solid #2a2a2a;
+            border: 1px solid %2;
             border-radius: 4px;
             margin-top: 8px;
         }
         QGroupBox::title { subcontrol-origin: margin; left: 10px; }
-    )");
+    )").arg(Tokens::Colors::TextPrimary, Tokens::Colors::Border));
     
     auto* ruleLayout = new QVBoxLayout(ruleGroup);
     initAlertList();
@@ -111,7 +111,7 @@ void AlertCenterPage::setupUI()
     
     // 下部：预警历史
     auto* bottomWidget = new QWidget();
-    bottomWidget->setStyleSheet("QWidget { background: #0a0a0a; }");
+    bottomWidget->setStyleSheet(QString("QWidget { background: %1; }").arg(Tokens::Colors::BgSurface));
     auto* bottomLayout = new QVBoxLayout(bottomWidget);
     bottomLayout->setContentsMargins(8, 8, 8, 8);
     
@@ -135,7 +135,7 @@ void AlertCenterPage::initToolBar()
 {
     auto* toolbar = new QWidget(this);
     toolbar->setFixedHeight(40);
-    toolbar->setStyleSheet("QWidget { background: #0a0a0a; }");
+    toolbar->setStyleSheet(QString("QWidget { background: %1; }").arg(Tokens::Colors::BgSurface));
     
     auto* layout = new QHBoxLayout(toolbar);
     layout->setContentsMargins(12, 6, 12, 6);
@@ -144,46 +144,46 @@ void AlertCenterPage::initToolBar()
     // 添加预警按钮
     d->addBtn = new QPushButton(QStringLiteral("添加预警"));
     d->addBtn->setFixedSize(80, 26);
-    d->addBtn->setStyleSheet(R"(
+    d->addBtn->setStyleSheet(QString(R"(
         QPushButton {
-            background: #00D4AA;
-            color: #ffffff;
+            background: %1;
+            color: %2;
             border: none;
             font-size: 12px;
             border-radius: 4px;
         }
-        QPushButton:hover { background: #00B894; }
-    )");
+        QPushButton:hover { background: %3; }
+    )").arg(Tokens::Colors::Success, Tokens::Colors::TextPrimary, Tokens::Colors::SuccessLight));
     layout->addWidget(d->addBtn);
     
     // 删除按钮
     d->deleteBtn = new QPushButton(QStringLiteral("删除"));
     d->deleteBtn->setFixedSize(60, 26);
-    d->deleteBtn->setStyleSheet(R"(
+    d->deleteBtn->setStyleSheet(QString(R"(
         QPushButton {
-            background: #FF3366;
-            color: #ffffff;
+            background: %1;
+            color: %2;
             border: none;
             font-size: 12px;
             border-radius: 4px;
         }
-        QPushButton:hover { background: #E91E63; }
-    )");
+        QPushButton:hover { background: %3; }
+    )").arg(Tokens::Colors::Danger, Tokens::Colors::TextPrimary, Tokens::Colors::DangerLight));
     layout->addWidget(d->deleteBtn);
     
     // 启用/禁用按钮
     d->toggleBtn = new QPushButton(QStringLiteral("启用/禁用"));
     d->toggleBtn->setFixedSize(80, 26);
-    d->toggleBtn->setStyleSheet(R"(
+    d->toggleBtn->setStyleSheet(QString(R"(
         QPushButton {
-            background: #2a2a2a;
-            color: #ffffff;
+            background: %1;
+            color: %2;
             border: none;
             font-size: 12px;
             border-radius: 4px;
         }
-        QPushButton:hover { background: #3a3a3a; }
-    )");
+        QPushButton:hover { background: %3; }
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary, Tokens::Colors::BgHover));
     layout->addWidget(d->toggleBtn);
     
     layout->addStretch();
@@ -218,23 +218,23 @@ void AlertCenterPage::initAlertList()
         QStringLiteral("触发时间")
     });
     
-    d->alertTable->setStyleSheet(R"(
+    d->alertTable->setStyleSheet(QString(R"(
         QTableWidget {
-            background: #0a0a0a;
-            color: #ffffff;
+            background: %1;
+            color: %2;
             border: none;
-            gridline-color: #1a1a1a;
+            gridline-color: %3;
             font-size: 12px;
         }
-        QTableWidget::item:selected { background: #2a2a2a; }
+        QTableWidget::item:selected { background: %4; }
         QHeaderView::section {
-            background: #0d0d0d;
-            color: #888888;
+            background: %5;
+            color: %6;
             border: none;
             padding: 6px;
             font-size: 11px;
         }
-    )");
+    )").arg(Tokens::Colors::BgSurface, Tokens::Colors::TextPrimary, Tokens::Colors::Border, Tokens::Colors::BgElevated, Tokens::Colors::BgBase, Tokens::Colors::TextTertiary));
     
     d->alertTable->horizontalHeader()->setStretchLastSection(true);
     d->alertTable->verticalHeader()->setVisible(false);
@@ -378,26 +378,26 @@ void AlertCenterPage::onAddAlert()
     auto* dialog = new QDialog(this);
     dialog->setWindowTitle(QStringLiteral("添加预警"));
     dialog->setFixedSize(350, 250);
-    dialog->setStyleSheet("QDialog { background: #0a0a0a; } QLabel { color: #ffffff; }");
+    dialog->setStyleSheet(QString("QDialog { background: %1; } QLabel { color: %2; }").arg(Tokens::Colors::BgSurface, Tokens::Colors::TextPrimary));
     
     auto* layout = new QFormLayout(dialog);
     
     auto* symbolEdit = new QLineEdit();
-    symbolEdit->setStyleSheet("background: #1a1a1a; color: #ffffff; padding: 4px;");
+    symbolEdit->setStyleSheet(QString("background: %1; color: %2; padding: 4px;").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary));
     layout->addRow(QStringLiteral("标的代码:"), symbolEdit);
     
     auto* typeCombo = new QComboBox();
     typeCombo->addItems({QStringLiteral("价格高于"), QStringLiteral("价格低于"), QStringLiteral("涨幅高于"), QStringLiteral("跌幅高于")});
-    typeCombo->setStyleSheet("background: #1a1a1a; color: #ffffff; padding: 4px;");
+    typeCombo->setStyleSheet(QString("background: %1; color: %2; padding: 4px;").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary));
     layout->addRow(QStringLiteral("预警类型:"), typeCombo);
     
     auto* thresholdSpin = new QDoubleSpinBox();
     thresholdSpin->setRange(-100, 100000);
-    thresholdSpin->setStyleSheet("background: #1a1a1a; color: #ffffff; padding: 4px;");
+    thresholdSpin->setStyleSheet(QString("background: %1; color: %2; padding: 4px;").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary));
     layout->addRow(QStringLiteral("阈值:"), thresholdSpin);
     
     auto* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    buttonBox->setStyleSheet("QPushButton { background: #2a2a2a; color: #ffffff; padding: 6px 16px; }");
+    buttonBox->setStyleSheet(QString("QPushButton { background: %1; color: %2; padding: 6px 16px; }").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary));
     layout->addRow(buttonBox);
     
     connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);

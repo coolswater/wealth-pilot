@@ -121,11 +121,11 @@ void FundPage::setupUI()
     
     // 主内容区域（左右分割）
     auto* splitter = new QSplitter(Qt::Horizontal, this);
-    splitter->setStyleSheet("QSplitter::handle { background: #2a2a2a; width: 1px; }");
+    splitter->setStyleSheet(QString("QSplitter::handle { background: %1; width: 1px; }").arg(Tokens::Colors::Border));
     
     // 左侧：基金列表
     auto* listWidget = new QWidget();
-    listWidget->setStyleSheet("QWidget { background: #0a0a0a; }");
+    listWidget->setStyleSheet(QString("QWidget { background: %1; }").arg(Tokens::Colors::BgSurface));
     auto* listLayout = new QVBoxLayout(listWidget);
     listLayout->setContentsMargins(0, 0, 0, 0);
     
@@ -150,7 +150,7 @@ void FundPage::initToolBar()
 {
     auto* toolbar = new QWidget(this);
     toolbar->setFixedHeight(40);
-    toolbar->setStyleSheet("QWidget { background: #0a0a0a; }");
+    toolbar->setStyleSheet(QString("QWidget { background: %1; }").arg(Tokens::Colors::BgSurface));
     
     auto* layout = new QHBoxLayout(toolbar);
     layout->setContentsMargins(12, 6, 12, 6);
@@ -167,10 +167,10 @@ void FundPage::initToolBar()
         QStringLiteral("债券基金")
     });
     d->fundTypeCombo->setFixedSize(120, 26);
-    d->fundTypeCombo->setStyleSheet(R"(
+    d->fundTypeCombo->setStyleSheet(QString(R"(
         QComboBox {
-            background: #1a1a1a;
-            color: #aaaaaa;
+            background: %1;
+            color: %2;
             border: none;
             padding: 0 8px;
             font-size: 12px;
@@ -178,28 +178,28 @@ void FundPage::initToolBar()
         }
         QComboBox::drop-down { border: none; width: 16px; }
         QComboBox QAbstractItemView {
-            background: #1a1a1a;
-            color: #ffffff;
-            selection-background-color: #2a2a2a;
+            background: %1;
+            color: %3;
+            selection-background-color: %4;
         }
-    )");
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextSecondary, Tokens::Colors::TextPrimary, Tokens::Colors::BgHover));
     layout->addWidget(d->fundTypeCombo);
     
     // 搜索框
     d->searchEdit = new QLineEdit();
     d->searchEdit->setPlaceholderText(QStringLiteral("搜索基金代码/名称"));
     d->searchEdit->setFixedSize(180, 26);
-    d->searchEdit->setStyleSheet(R"(
+    d->searchEdit->setStyleSheet(QString(R"(
         QLineEdit {
-            background: #1a1a1a;
-            color: #ffffff;
+            background: %1;
+            color: %2;
             border: none;
             padding: 0 10px;
             font-size: 12px;
             border-radius: 4px;
         }
-        QLineEdit::placeholder { color: #666666; }
-    )");
+        QLineEdit::placeholder { color: %3; }
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary, Tokens::Colors::TextTertiary));
     layout->addWidget(d->searchEdit);
     
     layout->addStretch();
@@ -207,31 +207,31 @@ void FundPage::initToolBar()
     // 加自选按钮
     d->addToWatchlistBtn = new QPushButton(QStringLiteral("加自选"));
     d->addToWatchlistBtn->setFixedSize(70, 26);
-    d->addToWatchlistBtn->setStyleSheet(R"(
+    d->addToWatchlistBtn->setStyleSheet(QString(R"(
         QPushButton {
-            background: #2a2a2a;
-            color: #ffffff;
+            background: %1;
+            color: %2;
             border: none;
             font-size: 12px;
             border-radius: 4px;
         }
-        QPushButton:hover { background: #3a3a3a; }
-    )");
+        QPushButton:hover { background: %3; }
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary, Tokens::Colors::BgHover));
     layout->addWidget(d->addToWatchlistBtn);
     
     // 刷新按钮
     d->refreshBtn = new QPushButton(QStringLiteral("刷新"));
     d->refreshBtn->setFixedSize(60, 26);
-    d->refreshBtn->setStyleSheet(R"(
+    d->refreshBtn->setStyleSheet(QString(R"(
         QPushButton {
-            background: #2a2a2a;
-            color: #ffffff;
+            background: %1;
+            color: %2;
             border: none;
             font-size: 12px;
             border-radius: 4px;
         }
-        QPushButton:hover { background: #3a3a3a; }
-    )");
+        QPushButton:hover { background: %3; }
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary, Tokens::Colors::BgHover));
     layout->addWidget(d->refreshBtn);
     
     auto* mainLayout = qobject_cast<QVBoxLayout*>(this->layout());
@@ -254,28 +254,28 @@ void FundPage::initFundList()
     });
     
     // 表格样式
-    d->fundListTable->setStyleSheet(R"(
+    d->fundListTable->setStyleSheet(QString(R"(
         QTableWidget {
-            background: #0a0a0a;
-            color: #ffffff;
+            background: %1;
+            color: %2;
             border: none;
-            gridline-color: #1a1a1a;
+            gridline-color: %3;
             font-size: 12px;
         }
         QTableWidget::item {
             padding: 4px;
         }
         QTableWidget::item:selected {
-            background: #2a2a2a;
+            background: %4;
         }
         QHeaderView::section {
-            background: #0d0d0d;
-            color: #888888;
+            background: %5;
+            color: %6;
             border: none;
             padding: 6px;
             font-size: 11px;
         }
-    )");
+    )").arg(Tokens::Colors::BgSurface, Tokens::Colors::TextPrimary, Tokens::Colors::Border, Tokens::Colors::BgElevated, Tokens::Colors::BgBase, Tokens::Colors::TextTertiary));
     
     d->fundListTable->horizontalHeader()->setStretchLastSection(true);
     d->fundListTable->verticalHeader()->setVisible(false);
@@ -287,7 +287,7 @@ void FundPage::initFundList()
 void FundPage::initDetailPanel()
 {
     d->detailPanel = new QWidget();
-    d->detailPanel->setStyleSheet("QWidget { background: #0a0a0a; }");
+    d->detailPanel->setStyleSheet(QString("QWidget { background: %1; }").arg(Tokens::Colors::BgSurface));
     
     auto* layout = new QVBoxLayout(d->detailPanel);
     layout->setContentsMargins(12, 12, 12, 12);
@@ -295,12 +295,12 @@ void FundPage::initDetailPanel()
     
     // 基金基本信息
     auto* infoGroup = new QGroupBox(QStringLiteral("基金信息"));
-    infoGroup->setStyleSheet(R"(
+    infoGroup->setStyleSheet(QString(R"(
         QGroupBox {
-            color: #ffffff;
+            color: %1;
             font-size: 13px;
             font-weight: bold;
-            border: 1px solid #2a2a2a;
+            border: 1px solid %2;
             border-radius: 4px;
             margin-top: 8px;
             padding-top: 8px;
@@ -309,24 +309,24 @@ void FundPage::initDetailPanel()
             subcontrol-origin: margin;
             left: 10px;
         }
-    )");
+    )").arg(Tokens::Colors::TextPrimary, Tokens::Colors::Border));
     
     auto* infoLayout = new QGridLayout(infoGroup);
     infoLayout->setSpacing(8);
     
     // 基金名称
     d->fundNameLabel = new QLabel(QStringLiteral("--"));
-    d->fundNameLabel->setStyleSheet("font-size: 16px; font-weight: bold; color: #ffffff;");
+    d->fundNameLabel->setStyleSheet(QString("font-size: 16px; font-weight: bold; color: %1;").arg(Tokens::Colors::TextPrimary));
     infoLayout->addWidget(d->fundNameLabel, 0, 0, 1, 4);
     
     // 净值信息
     int row = 1;
     auto createInfoRow = [&](const QString& label, QLabel*& valueLabel) {
         auto* lbl = new QLabel(label);
-        lbl->setStyleSheet("color: #666666; font-size: 12px;");
+        lbl->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::TextTertiary));
         infoLayout->addWidget(lbl, row, 0);
         valueLabel = new QLabel(QStringLiteral("--"));
-        valueLabel->setStyleSheet("color: #ffffff; font-size: 12px;");
+        valueLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::TextPrimary));
         infoLayout->addWidget(valueLabel, row, 1);
         row++;
     };
@@ -474,13 +474,13 @@ void FundPage::updateFundDetail(const FundQuote& quote)
     QString changeText = QString::number(quote.changePercent, 'f', 2) + "%";
     if (quote.changePercent > 0) {
         d->changeLabel->setText("+" + changeText);
-        d->changeLabel->setStyleSheet("color: #00D4AA; font-size: 12px;");
+        d->changeLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::Danger));
     } else if (quote.changePercent < 0) {
         d->changeLabel->setText(changeText);
-        d->changeLabel->setStyleSheet("color: #FF3366; font-size: 12px;");
+        d->changeLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::Success));
     } else {
         d->changeLabel->setText(changeText);
-        d->changeLabel->setStyleSheet("color: #888888; font-size: 12px;");
+        d->changeLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::TextTertiary));
     }
     
     // 规模

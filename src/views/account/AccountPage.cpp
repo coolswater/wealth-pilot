@@ -1,3 +1,17 @@
+/**
+ * @file AccountPage.cpp
+ * @brief 账户页面实现 - 账户信息展示与管理
+ *
+ * @details 功能：
+ * - 账户余额展示
+ * - 资金流水记录
+ * - 交易统计
+ * - 风控指标
+ *
+ * @author WealthPilot Team
+ * @version 1.0.0
+ */
+
 #include "AccountPage.h"
 #include "ui/components/PageStyles.h"
 #include <QVBoxLayout>

@@ -130,11 +130,11 @@ void BacktestPage::setupUI()
     
     // 主内容区域
     auto* splitter = new QSplitter(Qt::Horizontal, this);
-    splitter->setStyleSheet("QSplitter::handle { background: #2a2a2a; width: 1px; }");
+    splitter->setStyleSheet(QString("QSplitter::handle { background: %1; width: 1px; }").arg(Tokens::Colors::Border));
     
     // 左侧：策略编辑器
     auto* leftWidget = new QWidget();
-    leftWidget->setStyleSheet("QWidget { background: #0a0a0a; }");
+    leftWidget->setStyleSheet(QString("QWidget { background: %1; }").arg(Tokens::Colors::BgSurface));
     auto* leftLayout = new QVBoxLayout(leftWidget);
     leftLayout->setContentsMargins(8, 8, 8, 8);
     
@@ -144,7 +144,7 @@ void BacktestPage::setupUI()
     
     // 右侧：结果面板
     auto* rightWidget = new QWidget();
-    rightWidget->setStyleSheet("QWidget { background: #0a0a0a; }");
+    rightWidget->setStyleSheet(QString("QWidget { background: %1; }").arg(Tokens::Colors::BgSurface));
     auto* rightLayout = new QVBoxLayout(rightWidget);
     rightLayout->setContentsMargins(8, 8, 8, 8);
     rightLayout->setSpacing(8);
@@ -164,7 +164,7 @@ void BacktestPage::initToolBar()
 {
     auto* toolbar = new QWidget(this);
     toolbar->setFixedHeight(50);
-    toolbar->setStyleSheet("QWidget { background: #0a0a0a; }");
+    toolbar->setStyleSheet(QString("QWidget { background: %1; }").arg(Tokens::Colors::BgSurface));
     
     auto* layout = new QHBoxLayout(toolbar);
     layout->setContentsMargins(12, 8, 12, 8);
@@ -181,14 +181,14 @@ void BacktestPage::initToolBar()
         QStringLiteral("自定义策略")
     });
     d->strategyCombo->setFixedWidth(120);
-    d->strategyCombo->setStyleSheet("background: #1a1a1a; color: #ffffff; padding: 4px;");
+    d->strategyCombo->setStyleSheet(QString("background: %1; color: %2; padding: 4px;").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary));
     layout->addWidget(d->strategyCombo);
     
     // 标的代码
     layout->addWidget(new QLabel(QStringLiteral("标的:")));
     d->symbolEdit = new QLineEdit(QStringLiteral("600519"));
     d->symbolEdit->setFixedWidth(80);
-    d->symbolEdit->setStyleSheet("background: #1a1a1a; color: #ffffff; padding: 4px;");
+    d->symbolEdit->setStyleSheet(QString("background: %1; color: %2; padding: 4px;").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary));
     layout->addWidget(d->symbolEdit);
     
     // 开始日期
@@ -196,7 +196,7 @@ void BacktestPage::initToolBar()
     d->startDateEdit = new QDateEdit(QDate::currentDate().addYears(-1));
     d->startDateEdit->setCalendarPopup(true);
     d->startDateEdit->setFixedWidth(100);
-    d->startDateEdit->setStyleSheet("background: #1a1a1a; color: #ffffff; padding: 4px;");
+    d->startDateEdit->setStyleSheet(QString("background: %1; color: %2; padding: 4px;").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary));
     layout->addWidget(d->startDateEdit);
     
     // 结束日期
@@ -204,7 +204,7 @@ void BacktestPage::initToolBar()
     d->endDateEdit = new QDateEdit(QDate::currentDate());
     d->endDateEdit->setCalendarPopup(true);
     d->endDateEdit->setFixedWidth(100);
-    d->endDateEdit->setStyleSheet("background: #1a1a1a; color: #ffffff; padding: 4px;");
+    d->endDateEdit->setStyleSheet(QString("background: %1; color: %2; padding: 4px;").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary));
     layout->addWidget(d->endDateEdit);
     
     // 进度条
@@ -218,47 +218,47 @@ void BacktestPage::initToolBar()
     // 运行按钮
     d->runBtn = new QPushButton(QStringLiteral("运行回测"));
     d->runBtn->setFixedSize(80, 28);
-    d->runBtn->setStyleSheet(R"(
+    d->runBtn->setStyleSheet(QString(R"(
         QPushButton {
-            background: #00D4AA;
-            color: #ffffff;
+            background: %1;
+            color: %2;
             border: none;
             font-size: 12px;
             border-radius: 4px;
         }
-        QPushButton:hover { background: #00B894; }
-    )");
+        QPushButton:hover { background: %3; }
+    )").arg(Tokens::Colors::Success, Tokens::Colors::TextPrimary, Tokens::Colors::SuccessLight));
     layout->addWidget(d->runBtn);
     
     // 停止按钮
     d->stopBtn = new QPushButton(QStringLiteral("停止"));
     d->stopBtn->setFixedSize(60, 28);
     d->stopBtn->setEnabled(false);
-    d->stopBtn->setStyleSheet(R"(
+    d->stopBtn->setStyleSheet(QString(R"(
         QPushButton {
-            background: #FF3366;
-            color: #ffffff;
+            background: %1;
+            color: %2;
             border: none;
             font-size: 12px;
             border-radius: 4px;
         }
-        QPushButton:hover { background: #E91E63; }
-    )");
+        QPushButton:hover { background: %3; }
+    )").arg(Tokens::Colors::Danger, Tokens::Colors::TextPrimary, Tokens::Colors::DangerLight));
     layout->addWidget(d->stopBtn);
     
     // 导出按钮
     d->exportBtn = new QPushButton(QStringLiteral("导出报告"));
     d->exportBtn->setFixedSize(80, 28);
-    d->exportBtn->setStyleSheet(R"(
+    d->exportBtn->setStyleSheet(QString(R"(
         QPushButton {
-            background: #2a2a2a;
-            color: #ffffff;
+            background: %1;
+            color: %2;
             border: none;
             font-size: 12px;
             border-radius: 4px;
         }
-        QPushButton:hover { background: #3a3a3a; }
-    )");
+        QPushButton:hover { background: %3; }
+    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary, Tokens::Colors::BgHover));
     layout->addWidget(d->exportBtn);
     
     auto* mainLayout = qobject_cast<QVBoxLayout*>(this->layout());
@@ -268,32 +268,32 @@ void BacktestPage::initToolBar()
 void BacktestPage::initStrategyEditor()
 {
     auto* group = new QGroupBox(QStringLiteral("策略代码"));
-    group->setStyleSheet(R"(
+    group->setStyleSheet(QString(R"(
         QGroupBox {
-            color: #ffffff;
+            color: %1;
             font-size: 13px;
             font-weight: bold;
-            border: 1px solid #2a2a2a;
+            border: 1px solid %2;
             border-radius: 4px;
             margin-top: 8px;
             padding-top: 8px;
         }
         QGroupBox::title { subcontrol-origin: margin; left: 10px; }
-    )");
+    )").arg(Tokens::Colors::TextPrimary, Tokens::Colors::Border));
     
     auto* layout = new QVBoxLayout(group);
     layout->setContentsMargins(8, 8, 8, 8);
     
     d->strategyEditor = new QTextEdit();
-    d->strategyEditor->setStyleSheet(R"(
+    d->strategyEditor->setStyleSheet(QString(R"(
         QTextEdit {
-            background: #0d0d0d;
-            color: #00D4AA;
-            border: 1px solid #2a2a2a;
+            background: %1;
+            color: %2;
+            border: 1px solid %3;
             font-family: Consolas, Monaco, monospace;
             font-size: 12px;
         }
-    )");
+    )").arg(Tokens::Colors::BgBase, Tokens::Colors::Success, Tokens::Colors::Border));
     d->strategyEditor->setFont(QFont("Consolas", 10));
     
     layout->addWidget(d->strategyEditor);
@@ -313,18 +313,18 @@ void BacktestPage::initResultPanel()
     
     // 结果指标面板
     auto* resultGroup = new QGroupBox(QStringLiteral("回测结果"));
-    resultGroup->setStyleSheet(R"(
+    resultGroup->setStyleSheet(QString(R"(
         QGroupBox {
-            color: #ffffff;
+            color: %1;
             font-size: 13px;
             font-weight: bold;
-            border: 1px solid #2a2a2a;
+            border: 1px solid %2;
             border-radius: 4px;
             margin-top: 8px;
             padding-top: 8px;
         }
         QGroupBox::title { subcontrol-origin: margin; left: 10px; }
-    )");
+    )").arg(Tokens::Colors::TextPrimary, Tokens::Colors::Border));
     
     auto* resultLayout = new QGridLayout(resultGroup);
     resultLayout->setSpacing(8);
@@ -366,18 +366,18 @@ void BacktestPage::initResultPanel()
 void BacktestPage::initTradeHistory()
 {
     auto* tradeGroup = new QGroupBox(QStringLiteral("交易记录"));
-    tradeGroup->setStyleSheet(R"(
+    tradeGroup->setStyleSheet(QString(R"(
         QGroupBox {
-            color: #ffffff;
+            color: %1;
             font-size: 13px;
             font-weight: bold;
-            border: 1px solid #2a2a2a;
+            border: 1px solid %2;
             border-radius: 4px;
             margin-top: 8px;
             padding-top: 8px;
         }
         QGroupBox::title { subcontrol-origin: margin; left: 10px; }
-    )");
+    )").arg(Tokens::Colors::TextPrimary, Tokens::Colors::Border));
     
     auto* layout = new QVBoxLayout(tradeGroup);
     
@@ -392,21 +392,21 @@ void BacktestPage::initTradeHistory()
         QStringLiteral("累计盈亏")
     });
     
-    d->tradeTable->setStyleSheet(R"(
+    d->tradeTable->setStyleSheet(QString(R"(
         QTableWidget {
-            background: #0a0a0a;
-            color: #ffffff;
+            background: %1;
+            color: %2;
             border: none;
-            gridline-color: #1a1a1a;
+            gridline-color: %3;
             font-size: 11px;
         }
         QHeaderView::section {
-            background: #0d0d0d;
-            color: #888888;
+            background: %4;
+            color: %5;
             border: none;
             padding: 4px;
         }
-    )");
+    )").arg(Tokens::Colors::BgSurface, Tokens::Colors::TextPrimary, Tokens::Colors::Border, Tokens::Colors::BgBase, Tokens::Colors::TextTertiary));
     
     d->tradeTable->horizontalHeader()->setStretchLastSection(true);
     d->tradeTable->verticalHeader()->setVisible(false);

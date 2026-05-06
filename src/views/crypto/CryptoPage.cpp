@@ -5,6 +5,7 @@
 
 #include "CryptoPage.h"
 #include "core/config/Tokens.h"
+#include "ui/components/PageStyles.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -61,8 +62,8 @@ void CryptoPage::refresh()
 void CryptoPage::setupUI()
 {
     auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(16, 16, 16, 16);
-    mainLayout->setSpacing(12);
+    mainLayout->setContentsMargins(Tokens::Spacing::MD, Tokens::Spacing::MD, Tokens::Spacing::MD, Tokens::Spacing::MD);
+    mainLayout->setSpacing(Tokens::Spacing::SM);
 
     // 顶部工具栏
     auto* toolbarLayout = new QHBoxLayout();
@@ -104,39 +105,30 @@ void CryptoPage::setupUI()
     connect(d->cryptoListTable, &QTableWidget::cellClicked, this, &CryptoPage::onCryptoListClicked);
 
     // 设置样式
-    setStyleSheet(R"(
+    d->cryptoListTable->setStyleSheet(QString(R"(
         QTableWidget {
-            background-color: #0F1419;
-            alternate-background-color: #1A1F2E;
-            gridline-color: #2D3748;
-            border: 1px solid #2D3748;
+            background-color: %1;
+            alternate-background-color: %2;
+            gridline-color: %3;
+            border: 1px solid %3;
             border-radius: 4px;
         }
         QTableWidget::item {
             padding: 4px;
         }
         QHeaderView::section {
-            background-color: #1A1F2E;
-            color: #A0AEC0;
+            background-color: %2;
+            color: %4;
             padding: 6px;
             border: none;
-            border-bottom: 1px solid #2D3748;
+            border-bottom: 1px solid %3;
             font-weight: bold;
         }
-        QPushButton {
-            background-color: #3B82F6;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 12px;
-        }
-        QPushButton:hover {
-            background-color: #2563EB;
-        }
-        QLabel {
-            color: #A0AEC0;
-        }
-    )");
+    )").arg(Tokens::Colors::BgSurface, Tokens::Colors::BgBase, Tokens::Colors::Border, Tokens::Colors::TextSecondary));
+
+    refreshBtn->setStyleSheet(PageStyles::primaryButton());
+
+    d->priceLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::TextSecondary));
 }
 
 void CryptoPage::onCryptoListClicked(int row, int column)

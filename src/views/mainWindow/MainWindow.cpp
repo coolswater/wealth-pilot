@@ -7,6 +7,7 @@
 #include "../../app/ApplicationInitializer.h"
 #include "../../core/di/ServiceLocator.h"
 #include "../../core/config/EnvironmentConfig.h"
+#include "../../core/config/Tokens.h"
 #include "../../core/navigation/PageNavigator.h"
 #include "../../ui/components/ThemeEngine.h"
 #include "../../ui/components/LayoutConstants.h"
@@ -537,10 +538,10 @@ QWidget* MainWindow::getPage(const QString& pageId)
     }
     else if (pageId == "futures")
     {
-        auto* quotesPage = new FuturesQuotesPage(this);
+        auto* quotesPage = new WealthPilot::FuturesQuotesPage(this);
         page = quotesPage;
         // 链接K线页面信号
-        connect(quotesPage, &FuturesQuotesPage::navigateToKLinePage,
+        connect(quotesPage, &WealthPilot::FuturesQuotesPage::navigateToKLinePage,
                 this, &MainWindow::onNavigateToKLinePage);
     }
     else if (pageId == "portfolio")
@@ -731,15 +732,15 @@ void MainWindow::showSplashScreen()
     // 创建启动画面
     m_splashLabel = new QLabel(this);
     m_splashLabel->setAlignment(Qt::AlignCenter);
-    m_splashLabel->setStyleSheet(R"(
+    m_splashLabel->setStyleSheet(QString(R"(
         QLabel {
-            background-color: #1A1A2E;
-            color: #E2E8F0;
+            background-color: %1;
+            color: %2;
             font-size: 16px;
             font-weight: bold;
             padding: 20px;
         }
-    )");
+    )").arg(Tokens::Colors::BgBase, Tokens::Colors::TextPrimary));
     // 应用主题
     m_splashLabel->setGeometry(0, 0, width(), height());
     m_splashLabel->raise();
