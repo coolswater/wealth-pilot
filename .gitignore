@@ -92,3 +92,4 @@ CMakeLists.txt.user*
 *.tmp
 /datastorage/WealthPilot.db-shm
 /datastorage/WealthPilot.db-wal
+/datastorage/WealthPilot.db
