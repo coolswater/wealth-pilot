@@ -40,6 +40,7 @@ class QSplitter;
 class QTimer;
 class QGridLayout;
 class QFrame;
+class QListWidgetItem;
 QT_END_NAMESPACE
 
 // ============================================================================
@@ -276,6 +277,7 @@ private slots:
     void onRowDoubleClicked(const QModelIndex& index);
     void onMoneyFlowRowDoubleClicked(const QModelIndex& index);
     void onSectorRowDoubleClicked(const QModelIndex& index);
+    void onNewsItemClicked(QListWidgetItem* item);  ///< 新闻点击弹窗
     void updateRealTimeData();
     void updateTimeDisplay();
     

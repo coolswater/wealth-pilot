@@ -42,6 +42,8 @@
 #include <QListWidget>
 #include <QProgressBar>
 #include <QMessageBox>
+#include <QDialog>
+#include <QTextEdit>
 #include <algorithm>
 
 // ============================================================================
@@ -50,7 +52,7 @@
 
 /**
  * @brief 涨跌颜色委托
- * @details 根据涨跌数据显示不同颜色，红涨绿跌，无背景色
+ * @details 根据涨跌数据显示不同颜色，红涨绿跌
  */
 class ChangeColorDelegate : public QStyledItemDelegate {
 public:
@@ -58,43 +60,44 @@ public:
 
     void paint(QPainter* painter, const QStyleOptionViewItem& option,
                const QModelIndex& index) const override {
-        double value = index.data(Qt::UserRole).toDouble();
-        
-        // 确定颜色（只改变文字颜色，不添加背景色）
-        // value 是百分比形式，如 3.5 表示 3.5%
-        QColor textColor;
-        
-        if (value > 0.0) {
-            // 上涨 - 红色
-            textColor = QColor(239, 68, 68);  // #EF4444
-        } else if (value < 0.0) {
-            // 下跌 - 绿色
-            textColor = QColor(16, 185, 129);  // #10B981
-        } else {
-            // 平盘 - 灰色
-            textColor = QColor(156, 163, 175);  // #9CA3AF
-        }
-
-        // 绘制背景（选中或悬停状态）
+        // 先绘制背景
         painter->save();
         if (option.state & QStyle::State_Selected) {
-            painter->fillRect(option.rect, QColor(59, 130, 246));  // #3B82F6
+            painter->fillRect(option.rect, QColor(59, 130, 246));
         } else if (option.state & QStyle::State_MouseOver) {
             painter->fillRect(option.rect, QColor(255, 255, 255, 13));
         }
         painter->restore();
 
-        // 绘制文字 - 使用所有颜色组确保颜色被应用
-        QStyleOptionViewItem opt = option;
-        opt.palette.setColor(QPalette::All, QPalette::WindowText, textColor);
-        opt.palette.setColor(QPalette::All, QPalette::Text, textColor);
-        opt.palette.setColor(QPalette::All, QPalette::ButtonText, textColor);
-        QStyledItemDelegate::paint(painter, opt, index);
+        // 获取数值和文本
+        double value = index.data(Qt::UserRole).toDouble();
+        QString text = index.data(Qt::DisplayRole).toString();
+        
+        // 确定颜色（红涨绿跌）
+        QColor textColor;
+        if (value > 0.0) {
+            textColor = QColor(239, 68, 68);  // 红色 #EF4444
+        } else if (value < 0.0) {
+            textColor = QColor(16, 185, 129);  // 绿色 #10B981
+        } else {
+            textColor = QColor(156, 163, 175);  // 灰色 #9CA3AF
+        }
+
+        // 绘制文字
+        painter->save();
+        painter->setPen(textColor);
+        painter->setFont(option.font);
+        
+        // 计算文字位置（右对齐）
+        QRect textRect = option.rect.adjusted(4, 0, -4, 0);
+        int flags = Qt::AlignRight | Qt::AlignVCenter;
+        painter->drawText(textRect, flags, text);
+        painter->restore();
     }
 };
 
 /**
- * @brief 资金流向进度条委托
+ * @brief 资金流向颜色委托
  */
 class MoneyFlowDelegate : public QStyledItemDelegate {
 public:
@@ -102,14 +105,7 @@ public:
 
     void paint(QPainter* painter, const QStyleOptionViewItem& option,
                const QModelIndex& index) const override {
-        double value = index.data(Qt::UserRole).toDouble();
-        
-        // 确定颜色（红涨绿跌，无背景色）
-        QColor textColor = value >= 0 
-            ? QColor(239, 68, 68)   // 红色
-            : QColor(16, 185, 129);  // 绿色
-
-        // 绘制背景（选中或悬停状态）
+        // 先绘制背景
         painter->save();
         if (option.state & QStyle::State_Selected) {
             painter->fillRect(option.rect, QColor(59, 130, 246));
@@ -118,18 +114,30 @@ public:
         }
         painter->restore();
 
+        // 获取数值和文本
+        double value = index.data(Qt::UserRole).toDouble();
+        QString text = index.data(Qt::DisplayRole).toString();
+        
+        // 确定颜色（红涨绿跌）
+        QColor textColor = value >= 0 
+            ? QColor(239, 68, 68)   // 红色
+            : QColor(16, 185, 129);  // 绿色
+
         // 绘制文字
-        QStyleOptionViewItem opt = option;
-        opt.palette.setColor(QPalette::All, QPalette::WindowText, textColor);
-        opt.palette.setColor(QPalette::All, QPalette::Text, textColor);
-        opt.palette.setColor(QPalette::All, QPalette::ButtonText, textColor);
-        QStyledItemDelegate::paint(painter, opt, index);
+        painter->save();
+        painter->setPen(textColor);
+        painter->setFont(option.font);
+        
+        QRect textRect = option.rect.adjusted(4, 0, -4, 0);
+        int flags = Qt::AlignRight | Qt::AlignVCenter;
+        painter->drawText(textRect, flags, text);
+        painter->restore();
     }
 };
 
 /**
  * @brief 现价颜色委托
- * @details 根据涨跌显示现价颜色，红涨绿跌，无背景色
+ * @details 根据涨跌显示现价颜色，红涨绿跌
  */
 class PriceColorDelegate : public QStyledItemDelegate {
 public:
@@ -137,25 +145,7 @@ public:
 
     void paint(QPainter* painter, const QStyleOptionViewItem& option,
                const QModelIndex& index) const override {
-        // 从 UserRole 获取涨跌幅数据
-        double changePercent = index.data(Qt::UserRole).toDouble();
-        
-        // 确定颜色（只改变文字颜色，不添加背景色）
-        // changePercent 是百分比形式，如 3.5 表示 3.5%
-        QColor textColor;
-        
-        if (changePercent > 0.0) {
-            // 上涨 - 红色
-            textColor = QColor(239, 68, 68);  // #EF4444
-        } else if (changePercent < 0.0) {
-            // 下跌 - 绿色
-            textColor = QColor(16, 185, 129);  // #10B981
-        } else {
-            // 平盘 - 默认文字颜色
-            textColor = QColor(255, 255, 255);  // 白色
-        }
-
-        // 绘制背景（选中或悬停状态）
+        // 先绘制背景
         painter->save();
         if (option.state & QStyle::State_Selected) {
             painter->fillRect(option.rect, QColor(59, 130, 246));
@@ -164,12 +154,28 @@ public:
         }
         painter->restore();
 
+        // 获取涨跌幅数据用于颜色判断
+        double changePercent = index.data(Qt::UserRole).toDouble();
+        QString text = index.data(Qt::DisplayRole).toString();
+        
+        // 确定颜色（红涨绿跌）
+        QColor textColor;
+        if (changePercent > 0.0) {
+            textColor = QColor(239, 68, 68);  // 红色
+        } else if (changePercent < 0.0) {
+            textColor = QColor(16, 185, 129);  // 绿色
+        } else {
+            textColor = QColor(255, 255, 255);  // 白色
+        }
+
         // 绘制文字
-        QStyleOptionViewItem opt = option;
-        opt.palette.setColor(QPalette::All, QPalette::WindowText, textColor);
-        opt.palette.setColor(QPalette::All, QPalette::Text, textColor);
-        opt.palette.setColor(QPalette::All, QPalette::ButtonText, textColor);
-        QStyledItemDelegate::paint(painter, opt, index);
+        painter->save();
+        painter->setPen(textColor);
+        painter->setFont(option.font);
+        QRect textRect = option.rect.adjusted(4, 0, -4, 0);
+        int flags = Qt::AlignRight | Qt::AlignVCenter;
+        painter->drawText(textRect, flags, text);
+        painter->restore();
     }
 };
 
@@ -597,8 +603,15 @@ QVariant MoneyFlowModel::data(const QModelIndex& index, int role) const
         }
     }
 
+    // 为数值列返回数据用于颜色判断（红涨绿跌）
     if (role == Qt::UserRole) {
-        return flow.netInflow;
+        switch (index.column()) {
+            case ColNetInflow: return flow.netInflow;
+            case ColNetInflowPercent: return flow.netInflowPercent;
+            case ColDay3: return flow.day3Inflow;
+            case ColDay5: return flow.day5Inflow;
+            default: return QVariant();
+        }
     }
 
     if (role == Qt::TextAlignmentRole) {
@@ -1331,7 +1344,11 @@ void DashboardPage::setupMoneyFlowPanel()
     d->moneyFlowModel = new MoneyFlowModel(this);
     d->moneyFlowTable = new QTableView(d->moneyFlowContainer);
     d->moneyFlowTable->setModel(d->moneyFlowModel);
+    // 为净流入、当日增仓、3日增仓、5日增仓列设置颜色委托（红涨绿跌）
     d->moneyFlowTable->setItemDelegateForColumn(MoneyFlowModel::ColNetInflow, new MoneyFlowDelegate(this));
+    d->moneyFlowTable->setItemDelegateForColumn(MoneyFlowModel::ColNetInflowPercent, new MoneyFlowDelegate(this));
+    d->moneyFlowTable->setItemDelegateForColumn(MoneyFlowModel::ColDay3, new MoneyFlowDelegate(this));
+    d->moneyFlowTable->setItemDelegateForColumn(MoneyFlowModel::ColDay5, new MoneyFlowDelegate(this));
     d->moneyFlowTable->setAlternatingRowColors(true);
     d->moneyFlowTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     d->moneyFlowTable->verticalHeader()->setVisible(false);
@@ -1375,6 +1392,9 @@ void DashboardPage::setupConnections()
     connect(d->watchlistTable, &QTableView::doubleClicked, this, &DashboardPage::onRowDoubleClicked);
     connect(d->moneyFlowTable, &QTableView::doubleClicked, this, &DashboardPage::onMoneyFlowRowDoubleClicked);
     connect(d->sectorTable, &QTableView::doubleClicked, this, &DashboardPage::onSectorRowDoubleClicked);
+    
+    // 新闻点击弹窗
+    connect(d->newsList, &QListWidget::itemClicked, this, &DashboardPage::onNewsItemClicked);
 }
 
 /**
@@ -2612,4 +2632,87 @@ void DashboardPage::saveToDatabase()
     storage->setLastUpdateTime("quotes", QDateTime::currentDateTime());
     
     LOG_DEBUG("Dashboard data saved to database");
+}
+
+/**
+ * @brief 新闻点击弹窗
+ */
+void DashboardPage::onNewsItemClicked(QListWidgetItem* item)
+{
+    if (!item) return;
+    
+    // 获取新闻ID
+    QString newsId = item->data(Qt::UserRole).toString();
+    QString newsTitle = item->text();
+    
+    LOG_INFO(QString("News clicked: %1").arg(newsTitle));
+    
+    // 从数据库获取新闻详情
+    auto* storage = DataStorageService::instance();
+    
+    // 创建弹窗
+    QDialog* dialog = new QDialog(this);
+    dialog->setWindowTitle(QStringLiteral("新闻详情"));
+    dialog->setMinimumSize(500, 400);
+    dialog->setStyleSheet(QString(R"(
+        QDialog {
+            background-color: %1;
+        }
+        QLabel {
+            color: %2;
+        }
+        QPushButton {
+            background-color: %3;
+            color: %2;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        QPushButton:hover {
+            background-color: %4;
+        }
+        QTextEdit {
+            background-color: %1;
+            color: %2;
+            border: 1px solid %5;
+            border-radius: 4px;
+        }
+    )").arg(Tokens::Colors::BgBase, Tokens::Colors::TextPrimary, 
+            Tokens::Colors::Primary, Tokens::Colors::PrimaryHover, Tokens::Colors::Border));
+    
+    QVBoxLayout* layout = new QVBoxLayout(dialog);
+    layout->setContentsMargins(20, 20, 20, 20);
+    layout->setSpacing(16);
+    
+    // 标题
+    QLabel* titleLabel = new QLabel(newsTitle, dialog);
+    titleLabel->setStyleSheet(QString("font-size: 18px; font-weight: bold; color: %1;")
+        .arg(Tokens::Colors::TextPrimary));
+    titleLabel->setWordWrap(true);
+    layout->addWidget(titleLabel);
+    
+    // 内容（模拟内容）
+    QTextEdit* contentEdit = new QTextEdit(dialog);
+    contentEdit->setReadOnly(true);
+    contentEdit->setText(QStringLiteral(
+        "这是新闻的详细内容。\n\n"
+        "在实际应用中，这里会显示从数据库或网络获取的完整新闻内容。\n\n"
+        "新闻ID: %1\n\n"
+        "发布时间: %2"
+    ).arg(newsId, QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss")));
+    layout->addWidget(contentEdit);
+    
+    // 关闭按钮
+    QPushButton* closeButton = new QPushButton(QStringLiteral("关闭"), dialog);
+    closeButton->setFixedWidth(100);
+    connect(closeButton, &QPushButton::clicked, dialog, &QDialog::accept);
+    
+    QHBoxLayout* buttonLayout = new QHBoxLayout();
+    buttonLayout->addStretch();
+    buttonLayout->addWidget(closeButton);
+    layout->addLayout(buttonLayout);
+    
+    dialog->exec();
+    dialog->deleteLater();
 }
