@@ -1,3 +1,6 @@
+﻿#ifndef NEWSPAGE_H
+#define NEWSPAGE_H
+
 /**
  * @file NewsPage.h
  * @brief 新闻资讯页面 - 垂直滚动卡片列表设计
@@ -15,7 +18,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <memory>
-#include <core/base/BasePage.h>
+#include <ui/components/BasePage.h>
 #include "market/NewsDataSource.h"
 
 class QVBoxLayout;
@@ -71,7 +74,7 @@ private:
 /**
  * @brief 新闻资讯页面
  */
-class NewsPage : public BasePage {
+class NewsPage : public WealthPilot::BasePage {
     Q_OBJECT
 
 public:
@@ -98,3 +101,5 @@ private:
     class Impl;
     std::unique_ptr<Impl> d;
 };
+
+#endif

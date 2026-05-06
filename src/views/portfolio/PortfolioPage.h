@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file PortfolioPage.h
  * @brief 持仓页面 - 专业级投资组合管理
  *
@@ -15,7 +15,7 @@
 #ifndef PORTFOLIOPAGE_H
 #define PORTFOLIOPAGE_H
 
-#include <core/base/BasePage.h>
+#include <ui/components/BasePage.h>
 #include <QTableView>
 #include <QAbstractTableModel>
 #include <QChartView>
@@ -50,11 +50,11 @@ struct PositionData {
     QString instrumentId;       ///< 合约代码
     QString instrumentName;     ///< 合约名称
     QString exchangeId;         ///< 交易所
-    QString type;               ///< 类型：股票/期货/基金
+    QString type;               ///< 类型：股�?期货/基金
     int volume = 0;             ///< 持仓数量
     double avgPrice = 0.0;      ///< 持仓均价
     double currentPrice = 0.0;  ///< 当前价格
-    double marketValue = 0.0;   ///< 市值
+    double marketValue = 0.0;   ///< 市�?
     double profitLoss = 0.0;    ///< 盈亏
     double profitLossPercent = 0.0; ///< 盈亏比例
     double cost = 0.0;          ///< 成本
@@ -127,7 +127,7 @@ private:
 /**
  * @brief 持仓页面 - 高性能优化版本
  */
-class PortfolioPage : public BasePage {
+class PortfolioPage : public WealthPilot::BasePage {
     Q_OBJECT
 
 public:
@@ -171,4 +171,8 @@ private:
     std::unique_ptr<Impl> d;
 };
 
-#endif // PORTFOLIOPAGE_H
+
+
+ // PORTFOLIOPAGE_H
+
+#endif

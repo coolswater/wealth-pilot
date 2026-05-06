@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file PageNavigator.h
  * @brief 页面导航管理器 - 统一管理页面跳转和参数传递
  *
@@ -15,15 +15,13 @@
 #ifndef PAGENAVIGATOR_H
 #define PAGENAVIGATOR_H
 
+#include "ui/components/BasePage.h"
 #include <QObject>
 #include <QVariantMap>
 #include <QStack>
 #include <QMap>
 #include <QDateTime>
 #include <functional>
-
-// 前向声明
-class BasePage;
 
 /**
  * @brief 导航参数键定义
@@ -123,7 +121,7 @@ public:
      * @param creator 创建函数
      */
     void registerPage(const QString& pageId,
-                     std::function<BasePage*()> creator);
+                     std::function<WealthPilot::BasePage*()> creator);
 
     /**
      * @brief 注销页面
@@ -136,7 +134,7 @@ public:
      * @param pageId 页面ID
      * @return 页面实例（如果已注册）
      */
-    BasePage* createPage(const QString& pageId);
+    WealthPilot::BasePage* createPage(const QString& pageId);
 
 signals:
     /**

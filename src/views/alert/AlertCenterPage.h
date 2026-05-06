@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file AlertCenterPage.h
  * @brief 预警中心页面 - 价格预警与消息通知
  *
@@ -15,7 +15,7 @@
 #ifndef ALERTCENTERPAGE_H
 #define ALERTCENTERPAGE_H
 
-#include "core/base/BasePage.h"
+#include "ui/components/BasePage.h"
 #include "trading/AlertManager.h"
 #include <QWidget>
 #include <QTableWidget>
@@ -42,7 +42,7 @@ struct AlertRecord {
     QString message;
 };
 
-class AlertCenterPage : public BasePage
+class AlertCenterPage : public WealthPilot::BasePage
 {
     Q_OBJECT
 
@@ -85,4 +85,8 @@ private:
     std::unique_ptr<Impl> d;
 };
 
-#endif // ALERTCENTERPAGE_H
+
+
+ // ALERTCENTERPAGE_H
+
+#endif

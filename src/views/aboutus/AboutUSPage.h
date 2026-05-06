@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file SettingsPage.h
  * @brief 设置页面
  */
@@ -8,7 +8,7 @@
 
 #include <memory>
 
-#include <core/base/BasePage.h>
+#include <ui/components/BasePage.h>
 
 class QComboBox;
 class QSlider;
@@ -16,7 +16,7 @@ class QSlider;
 /**
  * @brief 设置页面
  */
-class AboutUSPage : public BasePage
+class AboutUSPage : public WealthPilot::BasePage
 {
     Q_OBJECT
 
@@ -37,4 +37,8 @@ private:
     std::unique_ptr<Impl> d;
 };
 
-#endif // ABOUTUSPAGE_H
+
+
+ // ABOUTUSPAGE_H
+
+#endif

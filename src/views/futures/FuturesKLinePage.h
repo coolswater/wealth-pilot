@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file FuturesKLinePage.h
  * @brief 期货K线页面 - 专业级K线图表和技术分析
  *
@@ -24,7 +24,7 @@
 #ifndef FUTURES_KLINE_PAGE_H
 #define FUTURES_KLINE_PAGE_H
 
-#include "core/base/BasePage.h"
+#include "ui/components/BasePage.h"
 #include "core/types/MarketTypes.h"  // 使用统一的类型定义
 #include "ui/components/KLineChart.h"
 #include "ui/components/ChartToolBar.h"
@@ -65,7 +65,7 @@ class IAIPlugin;
  * page->setIndicatorEnabled("MA5", true);
  * @endcode
  */
-class FuturesKLinePage : public BasePage
+class FuturesKLinePage : public WealthPilot::BasePage
 {
     Q_OBJECT
 
@@ -73,8 +73,8 @@ public:
     // ========== 构造与析构 ==========
 
     /**
-     * @brief 构造函数
-     * @param parent 父控件
+     * @brief 构造函�?
+     * @param parent 父控�?
      */
     explicit FuturesKLinePage(QWidget *parent = nullptr);
 
@@ -245,4 +245,8 @@ private:
     std::unique_ptr<Impl> d;
 };
 
-#endif // FUTURES_KLINE_PAGE_H
+
+
+ // FUTURES_KLINE_PAGE_H
+
+#endif

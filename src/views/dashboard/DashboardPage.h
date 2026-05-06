@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file DashboardPage.h
  * @brief 金融行情综合看板页面 - 专业级六宫格布局
  *
@@ -22,7 +22,7 @@
 #ifndef DASHBOARDPAGE_H
 #define DASHBOARDPAGE_H
 
-#include <core/base/BasePage.h>
+#include <ui/components/BasePage.h>
 #include <QTableView>
 #include <QAbstractTableModel>
 #include <memory>
@@ -243,7 +243,7 @@ private:
 /**
  * @brief 金融行情综合看板页面 - 六宫格布局
  */
-class DashboardPage : public BasePage {
+class DashboardPage : public WealthPilot::BasePage {
     Q_OBJECT
 
 public:
@@ -326,4 +326,8 @@ private:
     std::unique_ptr<Impl> d;
 };
 
-#endif // DASHBOARDPAGE_H
+
+
+ // DASHBOARDPAGE_H
+
+#endif

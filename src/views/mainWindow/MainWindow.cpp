@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file MainWindow.cpp
  * @brief Main Window - Refactored version with new architecture
  */
@@ -23,7 +23,31 @@
 #include "../stock/StockKLinePage.h"
 #include "../futures/FuturesQuotesPage.h"
 #include "../futures/FuturesKLinePage.h"
-#include "../../core/base/BasePage.h"
+#include "../portfolio/PortfolioPage.h"
+#include "../watchList/WatchListPage.h"
+#include "../signalCenter/SignalCenterPage.h"
+#include "../news/NewsPage.h"
+#include "../settings/SettingsPage.h"
+#include "../aboutus/AboutUSPage.h"
+#include "../account/AccountPage.h"
+#include "../trading/TradeHistoryPage.h"
+#include "../trading/ConditionOrderPage.h"
+#include "../settings/RiskSettingsPage.h"
+#include "../fund/FundPage.h"
+#include "../forex/ForexPage.h"
+#include "../crypto/CryptoPage.h"
+#include "../backtest/BacktestPage.h"
+#include "../alert/AlertCenterPage.h"
+#include "../../ui/components/BasePage.h"
+
+// 使用 WealthPilot 命名空间中的类
+using WealthPilot::BasePage;
+using WealthPilot::StockQuotesPage;
+using WealthPilot::WatchListPage;
+using WealthPilot::SignalCenterPage;
+using WealthPilot::TradeHistoryPage;
+using WealthPilot::ConditionOrderPage;
+using WealthPilot::CryptoPage;
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -46,7 +70,7 @@
 #include "views/trading/TradeHistoryPage.h"
 #include "views/trading/ConditionOrderPage.h"
 #include "views/settings/RiskSettingsPage.h"
-// 新增模块
+// ����ģ��
 #include "views/fund/FundPage.h"
 #include "views/forex/ForexPage.h"
 #include "views/crypto/CryptoPage.h"
@@ -663,15 +687,15 @@ void MainWindow::loadSettings()
         restoreState(state);
     }
 
-    // 默认启动页面为 dashboard
-    // 注意：这里强制使用 dashboard 作为启动页面，而不是从设置中读取
-    // 这样可以确保每次启动都显示 dashboard
+    // Ĭ������ҳ��Ϊ dashboard
+    // ע�⣺����ǿ��ʹ�� dashboard ��Ϊ����ҳ�棬�����Ǵ������ж�ȡ
+    // ��������ȷ��ÿ����������ʾ dashboard
     QString lastPage = "dashboard";
 
-    // 设置侧边栏选中状态
+    // ���ò����ѡ��״̬
     d->sidebar->setCurrentItem(lastPage);
 
-    // 切换到目标页面
+    // �л���Ŀ��ҳ��
     onSidebarItemClicked(lastPage);
 
     LOG_DEBUG(QString("Startup with default page: %1").arg(lastPage));

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file ForexPage.h
  * @brief 外汇页面 - 外汇行情展示与分析
  *
@@ -16,7 +16,7 @@
 #ifndef FOREXPAGE_H
 #define FOREXPAGE_H
 
-#include "core/base/BasePage.h"
+#include "ui/components/BasePage.h"
 #include <QWidget>
 #include <QTableWidget>
 #include <QLineEdit>
@@ -33,7 +33,7 @@ class KLineChart;
 /**
  * @brief 外汇页面类
  */
-class ForexPage : public BasePage
+class ForexPage : public WealthPilot::BasePage
 {
     Q_OBJECT
 
@@ -73,4 +73,8 @@ private:
     std::unique_ptr<Impl> d;
 };
 
-#endif // FOREXPAGE_H
+
+
+ // FOREXPAGE_H
+
+#endif

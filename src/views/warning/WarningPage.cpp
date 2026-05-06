@@ -10,6 +10,9 @@
 
 #include <ui/components/CardWidget.h>
 
+// 使用 WealthPilot 命名空间
+using WealthPilot::WarningPage;
+
 struct WarningPage::Impl {};
 
 WarningPage::WarningPage(QWidget *parent)
@@ -20,11 +23,6 @@ WarningPage::WarningPage(QWidget *parent)
 }
 
 WarningPage::~WarningPage() = default;
-
-QString WarningPage::pageId() const
-{
-    return QStringLiteral("WarningPage");
-}
 
 void WarningPage::initializePage()
 {

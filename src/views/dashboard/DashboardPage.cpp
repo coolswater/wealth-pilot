@@ -691,7 +691,6 @@ void DashboardPage::initializePage()
     }
 
     setInitialized(true);
-    emit pageStatusChanged(QStringLiteral("initialized"));
 
     LOG_DEBUG("DashboardPage initialized");
 }

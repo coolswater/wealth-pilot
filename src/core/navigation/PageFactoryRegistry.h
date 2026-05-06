@@ -1,12 +1,15 @@
 ﻿#ifndef PAGEFACTORYREGISTRY_H
 #define PAGEFACTORYREGISTRY_H
 
-#include "../base/BasePage.h"
+#include "../../ui/components/BasePage.h"
 #include <QMutex>
 #include <QReadWriteLock>
 #include <functional>
 #include <memory>
 #include <unordered_map>
+
+// 使用 WealthPilot 命名空间中的 BasePage
+using WealthPilot::BasePage;
 
 /// 页面工厂函数类型
 using PageFactory = std::function<std::shared_ptr<BasePage>(QWidget*)>;

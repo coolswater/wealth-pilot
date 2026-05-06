@@ -1,7 +1,7 @@
-#ifndef RISKSETTINGSPAGE_H
+﻿#ifndef RISKSETTINGSPAGE_H
 #define RISKSETTINGSPAGE_H
 
-#include "core/base/BasePage.h"
+#include "ui/components/BasePage.h"
 #include <QLabel>
 #include <QPushButton>
 #include <QDoubleSpinBox>
@@ -13,7 +13,7 @@
 /**
  * @brief RiskSettingsPage - Risk control settings page
  */
-class RiskSettingsPage : public BasePage
+class RiskSettingsPage : public WealthPilot::BasePage
 {
     Q_OBJECT
 
@@ -24,7 +24,7 @@ public:
         QString name;
         bool enabled;
         double value;
-        QString unit;       // "%", "手", "元"
+        QString unit;       // "%", "�?, "�?
         QString description;
     };
 
@@ -79,4 +79,8 @@ private:
     QVector<RiskRule> m_rules;
 };
 
-#endif // RISKSETTINGSPAGE_H
+
+
+ // RISKSETTINGSPAGE_H
+
+#endif

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file CryptoPage.h
  * @brief 数字货币页面 - 加密货币行情展示与分析
  *
@@ -16,7 +16,7 @@
 #ifndef CRYPTOPAGE_H
 #define CRYPTOPAGE_H
 
-#include "core/base/BasePage.h"
+#include "ui/components/BasePage.h"
 #include <QWidget>
 #include <QTableWidget>
 #include <QLabel>
@@ -30,6 +30,7 @@ class KLineChart;
  */
 #include "market/CryptoDataSource.h"
 
+namespace WealthPilot {
 class CryptoPage : public BasePage
 {
     Q_OBJECT
@@ -65,4 +66,10 @@ private:
     std::unique_ptr<Impl> d;
 };
 
-#endif // CRYPTOPAGE_H
+
+
+ // CRYPTOPAGE_H
+
+} // namespace WealthPilot
+
+#endif

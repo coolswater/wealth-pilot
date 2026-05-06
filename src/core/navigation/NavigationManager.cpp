@@ -4,7 +4,7 @@
  */
 
 #include "NavigationManager.h"
-#include "core/base/BasePage.h"
+#include "ui/components/BasePage.h"
 #include "utils/Logger.h"
 
 #include <QMutexLocker>

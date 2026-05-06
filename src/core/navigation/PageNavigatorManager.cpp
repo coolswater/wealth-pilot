@@ -4,6 +4,9 @@
 #include <QDebug>
 #include <QDateTime>
 
+// 使用 WealthPilot 命名空间中的 BasePage
+using WealthPilot::BasePage;
+
 /**
  * @brief 构造函数：初始化缓存清理定时器
  * @details 定时器每30秒执行一次 cleanupExpiredCache()，清理已失效的弱引用
@@ -224,13 +227,17 @@ void PageNavigatorManager::activatePage(std::shared_ptr<BasePage> page, const QV
     // 触发页面激活回调（页面应在此加载数据，而非构造函数中）
     page->onPageActivated(params);
 
-    // 【关键修复】使用成员函数指针实现 UniqueConnection，确保同一页面多次激活不会重复连接
+    // 【关键修复】使用 lambda 实现 UniqueConnection，确保同一页面多次激活不会重复连接
+    // 注意：lambda 不能与 UniqueConnection 一起使用，所以先断开再连接
+    disconnect(page.get(), &BasePage::navigateToRequested,
+               this, nullptr);  // 断开该信号到 this 的所有连接
     connect(
         page.get(),                                    // 信号发射者（页面）
-        &BasePage::requestNavigation,                   // 信号（页面请求导航）
+        &BasePage::navigateToRequested,                // 信号（页面请求导航）
         this,                                          // 接收者（导航器）
-        &PageNavigatorManager::onPageRequestNavigation, // 槽（必须是成员函数）
-        Qt::UniqueConnection                            // 连接类型：若已连接则跳过
+        [this](const QString& targetPageId, const QVariantMap& params) {
+            this->onPageRequestNavigation(targetPageId, params, false);
+        }
         );
 }
 
@@ -246,10 +253,10 @@ void PageNavigatorManager::activatePage(std::shared_ptr<BasePage> page, const QV
 void PageNavigatorManager::deactivateCurrentPage() {
     if (!m_currentPage) return;
 
-    // 【对应activatePage的connect】使用相同成员函数指针断开连接
+    // 【对应activatePage的connect】断开导航信号连接
     // 确保完全断开，防止残留连接导致重复响应
-    disconnect(m_currentPage.get(), &BasePage::requestNavigation,
-               this, &PageNavigatorManager::onPageRequestNavigation);
+    disconnect(m_currentPage.get(), &BasePage::navigateToRequested,
+               this, nullptr);
 
     // 触发页面失活生命周期（页面应在此保存未提交数据或停止后台任务）
     m_currentPage->onPageDeactivated();

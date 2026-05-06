@@ -1,7 +1,7 @@
-#ifndef ACCOUNTPAGE_H
+﻿#ifndef ACCOUNTPAGE_H
 #define ACCOUNTPAGE_H
 
-#include "core/base/BasePage.h"
+#include "ui/components/BasePage.h"
 #include <QLabel>
 #include <QPushButton>
 #include <QTableWidget>
@@ -13,7 +13,7 @@
 /**
  * @brief AccountPage - Account and fund management page
  */
-class AccountPage : public BasePage
+class AccountPage : public WealthPilot::BasePage
 {
     Q_OBJECT
 
@@ -111,4 +111,8 @@ private:
     QVector<FundFlowRecord> m_fundFlowRecords;
 };
 
-#endif // ACCOUNTPAGE_H
+
+
+ // ACCOUNTPAGE_H
+
+#endif

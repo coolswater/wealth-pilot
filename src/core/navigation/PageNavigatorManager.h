@@ -1,7 +1,7 @@
 ﻿#ifndef PAGENAVIGATORMANAGER_H
 #define PAGENAVIGATORMANAGER_H
 
-#include "../base/BasePage.h"
+#include "ui/components/BasePage.h"
 #include <QStackedWidget>
 #include <QMap>
 #include <QTimer>
@@ -100,7 +100,7 @@ public:
      * @return 当前活跃页面的 shared_ptr，无则返回 nullptr
      * @warning 不要在长期存储此指针，导航器可能自动销毁页面
      */
-    std::shared_ptr<BasePage> currentPage() const { return m_currentPage; }
+    std::shared_ptr<WealthPilot::BasePage> currentPage() const { return m_currentPage; }
 
     /**
      * @brief 获取当前页面ID（便捷方法）
@@ -195,7 +195,7 @@ private:
      * - 使用 move 语义减少 shared_ptr 引用计数开销
      * - 缓存命中时直接返回，避免工厂创建开销
      */
-    std::shared_ptr<BasePage> getOrCreatePage(const QString &pageId);
+    std::shared_ptr<WealthPilot::BasePage> getOrCreatePage(const QString &pageId);
 
     /**
      * @brief 激活指定页面（切换到前台）
@@ -206,7 +206,7 @@ private:
      * - 调用 onPageActivated(params)，页面可在此加载动态数据
      * - 连接 requestNavigation 信号到 onPageRequestNavigation（Qt::UniqueConnection 防止重复）
      */
-    void activatePage(std::shared_ptr<BasePage> page, const QVariantMap &params);
+    void activatePage(std::shared_ptr<WealthPilot::BasePage> page, const QVariantMap &params);
 
     /**
      * @brief 失活当前页面（切换到后台，不销毁）
@@ -228,13 +228,13 @@ private:
     // ==================== 成员变量 ====================
 
     QStackedWidget *m_container = nullptr;  ///< UI容器，用于页面堆叠显示，不拥有页面所有权
-    std::shared_ptr<BasePage> m_currentPage;  ///< 当前活跃页面（强引用，确保不会被自动销毁）
+    std::shared_ptr<WealthPilot::BasePage> m_currentPage;  ///< 当前活跃页面（强引用，确保不会被自动销毁）
 
     // 双级缓存系统说明：
     // m_strongCache: QMap<QString, shared_ptr> 强引用，手动控制生命周期，常驻内存直到 clearCache 或应用退出
     // m_weakCache: QMap<QString, weak_ptr> 弱引用，允许 Qt 自动清理，适合低频访问页面
-    QMap<QString, std::weak_ptr<BasePage>> m_weakCache;      ///< 弱引用缓存（LRU淘汰，Qt自动管理生命周期）
-    QMap<QString, std::shared_ptr<BasePage>> m_strongCache;  ///< 强引用缓存（手动控制生命周期）
+    QMap<QString, std::weak_ptr<WealthPilot::BasePage>> m_weakCache;      ///< 弱引用缓存（LRU淘汰，Qt自动管理生命周期）
+    QMap<QString, std::shared_ptr<WealthPilot::BasePage>> m_strongCache;  ///< 强引用缓存（手动控制生命周期）
     QMap<QString, PageCachePolicy> m_cachePolicies;          ///< 页面ID到缓存策略映射
 
     QList<HistoryEntry> m_historyStack;  ///< 导航历史栈，支持返回操作
@@ -242,5 +242,7 @@ private:
 
     QTimer *m_cleanupTimer = nullptr;  ///< 缓存清理定时器，30秒触发一次
 };
+
+
 
 #endif // PAGENAVIGATORMANAGER_H

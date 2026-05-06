@@ -1,12 +1,13 @@
-#ifndef SIGNALCENTERPAGE_H
+﻿#ifndef SIGNALCENTERPAGE_H
 #define SIGNALCENTERPAGE_H
 
 #include <memory>
 
-#include <core/base/BasePage.h>
+#include <ui/components/BasePage.h>
 
 #include <ui/components//CardWidget.h>
 
+namespace WealthPilot {
 class SignalCenterPage : public BasePage
 {
     Q_OBJECT
@@ -26,5 +27,10 @@ private:
     CardWidget *createCard(const QString &name, double returnRate, int winRate, int followers);
     void updateGridLayout();
 };
-#endif // SIGNALCENTERPAGE_H
 
+
+ // SIGNALCENTERPAGE_H
+
+} // namespace WealthPilot
+
+#endif

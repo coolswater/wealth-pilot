@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file BacktestPage.h
  * @brief 策略回测页面 - 量化策略回测与分析
  *
@@ -16,7 +16,7 @@
 #ifndef BACKTESTPAGE_H
 #define BACKTESTPAGE_H
 
-#include "core/base/BasePage.h"
+#include "ui/components/BasePage.h"
 #include <QWidget>
 #include <QTableWidget>
 #include <QTextEdit>
@@ -62,9 +62,9 @@ struct BacktestTradeRecord {
 };
 
 /**
- * @brief 策略回测页面类
+ * @brief 策略回测页面�?
  */
-class BacktestPage : public BasePage
+class BacktestPage : public WealthPilot::BasePage
 {
     Q_OBJECT
 
@@ -110,4 +110,8 @@ private:
     std::unique_ptr<Impl> d;
 };
 
-#endif // BACKTESTPAGE_H
+
+
+ // BACKTESTPAGE_H
+
+#endif

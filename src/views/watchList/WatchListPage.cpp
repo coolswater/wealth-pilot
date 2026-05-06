@@ -7,6 +7,10 @@
 #include "core/config/Tokens.h"
 #include "utils/Logger.h"
 
+// 使用 WealthPilot 命名空间中的类
+using WealthPilot::WatchListModel;
+using WealthPilot::WatchListPage;
+
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>

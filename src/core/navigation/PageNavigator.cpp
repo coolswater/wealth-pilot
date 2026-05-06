@@ -4,9 +4,12 @@
  */
 
 #include "PageNavigator.h"
-#include "../base/BasePage.h"
+#include "../../ui/components/BasePage.h"
 #include "../../utils/Logger.h"
 #include <QDateTime>
+
+// 使用 WealthPilot 命名空间中的 BasePage
+using WealthPilot::BasePage;
 
 // ========== PageNavigator::Impl Implementation ==========
 

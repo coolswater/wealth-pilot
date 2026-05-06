@@ -3,11 +3,14 @@
  * @brief Futures Quotes Page - CTP real-time quotes
  */
 
+#ifndef FUTURES_QUOTES_PAGE_H
+#define FUTURES_QUOTES_PAGE_H
+
 #pragma once
 
 #include <QTableView>
 #include <memory>
-#include <core/base/BasePage.h>
+#include <ui/components/BasePage.h>
 #include <ctp/service/CTPService.h>
 #include <QTimer>
 
@@ -18,7 +21,7 @@ class QLineEdit;
 class QSortFilterProxyModel;
 QT_END_NAMESPACE
 
-class FuturesQuotesPage : public BasePage
+class FuturesQuotesPage : public WealthPilot::BasePage
 {
     Q_OBJECT
 public:
@@ -66,3 +69,5 @@ private:
     class Impl;
     std::unique_ptr<Impl> d;
 };
+
+#endif

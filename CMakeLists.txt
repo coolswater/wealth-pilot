@@ -41,7 +41,6 @@ set(APP_SOURCES
 # Core - Base 基础类
 set(CORE_BASE_SOURCES
         src/core/base/Singleton.h
-        src/core/base/BasePage.h
         src/core/base/ErrorCode.h
         src/core/base/NamespaceGuide.h
         src/core/types/MarketTypes.h
@@ -167,6 +166,9 @@ set(MODEL_SOURCES
         src/models/FuturesQuoteDelegate.cpp
         src/models/StockQuoteItem.h
         src/models/StockQuoteItem.cpp
+        src/models/QuoteModelBase.h
+        src/models/QuoteModelBase.cpp
+        src/domain/types/MarketTypes.h
 )
 
 # Utils 工具
@@ -232,6 +234,8 @@ set(UI_COMPONENT_SOURCES
         src/ui/components/ChartStatusBar.cpp
         src/ui/components/BaseWidget.h
         src/ui/components/BaseWidget.cpp
+        src/ui/components/BasePage.h
+        src/ui/components/BasePage.cpp
         src/ui/components/SidebarWidget.h
         src/ui/components/SidebarWidget.cpp
         src/ui/components/SvgIconEngine.h

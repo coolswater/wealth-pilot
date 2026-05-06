@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file FundPage.h
  * @brief 基金页面 - 基金行情展示与分析
  *
@@ -17,7 +17,7 @@
 #ifndef FUNDPAGE_H
 #define FUNDPAGE_H
 
-#include "core/base/BasePage.h"
+#include "ui/components/BasePage.h"
 #include <QWidget>
 #include <QTableWidget>
 #include <QComboBox>
@@ -46,7 +46,7 @@ struct FundHolding {
 /**
  * @brief 基金页面类
  */
-class FundPage : public BasePage
+class FundPage : public WealthPilot::BasePage
 {
     Q_OBJECT
 
@@ -176,4 +176,8 @@ private:
     std::unique_ptr<Impl> d;
 };
 
-#endif // FUNDPAGE_H
+
+
+ // FUNDPAGE_H
+
+#endif

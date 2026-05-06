@@ -1,15 +1,18 @@
+﻿#ifndef WATCHLISTPAGE_H
+#define WATCHLISTPAGE_H
+
 /**
  * @file WatchListPage.h
  * @brief 自选股页面 - 个人自选股管理
  */
 
-#pragma once
+
 
 #include <QTableView>
 #include <QSortFilterProxyModel>
 #include <QAbstractTableModel>
 #include <memory>
-#include <core/base/BasePage.h>
+#include "ui/components/BasePage.h"
 #include "market/StockDataSource.h"
 
 QT_BEGIN_NAMESPACE
@@ -18,6 +21,8 @@ class QLineEdit;
 class QPushButton;
 class QComboBox;
 QT_END_NAMESPACE
+
+namespace WealthPilot {
 
 /**
  * @brief 自选股表格模型
@@ -98,3 +103,7 @@ private:
     class Impl;
     std::unique_ptr<Impl> d;
 };
+
+} // namespace WealthPilot
+
+#endif

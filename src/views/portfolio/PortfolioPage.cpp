@@ -315,7 +315,6 @@ void PortfolioPage::initializePage()
     loadDemoData();
 
     setInitialized(true);
-    emit pageStatusChanged(QStringLiteral("initialized"));
 
     LOG_DEBUG("PortfolioPage initialized");
 }

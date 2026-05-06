@@ -14,6 +14,9 @@
 
 #include <QTimer>
 
+// 使用 WealthPilot 命名空间
+using WealthPilot::SignalCenterPage;
+
 struct SignalCenterPage::Impl {
     QVBoxLayout* mainLayout = nullptr;
     QHBoxLayout* headerLayout = nullptr;
