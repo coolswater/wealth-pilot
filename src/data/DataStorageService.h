@@ -6,6 +6,8 @@
  * - 指数数据存储与读取
  * - 自选股数据管理(增删改查)
  * - 新闻数据存储与读取
+ * - K线数据存储与读取
+ * - 分时数据存储与读取
  * - 离线数据支持
  */
 
@@ -19,6 +21,7 @@
 #include <memory>
 #include "core/database/DatabaseManager.h"
 #include "market/NewsDataSource.h"  // 使用已有的 NewsItem 定义
+#include "core/types/MarketTypes.h" // KLineData 定义
 
 // ============================================================================
 // 数据结构定义
@@ -203,6 +206,72 @@ public:
      * @brief 清理行情缓存
      */
     void clearQuoteCache();
+
+    // ========== K线数据 ==========
+
+    /**
+     * @brief 保存K线数据
+     * @param symbol 股票代码
+     * @param period K线周期
+     * @param data K线数据
+     */
+    bool saveKLineData(const QString& symbol, int period, const QVector<KLineData>& data);
+
+    /**
+     * @brief 获取K线数据
+     * @param symbol 股票代码
+     * @param period K线周期
+     * @param count 数据条数（0表示全部）
+     */
+    QVector<KLineData> getKLineData(const QString& symbol, int period, int count = 0);
+
+    /**
+     * @brief 获取K线数据条数
+     */
+    int getKLineDataCount(const QString& symbol, int period);
+
+    /**
+     * @brief 清理K线数据
+     * @param symbol 股票代码（空表示清理全部）
+     * @param daysToKeep 保留天数
+     */
+    void cleanKLineData(const QString& symbol = QString(), int daysToKeep = 365);
+
+    // ========== 分时数据 ==========
+
+    /**
+     * @brief 分时数据点
+     */
+    struct TimeSharePoint {
+        QDateTime time;     ///< 时间
+        double price = 0.0; ///< 价格
+        qint64 volume = 0;  ///< 成交量
+    };
+
+    /**
+     * @brief 保存分时数据
+     * @param symbol 股票代码
+     * @param data 分时数据
+     * @param basePrice 昨收价
+     */
+    bool saveTimeShareData(const QString& symbol, const QVector<TimeSharePoint>& data, double basePrice);
+
+    /**
+     * @brief 获取分时数据
+     * @param symbol 股票代码
+     * @param date 日期（默认今天）
+     */
+    QVector<TimeSharePoint> getTimeShareData(const QString& symbol, const QDate& date = QDate());
+
+    /**
+     * @brief 获取分时数据基准价
+     */
+    double getTimeShareBasePrice(const QString& symbol, const QDate& date = QDate());
+
+    /**
+     * @brief 清理分时数据
+     */
+    void cleanTimeShareData(int daysToKeep = 7);
 
     // ========== 通用方法 ==========
 

@@ -8,6 +8,8 @@
 
 #include "ui/components/BasePage.h"
 #include "ui/components/KLineChart.h"
+#include "market/StockDataSource.h"
+#include "core/types/MarketTypes.h"
 #include <QWidget>
 #include <QVector>
 #include <QDateTime>
@@ -75,15 +77,35 @@ private slots:
     void onRefresh();
     void onCrosshairMoved(const QDateTime& time, double price);
     void onKLineInfoChanged(const KLineData& kline, int index);
+    
+    // 数据源回调
+    void onKLineReceived(const QString& symbol, const QVector<KLineData>& data);
 
 private:
     void setupUI();
     void setupConnections();
-    void loadKLineData();
-    void loadTimeShareData();
-    void generateDemoKLineData();
-    void generateDemoTimeShareData();
+    
+    // 数据加载流程：缓存 → 数据库 → 网络数据源
+    void loadDataWithFallback();
+    bool loadFromCache();
+    bool loadFromDatabase();
+    void loadFromNetwork();
+    void saveToCache();
+    void saveToDatabase();
+    
+    // 分时图数据加载
+    void loadTimeShareWithFallback();
+    bool loadTimeShareFromCache();
+    bool loadTimeShareFromDatabase();
+    void loadTimeShareFromNetwork();
+    void saveTimeShareToCache();
+    void saveTimeShareToDatabase();
+    
+    // 辅助方法
+    QString cacheKey() const;
+    QString timeShareCacheKey() const;
     void updateInfoLabel(const KLineData& kline);
+    KLinePeriod toKLinePeriod(StockKLinePeriod period) const;
 
     QString m_stockCode;
     QString m_stockName;
@@ -102,6 +124,9 @@ private:
     // 图表组件
     KLineChart* m_klineChart = nullptr;
     QWidget* m_timeShareWidget = nullptr;
+    
+    // 数据源
+    StockDataSource* m_dataSource = nullptr;
     
     struct Impl;
     std::unique_ptr<Impl> d;

@@ -159,6 +159,61 @@ void DataStorageService::createTables()
         )
     )");
     
+    // K线数据表
+    DatabaseManager::instance()->executeQuery(R"(
+        CREATE TABLE IF NOT EXISTS kline_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            symbol TEXT NOT NULL,
+            period INTEGER NOT NULL,
+            time TIMESTAMP NOT NULL,
+            open REAL NOT NULL,
+            high REAL NOT NULL,
+            low REAL NOT NULL,
+            close REAL NOT NULL,
+            volume INTEGER DEFAULT 0,
+            turnover REAL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(symbol, period, time)
+        )
+    )");
+    
+    // K线数据索引
+    DatabaseManager::instance()->executeQuery(
+        "CREATE INDEX IF NOT EXISTS idx_kline_symbol_period ON kline_data(symbol, period)");
+    DatabaseManager::instance()->executeQuery(
+        "CREATE INDEX IF NOT EXISTS idx_kline_time ON kline_data(time)");
+    
+    // 分时数据表
+    DatabaseManager::instance()->executeQuery(R"(
+        CREATE TABLE IF NOT EXISTS timeshare_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            symbol TEXT NOT NULL,
+            date DATE NOT NULL,
+            time TIMESTAMP NOT NULL,
+            price REAL NOT NULL,
+            volume INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(symbol, date, time)
+        )
+    )");
+    
+    // 分时数据索引
+    DatabaseManager::instance()->executeQuery(
+        "CREATE INDEX IF NOT EXISTS idx_timeshare_symbol_date ON timeshare_data(symbol, date)");
+    
+    // 分时基准价表（昨收价）
+    DatabaseManager::instance()->executeQuery(R"(
+        CREATE TABLE IF NOT EXISTS timeshare_base (
+            symbol TEXT NOT NULL,
+            date DATE NOT NULL,
+            base_price REAL NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (symbol, date)
+        )
+    )");
+    
+    LOG_DEBUG("Data storage tables created successfully");
+    
     LOG_DEBUG("Data storage tables created");
 }
 
@@ -702,6 +757,252 @@ void DataStorageService::clearQuoteCache()
 {
     DatabaseManager::instance()->executeQuery("DELETE FROM quote_cache");
     LOG_DEBUG("Quote cache cleared");
+}
+
+// ============================================================================
+// K线数据
+// ============================================================================
+
+bool DataStorageService::saveKLineData(const QString& symbol, int period, const QVector<KLineData>& data)
+{
+    if (data.isEmpty()) {
+        return true;
+    }
+    
+    // 先删除旧数据
+    QString deleteSql = "DELETE FROM kline_data WHERE symbol = :symbol AND period = :period";
+    QMap<QString, QVariant> deleteParams;
+    deleteParams[":symbol"] = symbol;
+    deleteParams[":period"] = period;
+    DatabaseManager::instance()->executeQuery(deleteSql, deleteParams);
+    
+    // 批量插入新数据
+    QString sql = R"(
+        INSERT INTO kline_data 
+        (symbol, period, time, open, high, low, close, volume, turnover)
+        VALUES (:symbol, :period, :time, :open, :high, :low, :close, :volume, :turnover)
+    )";
+    
+    QVector<QMap<QString, QVariant>> batchData;
+    for (const auto& kline : data) {
+        QMap<QString, QVariant> params;
+        params[":symbol"] = symbol;
+        params[":period"] = period;
+        params[":time"] = kline.time;
+        params[":open"] = kline.open;
+        params[":high"] = kline.high;
+        params[":low"] = kline.low;
+        params[":close"] = kline.close;
+        params[":volume"] = kline.volume;
+        params[":turnover"] = kline.turnover;
+        batchData.append(params);
+    }
+    
+    QueryResult result = DatabaseManager::instance()->executeBatch(sql, batchData);
+    if (result.success) {
+        LOG_DEBUG(QString("Saved %1 kline records for %2 period %3").arg(data.size()).arg(symbol).arg(period));
+    }
+    return result.success;
+}
+
+QVector<KLineData> DataStorageService::getKLineData(const QString& symbol, int period, int count)
+{
+    QString sql;
+    QMap<QString, QVariant> params;
+    params[":symbol"] = symbol;
+    params[":period"] = period;
+    
+    if (count > 0) {
+        sql = R"(
+            SELECT time, open, high, low, close, volume, turnover
+            FROM kline_data
+            WHERE symbol = :symbol AND period = :period
+            ORDER BY time DESC
+            LIMIT :count
+        )";
+        params[":count"] = count;
+    } else {
+        sql = R"(
+            SELECT time, open, high, low, close, volume, turnover
+            FROM kline_data
+            WHERE symbol = :symbol AND period = :period
+            ORDER BY time ASC
+        )";
+    }
+    
+    QueryResult result = DatabaseManager::instance()->executeQuery(sql, params);
+    QVector<KLineData> data;
+    
+    for (const auto& row : result.rows) {
+        KLineData kline;
+        kline.time = row["time"].toDateTime();
+        kline.open = row["open"].toDouble();
+        kline.high = row["high"].toDouble();
+        kline.low = row["low"].toDouble();
+        kline.close = row["close"].toDouble();
+        kline.volume = row["volume"].toLongLong();
+        kline.turnover = row["turnover"].toDouble();
+        data.append(kline);
+    }
+    
+    // 如果按倒序查询，需要反转
+    if (count > 0) {
+        std::reverse(data.begin(), data.end());
+    }
+    
+    return data;
+}
+
+int DataStorageService::getKLineDataCount(const QString& symbol, int period)
+{
+    QString sql = "SELECT COUNT(*) as count FROM kline_data WHERE symbol = :symbol AND period = :period";
+    QMap<QString, QVariant> params;
+    params[":symbol"] = symbol;
+    params[":period"] = period;
+    
+    QueryResult result = DatabaseManager::instance()->executeQuery(sql, params);
+    if (!result.rows.isEmpty()) {
+        return result.rows[0]["count"].toInt();
+    }
+    return 0;
+}
+
+void DataStorageService::cleanKLineData(const QString& symbol, int daysToKeep)
+{
+    QString sql;
+    QMap<QString, QVariant> params;
+    
+    QDateTime cutoffDate = QDateTime::currentDateTime().addDays(-daysToKeep);
+    params[":cutoff"] = cutoffDate;
+    
+    if (symbol.isEmpty()) {
+        sql = "DELETE FROM kline_data WHERE time < :cutoff";
+    } else {
+        sql = "DELETE FROM kline_data WHERE symbol = :symbol AND time < :cutoff";
+        params[":symbol"] = symbol;
+    }
+    
+    DatabaseManager::instance()->executeQuery(sql, params);
+    LOG_DEBUG(QString("Cleaned kline data older than %1").arg(cutoffDate.toString("yyyy-MM-dd")));
+}
+
+// ============================================================================
+// 分时数据
+// ============================================================================
+
+bool DataStorageService::saveTimeShareData(const QString& symbol, const QVector<TimeSharePoint>& data, double basePrice)
+{
+    if (data.isEmpty()) {
+        return true;
+    }
+    
+    QDate date = data.first().time.date();
+    
+    // 先删除当天的旧数据
+    QString deleteSql = "DELETE FROM timeshare_data WHERE symbol = :symbol AND date = :date";
+    QMap<QString, QVariant> deleteParams;
+    deleteParams[":symbol"] = symbol;
+    deleteParams[":date"] = date;
+    DatabaseManager::instance()->executeQuery(deleteSql, deleteParams);
+    
+    // 批量插入新数据
+    QString sql = R"(
+        INSERT INTO timeshare_data 
+        (symbol, date, time, price, volume)
+        VALUES (:symbol, :date, :time, :price, :volume)
+    )";
+    
+    QVector<QMap<QString, QVariant>> batchData;
+    for (const auto& point : data) {
+        QMap<QString, QVariant> params;
+        params[":symbol"] = symbol;
+        params[":date"] = date;
+        params[":time"] = point.time;
+        params[":price"] = point.price;
+        params[":volume"] = point.volume;
+        batchData.append(params);
+    }
+    
+    QueryResult result = DatabaseManager::instance()->executeBatch(sql, batchData);
+    
+    // 保存基准价
+    if (result.success && basePrice > 0) {
+        QString baseSql = R"(
+            INSERT OR REPLACE INTO timeshare_base 
+            (symbol, date, base_price)
+            VALUES (:symbol, :date, :base_price)
+        )";
+        QMap<QString, QVariant> baseParams;
+        baseParams[":symbol"] = symbol;
+        baseParams[":date"] = date;
+        baseParams[":base_price"] = basePrice;
+        DatabaseManager::instance()->executeQuery(baseSql, baseParams);
+    }
+    
+    if (result.success) {
+        LOG_DEBUG(QString("Saved %1 timeshare points for %2 on %3").arg(data.size()).arg(symbol).arg(date.toString()));
+    }
+    return result.success;
+}
+
+QVector<DataStorageService::TimeSharePoint> DataStorageService::getTimeShareData(const QString& symbol, const QDate& date)
+{
+    QDate queryDate = date.isValid() ? date : QDate::currentDate();
+    
+    QString sql = R"(
+        SELECT time, price, volume
+        FROM timeshare_data
+        WHERE symbol = :symbol AND date = :date
+        ORDER BY time ASC
+    )";
+    
+    QMap<QString, QVariant> params;
+    params[":symbol"] = symbol;
+    params[":date"] = queryDate;
+    
+    QueryResult result = DatabaseManager::instance()->executeQuery(sql, params);
+    QVector<TimeSharePoint> data;
+    
+    for (const auto& row : result.rows) {
+        TimeSharePoint point;
+        point.time = row["time"].toDateTime();
+        point.price = row["price"].toDouble();
+        point.volume = row["volume"].toLongLong();
+        data.append(point);
+    }
+    
+    return data;
+}
+
+double DataStorageService::getTimeShareBasePrice(const QString& symbol, const QDate& date)
+{
+    QDate queryDate = date.isValid() ? date : QDate::currentDate();
+    
+    QString sql = "SELECT base_price FROM timeshare_base WHERE symbol = :symbol AND date = :date";
+    QMap<QString, QVariant> params;
+    params[":symbol"] = symbol;
+    params[":date"] = queryDate;
+    
+    QueryResult result = DatabaseManager::instance()->executeQuery(sql, params);
+    if (!result.rows.isEmpty()) {
+        return result.rows[0]["base_price"].toDouble();
+    }
+    return 0.0;
+}
+
+void DataStorageService::cleanTimeShareData(int daysToKeep)
+{
+    QDate cutoffDate = QDate::currentDate().addDays(-daysToKeep);
+    
+    QString sql = "DELETE FROM timeshare_data WHERE date < :cutoff";
+    QMap<QString, QVariant> params;
+    params[":cutoff"] = cutoffDate;
+    DatabaseManager::instance()->executeQuery(sql, params);
+    
+    QString baseSql = "DELETE FROM timeshare_base WHERE date < :cutoff";
+    DatabaseManager::instance()->executeQuery(baseSql, params);
+    
+    LOG_DEBUG(QString("Cleaned timeshare data older than %1").arg(cutoffDate.toString("yyyy-MM-dd")));
 }
 
 // ============================================================================

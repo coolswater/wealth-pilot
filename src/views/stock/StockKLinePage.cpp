@@ -5,6 +5,8 @@
 
 #include "StockKLinePage.h"
 #include "core/config/Tokens.h"
+#include "core/cache/CacheManager.h"
+#include "data/DataStorageService.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -19,6 +21,7 @@
 #include <QPainterPath>
 #include <QRandomGenerator>
 #include <QDateTime>
+#include <QVariant>
 
 // ============================================================================
 // 分时图组件
@@ -53,6 +56,10 @@ public:
         m_basePrice = 0.0;
         update();
     }
+    
+    QVector<QPair<QDateTime, double>> prices() const { return m_prices; }
+    QVector<qint64> volumes() const { return m_volumes; }
+    double basePrice() const { return m_basePrice; }
 
 protected:
     void paintEvent(QPaintEvent* event) override
@@ -201,11 +208,7 @@ void StockKLinePage::setStock(const QString& stockCode, const QString& stockName
     }
     
     // 加载数据
-    if (m_chartType == ChartType::KLine) {
-        loadKLineData();
-    } else {
-        loadTimeShareData();
-    }
+    loadDataWithFallback();
     
     emit stockChanged(stockCode);
     LOG_DEBUG(QString("Stock set: %1 (%2)").arg(m_stockCode, m_stockName));
@@ -218,7 +221,7 @@ void StockKLinePage::setPeriod(StockKLinePeriod period)
         m_periodCombo->setCurrentIndex(static_cast<int>(period));
     }
     emit periodChanged(static_cast<int>(period));
-    loadKLineData();
+    loadDataWithFallback();
 }
 
 void StockKLinePage::setChartType(ChartType type)
@@ -422,14 +425,14 @@ void StockKLinePage::onChartTypeChanged(int index)
         m_periodCombo->setEnabled(true);
         m_mainIndicatorCombo->setEnabled(true);
         m_subIndicatorCombo->setEnabled(true);
-        loadKLineData();
+        loadDataWithFallback();
     } else {
         m_klineChart->hide();
         m_timeShareWidget->show();
         m_periodCombo->setEnabled(false);
         m_mainIndicatorCombo->setEnabled(false);
         m_subIndicatorCombo->setEnabled(false);
-        loadTimeShareData();
+        loadTimeShareWithFallback();
     }
     
     LOG_DEBUG(QString("Chart type changed: %1").arg(index == 0 ? "TimeShare" : "KLine"));
@@ -439,7 +442,7 @@ void StockKLinePage::onPeriodChanged(int index)
 {
     m_period = static_cast<StockKLinePeriod>(index);
     emit periodChanged(index);
-    loadKLineData();
+    loadDataWithFallback();
     LOG_DEBUG(QString("Period changed: %1").arg(index));
 }
 
@@ -467,9 +470,9 @@ void StockKLinePage::onRefresh()
     m_infoLabel->setText(QStringLiteral("刷新中..."));
     
     if (m_chartType == ChartType::KLine) {
-        loadKLineData();
+        loadFromNetwork();
     } else {
-        loadTimeShareData();
+        loadTimeShareFromNetwork();
     }
     
     LOG_DEBUG(QString("Refresh: %1").arg(m_stockCode));
@@ -487,53 +490,13 @@ void StockKLinePage::onKLineInfoChanged(const KLineData& kline, int index)
     updateInfoLabel(kline);
 }
 
-void StockKLinePage::loadKLineData()
+void StockKLinePage::onKLineReceived(const QString& symbol, const QVector<KLineData>& data)
 {
-    if (m_stockCode.isEmpty()) {
-        m_klineChart->clearData();
+    if (symbol != m_stockCode) return;
+    
+    if (data.isEmpty()) {
+        m_infoLabel->setText(QStringLiteral("未获取到数据"));
         return;
-    }
-    
-    // 生成演示数据
-    generateDemoKLineData();
-}
-
-void StockKLinePage::loadTimeShareData()
-{
-    if (m_stockCode.isEmpty()) {
-        if (m_timeShareWidget) {
-            static_cast<TimeShareChart*>(m_timeShareWidget)->clearData();
-        }
-        return;
-    }
-    
-    generateDemoTimeShareData();
-}
-
-void StockKLinePage::generateDemoKLineData()
-{
-    QVector<KLineData> data;
-    
-    // 生成演示K线数据
-    QDateTime baseTime = QDateTime::currentDateTime().addDays(-100);
-    double basePrice = 10.0 + QRandomGenerator::global()->bounded(90.0);
-    double price = basePrice;
-    
-    for (int i = 0; i < 100; i++) {
-        KLineData kline;
-        kline.time = baseTime.addDays(i);
-        
-        // 随机生成开高低收
-        double change = (QRandomGenerator::global()->bounded(100) - 50) / 100.0 * 0.05 * price;
-        kline.open = price;
-        kline.close = price + change;
-        kline.high = qMax(kline.open, kline.close) * (1.0 + QRandomGenerator::global()->bounded(100) / 1000.0);
-        kline.low = qMin(kline.open, kline.close) * (1.0 - QRandomGenerator::global()->bounded(100) / 1000.0);
-        kline.volume = 1000000 + QRandomGenerator::global()->bounded(9000000);
-        kline.turnover = kline.volume * (kline.open + kline.close) / 2;
-        
-        data.append(kline);
-        price = kline.close;
     }
     
     d->klineData = data;
@@ -544,18 +507,275 @@ void StockKLinePage::generateDemoKLineData()
     m_klineChart->setMainIndicator(MainIndicator::MA);
     m_klineChart->setSubIndicator(SubIndicator::MACD);
     
+    // 保存到缓存和数据库
+    saveToCache();
+    saveToDatabase();
+    
     m_infoLabel->setText(QStringLiteral("已加载 %1 条K线数据").arg(data.size()));
+    LOG_INFO(QString("KLine data received: %1 items for %2").arg(data.size()).arg(symbol));
 }
 
-void StockKLinePage::generateDemoTimeShareData()
+// ============================================================================
+// 数据加载流程：缓存 → 数据库 → 网络数据源
+// ============================================================================
+
+void StockKLinePage::loadDataWithFallback()
 {
-    if (!m_timeShareWidget) return;
+    if (m_stockCode.isEmpty()) {
+        m_klineChart->clearData();
+        return;
+    }
+    
+    LOG_INFO(QString("Loading KLine data with fallback for %1").arg(m_stockCode));
+    
+    // 1. 尝试从缓存加载
+    if (loadFromCache()) {
+        LOG_INFO("KLine data loaded from cache");
+        // 缓存命中，后台更新数据
+        QTimer::singleShot(100, this, [this]() {
+            loadFromNetwork();
+        });
+        return;
+    }
+    
+    // 2. 缓存未命中，尝试从数据库加载
+    if (loadFromDatabase()) {
+        LOG_INFO("KLine data loaded from database");
+        // 数据库命中，保存到缓存并后台更新
+        saveToCache();
+        QTimer::singleShot(100, this, [this]() {
+            loadFromNetwork();
+        });
+        return;
+    }
+    
+    // 3. 数据库也没有，从网络加载
+    LOG_INFO("No local KLine data, loading from network");
+    loadFromNetwork();
+}
+
+bool StockKLinePage::loadFromCache()
+{
+    auto* cache = CacheManager::instance();
+    QString key = cacheKey();
+    
+    if (!cache->contains(key)) {
+        return false;
+    }
+    
+    // 检查缓存是否过期（根据周期设置不同的TTL）
+    QDateTime lastUpdate = cache->get(key + "_time").toDateTime();
+    if (lastUpdate.isValid()) {
+        qint64 ageSecs = lastUpdate.secsTo(QDateTime::currentDateTime());
+        int maxAge = 300; // 默认5分钟
+        if (m_period == StockKLinePeriod::Day || 
+            m_period == StockKLinePeriod::Week ||
+            m_period == StockKLinePeriod::Month) {
+            maxAge = 3600; // 日线以上1小时过期
+        }
+        if (ageSecs > maxAge) {
+            LOG_DEBUG(QString("Cache expired, age: %1 seconds").arg(ageSecs));
+            return false;
+        }
+    }
+    
+    QVariant dataVariant = cache->get(key);
+    if (dataVariant.canConvert<QVector<KLineData>>()) {
+        QVector<KLineData> data = dataVariant.value<QVector<KLineData>>();
+        if (!data.isEmpty()) {
+            d->klineData = data;
+            m_klineChart->setData(data);
+            m_klineChart->showLatest(60);
+            m_klineChart->setMainIndicator(MainIndicator::MA);
+            m_klineChart->setSubIndicator(SubIndicator::MACD);
+            m_infoLabel->setText(QStringLiteral("已从缓存加载 %1 条数据").arg(data.size()));
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+bool StockKLinePage::loadFromDatabase()
+{
+    auto* storage = DataStorageService::instance();
+    
+    // 从数据库加载K线数据
+    int period = static_cast<int>(toKLinePeriod(m_period));
+    QVector<KLineData> data = storage->getKLineData(m_stockCode, period, 500);
+    
+    if (!data.isEmpty()) {
+        d->klineData = data;
+        m_klineChart->setData(data);
+        m_klineChart->showLatest(60);
+        m_klineChart->setMainIndicator(MainIndicator::MA);
+        m_klineChart->setSubIndicator(SubIndicator::MACD);
+        m_infoLabel->setText(QStringLiteral("已从数据库加载 %1 条数据").arg(data.size()));
+        LOG_INFO(QString("KLine data loaded from database: %1 items").arg(data.size()));
+        return true;
+    }
+    
+    return false;
+}
+
+void StockKLinePage::loadFromNetwork()
+{
+    if (m_stockCode.isEmpty()) return;
+    
+    LOG_INFO(QString("Loading KLine data from network for %1").arg(m_stockCode));
+    
+    // 初始化数据源
+    if (!m_dataSource) {
+        m_dataSource = new StockDataSource(StockDataSource::Source::Sina, this);
+        connect(m_dataSource, &StockDataSource::kLineReceived, 
+                this, &StockKLinePage::onKLineReceived);
+    }
+    
+    // 请求K线数据
+    KLinePeriod period = toKLinePeriod(m_period);
+    m_dataSource->requestKLine(m_stockCode, period, 500);
+    
+    m_infoLabel->setText(QStringLiteral("正在从网络获取数据..."));
+}
+
+void StockKLinePage::saveToCache()
+{
+    if (d->klineData.isEmpty()) return;
+    
+    auto* cache = CacheManager::instance();
+    QString key = cacheKey();
+    
+    // 保存K线数据
+    cache->set(key, QVariant::fromValue(d->klineData), 300);
+    cache->set(key + "_time", QDateTime::currentDateTime(), 300);
+    
+    LOG_DEBUG(QString("KLine data saved to cache: %1 items").arg(d->klineData.size()));
+}
+
+void StockKLinePage::saveToDatabase()
+{
+    if (d->klineData.isEmpty()) return;
+    
+    auto* storage = DataStorageService::instance();
+    
+    // 保存K线数据到数据库
+    int period = static_cast<int>(toKLinePeriod(m_period));
+    if (storage->saveKLineData(m_stockCode, period, d->klineData)) {
+        LOG_INFO(QString("KLine data saved to database: %1 items for %2 period %3")
+            .arg(d->klineData.size()).arg(m_stockCode).arg(period));
+    }
+}
+
+// ============================================================================
+// 分时图数据加载
+// ============================================================================
+
+void StockKLinePage::loadTimeShareWithFallback()
+{
+    if (m_stockCode.isEmpty()) {
+        static_cast<TimeShareChart*>(m_timeShareWidget)->clearData();
+        return;
+    }
+    
+    LOG_INFO(QString("Loading TimeShare data with fallback for %1").arg(m_stockCode));
+    
+    // 1. 尝试从缓存加载
+    if (loadTimeShareFromCache()) {
+        LOG_INFO("TimeShare data loaded from cache");
+        QTimer::singleShot(100, this, [this]() {
+            loadTimeShareFromNetwork();
+        });
+        return;
+    }
+    
+    // 2. 缓存未命中，尝试从数据库加载
+    if (loadTimeShareFromDatabase()) {
+        LOG_INFO("TimeShare data loaded from database");
+        saveTimeShareToCache();
+        QTimer::singleShot(100, this, [this]() {
+            loadTimeShareFromNetwork();
+        });
+        return;
+    }
+    
+    // 3. 从网络加载
+    LOG_INFO("No local TimeShare data, loading from network");
+    loadTimeShareFromNetwork();
+}
+
+bool StockKLinePage::loadTimeShareFromCache()
+{
+    auto* cache = CacheManager::instance();
+    QString key = timeShareCacheKey();
+    
+    if (!cache->contains(key)) {
+        return false;
+    }
+    
+    // 检查缓存是否过期（分时图数据1分钟过期）
+    QDateTime lastUpdate = cache->get(key + "_time").toDateTime();
+    if (lastUpdate.isValid()) {
+        qint64 ageSecs = lastUpdate.secsTo(QDateTime::currentDateTime());
+        if (ageSecs > 60) { // 1分钟过期
+            return false;
+        }
+    }
+    
+    // 加载分时数据
+    QVariant pricesVariant = cache->get(key + "_prices");
+    QVariant volumesVariant = cache->get(key + "_volumes");
+    QVariant baseVariant = cache->get(key + "_base");
+    
+    if (pricesVariant.isValid() && volumesVariant.isValid() && baseVariant.isValid()) {
+        // TODO: 反序列化分时数据
+        // 暂时返回false
+    }
+    
+    return false;
+}
+
+bool StockKLinePage::loadTimeShareFromDatabase()
+{
+    auto* storage = DataStorageService::instance();
+    
+    // 从数据库加载分时数据
+    QVector<DataStorageService::TimeSharePoint> data = storage->getTimeShareData(m_stockCode);
+    double basePrice = storage->getTimeShareBasePrice(m_stockCode);
+    
+    if (!data.isEmpty() && basePrice > 0) {
+        // 转换为分时图数据格式
+        QVector<QPair<QDateTime, double>> prices;
+        QVector<qint64> volumes;
+        
+        for (const auto& point : data) {
+            prices.append({point.time, point.price});
+            volumes.append(point.volume);
+        }
+        
+        auto* timeShareChart = static_cast<TimeShareChart*>(m_timeShareWidget);
+        timeShareChart->setData(prices, volumes, basePrice);
+        m_infoLabel->setText(QStringLiteral("已从数据库加载分时数据"));
+        LOG_INFO(QString("TimeShare data loaded from database: %1 points").arg(data.size()));
+        return true;
+    }
+    
+    return false;
+}
+
+void StockKLinePage::loadTimeShareFromNetwork()
+{
+    if (m_stockCode.isEmpty()) return;
+    
+    LOG_INFO(QString("Loading TimeShare data from network for %1").arg(m_stockCode));
+    
+    // 暂时生成演示数据
+    // TODO: 接入真实分时数据API
+    
     auto* timeShareChart = static_cast<TimeShareChart*>(m_timeShareWidget);
     
     QVector<QPair<QDateTime, double>> prices;
     QVector<qint64> volumes;
     
-    // 生成分时数据（9:30-11:30, 13:00-15:00）
     QDateTime today = QDateTime::currentDateTime();
     today.setTime(QTime(9, 30));
     
@@ -572,7 +792,7 @@ void StockKLinePage::generateDemoTimeShareData()
     }
     
     // 下午 13:00-15:00 (120分钟)
-    QDateTime afternoon = today.addSecs(3.5 * 3600); // 13:00
+    QDateTime afternoon = today.addSecs(3.5 * 3600);
     for (int i = 0; i < 120; i++) {
         QDateTime time = afternoon.addSecs(i * 60);
         double change = (QRandomGenerator::global()->bounded(100) - 48) / 1000.0 * basePrice;
@@ -583,6 +803,72 @@ void StockKLinePage::generateDemoTimeShareData()
     
     timeShareChart->setData(prices, volumes, basePrice);
     m_infoLabel->setText(QStringLiteral("分时图已加载"));
+    
+    // 保存到缓存和数据库
+    saveTimeShareToCache();
+    saveTimeShareToDatabase();
+}
+
+void StockKLinePage::saveTimeShareToCache()
+{
+    auto* cache = CacheManager::instance();
+    QString key = timeShareCacheKey();
+    
+    auto* timeShareChart = static_cast<TimeShareChart*>(m_timeShareWidget);
+    auto prices = timeShareChart->prices();
+    auto volumes = timeShareChart->volumes();
+    double basePrice = timeShareChart->basePrice();
+    
+    if (prices.isEmpty()) return;
+    
+    // 保存分时数据
+    cache->set(key + "_prices", QVariant::fromValue(prices), 60);
+    cache->set(key + "_volumes", QVariant::fromValue(volumes), 60);
+    cache->set(key + "_base", basePrice, 60);
+    cache->set(key + "_time", QDateTime::currentDateTime(), 60);
+    
+    LOG_DEBUG("TimeShare data saved to cache");
+}
+
+void StockKLinePage::saveTimeShareToDatabase()
+{
+    auto* timeShareChart = static_cast<TimeShareChart*>(m_timeShareWidget);
+    auto prices = timeShareChart->prices();
+    auto volumes = timeShareChart->volumes();
+    double basePrice = timeShareChart->basePrice();
+    
+    if (prices.isEmpty() || basePrice <= 0) return;
+    
+    auto* storage = DataStorageService::instance();
+    
+    // 转换为数据库格式
+    QVector<DataStorageService::TimeSharePoint> data;
+    for (int i = 0; i < prices.size() && i < volumes.size(); i++) {
+        DataStorageService::TimeSharePoint point;
+        point.time = prices[i].first;
+        point.price = prices[i].second;
+        point.volume = volumes[i];
+        data.append(point);
+    }
+    
+    if (storage->saveTimeShareData(m_stockCode, data, basePrice)) {
+        LOG_INFO(QString("TimeShare data saved to database: %1 points for %2")
+            .arg(data.size()).arg(m_stockCode));
+    }
+}
+
+// ============================================================================
+// 辅助方法
+// ============================================================================
+
+QString StockKLinePage::cacheKey() const
+{
+    return QString("kline_%1_%2").arg(m_stockCode, QString::number(static_cast<int>(m_period)));
+}
+
+QString StockKLinePage::timeShareCacheKey() const
+{
+    return QString("timeshare_%1").arg(m_stockCode);
 }
 
 void StockKLinePage::updateInfoLabel(const KLineData& kline)
@@ -602,4 +888,19 @@ void StockKLinePage::updateInfoLabel(const KLineData& kline)
              QString::number(kline.close, 'f', 2),
              changeText,
              QString::number(kline.volume)));
+}
+
+KLinePeriod StockKLinePage::toKLinePeriod(StockKLinePeriod period) const
+{
+    switch (period) {
+        case StockKLinePeriod::Min1:  return KLinePeriod::Minute1;
+        case StockKLinePeriod::Min5:  return KLinePeriod::Minute5;
+        case StockKLinePeriod::Min15: return KLinePeriod::Minute15;
+        case StockKLinePeriod::Min30: return KLinePeriod::Minute30;
+        case StockKLinePeriod::Min60: return KLinePeriod::Hour1;
+        case StockKLinePeriod::Day:   return KLinePeriod::Day1;
+        case StockKLinePeriod::Week:  return KLinePeriod::Week1;
+        case StockKLinePeriod::Month: return KLinePeriod::Month1;
+        default: return KLinePeriod::Day1;
+    }
 }
