@@ -854,13 +854,13 @@ void DashboardPage::setupIndexPanel()
         )").arg(Tokens::Colors::BgBase, Tokens::Colors::Border));
 
         QVBoxLayout* cardLayout = new QVBoxLayout(card);
-        cardLayout->setContentsMargins(12, 10, 12, 10);
+        cardLayout->setContentsMargins(10, 10, 10, 10);
         cardLayout->setSpacing(4);
 
         // 指数名称
         QLabel* nameLabel = new QLabel(indexNames[i], card);
-        nameLabel->setStyleSheet(QString("color: %1; font-size: 13px;")
-            .arg(Tokens::Colors::TextSecondary));
+        nameLabel->setStyleSheet(QString("color: %1; font-size: 15px; font-weight: bold;")
+            .arg(Tokens::Colors::TextPrimary));
         cardLayout->addWidget(nameLabel);
         d->indexNameLabels.append(nameLabel);
 
@@ -868,15 +868,15 @@ void DashboardPage::setupIndexPanel()
         QHBoxLayout* priceLayout = new QHBoxLayout();
         
         QLabel* priceLabel = new QLabel(QStringLiteral("0.00"), card);
-        priceLabel->setStyleSheet(QString("color: %1; font-size: 22px; font-weight: bold;")
+        priceLabel->setStyleSheet(QString("color: %1; font-size: 15px; font-weight: bold;")
             .arg(Tokens::Colors::TextPrimary));
-        priceLayout->addWidget(priceLabel);
+        priceLayout->addWidget(priceLabel, 1);
         d->indexPriceLabels.append(priceLabel);
 
         QLabel* changeLabel = new QLabel(QStringLiteral("+0.00%"), card);
-        changeLabel->setStyleSheet(QString("color: %1; font-size: 13px;")
+        changeLabel->setStyleSheet(QString("color: %1; font-size: 10px;")
             .arg(Tokens::Colors::Danger));
-        priceLayout->addWidget(changeLabel);
+        priceLayout->addWidget(changeLabel, 2);
         priceLayout->addStretch();
         d->indexChangeLabels.append(changeLabel);
 
@@ -1420,9 +1420,9 @@ void DashboardPage::loadRealData()
     d->watchlistDataSource->requestQuotes(d->watchlistSymbols);
     
     // 启动自动刷新（5秒）
-    d->indexDataSource->startAutoRefresh(2000);
-    d->rankDataSource->startAutoRefresh(2000);
-    d->watchlistDataSource->startAutoRefresh(2000);
+    d->indexDataSource->startAutoRefresh(1500);
+    d->rankDataSource->startAutoRefresh(1500);
+    d->watchlistDataSource->startAutoRefresh(1500);
     
     // 加载其他数据（新闻、资金流向等暂时用模拟数据）
     loadNewsData();
@@ -1607,9 +1607,11 @@ void DashboardPage::loadIndexData()
     QVector<IndexInfo> indices = {
         {"sh000001", QStringLiteral("上证指数"), 3256.78, 23.45, 0.72},
         {"sz399001", QStringLiteral("深证成指"), 10856.34, -45.67, -0.42},
-        {"sh000300", QStringLiteral("沪深300"), 3892.45, 18.67, 0.48},
         {"sz399006", QStringLiteral("创业板指"), 2156.89, 32.45, 1.53},
-        {"sh000688", QStringLiteral("科创50"), 987.65, -12.34, -1.24}
+        {"sh000688", QStringLiteral("科创50"), 987.65, -12.34, -1.24},
+        {"sh000016", QStringLiteral("上证50"), 2567.89, 15.23, 0.60},
+        {"sh000300", QStringLiteral("沪深300"), 3892.45, 18.67, 0.48},
+        {"bj899050", QStringLiteral("北证50"), 1234.56, -8.90, -0.72}
     };
 
     for (const auto& idx : indices) {
