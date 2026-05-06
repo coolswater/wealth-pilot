@@ -329,30 +329,6 @@ void SettingsPage::setupUI()
     
     contentLayout->addWidget(aiGroup);
     
-    // ========== 关于信息 ==========
-    QGroupBox* aboutGroup = new QGroupBox(QStringLiteral("关于"), this);
-    aboutGroup->setStyleSheet(groupBoxStyle);
-    QFormLayout* aboutLayout = new QFormLayout(aboutGroup);
-    aboutLayout->setSpacing(8);
-    
-    QLabel* versionLabel = new QLabel(QStringLiteral("WealthPilot v2.0.0"), this);
-    versionLabel->setStyleSheet(PageStyles::valueText());
-    aboutLayout->addRow(QStringLiteral("版本:"), versionLabel);
-    
-    QLabel* buildLabel = new QLabel(QString(__DATE__) + " " + QString(__TIME__), this);
-    buildLabel->setStyleSheet(PageStyles::labelText());
-    aboutLayout->addRow(QStringLiteral("构建日期:"), buildLabel);
-    
-    QLabel* qtLabel = new QLabel(QString(qVersion()), this);
-    qtLabel->setStyleSheet(PageStyles::labelText());
-    aboutLayout->addRow(QStringLiteral("Qt 版本:"), qtLabel);
-    
-    QLabel* copyrightLabel = new QLabel(QStringLiteral("© 2026 WealthPilot Team"), this);
-    copyrightLabel->setStyleSheet(PageStyles::labelText());
-    aboutLayout->addRow(QStringLiteral("版权:"), copyrightLabel);
-    
-    contentLayout->addWidget(aboutGroup);
-    
     contentLayout->addStretch();
     
     // ========== 连接信号 ==========
