@@ -1420,9 +1420,9 @@ void DashboardPage::loadRealData()
     d->watchlistDataSource->requestQuotes(d->watchlistSymbols);
     
     // 启动自动刷新（5秒）
-    d->indexDataSource->startAutoRefresh(5000);
-    d->rankDataSource->startAutoRefresh(5000);
-    d->watchlistDataSource->startAutoRefresh(5000);
+    d->indexDataSource->startAutoRefresh(2000);
+    d->rankDataSource->startAutoRefresh(2000);
+    d->watchlistDataSource->startAutoRefresh(2000);
     
     // 加载其他数据（新闻、资金流向等暂时用模拟数据）
     loadNewsData();
@@ -2528,6 +2528,11 @@ void DashboardPage::loadFromNetwork()
     
     // 请求自选股数据
     d->watchlistDataSource->requestQuotes(d->watchlistSymbols);
+    
+    // 启动自动刷新（5秒）
+    d->indexDataSource->startAutoRefresh(5000);
+    d->rankDataSource->startAutoRefresh(5000);
+    d->watchlistDataSource->startAutoRefresh(5000);
     
     // 加载其他数据（新闻、资金流向等暂时用模拟数据）
     loadNewsData();
