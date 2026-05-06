@@ -685,10 +685,11 @@ void DashboardPage::initializePage()
 
     setupConnections();
     
-    // 尝试加载真实数据，如果失败则加载本地数据
-    if (!checkAndLoadLocalData()) {
-        loadRealData();
-    }
+    // 先加载演示数据确保有初始显示
+    loadDemoData();
+    
+    // 然后尝试加载真实数据（会覆盖演示数据）
+    loadRealData();
 
     setInitialized(true);
 
