@@ -36,6 +36,8 @@ private slots:
     void onClearCacheClicked();
     void onExportDataClicked();
     void onAIConfigChanged();
+    void onSaveClicked();
+    void onResetClicked();
 
 private:
     void setupUI();
