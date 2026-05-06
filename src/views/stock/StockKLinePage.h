@@ -7,6 +7,7 @@
 #define STOCKKLINEPAGE_H
 
 #include "ui/components/BasePage.h"
+#include "ui/components/KLineChart.h"
 #include <QWidget>
 #include <QVector>
 #include <QDateTime>
@@ -16,7 +17,6 @@ class QComboBox;
 class QPushButton;
 class QLabel;
 class QLineEdit;
-class QTableWidget;
 class QTabWidget;
 class QSplitter;
 
@@ -35,18 +35,11 @@ enum class StockKLinePeriod {
 };
 
 /**
- * @brief 技术指标类型
+ * @brief 图表类型
  */
-enum class TechnicalIndicator {
-    None = 0,
-    MA,
-    EMA,
-    MACD,
-    KDJ,
-    BOLL,
-    RSI,
-    VOL,
-    VMA
+enum class ChartType {
+    KLine,      // K线图
+    TimeShare   // 分时图
 };
 
 /**
@@ -63,32 +56,52 @@ public:
     QString pageId() const override { return "stock-kline"; }
     QString pageName() const override { return QStringLiteral("股票K线"); }
 
-    void setStock(const QString& stockCode, const QString& exchange = "SZ");
-    QString stockCode() const;
+    void setStock(const QString& stockCode, const QString& stockName = QString());
+    QString stockCode() const { return m_stockCode; }
+    QString stockName() const { return m_stockName; }
+    
     void setPeriod(StockKLinePeriod period);
-    void setAdjustType(int adjust);
+    void setChartType(ChartType type);
 
 signals:
     void stockChanged(const QString& stockCode);
     void periodChanged(int period);
-    void crosshairMoved(const QDateTime& time, double price, double volume);
 
 private slots:
+    void onChartTypeChanged(int index);
     void onPeriodChanged(int index);
-    void onAdjustChanged(int index);
+    void onMainIndicatorChanged(int index);
+    void onSubIndicatorChanged(int index);
     void onRefresh();
+    void onCrosshairMoved(const QDateTime& time, double price);
+    void onKLineInfoChanged(const KLineData& kline, int index);
 
 private:
     void setupUI();
     void setupConnections();
+    void loadKLineData();
+    void loadTimeShareData();
+    void generateDemoKLineData();
+    void generateDemoTimeShareData();
+    void updateInfoLabel(const KLineData& kline);
 
     QString m_stockCode;
+    QString m_stockName;
     StockKLinePeriod m_period = StockKLinePeriod::Day;
+    ChartType m_chartType = ChartType::KLine;
     
-    QComboBox* m_periodCombo = nullptr;
-    QComboBox* m_adjustCombo = nullptr;
-    QPushButton* m_refreshBtn = nullptr;
+    // UI组件
     QLabel* m_stockNameLabel = nullptr;
+    QTabWidget* m_chartTypeTab = nullptr;
+    QComboBox* m_periodCombo = nullptr;
+    QComboBox* m_mainIndicatorCombo = nullptr;
+    QComboBox* m_subIndicatorCombo = nullptr;
+    QPushButton* m_refreshBtn = nullptr;
+    QLabel* m_infoLabel = nullptr;
+    
+    // 图表组件
+    KLineChart* m_klineChart = nullptr;
+    QWidget* m_timeShareWidget = nullptr;
     
     struct Impl;
     std::unique_ptr<Impl> d;
