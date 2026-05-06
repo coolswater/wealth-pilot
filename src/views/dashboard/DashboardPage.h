@@ -296,6 +296,13 @@ private:
     void setupConnections();
     
     // 数据加载
+    void loadDataWithFallback();    ///< 缓存->数据库->网络数据源
+    bool loadFromCache();            ///< 从缓存加载数据
+    bool loadFromDatabase();         ///< 从数据库加载数据
+    void loadFromNetwork();          ///< 从网络加载数据
+    void saveToCache();              ///< 保存数据到缓存
+    void saveToDatabase();           ///< 保存数据到数据库
+    
     void loadDemoData();
     void loadRealData();            ///< 加载真实数据
     void loadLocalData();           ///< 加载本地缓存数据
@@ -329,5 +336,16 @@ private:
 
 
  // DASHBOARDPAGE_H
-
 #endif
+
+// 注册数据类型以支持 QVariant 序列化
+Q_DECLARE_METATYPE(IndexData)
+Q_DECLARE_METATYPE(StockRankData)
+Q_DECLARE_METATYPE(SectorData)
+Q_DECLARE_METATYPE(NewsData)
+Q_DECLARE_METATYPE(MoneyFlowData)
+Q_DECLARE_METATYPE(QVector<IndexData>)
+Q_DECLARE_METATYPE(QVector<StockRankData>)
+Q_DECLARE_METATYPE(QVector<SectorData>)
+Q_DECLARE_METATYPE(QVector<NewsData>)
+Q_DECLARE_METATYPE(QVector<MoneyFlowData>)

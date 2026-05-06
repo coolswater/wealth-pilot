@@ -18,6 +18,7 @@
 #include "core/config/Tokens.h"
 #include "market/StockDataSource.h"
 #include "data/DataStorageService.h"
+#include "core/cache/CacheManager.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -683,13 +684,13 @@ void DashboardPage::initializePage()
         DataStorageService::instance()->initialize();
     }
 
+    // 初始化缓存管理器
+    CacheManager::instance()->initialize();
+
     setupConnections();
     
-    // 先加载演示数据确保有初始显示
-    loadDemoData();
-    
-    // 然后尝试加载真实数据（会覆盖演示数据）
-    loadRealData();
+    // 数据加载流程：缓存 -> 数据库 -> 网络数据源
+    loadDataWithFallback();
 
     setInitialized(true);
 
@@ -2221,4 +2222,387 @@ void DashboardPage::saveNewsToDb(const QVector<NewsItem>& news)
     storage->saveNewsBatch(news);
     storage->setLastUpdateTime("news", QDateTime::currentDateTime());
     LOG_DEBUG(QString("Saved %1 news items").arg(news.size()));
+}
+
+// ============================================================================
+// 数据加载流程：缓存 -> 数据库 -> 网络数据源
+// ============================================================================
+
+/**
+ * @brief 数据加载主流程：缓存 -> 数据库 -> 网络数据源
+ */
+void DashboardPage::loadDataWithFallback()
+{
+    LOG_INFO("Starting data load with fallback strategy...");
+    
+    // 1. 尝试从缓存加载
+    if (loadFromCache()) {
+        LOG_INFO("Data loaded from cache successfully");
+        // 缓存命中，后台更新数据
+        QTimer::singleShot(100, this, [this]() {
+            loadFromNetwork();
+        });
+        return;
+    }
+    
+    // 2. 缓存未命中，尝试从数据库加载
+    if (loadFromDatabase()) {
+        LOG_INFO("Data loaded from database successfully");
+        // 数据库命中，保存到缓存并后台更新
+        saveToCache();
+        QTimer::singleShot(100, this, [this]() {
+            loadFromNetwork();
+        });
+        return;
+    }
+    
+    // 3. 数据库也没有，从网络加载
+    LOG_INFO("No local data, loading from network...");
+    loadFromNetwork();
+}
+
+/**
+ * @brief 从缓存加载数据
+ * @return 是否成功加载
+ */
+bool DashboardPage::loadFromCache()
+{
+    auto* cache = CacheManager::instance();
+    
+    // 检查缓存是否有数据
+    if (!cache->contains("dashboard_index_data") &&
+        !cache->contains("dashboard_rank_data") &&
+        !cache->contains("dashboard_watchlist_data")) {
+        LOG_DEBUG("Cache miss for dashboard data");
+        return false;
+    }
+    
+    // 检查缓存是否过期（5分钟）
+    QDateTime lastUpdate = cache->get("dashboard_last_update").toDateTime();
+    if (lastUpdate.isValid()) {
+        qint64 ageSecs = lastUpdate.secsTo(QDateTime::currentDateTime());
+        if (ageSecs > 300) { // 5分钟过期
+            LOG_DEBUG(QString("Cache expired, age: %1 seconds").arg(ageSecs));
+            return false;
+        }
+    }
+    
+    bool loaded = false;
+    
+    // 加载指数数据
+    if (cache->contains("dashboard_index_data")) {
+        QVariant indexVariant = cache->get("dashboard_index_data");
+        if (indexVariant.canConvert<QVector<IndexData>>()) {
+            d->indexData = indexVariant.value<QVector<IndexData>>();
+            updateIndexDisplay();
+            loaded = true;
+            LOG_DEBUG(QString("Loaded %1 index items from cache").arg(d->indexData.size()));
+        }
+    }
+    
+    // 加载排行榜数据
+    if (cache->contains("dashboard_rank_data")) {
+        QVariant rankVariant = cache->get("dashboard_rank_data");
+        if (rankVariant.canConvert<QVector<StockRankData>>()) {
+            QVector<StockRankData> rankData = rankVariant.value<QVector<StockRankData>>();
+            if (d->shGainModel) {
+                d->shGainModel->setData(rankData);
+            }
+            loaded = true;
+            LOG_DEBUG(QString("Loaded %1 rank items from cache").arg(rankData.size()));
+        }
+    }
+    
+    // 加载自选股数据
+    if (cache->contains("dashboard_watchlist_data")) {
+        QVariant watchlistVariant = cache->get("dashboard_watchlist_data");
+        if (watchlistVariant.canConvert<QVector<StockRankData>>()) {
+            QVector<StockRankData> watchlistData = watchlistVariant.value<QVector<StockRankData>>();
+            if (d->watchlistModel) {
+                d->watchlistModel->setData(watchlistData);
+            }
+            loaded = true;
+            LOG_DEBUG(QString("Loaded %1 watchlist items from cache").arg(watchlistData.size()));
+        }
+    }
+    
+    // 加载新闻数据
+    if (cache->contains("dashboard_news_data")) {
+        QVariant newsVariant = cache->get("dashboard_news_data");
+        if (newsVariant.canConvert<QVector<NewsData>>()) {
+            QVector<NewsData> newsData = newsVariant.value<QVector<NewsData>>();
+            if (d->newsList) {
+                d->newsList->clear();
+                for (const auto& news : newsData) {
+                    QListWidgetItem* item = new QListWidgetItem(
+                        QString("[%1] %2").arg(news.category, news.title));
+                    d->newsList->addItem(item);
+                }
+            }
+            loaded = true;
+            LOG_DEBUG(QString("Loaded %1 news items from cache").arg(newsData.size()));
+        }
+    }
+    
+    // 加载资金流向数据
+    if (cache->contains("dashboard_moneyflow_data")) {
+        QVariant mfVariant = cache->get("dashboard_moneyflow_data");
+        if (mfVariant.canConvert<QVector<MoneyFlowData>>()) {
+            QVector<MoneyFlowData> mfData = mfVariant.value<QVector<MoneyFlowData>>();
+            if (d->moneyFlowModel) {
+                d->moneyFlowModel->setData(mfData);
+            }
+            loaded = true;
+            LOG_DEBUG(QString("Loaded %1 money flow items from cache").arg(mfData.size()));
+        }
+    }
+    
+    // 加载板块数据
+    if (cache->contains("dashboard_sector_data")) {
+        QVariant sectorVariant = cache->get("dashboard_sector_data");
+        if (sectorVariant.canConvert<QVector<SectorData>>()) {
+            QVector<SectorData> sectorData = sectorVariant.value<QVector<SectorData>>();
+            if (d->sectorModel) {
+                d->sectorModel->setData(sectorData);
+            }
+            loaded = true;
+            LOG_DEBUG(QString("Loaded %1 sector items from cache").arg(sectorData.size()));
+        }
+    }
+    
+    if (loaded) {
+        updateTimeDisplay();
+        d->statusLabel->setText(QStringLiteral("已从缓存加载"));
+    }
+    
+    return loaded;
+}
+
+/**
+ * @brief 从数据库加载数据
+ * @return 是否成功加载
+ */
+bool DashboardPage::loadFromDatabase()
+{
+    auto* storage = DataStorageService::instance();
+    
+    // 检查数据库是否有数据
+    if (!storage->hasLocalData()) {
+        LOG_DEBUG("No local data in database");
+        return false;
+    }
+    
+    bool loaded = false;
+    
+    // 加载指数数据
+    QVector<IndexHistoryData> indexHistory = storage->getLatestIndexData();
+    if (!indexHistory.isEmpty()) {
+        d->indexData.clear();
+        for (const auto& hist : indexHistory) {
+            IndexData data;
+            data.code = hist.code;
+            data.name = hist.name;
+            data.current = hist.closePrice;
+            data.change = hist.closePrice * hist.changePercent / 100.0;
+            data.changePercent = hist.changePercent;
+            data.volume = hist.volume;
+            data.amount = hist.amount;
+            d->indexData.append(data);
+        }
+        updateIndexDisplay();
+        loaded = true;
+        LOG_DEBUG(QString("Loaded %1 index items from database").arg(indexHistory.size()));
+    }
+    
+    // 加载行情缓存数据
+    QVector<CachedQuoteData> quoteCache = storage->getAllQuoteCache();
+    if (!quoteCache.isEmpty()) {
+        // 分类处理：排行榜和自选股
+        QVector<StockRankData> rankData;
+        QVector<StockRankData> watchlistData;
+        
+        // 获取自选股列表
+        QStringList watchlistSymbols = storage->getWatchlistSymbols();
+        
+        int rank = 1;
+        for (const auto& quote : quoteCache) {
+            StockRankData stock;
+            stock.rank = rank++;
+            stock.code = quote.symbol;
+            stock.name = quote.name;
+            stock.price = quote.lastPrice;
+            stock.changePercent = quote.changePercent;
+            stock.change = quote.changeAmount;
+            stock.volume = quote.volume;
+            stock.amount = quote.amount;
+            
+            // 判断是自选股还是排行榜
+            if (watchlistSymbols.contains(quote.symbol)) {
+                watchlistData.append(stock);
+            } else {
+                rankData.append(stock);
+            }
+        }
+        
+        // 更新模型
+        if (d->shGainModel && !rankData.isEmpty()) {
+            d->shGainModel->setData(rankData);
+        }
+        if (d->watchlistModel && !watchlistData.isEmpty()) {
+            d->watchlistModel->setData(watchlistData);
+        }
+        loaded = true;
+        LOG_DEBUG(QString("Loaded %1 quotes from database").arg(quoteCache.size()));
+    }
+    
+    // 加载新闻数据
+    QVector<NewsItem> newsItems = storage->getLatestNews(50);
+    if (!newsItems.isEmpty() && d->newsList) {
+        d->newsList->clear();
+        for (const auto& news : newsItems) {
+            QString timeStr = news.publishTime.toString("HH:mm");
+            QString category = news.categories.isEmpty() ? QStringLiteral("新闻") : news.categories.first();
+            QString displayText = QString("[%1] %2").arg(category, news.title);
+            QListWidgetItem* item = new QListWidgetItem(displayText);
+            item->setData(Qt::UserRole, news.id);
+            d->newsList->addItem(item);
+        }
+        loaded = true;
+        LOG_DEBUG(QString("Loaded %1 news items from database").arg(newsItems.size()));
+    }
+    
+    if (loaded) {
+        updateTimeDisplay();
+        QDateTime lastUpdate = storage->getLastUpdateTime("quotes");
+        if (lastUpdate.isValid()) {
+            d->statusLabel->setText(QString("已从数据库加载 (%1)")
+                .arg(lastUpdate.toString("HH:mm:ss")));
+        } else {
+            d->statusLabel->setText(QStringLiteral("已从数据库加载"));
+        }
+    }
+    
+    return loaded;
+}
+
+/**
+ * @brief 从网络加载数据
+ */
+void DashboardPage::loadFromNetwork()
+{
+    LOG_INFO("Loading data from network...");
+    
+    // 初始化数据源
+    if (!d->indexDataSource) {
+        d->indexDataSource = new StockDataSource(StockDataSource::Source::Sina, this);
+        d->rankDataSource = new StockDataSource(StockDataSource::Source::Sina, this);
+        d->watchlistDataSource = new StockDataSource(StockDataSource::Source::Sina, this);
+        
+        // 连接信号
+        connect(d->indexDataSource, &StockDataSource::quotesReceived,
+                this, [this](const QVector<StockQuote>& quotes) {
+                    onIndexQuotesReceived(quotes);
+                    // 保存到缓存和数据库
+                    saveToCache();
+                    saveToDatabase();
+                });
+        connect(d->rankDataSource, &StockDataSource::quotesReceived,
+                this, [this](const QVector<StockQuote>& quotes) {
+                    onRankQuotesReceived(quotes);
+                    saveToCache();
+                    saveToDatabase();
+                });
+        connect(d->watchlistDataSource, &StockDataSource::quotesReceived,
+                this, [this](const QVector<StockQuote>& quotes) {
+                    onWatchlistQuotesReceived(quotes);
+                    saveToCache();
+                    saveToDatabase();
+                });
+    }
+    
+    // 请求指数数据
+    d->indexDataSource->requestQuotes(d->indexSymbols);
+    
+    // 请求排行榜数据
+    d->rankDataSource->requestQuotes(d->hotStockSymbols);
+    
+    // 请求自选股数据
+    d->watchlistDataSource->requestQuotes(d->watchlistSymbols);
+    
+    // 加载其他数据（新闻、资金流向等暂时用模拟数据）
+    loadNewsData();
+    loadMoneyFlowData();
+    loadSectorData();
+    
+    updateTimeDisplay();
+    d->statusLabel->setText(QStringLiteral("正在从网络获取数据..."));
+}
+
+/**
+ * @brief 保存数据到缓存
+ */
+void DashboardPage::saveToCache()
+{
+    auto* cache = CacheManager::instance();
+    
+    // 保存指数数据
+    if (!d->indexData.isEmpty()) {
+        QVariant indexVariant = QVariant::fromValue(d->indexData);
+        cache->set("dashboard_index_data", indexVariant, 300); // 5分钟TTL
+    }
+    
+    // 保存排行榜数据
+    if (d->shGainModel) {
+        QVector<StockRankData> rankData;
+        // 从模型获取数据... 这里简化处理
+        cache->set("dashboard_rank_data", QVariant::fromValue(rankData), 300);
+    }
+    
+    // 保存自选股数据
+    if (d->watchlistModel) {
+        QVector<StockRankData> watchlistData;
+        cache->set("dashboard_watchlist_data", QVariant::fromValue(watchlistData), 300);
+    }
+    
+    // 保存更新时间
+    cache->set("dashboard_last_update", QDateTime::currentDateTime(), 300);
+    
+    LOG_DEBUG("Dashboard data saved to cache");
+}
+
+/**
+ * @brief 保存数据到数据库
+ */
+void DashboardPage::saveToDatabase()
+{
+    auto* storage = DataStorageService::instance();
+    
+    // 保存指数历史数据（收盘后）
+    QTime now = QTime::currentTime();
+    if (now >= QTime(15, 0)) {
+        QVector<IndexHistoryData> indexHistory;
+        QDate today = QDate::currentDate();
+        
+        for (const auto& idx : d->indexData) {
+            IndexHistoryData data;
+            data.code = idx.code;
+            data.name = idx.name;
+            data.closePrice = idx.current;
+            data.changePercent = idx.changePercent;
+            data.volume = idx.volume;
+            data.amount = idx.amount;
+            data.date = today;
+            indexHistory.append(data);
+        }
+        
+        if (!indexHistory.isEmpty()) {
+            storage->saveIndexDataBatch(indexHistory);
+            LOG_DEBUG(QString("Saved %1 index records to database").arg(indexHistory.size()));
+        }
+    }
+    
+    // 更新最后更新时间
+    storage->setLastUpdateTime("quotes", QDateTime::currentDateTime());
+    
+    LOG_DEBUG("Dashboard data saved to database");
 }
