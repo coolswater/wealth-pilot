@@ -183,10 +183,10 @@ QMap<QString, QVariant> SignalService::getOverlayConfig(const QString& symbol) c
     config["theory_count"] = composite.theoryCount;
 
     // 配置信号标记样式
-    if (composite.direction == SignalDirection::Bullish) {
+    if (composite.direction == Analysis::SignalDirection::Bullish) {
         config["marker_color"] = "#00AA00"; // 绿色
         config["marker_shape"] = "arrow_up";
-    } else if (composite.direction == SignalDirection::Bearish) {
+    } else if (composite.direction == Analysis::SignalDirection::Bearish) {
         config["marker_color"] = "#AA0000"; // 红色
         config["marker_shape"] = "arrow_down";
     } else {
