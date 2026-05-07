@@ -18,8 +18,10 @@ StockDataSource::StockDataSource(Source source, QObject *parent)
     , m_source(source)
     , m_networkManager(new QNetworkAccessManager(this))
     , m_refreshTimer(new QTimer(this))
+    , m_realtimeQuoteTimer(new QTimer(this))
 {
     connect(m_refreshTimer, &QTimer::timeout, this, &StockDataSource::onRefreshTimer);
+    connect(m_realtimeQuoteTimer, &QTimer::timeout, this, &StockDataSource::onRealtimeQuoteTimer);
     connect(m_networkManager, &QNetworkAccessManager::finished, this, &StockDataSource::onNetworkReply);
     LOG_DEBUG(QString("StockDataSource created, source: %1").arg(static_cast<int>(source)));
 }
@@ -27,6 +29,7 @@ StockDataSource::StockDataSource(Source source, QObject *parent)
 StockDataSource::~StockDataSource()
 {
     stopAutoRefresh();
+    stopRealtimeQuotes();
 }
 
 void StockDataSource::requestQuotes(const QStringList &symbols)
@@ -120,6 +123,21 @@ void StockDataSource::onNetworkReply(QNetworkReply *reply)
         switch (m_source) {
         case Source::Sina:
             parseSinaQuotes(data);
+            // 如果是实时行情请求，同时发送实时K线更新
+            if (!m_realtimeSymbol.isEmpty() && param == m_realtimeSymbol) {
+                StockQuote quote = getCachedQuote(m_realtimeSymbol);
+                if (quote.isValid()) {
+                    RealtimeKLineUpdate update;
+                    update.symbol = quote.symbol;
+                    update.lastPrice = quote.lastPrice;
+                    update.highPrice = quote.highPrice;
+                    update.lowPrice = quote.lowPrice;
+                    update.volume = quote.volume;
+                    update.updateTime = quote.updateTime;
+                    update.isTrading = true;
+                    emit realtimeKLineUpdate(m_realtimeSymbol, update);
+                }
+            }
             break;
         case Source::Tencent:
             parseTencentQuotes(data);
@@ -134,9 +152,17 @@ void StockDataSource::onNetworkReply(QNetworkReply *reply)
         parseSinaKLine(data, param);
         break;
 
+    case RequestType::TimeShare:
+        parseSinaTimeShare(data, param);
+        break;
+
     case RequestType::StockList:
         // 解析股票列表
         parseSinaStockList(data);
+        break;
+
+    case RequestType::RealtimeQuote:
+        parseSinaQuotes(data);
         break;
     }
 }
@@ -459,5 +485,77 @@ QString StockDataSource::toSinaSymbol(const QString &symbol)
         return "sh" + symbol;
     } else {
         return "sz" + symbol;
+    }
+}
+
+// ============================================================================
+// 分时数据与实时行情
+// ============================================================================
+
+void StockDataSource::requestTimeShare(const QString &symbol)
+{
+    QString url = buildTimeShareUrl(symbol);
+    QNetworkReply *reply = m_networkManager->get(QNetworkRequest(QUrl(url)));
+    m_pendingRequests[reply] = url;
+    m_requestTypes[reply] = {RequestType::TimeShare, symbol};
+    LOG_DEBUG(QString("Requesting TimeShare data: %1").arg(symbol));
+}
+
+void StockDataSource::startRealtimeQuotes(const QString &symbol, int intervalMs)
+{
+    m_realtimeSymbol = symbol;
+    m_realtimeQuoteTimer->start(intervalMs);
+    LOG_INFO(QString("Started realtime quotes for %1, interval: %2ms").arg(symbol).arg(intervalMs));
+}
+
+void StockDataSource::stopRealtimeQuotes()
+{
+    m_realtimeQuoteTimer->stop();
+    m_realtimeSymbol.clear();
+    LOG_INFO("Stopped realtime quotes");
+}
+
+void StockDataSource::onRealtimeQuoteTimer()
+{
+    if (m_realtimeSymbol.isEmpty()) return;
+    requestQuotes({m_realtimeSymbol});
+}
+
+QString StockDataSource::buildTimeShareUrl(const QString &symbol) const
+{
+    QString sinaSymbol = toSinaSymbol(symbol);
+    // 新浪分时数据API
+    return QString("http://hq.sinajs.cn/list=%1").arg(sinaSymbol);
+}
+
+void StockDataSource::parseSinaTimeShare(const QByteArray &data, const QString &symbol)
+{
+    // 解析新浪分时数据
+    QString response = QString::fromLocal8Bit(data);
+    QVector<TimeShareData> timeShareData;
+
+    // 新浪分时数据格式：var hq_str_sh600000="浦发银行,9.180,9.180,9.170,9.200,9.150,9.160,9.170,..."
+    QRegularExpression regex("var hq_str_(\\w+)=\"([^\"]*)\"");
+    QRegularExpressionMatch match = regex.match(response);
+
+    if (match.hasMatch()) {
+        QStringList fields = match.captured(2).split(',');
+        if (fields.size() >= 32) {
+            // 构造当前分时数据点
+            TimeShareData data;
+            data.time = QDateTime::currentDateTime();
+            data.price = fields[3].toDouble(); // 当前价
+            data.avgPrice = fields[0].toDouble(); // 今开作为均价近似
+            data.volume = fields[8].toLongLong(); // 成交量
+            data.turnover = fields[9].toDouble(); // 成交额
+            data.changePercent = ((data.price - fields[2].toDouble()) / fields[2].toDouble()) * 100;
+
+            timeShareData.append(data);
+        }
+    }
+
+    if (!timeShareData.isEmpty()) {
+        emit timeShareReceived(symbol, timeShareData);
+        LOG_DEBUG(QString("Parsed TimeShare data for %1").arg(symbol));
     }
 }

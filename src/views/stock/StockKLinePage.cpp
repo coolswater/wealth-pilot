@@ -448,8 +448,22 @@ void StockKLinePage::onPeriodChanged(int index)
 {
     m_period = static_cast<StockKLinePeriod>(index);
     emit periodChanged(index);
+    
+    // 停止之前的实时更新
+    stopRealtimeUpdate();
+    
+    // 加载新周期的数据
     loadDataWithFallback();
-    LOG_DEBUG(QString("Period changed: %1").arg(index));
+    
+    // 如果是交易时间，启动实时更新
+    QTime now = QTime::currentTime();
+    bool isTradingTime = (now >= QTime(9, 30) && now <= QTime(11, 30)) ||
+                         (now >= QTime(13, 0) && now <= QTime(15, 0));
+    if (isTradingTime) {
+        startRealtimeUpdate();
+    }
+    
+    LOG_DEBUG(QString("Period changed: %1, realtime: %2").arg(index).arg(isTradingTime));
 }
 
 void StockKLinePage::onMainIndicatorChanged(int index)
@@ -930,4 +944,108 @@ KLinePeriod StockKLinePage::toKLinePeriod(StockKLinePeriod period) const
         case StockKLinePeriod::Month: return KLinePeriod::Month1;
         default: return KLinePeriod::Day1;
     }
+}
+
+// ============================================================================
+// 实时数据更新
+// ============================================================================
+
+void StockKLinePage::onTimeShareReceived(const QString& symbol, const QVector<TimeShareData>& data)
+{
+    if (symbol != m_stockCode) return;
+    
+    // 更新分时图显示
+    if (m_chartType == ChartType::TimeShare && !data.isEmpty()) {
+        // TODO: 实现分时图绘制
+        m_infoLabel->setText(QStringLiteral("分时数据已更新"));
+    }
+    
+    LOG_DEBUG(QString("TimeShare data received: %1 points for %2").arg(data.size()).arg(symbol));
+}
+
+void StockKLinePage::onRealtimeQuoteReceived(const QString& symbol, const StockQuote& quote)
+{
+    if (symbol != m_stockCode) return;
+    
+    // 更新股票信息显示
+    if (m_stockNameLabel) {
+        QString changeText = quote.changePercent >= 0 ? 
+            QStringLiteral("+%1%%").arg(quote.changePercent, 0, 'f', 2) :
+            QStringLiteral("%1%%").arg(quote.changePercent, 0, 'f', 2);
+        
+        QString colorStyle = quote.changePercent >= 0 ? "color: #00AA00;" : "color: #AA0000;";
+        m_stockNameLabel->setText(QStringLiteral("%1 (%2) %3 <span style='%4'>%5</span>")
+            .arg(quote.name, quote.symbol)
+            .arg(QString::number(quote.lastPrice, 'f', 2))
+            .arg(colorStyle)
+            .arg(changeText));
+    }
+    
+    LOG_DEBUG(QString("Realtime quote: %1 %2 %3%%").arg(symbol).arg(quote.lastPrice).arg(quote.changePercent));
+}
+
+void StockKLinePage::onRealtimeKLineUpdate(const QString& symbol, const RealtimeKLineUpdate& update)
+{
+    if (symbol != m_stockCode) return;
+    
+    // 更新K线图最后一根蜡烛
+    if (m_chartType == ChartType::KLine && m_klineChart) {
+        // 获取当前K线数据
+        QVector<KLineData> currentData = m_klineChart->data();
+        
+        if (!currentData.isEmpty()) {
+            // 更新最后一根K线
+            KLineData& lastKLine = currentData.last();
+            lastKLine.close = update.lastPrice;
+            lastKLine.high = qMax(lastKLine.high, update.highPrice);
+            lastKLine.low = qMin(lastKLine.low, update.lowPrice);
+            lastKLine.volume = update.volume;
+            
+            // 重新设置数据以触发重绘
+            m_klineChart->setData(currentData);
+            
+            // 更新信息标签
+            m_infoLabel->setText(QStringLiteral("实时更新: %1 (高:%2 低:%3 收:%4)")
+                .arg(QString::number(update.lastPrice, 'f', 2))
+                .arg(QString::number(lastKLine.high, 'f', 2))
+                .arg(QString::number(lastKLine.low, 'f', 2))
+                .arg(QString::number(lastKLine.close, 'f', 2)));
+        }
+    }
+    
+    LOG_DEBUG(QString("Realtime KLine update: %1 %2").arg(symbol).arg(update.lastPrice));
+}
+
+void StockKLinePage::startRealtimeUpdate()
+{
+    if (m_stockCode.isEmpty()) return;
+    
+    // 初始化数据源
+    if (!m_dataSource) {
+        m_dataSource = new StockDataSource(StockDataSource::Source::Sina, this);
+        connect(m_dataSource, &StockDataSource::kLineReceived,
+                this, &StockKLinePage::onKLineReceived);
+        connect(m_dataSource, &StockDataSource::timeShareReceived,
+                this, &StockKLinePage::onTimeShareReceived);
+        connect(m_dataSource, &StockDataSource::realtimeQuoteReceived,
+                this, &StockKLinePage::onRealtimeQuoteReceived);
+        connect(m_dataSource, &StockDataSource::realtimeKLineUpdate,
+                this, &StockKLinePage::onRealtimeKLineUpdate);
+    }
+    
+    // 启动实时行情推送（3秒间隔）
+    m_dataSource->startRealtimeQuotes(m_stockCode, 3000);
+    
+    m_infoLabel->setText(QStringLiteral("实时更新已启动"));
+    LOG_INFO(QString("Started realtime update for %1").arg(m_stockCode));
+}
+
+void StockKLinePage::stopRealtimeUpdate()
+{
+    if (m_dataSource) {
+        m_dataSource->stopRealtimeQuotes();
+    }
+    
+    m_infoLabel->setText(QStringLiteral("实时更新已停止"));
+    LOG_INFO("Stopped realtime update");
 }

@@ -44,6 +44,33 @@ struct StockQuote {
 };
 
 /**
+ * @brief 分时数据点
+ */
+struct TimeShareData {
+    QDateTime time;             ///< 时间点
+    double price = 0.0;         ///< 当前价格
+    double avgPrice = 0.0;      ///< 均价
+    qint64 volume = 0;          ///< 成交量
+    double turnover = 0.0;      ///< 成交额
+    double changePercent = 0.0; ///< 涨跌幅
+
+    bool isValid() const { return time.isValid() && price > 0; }
+};
+
+/**
+ * @brief 实时K线更新数据
+ */
+struct RealtimeKLineUpdate {
+    QString symbol;
+    double lastPrice = 0.0;     ///< 最新价（实时更新收盘价）
+    double highPrice = 0.0;     ///< 最高价
+    double lowPrice = 0.0;      ///< 最低价
+    qint64 volume = 0;          ///< 成交量
+    QDateTime updateTime;       ///< 更新时间
+    bool isTrading = false;     ///< 是否交易中
+};
+
+/**
  * @brief 股票数据源
  */
 class StockDataSource : public QObject
@@ -78,6 +105,12 @@ public:
     void requestKLine(const QString &symbol, KLinePeriod period, int count = 500);
 
     /**
+     * @brief 请求分时数据
+     * @param symbol 股票代码
+     */
+    void requestTimeShare(const QString &symbol);
+
+    /**
      * @brief 请求股票列表
      * @param market 市场类型（sh/sz）
      */
@@ -87,6 +120,18 @@ public:
      * @brief 获取缓存行情
      */
     StockQuote getCachedQuote(const QString &symbol) const;
+
+    /**
+     * @brief 启动实时行情推送
+     * @param symbol 股票代码
+     * @param intervalMs 刷新间隔（默认3秒）
+     */
+    void startRealtimeQuotes(const QString &symbol, int intervalMs = 3000);
+
+    /**
+     * @brief 停止实时行情推送
+     */
+    void stopRealtimeQuotes();
 
     /**
      * @brief 启动自动刷新
@@ -102,12 +147,16 @@ public:
 signals:
     void quotesReceived(const QVector<StockQuote> &quotes);
     void kLineReceived(const QString &symbol, const QVector<KLineData> &data);
+    void timeShareReceived(const QString &symbol, const QVector<TimeShareData> &data);
+    void realtimeQuoteReceived(const QString &symbol, const StockQuote &quote);
+    void realtimeKLineUpdate(const QString &symbol, const RealtimeKLineUpdate &update);
     void stockListReceived(const QStringList &symbols);
     void errorOccurred(const QString &error);
 
 private slots:
     void onNetworkReply(QNetworkReply *reply);
     void onRefreshTimer();
+    void onRealtimeQuoteTimer();
 
 private:
     // 解析函数
@@ -115,11 +164,13 @@ private:
     void parseTencentQuotes(const QByteArray &data);
     void parseEastMoneyQuotes(const QByteArray &data);
     void parseSinaKLine(const QByteArray &data, const QString &symbol);
+    void parseSinaTimeShare(const QByteArray &data, const QString &symbol);
     void parseSinaStockList(const QByteArray &data);
 
     // URL构建
     QString buildQuotesUrl(const QStringList &symbols) const;
     QString buildKLineUrl(const QString &symbol, KLinePeriod period, int count) const;
+    QString buildTimeShareUrl(const QString &symbol) const;
 
     // 辅助函数
     static QString normalizeSymbol(const QString &symbol);
@@ -128,14 +179,16 @@ private:
     Source m_source;
     QNetworkAccessManager *m_networkManager;
     QTimer *m_refreshTimer;
+    QTimer *m_realtimeQuoteTimer;
 
     // 缓存
     QHash<QString, StockQuote> m_quoteCache;
     QStringList m_subscribedSymbols;
+    QString m_realtimeSymbol;
 
     // 请求追踪
     QHash<QNetworkReply*, QString> m_pendingRequests;
-    enum class RequestType { Quotes, KLine, StockList };
+    enum class RequestType { Quotes, KLine, TimeShare, StockList, RealtimeQuote };
     QHash<QNetworkReply*, QPair<RequestType, QString>> m_requestTypes;
 };
 

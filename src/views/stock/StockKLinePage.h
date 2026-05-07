@@ -81,6 +81,13 @@ private slots:
     
     // 数据源回调
     void onKLineReceived(const QString& symbol, const QVector<KLineData>& data);
+    void onTimeShareReceived(const QString& symbol, const QVector<TimeShareData>& data);
+    void onRealtimeQuoteReceived(const QString& symbol, const StockQuote& quote);
+    void onRealtimeKLineUpdate(const QString& symbol, const RealtimeKLineUpdate& update);
+    
+    // 实时更新控制
+    void startRealtimeUpdate();
+    void stopRealtimeUpdate();
 
 private:
     void setupUI();
