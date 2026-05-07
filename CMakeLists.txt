@@ -208,7 +208,7 @@ set(PLUGIN_SOURCES
 )
 
 # Analysis - ChanLun 缠论分析模块
-set(ANALYSIS_SOURCES
+set(ANALYSIS_CHANLUN_SOURCES
         src/analysis/chanlun/ChanLunTypes.h
         src/analysis/chanlun/ChanLunAnalyzer.h
         src/analysis/chanlun/ChanLunAnalyzer.cpp
@@ -216,6 +216,39 @@ set(ANALYSIS_SOURCES
         src/analysis/chanlun/ChanLunIndicator.cpp
         src/analysis/chanlun/ChanLunIntegration.h
         src/analysis/chanlun/ChanLunIntegration.cpp
+)
+
+# Analysis - ElliottWave 波浪理论分析模块
+set(ANALYSIS_ELLIOTTWAVE_SOURCES
+        src/analysis/elliottwave/ElliottWaveTypes.h
+        src/analysis/elliottwave/ElliottWaveAnalyzer.h
+        src/analysis/elliottwave/ElliottWaveAnalyzer.cpp
+)
+
+# Analysis - DowTheory 道氏理论分析模块
+set(ANALYSIS_DOWTHEORY_SOURCES
+        src/analysis/dowtheory/DowTheoryTypes.h
+        src/analysis/dowtheory/DowTheoryAnalyzer.h
+        src/analysis/dowtheory/DowTheoryAnalyzer.cpp
+)
+
+# Analysis - VolumePattern 量价形态分析模块
+set(ANALYSIS_VOLUMEPATTERN_SOURCES
+        src/analysis/volumepattern/VolumePatternTypes.h
+        src/analysis/volumepattern/VolumePatternAnalyzer.h
+        src/analysis/volumepattern/VolumePatternAnalyzer.cpp
+)
+
+# Analysis - Signal 信号系统
+set(ANALYSIS_SIGNAL_SOURCES
+        src/analysis/AnalysisTypes.h
+        src/analysis/IAnalyzer.h
+        src/analysis/AnalysisManager.h
+        src/analysis/AnalysisManager.cpp
+        src/analysis/signal/SignalFilter.h
+        src/analysis/signal/SignalFilter.cpp
+        src/analysis/signal/SignalService.h
+        src/analysis/signal/SignalService.cpp
 )
 
 # UI Components UI组件库
@@ -389,7 +422,11 @@ set(SOURCES
         ${UTIL_SOURCES}
         ${NETWORK_SOURCES}
         ${PLUGIN_SOURCES}
-        ${ANALYSIS_SOURCES}
+        ${ANALYSIS_CHANLUN_SOURCES}
+        ${ANALYSIS_ELLIOTTWAVE_SOURCES}
+        ${ANALYSIS_DOWTHEORY_SOURCES}
+        ${ANALYSIS_VOLUMEPATTERN_SOURCES}
+        ${ANALYSIS_SIGNAL_SOURCES}
         ${UI_COMPONENT_SOURCES}
         ${UI_ANIMATION_SOURCES}
         ${WIDGET_SOURCES}
