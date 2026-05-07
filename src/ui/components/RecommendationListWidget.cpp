@@ -171,10 +171,10 @@ void RecommendationListWidget::updateRecommendationList(const QVector<StockRecom
             riskItem->setForeground(QColor(Colors::Success));
             break;
         case RiskLevel::Medium:
-            riskItem->setForeground(QColor(QStringLiteral("#F59E0B")));
+            riskItem->setForeground(QColor(Colors::Warning));
             break;
         case RiskLevel::High:
-            riskItem->setForeground(QColor(QStringLiteral("#F97316")));
+            riskItem->setForeground(QColor(Colors::WarningLight));
             break;
         case RiskLevel::Critical:
             riskItem->setForeground(QColor(Colors::Danger));

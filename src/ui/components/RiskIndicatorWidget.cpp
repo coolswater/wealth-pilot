@@ -228,8 +228,8 @@ QString RiskIndicatorWidget::riskLevelToColor(RiskLevel level) const
 {
     switch (level) {
     case RiskLevel::Low: return Colors::Success;
-    case RiskLevel::Medium: return QStringLiteral("#F59E0B"); // 警告色
-    case RiskLevel::High: return QStringLiteral("#F97316"); // 橙色
+    case RiskLevel::Medium: return Colors::Warning;
+    case RiskLevel::High: return Colors::WarningLight;
     case RiskLevel::Critical: return Colors::Danger;
     default: return Colors::TextSecondary;
     }

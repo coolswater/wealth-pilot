@@ -144,19 +144,25 @@ void StatusBarWidget::setupSearch()
     d->searchEdit->setPlaceholderText(QStringLiteral("搜索股票"));
     d->searchEdit->setFixedWidth(120);
     d->searchEdit->setFixedHeight(24);
-    d->searchEdit->setStyleSheet(R"(
-        QLineEdit {
-            background: #2d3748;
-            color: #ffffff;
-            border: none;
-            padding: 0 8px;
-            font-size: 12px;
-            border-radius: 4px;
-        }
-        QLineEdit::placeholder {
-            color: #6b7280;
-        }
-    )");
+    d->searchEdit->setStyleSheet(QString(
+        "QLineEdit {"
+        "  background: %1;"
+        "  color: %2;"
+        "  border: none;"
+        "  padding: 0 %3px;"
+        "  font-size: %4px;"
+        "  border-radius: %5px;"
+        "}"
+        "QLineEdit::placeholder {"
+        "  color: %6;"
+        "}"
+    )
+    .arg(Tokens::Colors::BgElevated)
+    .arg(Tokens::Colors::TextPrimary)
+    .arg(Tokens::Spacing::SM)
+    .arg(Tokens::Font::Size::Small)
+    .arg(Tokens::Radius::SM)
+    .arg(Tokens::Colors::TextSecondary));
     connect(d->searchEdit, &QLineEdit::textChanged, this, &StatusBarWidget::onSearchTextChanged);
     d->layout->addWidget(d->searchEdit);
 }
@@ -175,7 +181,9 @@ void StatusBarWidget::onSearchTextChanged(const QString& text)
     if (!d->searchPopupWidget) {
         d->searchPopupWidget = new QWidget(this);
         d->searchPopupWidget->setWindowFlags(Qt::Popup | Qt::FramelessWindowHint);
-        d->searchPopupWidget->setStyleSheet("QWidget { background: #1a1f2e; border: 1px solid #2d3748; }");
+        d->searchPopupWidget->setStyleSheet(QString(
+            "QWidget { background: %1; border: 1px solid %2; }"
+        ).arg(Tokens::Colors::BgBase, Tokens::Colors::Border));
         
         auto* popupLayout = new QVBoxLayout(d->searchPopupWidget);
         popupLayout->setContentsMargins(0, 0, 0, 0);
@@ -190,27 +198,36 @@ void StatusBarWidget::onSearchTextChanged(const QString& text)
         d->searchResultPopup->setSelectionMode(QAbstractItemView::SingleSelection);
         d->searchResultPopup->verticalHeader()->setVisible(false);
         d->searchResultPopup->setShowGrid(false);
-        d->searchResultPopup->setStyleSheet(R"(
-            QTableWidget {
-                background: #1a1f2e;
-                color: #ffffff;
-                border: none;
-                font-size: 12px;
-            }
-            QTableWidget::item {
-                padding: 6px 8px;
-            }
-            QTableWidget::item:selected {
-                background: #3b82f6;
-            }
-            QHeaderView::section {
-                background: #2d3748;
-                color: #6b7280;
-                border: none;
-                padding: 6px;
-                font-size: 11px;
-            }
-        )");
+        d->searchResultPopup->setStyleSheet(QString(
+            "QTableWidget {"
+            "  background: %1;"
+            "  color: %2;"
+            "  border: none;"
+            "  font-size: %3px;"
+            "}"
+            "QTableWidget::item {"
+            "  padding: %4px %5px;"
+            "}"
+            "QTableWidget::item:selected {"
+            "  background: %6;"
+            "}"
+            "QHeaderView::section {"
+            "  background: %7;"
+            "  color: %8;"
+            "  border: none;"
+            "  padding: %4px;"
+            "  font-size: %9px;"
+            "}"
+        )
+        .arg(Tokens::Colors::BgBase)
+        .arg(Tokens::Colors::TextPrimary)
+        .arg(Tokens::Font::Size::Small)
+        .arg(Tokens::Spacing::XS)
+        .arg(Tokens::Spacing::SM)
+        .arg(Tokens::Colors::Primary)
+        .arg(Tokens::Colors::BgElevated)
+        .arg(Tokens::Colors::TextSecondary)
+        .arg(Tokens::Font::Size::Small - 1));
         d->searchResultPopup->setMinimumWidth(300);
         d->searchResultPopup->setMinimumHeight(200);
         

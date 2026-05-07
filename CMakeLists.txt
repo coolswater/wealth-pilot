@@ -382,6 +382,14 @@ set(UI_ANIMATION_SOURCES
         src/ui/animation/AnimationManager.cpp
 )
 
+# UI Utils 样式工具
+set(UI_UTILS_SOURCES
+        src/ui/utils/StyleHelper.h
+        src/ui/utils/StyleHelper.cpp
+        src/ui/utils/PageStyleHelper.h
+        src/ui/utils/PageStyleHelper.cpp
+)
+
 # Views 视图
 set(VIEW_SOURCES
         src/views/mainWindow/MainWindow.cpp
@@ -498,6 +506,7 @@ set(SOURCES
         ${ANALYSIS_SIGNAL_SOURCES}
         ${UI_COMPONENT_SOURCES}
         ${UI_ANIMATION_SOURCES}
+        ${UI_UTILS_SOURCES}
         ${WIDGET_SOURCES}
         ${VIEW_SOURCES}
         ${TRADING_SOURCES}

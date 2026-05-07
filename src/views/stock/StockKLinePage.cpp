@@ -70,10 +70,10 @@ protected:
         painter.setRenderHint(QPainter::Antialiasing);
         
         // 背景
-        painter.fillRect(rect(), QColor("#0F1419"));
+        painter.fillRect(rect(), QColor(Tokens::Colors::BgSurface));
         
         if (m_prices.isEmpty()) {
-            painter.setPen(QColor("#4A5568"));
+            painter.setPen(QColor(Tokens::Colors::TextSecondary));
             painter.drawText(rect(), Qt::AlignCenter, QStringLiteral("暂无数据"));
             return;
         }
@@ -97,7 +97,7 @@ protected:
         int volumeHeight = 80;
         
         // 绘制网格
-        painter.setPen(QPen(QColor("#1E293B"), 1));
+        painter.setPen(QPen(QColor(Tokens::Colors::Border), 1));
         for (int i = 0; i <= 4; i++) {
             int y = 40 + i * chartHeight / 4;
             painter.drawLine(margin, y, width() - margin, y);
@@ -105,11 +105,11 @@ protected:
         
         // 绘制基准线（昨日收盘价）
         int baseY = 40 + chartHeight / 2;
-        painter.setPen(QPen(QColor("#6B7280"), 1, Qt::DashLine));
+        painter.setPen(QPen(QColor(Tokens::Colors::TextTertiary), 1, Qt::DashLine));
         painter.drawLine(margin, baseY, width() - margin, baseY);
         
         // 绘制价格线
-        painter.setPen(QPen(QColor("#3B82F6"), 2));
+        painter.setPen(QPen(QColor(Tokens::Colors::Primary), 2));
         QPainterPath path;
         bool first = true;
         
@@ -994,7 +994,9 @@ void StockKLinePage::onRealtimeQuoteReceived(const QString& symbol, const StockQ
             QStringLiteral("+%1%%").arg(quote.changePercent, 0, 'f', 2) :
             QStringLiteral("%1%%").arg(quote.changePercent, 0, 'f', 2);
         
-        QString colorStyle = quote.changePercent >= 0 ? "color: #00AA00;" : "color: #AA0000;";
+        QString colorStyle = quote.changePercent >= 0 ? 
+            QString("color: %1;").arg(Tokens::Colors::Success) : 
+            QString("color: %1;").arg(Tokens::Colors::Danger);
         m_stockNameLabel->setText(QStringLiteral("%1 (%2) %3 <span style='%4'>%5</span>")
             .arg(quote.name, quote.symbol)
             .arg(QString::number(quote.lastPrice, 'f', 2))

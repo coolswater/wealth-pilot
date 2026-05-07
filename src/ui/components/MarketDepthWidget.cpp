@@ -5,6 +5,7 @@
 
 #include "MarketDepthWidget.h"
 #include "core/config/Tokens.h"
+#include "ui/utils/PageStyleHelper.h"
 #include "plugins/ICTPPlugin.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -12,6 +13,8 @@
 #include <QLabel>
 #include <QFrame>
 #include <QMouseEvent>
+
+using namespace Tokens;
 
 // ========== PIMPL 实现 ==========
 
@@ -177,7 +180,7 @@ void MarketDepthWidget::setupUI()
 {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(10, 10, 10, 10);
-    mainLayout->setSpacing(10);
+    mainLayout->setSpacing(Spacing::SM);
 
     // 头部
     mainLayout->addLayout(createHeaderLayout());
@@ -185,7 +188,7 @@ void MarketDepthWidget::setupUI()
     // 分隔线
     QFrame* line1 = new QFrame(this);
     line1->setFrameShape(QFrame::HLine);
-    line1->setStyleSheet("background-color: #374151;");
+    line1->setStyleSheet(PageStyleHelper::dividerStyle());
     mainLayout->addWidget(line1);
 
     // 价格面板
@@ -194,7 +197,7 @@ void MarketDepthWidget::setupUI()
     // 分隔线
     QFrame* line2 = new QFrame(this);
     line2->setFrameShape(QFrame::HLine);
-    line2->setStyleSheet("background-color: #374151;");
+    line2->setStyleSheet(PageStyleHelper::dividerStyle());
     mainLayout->addWidget(line2);
 
     // 买卖盘口
@@ -203,13 +206,13 @@ void MarketDepthWidget::setupUI()
     // 买盘
     QVBoxLayout* bidLayout = new QVBoxLayout();
     QLabel* bidTitle = new QLabel(QStringLiteral("买一"), this);
-    bidTitle->setStyleSheet("color: #10B981; font-weight: bold;");
+    bidTitle->setStyleSheet(QString("color: %1; font-weight: bold;").arg(Colors::Success));
     bidLayout->addWidget(bidTitle);
-    d->bidPriceLabel = new QLabel("--", this);
-    d->bidPriceLabel->setStyleSheet("color: #10B981; font-size: 16px;");
+    d->bidPriceLabel = new QLabel(QStringLiteral("--"), this);
+    d->bidPriceLabel->setStyleSheet(QString("color: %1; font-size: %2px;").arg(Colors::Success).arg(Font::Size::Data));
     bidLayout->addWidget(d->bidPriceLabel);
-    d->bidVolumeLabel = new QLabel("--", this);
-    d->bidVolumeLabel->setStyleSheet("color: #9CA3AF;");
+    d->bidVolumeLabel = new QLabel(QStringLiteral("--"), this);
+    d->bidVolumeLabel->setStyleSheet(PageStyleHelper::dataLabelStyle());
     bidLayout->addWidget(d->bidVolumeLabel);
     depthLayout->addLayout(bidLayout);
     
@@ -218,13 +221,13 @@ void MarketDepthWidget::setupUI()
     // 卖盘
     QVBoxLayout* askLayout = new QVBoxLayout();
     QLabel* askTitle = new QLabel(QStringLiteral("卖一"), this);
-    askTitle->setStyleSheet("color: #EF4444; font-weight: bold;");
+    askTitle->setStyleSheet(QString("color: %1; font-weight: bold;").arg(Colors::Danger));
     askLayout->addWidget(askTitle);
-    d->askPriceLabel = new QLabel("--", this);
-    d->askPriceLabel->setStyleSheet("color: #EF4444; font-size: 16px;");
+    d->askPriceLabel = new QLabel(QStringLiteral("--"), this);
+    d->askPriceLabel->setStyleSheet(QString("color: %1; font-size: %2px;").arg(Colors::Danger).arg(Font::Size::Data));
     askLayout->addWidget(d->askPriceLabel);
-    d->askVolumeLabel = new QLabel("--", this);
-    d->askVolumeLabel->setStyleSheet("color: #9CA3AF;");
+    d->askVolumeLabel = new QLabel(QStringLiteral("--"), this);
+    d->askVolumeLabel->setStyleSheet(PageStyleHelper::dataLabelStyle());
     askLayout->addWidget(d->askVolumeLabel);
     depthLayout->addLayout(askLayout);
     
@@ -233,7 +236,7 @@ void MarketDepthWidget::setupUI()
     // 分隔线
     QFrame* line3 = new QFrame(this);
     line3->setFrameShape(QFrame::HLine);
-    line3->setStyleSheet("background-color: #374151;");
+    line3->setStyleSheet(PageStyleHelper::dividerStyle());
     mainLayout->addWidget(line3);
 
     // 统计面板
@@ -242,11 +245,11 @@ void MarketDepthWidget::setupUI()
     mainLayout->addStretch();
     
     // 设置整体样式
-    setStyleSheet(R"(
-        MarketDepthWidget {
-            background-color: #1F2937;
-        }
-    )");
+    setStyleSheet(QString(
+        "MarketDepthWidget {"
+        "  background-color: %1;"
+        "}"
+    ).arg(Colors::BgSurface));
 }
 
 QLayout* MarketDepthWidget::createHeaderLayout()
@@ -254,7 +257,9 @@ QLayout* MarketDepthWidget::createHeaderLayout()
     QHBoxLayout* layout = new QHBoxLayout();
 
     d->instrumentLabel = new QLabel(this);
-    d->instrumentLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #F3F4F6;");
+    d->instrumentLabel->setStyleSheet(QString("font-size: %1px; font-weight: bold; color: %2;")
+        .arg(Font::Size::Body)
+        .arg(Colors::TextPrimary));
     layout->addWidget(d->instrumentLabel);
 
     layout->addStretch();
@@ -268,8 +273,10 @@ QLayout* MarketDepthWidget::createPriceLayout()
 
     // 最新价行
     QHBoxLayout* priceRow = new QHBoxLayout();
-    d->priceLabel = new QLabel("--", this);
-    d->priceLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: #F3F4F6;");
+    d->priceLabel = new QLabel(QStringLiteral("--"), this);
+    d->priceLabel->setStyleSheet(QString("font-size: %1px; font-weight: bold; color: %2;")
+        .arg(Font::Size::DataXLarge)
+        .arg(Colors::TextPrimary));
     priceRow->addWidget(d->priceLabel);
     priceRow->addStretch();
     layout->addLayout(priceRow);

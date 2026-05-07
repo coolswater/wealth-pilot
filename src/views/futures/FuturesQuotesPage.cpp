@@ -302,7 +302,7 @@ void FuturesQuotesPage::setupCtpConnections()
             [this](const bool success, const QString& msg) {
                 if (success) {
                     LOG_INFO("Market login successful");
-                    updateConnectionStatus("行情登录Success", "#4CAF50");
+                    updateConnectionStatus(QStringLiteral("行情登录Success"), Tokens::Colors::Success);
                 } else {
                     LOG_ERROR(QString("Market login failed: %1").arg(msg));
                 }

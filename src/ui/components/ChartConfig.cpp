@@ -161,31 +161,31 @@ void ChartConfig::load()
 {
     if (!m_settings) return;
 
-    m_settings->beginGroup("KLine");
+    m_settings->beginGroup(QStringLiteral("KLine"));
 
-    // 颜色
-    m_upColor = QColor(m_settings->value("upColor", "#EF4444").toString());
-    m_downColor = QColor(m_settings->value("downColor", "#10B981").toString());
-    m_flatColor = QColor(m_settings->value("flatColor", "#9CA3AF").toString());
+    // 颜色 - 使用设计令牌
+    m_upColor = QColor(m_settings->value(QStringLiteral("upColor"), Tokens::Colors::Danger).toString());
+    m_downColor = QColor(m_settings->value(QStringLiteral("downColor"), Tokens::Colors::Success).toString());
+    m_flatColor = QColor(m_settings->value(QStringLiteral("flatColor"), Tokens::Colors::TextSecondary).toString());
 
     // 样式
-    m_candleWidth = m_settings->value("candleWidth", 8).toInt();
-    m_candleSpacing = m_settings->value("candleSpacing", 2).toInt();
+    m_candleWidth = m_settings->value(QStringLiteral("candleWidth"), 8).toInt();
+    m_candleSpacing = m_settings->value(QStringLiteral("candleSpacing"), 2).toInt();
 
     // 显示选项
-    m_showGrid = m_settings->value("showGrid", true).toBool();
-    m_showCrosshair = m_settings->value("showCrosshair", true).toBool();
-    m_showVolume = m_settings->value("showVolume", true).toBool();
-    m_volumeHeightRatio = m_settings->value("volumeHeightRatio", 0.1).toDouble();
+    m_showGrid = m_settings->value(QStringLiteral("showGrid"), true).toBool();
+    m_showCrosshair = m_settings->value(QStringLiteral("showCrosshair"), true).toBool();
+    m_showVolume = m_settings->value(QStringLiteral("showVolume"), true).toBool();
+    m_volumeHeightRatio = m_settings->value(QStringLiteral("volumeHeightRatio"), 0.1).toDouble();
 
     m_settings->endGroup();
 
     // 指标配置
-    m_settings->beginGroup("Indicators");
+    m_settings->beginGroup(QStringLiteral("Indicators"));
     for (const QString& name : m_indicatorPeriods.keys()) {
-        m_indicatorPeriods[name] = m_settings->value(name + "_period", m_indicatorPeriods[name]).toInt();
-        m_indicatorColors[name] = QColor(m_settings->value(name + "_color", m_indicatorColors[name].name()).toString());
-        m_indicatorEnabled[name] = m_settings->value(name + "_enabled", m_indicatorEnabled[name]).toBool();
+        m_indicatorPeriods[name] = m_settings->value(name + QStringLiteral("_period"), m_indicatorPeriods[name]).toInt();
+        m_indicatorColors[name] = QColor(m_settings->value(name + QStringLiteral("_color"), m_indicatorColors[name].name()).toString());
+        m_indicatorEnabled[name] = m_settings->value(name + QStringLiteral("_enabled"), m_indicatorEnabled[name]).toBool();
     }
     m_settings->endGroup();
 }
@@ -258,7 +258,7 @@ void ChartConfig::initDefaultIndicators()
 
     m_indicatorColors["MA5"] = QColor(Tokens::Colors::ChartYellow);
     m_indicatorColors["MA10"] = QColor(Tokens::Colors::ChartCyan);
-    m_indicatorColors["MA20"] = QColor("#FF6B6B");
+    m_indicatorColors["MA20"] = QColor(Tokens::Colors::DangerLight);
     m_indicatorColors["MA30"] = QColor(Tokens::Colors::ChartPurple);
     m_indicatorColors["MA60"] = QColor(Tokens::Colors::ChartBlue);
 

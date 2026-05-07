@@ -8,9 +8,9 @@
  * - 底部：自选股/新闻/资金流向
  *
  * @details 设计规范：
- * - 主背景：#0d1117
- * - 卡片背景：#161b22
- * - 涨：#ff4d4f（红），跌：#00b578（绿）
+ * - 主背景：Colors::BgBase
+ * - 卡片背景：Colors::BgElevated
+ * - 涨：Colors::Danger（红），跌：Colors::Success（绿）
  * - 紧凑布局，单屏最大信息量
  */
 

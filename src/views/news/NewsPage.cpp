@@ -373,9 +373,9 @@ void NewsPage::setupScrollArea()
     d->scrollArea->setStyleSheet(QString(
         "QScrollArea { background-color: %1; border: none; }"
         "QScrollBar:vertical { width: 8px; background-color: transparent; }"
-        "QScrollBar::handle:vertical { background-color: #3d3d5c; border-radius: 4px; min-height: 40px; }"
+        "QScrollBar::handle:vertical { background-color: %2; border-radius: 4px; min-height: 40px; }"
         "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }"
-    ).arg(COLOR_BG_GLOBAL));
+    ).arg(COLOR_BG_GLOBAL, Tokens::Colors::Border));
     
     d->scrollContent = new QWidget();
     d->scrollContent->setStyleSheet(QString("QWidget { background-color: %1; }").arg(COLOR_BG_GLOBAL));
@@ -573,7 +573,7 @@ void NewsPage::showDetailDialog(const NewsCardData& data)
     buttonBox->setStyleSheet(QString(
         "QPushButton { padding: 8px 24px; border-radius: 4px; background-color: %1; color: white; border: none; }"
         "QPushButton:hover { background-color: %2; }"
-    ).arg(COLOR_CATEGORY_ACTIVE, "#2563EB"));
+    ).arg(COLOR_CATEGORY_ACTIVE, Tokens::Colors::PrimaryHover));
     connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::close);
     layout->addWidget(buttonBox);
     

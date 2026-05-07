@@ -131,7 +131,9 @@ QWidget* SignalDetailPanel::createSummaryWidget()
     // 描述
     d->descriptionLabel = new QLabel(QStringLiteral("暂无信号"));
     d->descriptionLabel->setWordWrap(true);
-    d->descriptionLabel->setStyleSheet("color: #666; padding: 5px; background: #f5f5f5; border-radius: 3px;");
+    d->descriptionLabel->setStyleSheet(QString(
+        "color: %1; padding: 5px; background: %2; border-radius: 3px;"
+    ).arg(Tokens::Colors::TextSecondary, Tokens::Colors::BgHover));
     layout->addWidget(d->descriptionLabel);
 
     return group;
@@ -268,16 +270,17 @@ void SignalDetailPanel::updateSummary()
     QColor directionColor;
     if (signal.direction == Analysis::SignalDirection::Bullish) {
         directionText = QStringLiteral("📈 看涨");
-        directionColor = QColor("#00AA00");
+        directionColor = QColor(Tokens::Colors::Success);
     } else if (signal.direction == Analysis::SignalDirection::Bearish) {
         directionText = QStringLiteral("📉 看跌");
-        directionColor = QColor("#AA0000");
+        directionColor = QColor(Tokens::Colors::Danger);
     } else {
         directionText = QStringLiteral("➡️ 中性");
-        directionColor = QColor("#888888");
+        directionColor = QColor(Tokens::Colors::TextSecondary);
     }
     d->directionLabel->setText(directionText);
-    d->directionLabel->setStyleSheet(QString("font-size: 14px; font-weight: bold; color: %1;")
+    d->directionLabel->setStyleSheet(QString("font-size: %1px; font-weight: bold; color: %2;")
+        .arg(Tokens::Font::Size::Body)
         .arg(directionColor.name()));
 
     // 置信度
@@ -286,11 +289,11 @@ void SignalDetailPanel::updateSummary()
     // 设置置信度颜色
     QString barStyle;
     if (signal.confidence >= 80) {
-        barStyle = "QProgressBar::chunk { background-color: #00AA00; }";
+        barStyle = QString("QProgressBar::chunk { background-color: %1; }").arg(Tokens::Colors::Success);
     } else if (signal.confidence >= 60) {
-        barStyle = "QProgressBar::chunk { background-color: #FFA500; }";
+        barStyle = QString("QProgressBar::chunk { background-color: %1; }").arg(Tokens::Colors::Warning);
     } else {
-        barStyle = "QProgressBar::chunk { background-color: #AA0000; }";
+        barStyle = QString("QProgressBar::chunk { background-color: %1; }").arg(Tokens::Colors::Danger);
     }
     d->confidenceBar->setStyleSheet(barStyle);
 
@@ -323,13 +326,13 @@ void SignalDetailPanel::updateTheoryDetails()
         QColor dirColor;
         if (signal.direction == Analysis::SignalDirection::Bullish) {
             dirText = QStringLiteral("看涨");
-            dirColor = QColor("#00AA00");
+            dirColor = QColor(Tokens::Colors::Success);
         } else if (signal.direction == Analysis::SignalDirection::Bearish) {
             dirText = QStringLiteral("看跌");
-            dirColor = QColor("#AA0000");
+            dirColor = QColor(Tokens::Colors::Danger);
         } else {
             dirText = QStringLiteral("中性");
-            dirColor = QColor("#888888");
+            dirColor = QColor(Tokens::Colors::TextSecondary);
         }
         auto* dirItem = new QTableWidgetItem(dirText);
         dirItem->setForeground(dirColor);
@@ -424,11 +427,11 @@ QColor SignalDetailPanel::getDirectionColor(Analysis::SignalDirection direction)
 {
     switch (direction) {
         case Analysis::SignalDirection::Bullish:
-            return QColor("#00AA00");
+            return QColor(Tokens::Colors::Success);
         case Analysis::SignalDirection::Bearish:
-            return QColor("#AA0000");
+            return QColor(Tokens::Colors::Danger);
         default:
-            return QColor("#888888");
+            return QColor(Tokens::Colors::TextSecondary);
     }
 }
 
