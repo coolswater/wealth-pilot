@@ -1,211 +1,385 @@
-# WealthPilot 领航资产管理AI助手
+# WealthPilot - 智能金融投资理财助手
 
-<p align="center">
-  <img src="resources/images/logo.png" alt="WealthPilot Logo" width="200"/>
-</p>
+<div align="center">
 
-<p align="center">
-  <strong>专业级金融信息展示与分析软件</strong>
-</p>
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
+![Qt](https://img.shields.io/badge/Qt-6.10.2-green.svg)
+![C++](https://img.shields.io/badge/C++-17-orange.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-<p align="center">
-  <a href="#功能特性">功能特性</a> •
-  <a href="#技术栈">技术栈</a> •
-  <a href="#快速开始">快速开始</a> •
-  <a href="#项目结构">项目结构</a> •
-  <a href="#开发指南">开发指南</a>
-</p>
+**专业的金融信息展示与分析软件，为投资者提供全面的市场洞察**
+
+[功能特性](#功能特性) • [快速开始](#快速开始) • [项目结构](#项目结构) • [技术架构](#技术架构) • [文档](#文档)
+
+</div>
 
 ---
 
-## 功能特性
+## 📖 项目简介
+
+WealthPilot 是一个基于 Qt 6.10.2 和 C++17 开发的金融信息展示与分析软件，专为 PC
+平台设计。该软件提供股票、期货、外汇、基金和数字货币等金融产品的实时数据展示、自选股管理、市场全景等功能，旨在为用户提供全面的金融市场信息。
+
+### 核心亮点
+
+- 🎯 **多市场支持** - 股票、期货、外汇、基金、数字货币
+- 📊 **实时行情** - 支持多种数据源（新浪、腾讯、东财）
+- 🔌 **CTP集成** - 支持期货CTP接口
+- 🤖 **AI分析** - 智能投资分析与建议
+- 📈 **技术分析** - 缠论、K线形态识别
+- 🎨 **现代UI** - 深色主题，流畅体验
+
+---
+
+## ✨ 功能特性
 
 ### 📊 行情展示
-- **股票行情**：A股、港股、美股实时行情
-- **期货行情**：国内期货、国际期货实时行情
-- **数字货币**：主流数字货币行情
-- **外汇行情**：主要货币对实时汇率
+
+| 功能   | 描述             | 状态 |
+|------|----------------|----|
+| 股票行情 | A股实时行情、分时图、K线图 | ✅  |
+| 期货行情 | 国内期货实时行情、K线图   | ✅  |
+| 外汇行情 | 主要货币对实时行情      | ✅  |
+| 基金净值 | 场内基金实时净值       | ✅  |
+| 数字货币 | 主流数字货币行情       | ✅  |
 
 ### 📈 技术分析
-- **K线图表**：专业级K线图表，支持多周期切换
-- **技术指标**：MA、MACD、KDJ、RSI、BOLL等
-- **画线工具**：趋势线、水平线、斐波那契等
 
-### 💼 投资组合
-- **持仓管理**：实时持仓盈亏计算
-- **资产配置**：饼图展示资产分布
-- **风险分析**：投资组合风险评估
+| 功能   | 描述                | 状态 |
+|------|-------------------|----|
+| K线图表 | 专业K线图表组件          | ✅  |
+| 技术指标 | MA、MACD、RSI、BOLL等 | ✅  |
+| 缠论分析 | 缠论自动识别与分析         | ✅  |
+| 形态识别 | K线形态自动识别          | ✅  |
+| 画线工具 | 趋势线、水平线等          | ✅  |
 
-### 🤖 AI助手
-- **智能问答**：基于AI的金融问答
-- **市场分析**：AI驱动的市场分析
-- **投资建议**：个性化投资建议
+### 🤖 智能分析
 
-### ⚙️ 系统功能
-- **多主题支持**：深色、浅色、护眼主题
-- **国际化**：中英文切换
-- **数据缓存**：本地数据缓存加速
+| 功能   | 描述     | 状态 |
+|------|--------|----|
+| AI助手 | 智能投资建议 | ✅  |
+| 新闻分析 | 新闻情感分析 | ✅  |
+| 风险评估 | 投资风险评估 | ✅  |
+| 组合优化 | 投资组合建议 | ✅  |
+| 信号中心 | 交易信号推送 | ✅  |
 
-## 技术栈
+### 💼 投资管理
 
-| 类别 | 技术 |
-|------|------|
-| 开发语言 | C++ 17 |
-| GUI框架 | Qt 6.10.2 |
-| 构建系统 | CMake 3.16+ |
-| 图表库 | Qt Charts |
-| 数据库 | SQLite |
-| 国际化 | Qt Linguist |
-| 行情接口 | CTP (期货) |
+| 功能    | 描述        | 状态 |
+|-------|-----------|----|
+| 自选股管理 | 自选股分组、排序  | ✅  |
+| 持仓管理  | 持仓盈亏计算    | ✅  |
+| 预警系统  | 价格预警、指标预警 | ✅  |
+| 交易记录  | 交易记录管理    | ✅  |
+| 资产分析  | 资产配置分析    | ✅  |
 
-## 快速开始
+---
+
+## 🚀 快速开始
 
 ### 环境要求
 
-- Windows 10/11 64位
-- Qt 6.10.2 (MinGW 64-bit)
-- CMake 3.16+
-- Git
+- **操作系统**: Windows 10/11
+- **编译器**: MinGW-w64 13.1.0 或 MSVC 2022
+- **Qt版本**: Qt 6.10.2
+- **CMake**: 3.16+
+- **C++标准**: C++17
 
-### 构建步骤
+### 编译步骤
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/your-repo/wealth-pilot.git
+git clone https://github.com/yourusername/wealth-pilot.git
 cd wealth-pilot
 
 # 2. 创建构建目录
 mkdir build && cd build
 
 # 3. 配置项目
-cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
 
-# 4. 编译
-cmake --build . --target WealthPilot
+# 4. 编译项目
+cmake --build . --target WealthPilot -j 10
 
-# 5. 运行
+# 5. 运行程序
 ./WealthPilot.exe
 ```
 
-### Qt Creator 构建
+### 运行要求
 
-1. 打开 Qt Creator
-2. 文件 → 打开文件或项目 → 选择 `CMakeLists.txt`
-3. 配置项目（选择 Qt 6.10.2 MinGW 64-bit）
-4. 点击"构建" → "构建项目"
-5. 点击"运行"
-
-## 项目结构
-
-```
-wealth-pilot/
-├── CMakeLists.txt              # 根 CMake 配置
-├── README.md                   # 项目说明
-├── docs/                       # 项目文档
-│   ├── ARCHITECTURE_ANALYSIS.md
-│   ├── STYLE_OPTIMIZATION_FINAL.md
-│   └── ...
-├── external/                   # 第三方依赖
-│   └── ctp/                    # CTP 行情接口
-├── resources/                  # 静态资源
-│   ├── fonts/                  # 字体文件
-│   ├── i18n/                   # 国际化翻译
-│   ├── icons/                  # 图标资源
-│   ├── images/                 # 图片资源
-│   └── style/                  # QSS 样式表
-│       ├── theme_dark.qss      # 深色主题
-│       ├── theme_light.qss     # 浅色主题
-│       └── theme_eyecare.qss   # 护眼主题
-├── scripts/                    # 构建脚本
-├── src/                        # 源代码
-│   ├── app/                    # 应用入口
-│   ├── core/                   # 核心模块
-│   │   ├── base/               # 基础类
-│   │   ├── cache/              # 缓存管理
-│   │   ├── config/             # 配置管理
-│   │   ├── database/           # 数据库
-│   │   ├── di/                 # 依赖注入
-│   │   ├── navigation/         # 导航管理
-│   │   ├── task/               # 异步任务
-│   │   └── types/              # 类型定义
-│   ├── ui/                     # UI组件
-│   │   ├── animation/          # 动画管理
-│   │   └── components/         # 通用组件
-│   ├── views/                  # 页面视图
-│   │   ├── dashboard/          # 仪表盘
-│   │   ├── futures/            # 期货模块
-│   │   ├── portfolio/          # 投资组合
-│   │   ├── settings/           # 系统设置
-│   │   ├── stock/              # 股票模块
-│   │   ├── trading/            # 交易模块
-│   │   ├── widgets/            # 通用控件
-│   │   └── ...
-│   ├── ai/                     # AI 模块
-│   ├── ctp/                    # CTP 接口
-│   ├── trading/                # 交易逻辑
-│   ├── market/                 # 市场数据
-│   ├── models/                 # 数据模型
-│   ├── network/                # 网络模块
-│   ├── plugins/                # 插件接口
-│   └── utils/                  # 工具类
-└── tests/                      # 单元测试
-```
-
-## 开发指南
-
-### 设计系统
-
-项目使用统一的设计令牌系统（Design Tokens），所有颜色、间距、字体等设计变量定义在 `src/core/config/Tokens.h` 中。
-
-#### 颜色规范
-
-```cpp
-// 金融标准：红涨绿跌
-Tokens::Colors::Danger   // #EF4444 - 涨（红）
-Tokens::Colors::Success  // #10B981 - 跌（绿）
-
-// 主题色
-Tokens::Colors::Primary  // #3B82F6 - 主蓝色
-
-// 背景色（深色主题）
-Tokens::Colors::BgBase      // #1A1F2E - 主背景
-Tokens::Colors::BgSurface   // #0F1419 - 表面背景
-Tokens::Colors::BgElevated  // #242937 - 卡片背景
-```
-
-#### 间距规范
-
-```cpp
-Tokens::Spacing::XS   // 4px
-Tokens::Spacing::SM   // 8px
-Tokens::Spacing::MD   // 16px
-Tokens::Spacing::LG   // 24px
-Tokens::Spacing::XL   // 32px
-```
-
-### 代码规范
-
-- **命名规范**：驼峰命名法，类名首字母大写
-- **注释规范**：使用 Doxygen 格式注释
-- **代码风格**：遵循 C++ Core Guidelines
-
-### 添加新页面
-
-1. 在 `src/views/` 下创建页面目录
-2. 继承 `BasePage` 类
-3. 在 `PageFactoryRegistry` 中注册页面
-4. 更新 `CMakeLists.txt`
-
-## 许可证
-
-本项目仅供学习和研究使用。
-
-## 贡献
-
-欢迎提交 Issue 和 Pull Request。
+- 确保Qt 6.10.2运行时库已安装
+- 首次运行需要配置数据源
 
 ---
 
-<p align="center">
-  Made with ❤️ by WealthPilot Team
-</p>
+## 📁 项目结构
+
+```
+wealth-pilot/
+├── src/                    # 源代码目录
+│   ├── ai/                 # AI分析模块
+│   ├── analysis/           # 技术分析模块
+│   ├── app/                # 应用程序入口
+│   ├── core/               # 核心功能模块
+│   ├── ctp/                # CTP接口模块
+│   ├── data/               # 数据存储模块
+│   ├── domain/             # 领域模型
+│   ├── market/             # 市场数据模块
+│   ├── models/             # 数据模型
+│   ├── network/            # 网络通信模块
+│   ├── plugins/            # 插件系统
+│   ├── trading/            # 交易管理模块
+│   ├── ui/                 # UI组件
+│   ├── utils/              # 工具类
+│   └── views/              # 页面视图
+├── external/               # 外部依赖
+├── docs/                   # 项目文档
+├── resources/              # 资源文件
+├── translations/           # 国际化文件
+└── CMakeLists.txt          # 构建配置
+```
+
+### 模块说明
+
+#### 核心模块 (src/core)
+
+- **config** - 配置管理（设计令牌、主题管理）
+- **navigation** - 页面导航系统
+- **di** - 依赖注入容器
+- **cache** - 缓存管理
+- **task** - 异步任务管理
+- **alert** - 智能预警系统
+- **analysis** - 新闻情感分析
+
+#### UI模块 (src/ui)
+
+- **components** - UI组件库（50+组件）
+- **animation** - 动画管理
+- **utils** - UI工具类
+- **ThemeManager** - 主题管理器
+
+#### 视图模块 (src/views)
+
+- **dashboard** - 仪表盘页面
+- **stock** - 股票相关页面
+- **futures** - 期货相关页面
+- **news** - 新闻资讯页面
+- **portfolio** - 持仓管理页面
+- **settings** - 设置页面
+- **signalCenter** - 信号中心页面
+
+---
+
+## 🏗️ 技术架构
+
+### 架构设计
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                      Presentation Layer                  │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
+│  │ Dashboard│  │  Stock   │  │ Futures  │  │   News   │ │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
+└─────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────┐
+│                      Business Layer                      │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
+│  │ Analysis │  │  Trading │  │   AI     │  │  Alert   │ │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
+└─────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────┐
+│                       Data Layer                         │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
+│  │  Market  │  │ Storage  │  │ Network  │  │   CTP    │ │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 设计模式
+
+- **MVVM** - 模型-视图-视图模型
+- **DI** - 依赖注入
+- **Observer** - 观察者模式
+- **Factory** - 工厂模式
+- **Singleton** - 单例模式
+- **Strategy** - 策略模式
+
+### 技术栈
+
+| 类别  | 技术                    |
+|-----|-----------------------|
+| 语言  | C++17                 |
+| 框架  | Qt 6.10.2             |
+| 构建  | CMake + Ninja         |
+| 数据库 | SQLite                |
+| 网络  | QNetworkAccessManager |
+| 图表  | Qt Charts             |
+| 国际化 | Qt Linguist           |
+| 日志  | 自定义Logger             |
+
+---
+
+## 📊 项目统计
+
+| 指标         | 数量     |
+|------------|--------|
+| 源文件 (.cpp) | 136    |
+| 头文件 (.h)   | 160    |
+| 代码行数       | 79,659 |
+| UI组件       | 50+    |
+| 页面视图       | 15+    |
+| 文档页数       | 50+    |
+
+---
+
+## 📚 文档
+
+### 开发文档
+
+- [架构设计](docs/01-architecture/ARCHITECTURE.md)
+- [开发者指南](docs/02-development/DEVELOPER_GUIDE.md)
+- [编码规范](docs/02-development/CODING_STANDARDS.md)
+- [样式指南](docs/04-style/STYLE_GUIDE.md)
+
+### 功能文档
+
+- [分析系统](docs/03-features/analysis-system-guide.md)
+- [期货集成](docs/03-features/FUTURES_INTEGRATION_SUMMARY.md)
+- [数据源集成](docs/05-integration/data-source-integration.md)
+
+### 用户文档
+
+- [用户手册](docs/07-user/USER_MANUAL.md)
+- [API文档](docs/07-user/API_DOCUMENTATION.md)
+- [快速测试](docs/07-user/quick-test-guide.md)
+
+完整文档请查看 [docs/README.md](docs/README.md)
+
+---
+
+## 🎨 设计系统
+
+### 主题支持
+
+- 🌙 **深色主题** - 护眼深色模式
+- ☀️ **浅色主题** - 明亮浅色模式
+- 👁️ **护眼主题** - 特殊护眼模式
+
+### 设计令牌
+
+项目使用统一的设计令牌系统（Design Tokens），确保视觉一致性：
+
+```cpp
+// 颜色令牌
+namespace Tokens::Colors {
+    constexpr auto Primary = "#3B82F6";      // 主色
+    constexpr auto Danger = "#EF4444";       // 危险色
+    constexpr auto Success = "#10B981";      // 成功色
+    constexpr auto Warning = "#F59E0B";      // 警告色
+    constexpr auto BgBase = "#1F2937";       // 基础背景
+    constexpr auto TextPrimary = "#FFFFFF";  // 主文本
+}
+```
+
+---
+
+## 🔧 配置
+
+### 数据源配置
+
+支持多种数据源：
+
+- **新浪财经** - 股票、基金行情
+- **腾讯财经** - 股票行情
+- **东方财富** - 股票、期货行情
+- **CTP接口** - 期货实时行情
+
+### CTP配置
+
+```ini
+[CTP]
+MarketFront = tcp://180.168.146.187:10131
+TradingFront = tcp://180.168.146.187:10130
+BrokerID = 9999
+UserID = your_user_id
+Password = your_password
+```
+
+---
+
+## 🤝 贡献指南
+
+欢迎贡献代码！请遵循以下步骤：
+
+1. Fork 本仓库
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 提交 Pull Request
+
+### 代码规范
+
+- 遵循 [编码规范](docs/02-development/CODING_STANDARDS.md)
+- 使用 [代码风格](docs/02-development/CODE_STYLE_GUIDE.md)
+- 添加必要的注释和文档
+
+---
+
+## 📝 更新日志
+
+### v1.0.0 (2026-05-07)
+
+**新增功能**
+
+- ✅ 完整的行情展示系统
+- ✅ 技术分析工具
+- ✅ AI智能分析
+- ✅ 智能预警系统
+- ✅ 多主题支持
+
+**样式重构**
+
+- ✅ 消除75+处硬编码颜色
+- ✅ 统一设计令牌系统
+- ✅ 创建样式辅助工具
+
+**性能优化**
+
+- ✅ 数据缓存机制
+- ✅ 异步任务管理
+- ✅ UI渲染优化
+
+---
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
+
+---
+
+## 👥 作者
+
+**WealthPilot Team**
+
+---
+
+## 🙏 致谢
+
+感谢以下开源项目：
+
+- [Qt Framework](https://www.qt.io/)
+- [Qt Charts](https://doc.qt.io/qt-6/qtcharts-index.html)
+- [CTP API](http://www.sfit.com.cn/)
+
+---
+
+<div align="center">
+
+**⭐ 如果这个项目对你有帮助，请给一个 Star！⭐**
+
+Made with ❤️ by WealthPilot Team
+
+</div>
