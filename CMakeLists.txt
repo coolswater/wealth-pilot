@@ -200,6 +200,20 @@ set(RECOMMENDATION_SOURCES
         src/core/recommendation/PersonalizedRecommendation.cpp
 )
 
+# Alert 预警系统
+set(ALERT_SOURCES
+        src/core/alert/SmartAlertSystem.h
+        src/core/alert/SmartAlertSystem.cpp
+)
+
+# NewsAnalysis 新闻分析
+set(NEWS_ANALYSIS_SOURCES
+        src/core/analysis/NewsSentimentAnalyzer.h
+        src/core/analysis/NewsSentimentAnalyzer.cpp
+        src/market/NewsDataSource.h
+        src/market/NewsDataSource.cpp
+)
+
 # Portfolio 组合
 set(PORTFOLIO_SOURCES
         src/core/portfolio/PortfolioOptimizer.h
@@ -455,6 +469,8 @@ set(SOURCES
         ${RISK_SOURCES}
         ${RECOMMENDATION_SOURCES}
         ${PORTFOLIO_SOURCES}
+        ${ALERT_SOURCES}
+        ${NEWS_ANALYSIS_SOURCES}
         ${NETWORK_SOURCES}
         ${PLUGIN_SOURCES}
         ${ANALYSIS_CHANLUN_SOURCES}
