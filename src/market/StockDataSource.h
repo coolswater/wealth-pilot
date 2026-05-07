@@ -40,6 +40,25 @@ struct StockQuote {
     double changeAmount = 0.0;  ///< 涨跌额
     QDateTime updateTime;       ///< 更新时间
 
+    // 五档盘口
+    double bidPrice[5] = {0};   ///< 买价1-5
+    qint64 bidVolume[5] = {0};  ///< 买量1-5
+    double askPrice[5] = {0};   ///< 卖价1-5
+    qint64 askVolume[5] = {0};  ///< 卖量1-5
+
+    // 委比委差
+    double orderRatio = 0.0;    ///< 委比
+    qint64 orderDiff = 0;       ///< 委差
+
+    // 其他数据
+    double avgPrice = 0.0;      ///< 均价
+    double turnoverRate = 0.0; ///< 换手率
+    double volumeRatio = 0.0;  ///< 量比
+    double limitUp = 0.0;      ///< 涨停价
+    double limitDown = 0.0;    ///< 跌停价
+    qint64 outerVolume = 0;    ///< 外盘
+    qint64 innerVolume = 0;    ///< 内盘
+
     bool isValid() const { return !symbol.isEmpty() && lastPrice > 0; }
 };
 

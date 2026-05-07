@@ -316,6 +316,8 @@ set(UI_COMPONENT_SOURCES
         src/ui/components/SignalDetailPanel.cpp
         src/ui/components/KLineChartWithSignals.h
         src/ui/components/KLineChartWithSignals.cpp
+        src/ui/components/StockInfoPanel.h
+        src/ui/components/StockInfoPanel.cpp
         src/ui/ThemeManager.h
         src/ui/ThemeManager.cpp
 )

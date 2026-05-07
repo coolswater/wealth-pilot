@@ -8,6 +8,7 @@
 
 #include "ui/components/BasePage.h"
 #include "ui/components/KLineChart.h"
+#include "ui/components/StockInfoPanel.h"
 #include "market/StockDataSource.h"
 #include "core/types/MarketTypes.h"
 #include "analysis/chanlun/ChanLunIntegration.h"
@@ -132,6 +133,7 @@ private:
     // 图表组件
     KLineChart* m_klineChart = nullptr;
     QWidget* m_timeShareWidget = nullptr;
+    StockInfoPanel* m_infoPanel = nullptr;  // 右侧信息面板
     
     // 数据源
     StockDataSource* m_dataSource = nullptr;

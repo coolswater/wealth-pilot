@@ -241,6 +241,32 @@ void StockDataSource::parseSinaQuotes(const QByteArray &data)
         quote.volume = fields[8].toLongLong();
         quote.turnover = fields[9].toDouble();
 
+        // 解析五档盘口（新浪格式：买1-5量价交替）
+        if (fields.size() >= 32) {
+            // 买盘：买1量(10)、买1价(11)、买2量(12)、买2价(13)...
+            for (int i = 0; i < 5; ++i) {
+                quote.bidVolume[i] = fields[10 + i * 2].toLongLong();
+                quote.bidPrice[i] = fields[11 + i * 2].toDouble();
+            }
+            // 卖盘：卖1量(20)、卖1价(21)、卖2量(22)、卖2价(23)...
+            for (int i = 0; i < 5; ++i) {
+                quote.askVolume[i] = fields[20 + i * 2].toLongLong();
+                quote.askPrice[i] = fields[21 + i * 2].toDouble();
+            }
+
+            // 计算委比委差
+            qint64 totalBidVolume = 0;
+            qint64 totalAskVolume = 0;
+            for (int i = 0; i < 5; ++i) {
+                totalBidVolume += quote.bidVolume[i];
+                totalAskVolume += quote.askVolume[i];
+            }
+            quote.orderDiff = totalBidVolume - totalAskVolume;
+            if (totalBidVolume + totalAskVolume > 0) {
+                quote.orderRatio = (double)quote.orderDiff / (totalBidVolume + totalAskVolume) * 100.0;
+            }
+        }
+
         if (quote.preClose > 0) {
             quote.changeAmount = quote.lastPrice - quote.preClose;
             quote.changePercent = quote.changeAmount / quote.preClose * 100.0;

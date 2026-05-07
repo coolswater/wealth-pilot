@@ -8,6 +8,7 @@
 #include "core/cache/CacheManager.h"
 #include "data/DataStorageService.h"
 #include "utils/Logger.h"
+#include "ui/components/StockInfoPanel.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -209,6 +210,11 @@ void StockKLinePage::setStock(const QString& stockCode, const QString& stockName
         m_stockNameLabel->setText(QStringLiteral("%1 (%2)").arg(m_stockName, m_stockCode));
     }
     
+    // 更新右侧信息面板
+    if (m_infoPanel) {
+        m_infoPanel->setStock(stockCode, stockName);
+    }
+    
     // 加载数据
     loadDataWithFallback();
     
@@ -332,8 +338,12 @@ void StockKLinePage::setupUI()
 
     mainLayout->addWidget(toolbar);
 
-    // 图表区域
-    auto* chartContainer = new QWidget(this);
+    // 图表区域（水平布局：左侧K线图，右侧信息面板）
+    auto* chartSplitter = new QSplitter(Qt::Horizontal, this);
+    chartSplitter->setStyleSheet(QString("QSplitter::handle { background-color: %1; width: 1px; }").arg(Tokens::Colors::Border));
+
+    // 左侧：K线图容器
+    auto* chartContainer = new QWidget(chartSplitter);
     auto* chartLayout = new QVBoxLayout(chartContainer);
     chartLayout->setContentsMargins(0, 0, 0, 0);
     chartLayout->setSpacing(0);
@@ -350,7 +360,18 @@ void StockKLinePage::setupUI()
     m_timeShareWidget->hide();
     chartLayout->addWidget(m_timeShareWidget);
 
-    mainLayout->addWidget(chartContainer, 1);
+    // 右侧：股票信息面板
+    m_infoPanel = new StockInfoPanel(chartSplitter);
+    m_infoPanel->setMinimumWidth(280);
+    m_infoPanel->setMaximumWidth(320);
+
+    // 设置分割比例（K线图占70%，信息面板占30%）
+    chartSplitter->addWidget(chartContainer);
+    chartSplitter->addWidget(m_infoPanel);
+    chartSplitter->setStretchFactor(0, 7);
+    chartSplitter->setStretchFactor(1, 3);
+
+    mainLayout->addWidget(chartSplitter, 1);
 
     // 底部信息栏
     auto* infoBar = new QWidget(this);
@@ -979,6 +1000,11 @@ void StockKLinePage::onRealtimeQuoteReceived(const QString& symbol, const StockQ
             .arg(QString::number(quote.lastPrice, 'f', 2))
             .arg(colorStyle)
             .arg(changeText));
+    }
+    
+    // 更新右侧信息面板
+    if (m_infoPanel) {
+        m_infoPanel->updateQuote(quote);
     }
     
     LOG_DEBUG(QString("Realtime quote: %1 %2 %3%%").arg(symbol).arg(quote.lastPrice).arg(quote.changePercent));
