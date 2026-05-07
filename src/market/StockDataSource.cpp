@@ -332,30 +332,58 @@ void StockDataSource::parseEastMoneyQuotes(const QByteArray &data)
 
 void StockDataSource::parseSinaKLine(const QByteArray &data, const QString &symbol)
 {
-    // 新浪K线格式: 数据以换行分隔，每行: 日期,开盘,最高,最低,收盘,成交量
-    QString response = QString::fromLocal8Bit(data);
+    // 新浪K线API返回JSON格式
+    QString response = QString::fromUtf8(data);
     QVector<KLineData> klines;
 
-    QStringList lines = response.split('\n', Qt::SkipEmptyParts);
-    for (const QString &line : lines) {
-        QStringList fields = line.split(',');
-        if (fields.size() < 6) {
-            continue;
-        }
+    // 尝试解析JSON格式
+    QJsonParseError error;
+    QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8(), &error);
 
-        KLineData kline;
-        kline.time = QDateTime::fromString(fields[0], "yyyy-MM-dd");
-        if (!kline.time.isValid()) {
-            kline.time = QDateTime::fromString(fields[0], "yyyy-MM-dd hh:mm:ss");
-        }
-        kline.open = fields[1].toDouble();
-        kline.high = fields[2].toDouble();
-        kline.low = fields[3].toDouble();
-        kline.close = fields[4].toDouble();
-        kline.volume = fields[5].toLongLong();
+    if (error.error == QJsonParseError::NoError && doc.isArray()) {
+        // JSON数组格式
+        QJsonArray array = doc.array();
+        for (const QJsonValue &value : array) {
+            QJsonObject obj = value.toObject();
 
-        if (kline.isValid()) {
-            klines.append(kline);
+            KLineData kline;
+            kline.time = QDateTime::fromString(obj["day"].toString(), "yyyy-MM-dd");
+            if (!kline.time.isValid()) {
+                kline.time = QDateTime::fromString(obj["day"].toString(), "yyyy-MM-dd hh:mm:ss");
+            }
+            kline.open = obj["open"].toString().toDouble();
+            kline.high = obj["high"].toString().toDouble();
+            kline.low = obj["low"].toString().toDouble();
+            kline.close = obj["close"].toString().toDouble();
+            kline.volume = obj["volume"].toString().toLongLong();
+
+            if (kline.isValid()) {
+                klines.append(kline);
+            }
+        }
+    } else {
+        // 尝试CSV格式（旧版API）
+        QStringList lines = response.split('\n', Qt::SkipEmptyParts);
+        for (const QString &line : lines) {
+            QStringList fields = line.split(',');
+            if (fields.size() < 6) {
+                continue;
+            }
+
+            KLineData kline;
+            kline.time = QDateTime::fromString(fields[0], "yyyy-MM-dd");
+            if (!kline.time.isValid()) {
+                kline.time = QDateTime::fromString(fields[0], "yyyy-MM-dd hh:mm:ss");
+            }
+            kline.open = fields[1].toDouble();
+            kline.high = fields[2].toDouble();
+            kline.low = fields[3].toDouble();
+            kline.close = fields[4].toDouble();
+            kline.volume = fields[5].toLongLong();
+
+            if (kline.isValid()) {
+                klines.append(kline);
+            }
         }
     }
 
@@ -387,23 +415,24 @@ QString StockDataSource::buildQuotesUrl(const QStringList &symbols) const
 
 QString StockDataSource::buildKLineUrl(const QString &symbol, KLinePeriod period, int count) const
 {
-    // 新浪K线API
-    QString periodStr;
+    // 新浪K线API - scale参数: 240=日线, 1200=周线, 7200=月线, 5=5分钟, 15=15分钟, 30=30分钟, 60=60分钟
+    QString scaleStr;
     switch (period) {
-    case KLinePeriod::Day1: periodStr = "daily"; break;
-    case KLinePeriod::Week1: periodStr = "weekly"; break;
-    case KLinePeriod::Month1: periodStr = "monthly"; break;
-    case KLinePeriod::Minute5: periodStr = "5"; break;
-    case KLinePeriod::Minute15: periodStr = "15"; break;
-    case KLinePeriod::Minute30: periodStr = "30"; break;
-    case KLinePeriod::Hour1: periodStr = "60"; break;
-    default: periodStr = "daily"; break;
+    case KLinePeriod::Day1: scaleStr = "240"; break;
+    case KLinePeriod::Week1: scaleStr = "1200"; break;
+    case KLinePeriod::Month1: scaleStr = "7200"; break;
+    case KLinePeriod::Minute5: scaleStr = "5"; break;
+    case KLinePeriod::Minute15: scaleStr = "15"; break;
+    case KLinePeriod::Minute30: scaleStr = "30"; break;
+    case KLinePeriod::Hour1: scaleStr = "60"; break;
+    default: scaleStr = "240"; break;
     }
 
     QString sinaSymbol = toSinaSymbol(symbol);
-    return QString("http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData"
+    // 使用正确的新浪K线API
+    return QString("http://quotes.sina.cn/cn/api/json_v2.php/CN_MarketDataService.getKLineData"
                    "?symbol=%1&scale=%2&datalen=%3")
-        .arg(sinaSymbol, periodStr)
+        .arg(sinaSymbol, scaleStr)
         .arg(count);
 }
 
