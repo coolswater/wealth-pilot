@@ -310,6 +310,12 @@ set(UI_COMPONENT_SOURCES
         src/ui/components/DividerWidget.cpp
         src/ui/components/OrderDialog.h
         src/ui/components/OrderDialog.cpp
+        src/ui/components/SignalMarker.h
+        src/ui/components/SignalMarker.cpp
+        src/ui/components/SignalDetailPanel.h
+        src/ui/components/SignalDetailPanel.cpp
+        src/ui/components/KLineChartWithSignals.h
+        src/ui/components/KLineChartWithSignals.cpp
         src/ui/ThemeManager.h
         src/ui/ThemeManager.cpp
 )
