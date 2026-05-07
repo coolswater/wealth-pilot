@@ -32,11 +32,24 @@ public:
 signals:
     void stockChanged(const QString& stockCode);
 
+private slots:
+    void onQuoteReceived(const QString& symbol, const StockQuote& quote);
+
 private:
     void setupUI();
     void updatePriceLabel(QLabel* label, double price, double prevPrice = 0.0);
     QString formatVolume(qint64 volume) const;
     QString formatAmount(double amount) const;
+
+    // 三层缓存机制
+    void loadQuoteWithFallback();
+    bool loadQuoteFromCache();
+    bool loadQuoteFromDatabase();
+    void loadQuoteFromNetwork();
+    void saveQuoteToCache();
+    void saveQuoteToDatabase();
+
+    QString quoteCacheKey() const;
 
     // UI组件
     QLabel* m_stockNameLabel = nullptr;
@@ -49,14 +62,13 @@ private:
     QTableWidget* m_detailTable = nullptr;
     QTableWidget* m_tickTable = nullptr;
 
+    // 数据源
+    StockDataSource* m_dataSource = nullptr;
+
     // 数据
     QString m_stockCode;
     StockQuote m_currentQuote;
-
-    // 样式
-    const QString COLOR_RED = "#FF0000";
-    const QString COLOR_GREEN = "#00AA00";
-    const QString COLOR_GRAY = "#888888";
+    QVector<TickData> m_tickData;
 };
 
 #endif // STOCKINFOPANEL_H
