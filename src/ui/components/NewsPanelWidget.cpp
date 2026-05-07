@@ -1,0 +1,285 @@
+/**
+ * @file NewsPanelWidget.cpp
+ * @brief 新闻资讯面板实现
+ */
+
+#include "NewsPanelWidget.h"
+#include "core/config/Tokens.h"
+#include <QHeaderView>
+#include <QDateTime>
+
+using namespace Tokens;
+
+NewsPanelWidget::NewsPanelWidget(QWidget* parent)
+    : QWidget(parent)
+{
+    setupUI();
+
+    // 连接新闻数据源信号
+    auto* newsSource = NewsDataSource::instance();
+    connect(newsSource, &NewsDataSource::newsUpdated,
+            this, &NewsPanelWidget::onNewsUpdated);
+    connect(newsSource, &NewsDataSource::socialHeatUpdated,
+            this, &NewsPanelWidget::onSocialHeatUpdated);
+}
+
+NewsPanelWidget::~NewsPanelWidget()
+{
+}
+
+void NewsPanelWidget::setSymbol(const QString& symbol)
+{
+    m_currentSymbol = symbol;
+    m_titleLabel->setText(QString(QStringLiteral("新闻资讯 - %1")).arg(symbol));
+
+    // 订阅新闻
+    NewsDataSource::instance()->subscribeSymbols({symbol});
+
+    // 立即刷新
+    refreshNews();
+}
+
+void NewsPanelWidget::refreshNews()
+{
+    if (m_currentSymbol.isEmpty()) return;
+
+    NewsDataSource::instance()->requestNews(m_currentSymbol, 50);
+    NewsDataSource::instance()->requestSocialHeat(m_currentSymbol);
+}
+
+void NewsPanelWidget::onNewsUpdated(const QString& symbol, const QVector<NewsItem>& news)
+{
+    if (symbol != m_currentSymbol) return;
+
+    m_currentNews = news;
+    updateNewsList(news);
+}
+
+void NewsPanelWidget::onSocialHeatUpdated(const QString& symbol, const SocialHeatData& heat)
+{
+    if (symbol != m_currentSymbol) return;
+
+    updateSocialHeat(heat);
+}
+
+void NewsPanelWidget::onCategoryFilterChanged(int index)
+{
+    Q_UNUSED(index);
+
+    // 根据分类筛选新闻
+    QString category = m_categoryFilter->currentText();
+    QVector<NewsItem> filteredNews;
+
+    if (category == QStringLiteral("全部")) {
+        filteredNews = m_currentNews;
+    } else {
+        for (const NewsItem& news : m_currentNews) {
+            if (news.category == category) {
+                filteredNews.append(news);
+            }
+        }
+    }
+
+    updateNewsList(filteredNews);
+}
+
+void NewsPanelWidget::onRefreshClicked()
+{
+    refreshNews();
+}
+
+void NewsPanelWidget::onNewsDoubleClicked(int row, int column)
+{
+    Q_UNUSED(column);
+
+    if (row >= 0 && row < m_currentNews.size()) {
+        emit newsSelected(m_currentNews[row]);
+    }
+}
+
+void NewsPanelWidget::setupUI()
+{
+    QVBoxLayout* mainLayout = new QVBoxLayout(this);
+    mainLayout->setSpacing(10);
+    mainLayout->setContentsMargins(10, 10, 10, 10);
+
+    // 标题栏
+    QHBoxLayout* titleLayout = new QHBoxLayout();
+    m_titleLabel = new QLabel(QStringLiteral("新闻资讯"));
+    m_titleLabel->setStyleSheet(QString("font-size: 16px; font-weight: bold; color: %1;")
+        .arg(Colors::TextPrimary));
+    titleLayout->addWidget(m_titleLabel);
+    titleLayout->addStretch();
+
+    // 分类筛选
+    QLabel* categoryLabel = new QLabel(QStringLiteral("分类:"));
+    categoryLabel->setStyleSheet(QString("font-size: 12px; color: %1;")
+        .arg(Colors::TextSecondary));
+    titleLayout->addWidget(categoryLabel);
+
+    m_categoryFilter = new QComboBox();
+    m_categoryFilter->addItem(QStringLiteral("全部"));
+    m_categoryFilter->addItem(QStringLiteral("新闻"));
+    m_categoryFilter->addItem(QStringLiteral("公告"));
+    m_categoryFilter->addItem(QStringLiteral("财报"));
+    m_categoryFilter->addItem(QStringLiteral("研报"));
+    m_categoryFilter->setFixedWidth(80);
+    connect(m_categoryFilter, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &NewsPanelWidget::onCategoryFilterChanged);
+    titleLayout->addWidget(m_categoryFilter);
+
+    m_refreshBtn = new QPushButton(QStringLiteral("刷新"));
+    m_refreshBtn->setFixedWidth(60);
+    connect(m_refreshBtn, &QPushButton::clicked, this, &NewsPanelWidget::onRefreshClicked);
+    titleLayout->addWidget(m_refreshBtn);
+
+    mainLayout->addLayout(titleLayout);
+
+    // 社交热度
+    QHBoxLayout* heatLayout = new QHBoxLayout();
+    QLabel* heatTitleLabel = new QLabel(QStringLiteral("社交热度:"));
+    heatTitleLabel->setStyleSheet(QString("font-size: 12px; color: %1;")
+        .arg(Colors::TextSecondary));
+    heatLayout->addWidget(heatTitleLabel);
+
+    m_socialHeatLabel = new QLabel(QStringLiteral("--"));
+    m_socialHeatLabel->setStyleSheet(QString("font-size: 12px; color: %1;")
+        .arg(Colors::TextPrimary));
+    heatLayout->addWidget(m_socialHeatLabel);
+    heatLayout->addStretch();
+    mainLayout->addLayout(heatLayout);
+
+    // 新闻列表
+    m_newsTable = new QTableWidget();
+    m_newsTable->setColumnCount(6);
+    m_newsTable->setHorizontalHeaderLabels({
+        QStringLiteral("时间"),
+        QStringLiteral("分类"),
+        QStringLiteral("标题"),
+        QStringLiteral("情感"),
+        QStringLiteral("影响"),
+        QStringLiteral("阅读")
+    });
+    m_newsTable->horizontalHeader()->setStretchLastSection(true);
+    m_newsTable->setColumnWidth(0, 80);
+    m_newsTable->setColumnWidth(1, 60);
+    m_newsTable->setColumnWidth(3, 60);
+    m_newsTable->setColumnWidth(4, 60);
+    m_newsTable->setColumnWidth(5, 60);
+    m_newsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_newsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_newsTable->setAlternatingRowColors(true);
+    m_newsTable->verticalHeader()->setVisible(false);
+    m_newsTable->setStyleSheet(QString(
+        "QTableWidget { background-color: %1; border: 1px solid %2; }"
+        "QTableWidget::item { padding: 5px; }"
+    ).arg(Colors::BgSurface, Colors::Border));
+    connect(m_newsTable, &QTableWidget::cellDoubleClicked,
+            this, &NewsPanelWidget::onNewsDoubleClicked);
+    mainLayout->addWidget(m_newsTable, 1);
+
+    // 提示信息
+    QLabel* tipLabel = new QLabel(QStringLiteral("双击查看新闻详情"));
+    tipLabel->setStyleSheet(QString("font-size: 12px; color: %1;")
+        .arg(Colors::TextSecondary));
+    mainLayout->addWidget(tipLabel);
+
+    setStyleSheet(QString("background-color: %1; border-radius: 8px;")
+        .arg(Colors::BgElevated));
+}
+
+void NewsPanelWidget::updateNewsList(const QVector<NewsItem>& news)
+{
+    m_newsTable->setRowCount(0);
+
+    for (const NewsItem& item : news) {
+        int row = m_newsTable->rowCount();
+        m_newsTable->insertRow(row);
+
+        // 时间
+        m_newsTable->setItem(row, 0, new QTableWidgetItem(
+            item.publishTime.toString(QStringLiteral("MM-dd hh:mm"))));
+
+        // 分类
+        m_newsTable->setItem(row, 1, new QTableWidgetItem(item.category));
+
+        // 标题
+        QTableWidgetItem* titleItem = new QTableWidgetItem(item.title);
+        if (item.isImportant) {
+            titleItem->setForeground(QColor(Colors::Primary));
+            titleItem->setFont(QFont(titleItem->font().family(), -1, QFont::Bold));
+        }
+        m_newsTable->setItem(row, 2, titleItem);
+
+        // 情感
+        QString sentimentText = sentimentToText(item.sentiment.sentiment);
+        QTableWidgetItem* sentimentItem = new QTableWidgetItem(sentimentText);
+        sentimentItem->setForeground(QColor(sentimentToColor(item.sentiment.sentiment)));
+        m_newsTable->setItem(row, 3, sentimentItem);
+
+        // 影响力
+        QString impactText;
+        if (item.sentiment.impactScore > 5.0) {
+            impactText = QStringLiteral("高");
+        } else if (item.sentiment.impactScore > 2.0) {
+            impactText = QStringLiteral("中");
+        } else if (item.sentiment.impactScore > -2.0) {
+            impactText = QStringLiteral("低");
+        } else {
+            impactText = QStringLiteral("高");
+        }
+        m_newsTable->setItem(row, 4, new QTableWidgetItem(impactText));
+
+        // 阅读量
+        QString readText;
+        if (item.readCount >= 10000) {
+            readText = QString(QStringLiteral("%1万"))
+                .arg(item.readCount / 10000.0, 0, 'f', 1);
+        } else {
+            readText = QString::number(item.readCount);
+        }
+        m_newsTable->setItem(row, 5, new QTableWidgetItem(readText));
+    }
+}
+
+void NewsPanelWidget::updateSocialHeat(const SocialHeatData& heat)
+{
+    QString text = QString(QStringLiteral("%1提及 (较昨日%2%3%)"))
+        .arg(heat.mentionCount)
+        .arg(heat.changePercent >= 0 ? QStringLiteral("+") : QString())
+        .arg(heat.changePercent, 0, 'f', 1);
+
+    QString color;
+    if (heat.changePercent > 20) {
+        color = Colors::Danger;
+    } else if (heat.changePercent > 0) {
+        color = Colors::Warning;
+    } else if (heat.changePercent < -20) {
+        color = Colors::Success;
+    } else {
+        color = Colors::TextPrimary;
+    }
+
+    m_socialHeatLabel->setText(text);
+    m_socialHeatLabel->setStyleSheet(QString("font-size: 12px; color: %1;").arg(color));
+}
+
+QString NewsPanelWidget::sentimentToColor(SentimentType sentiment) const
+{
+    switch (sentiment) {
+    case SentimentType::Positive: return Colors::Success;
+    case SentimentType::Negative: return Colors::Danger;
+    case SentimentType::Neutral: return Colors::TextSecondary;
+    default: return Colors::TextSecondary;
+    }
+}
+
+QString NewsPanelWidget::sentimentToText(SentimentType sentiment) const
+{
+    switch (sentiment) {
+    case SentimentType::Positive: return QStringLiteral("正面");
+    case SentimentType::Negative: return QStringLiteral("负面");
+    case SentimentType::Neutral: return QStringLiteral("中性");
+    default: return QStringLiteral("未知");
+    }
+}

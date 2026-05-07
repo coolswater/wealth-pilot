@@ -214,6 +214,18 @@ set(NEWS_ANALYSIS_SOURCES
         src/market/NewsDataSource.cpp
 )
 
+# Plugin 插件系统
+set(PLUGIN_SOURCES
+        src/core/plugin/PluginSystem.h
+        src/core/plugin/PluginSystem.cpp
+)
+
+# Layout 布局管理
+set(LAYOUT_SOURCES
+        src/core/layout/LayoutManager.h
+        src/core/layout/LayoutManager.cpp
+)
+
 # Portfolio 组合
 set(PORTFOLIO_SOURCES
         src/core/portfolio/PortfolioOptimizer.h
@@ -356,6 +368,10 @@ set(UI_COMPONENT_SOURCES
         src/ui/components/RecommendationListWidget.cpp
         src/ui/components/PortfolioOptimizationDialog.h
         src/ui/components/PortfolioOptimizationDialog.cpp
+        src/ui/components/NewsPanelWidget.h
+        src/ui/components/NewsPanelWidget.cpp
+        src/ui/components/AlertSettingDialog.h
+        src/ui/components/AlertSettingDialog.cpp
         src/ui/ThemeManager.h
         src/ui/ThemeManager.cpp
 )
@@ -471,6 +487,8 @@ set(SOURCES
         ${PORTFOLIO_SOURCES}
         ${ALERT_SOURCES}
         ${NEWS_ANALYSIS_SOURCES}
+        ${PLUGIN_SOURCES}
+        ${LAYOUT_SOURCES}
         ${NETWORK_SOURCES}
         ${PLUGIN_SOURCES}
         ${ANALYSIS_CHANLUN_SOURCES}
