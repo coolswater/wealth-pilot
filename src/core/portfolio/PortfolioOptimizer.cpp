@@ -86,26 +86,14 @@ PortfolioRiskMetrics PortfolioOptimizer::calculateRiskMetrics(const Portfolio& p
     if (portfolio.allocations.isEmpty()) return metrics;
 
     // 简化的风险指标计算
-    // 实际应该基于历史数据和协方差矩阵
-
-    // 波动率（年化）
-    double avgVolatility = 20.0; // 假设平均波动率20%
+    double avgVolatility = 20.0;
     metrics.volatility = avgVolatility * std::sqrt(portfolio.allocations.size() / 10.0);
-
-    // 最大回撤
     metrics.maxDrawdown = metrics.volatility * 1.5;
 
-    // 夏普比率（假设无风险利率3%）
     double riskFreeRate = 3.0;
     metrics.sharpeRatio = (portfolio.returnMetrics.annualizedReturn - riskFreeRate) / metrics.volatility;
-
-    // Beta系数
-    metrics.beta = 1.0; // 假设与市场同步
-
-    // VaR (95%)
+    metrics.beta = 1.0;
     metrics.var95 = portfolio.totalValue * metrics.volatility / 100.0 * 1.65;
-
-    // 预期损失
     metrics.expectedShortfall = metrics.var95 * 1.2;
 
     return metrics;
@@ -117,12 +105,7 @@ PortfolioReturnMetrics PortfolioOptimizer::calculateReturnMetrics(const Portfoli
 
     if (portfolio.allocations.isEmpty()) return metrics;
 
-    // 简化的收益指标计算
-    // 假设等权重组合的预期收益
-
-    double avgReturn = 10.0; // 假设平均年化收益10%
-
-    // 根据资产类型调整
+    double avgReturn = 10.0;
     int stockCount = 0;
     for (const auto& allocation : portfolio.allocations) {
         if (allocation.type == AssetType::Stock) {
@@ -132,18 +115,18 @@ PortfolioReturnMetrics PortfolioOptimizer::calculateReturnMetrics(const Portfoli
     }
 
     metrics.annualizedReturn = avgReturn;
-    metrics.totalReturn = avgReturn * 3; // 假设3年持有期
-    metrics.dividendYield = 2.5; // 假设平均股息率2.5%
-    metrics.alpha = avgReturn - 10.0; // 超额收益
+    metrics.totalReturn = avgReturn * 3;
+    metrics.dividendYield = 2.5;
+    metrics.alpha = avgReturn - 10.0;
 
     return metrics;
 }
 
-BacktestResult PortfolioOptimizer::backtest(const Portfolio& portfolio,
+PortfolioBacktestResult PortfolioOptimizer::backtest(const Portfolio& portfolio,
                                            const QDateTime& startDate,
                                            const QDateTime& endDate)
 {
-    BacktestResult result;
+    PortfolioBacktestResult result;
 
     if (portfolio.allocations.isEmpty()) return result;
 
@@ -151,14 +134,11 @@ BacktestResult PortfolioOptimizer::backtest(const Portfolio& portfolio,
         .arg(startDate.toString("yyyy-MM-dd"))
         .arg(endDate.toString("yyyy-MM-dd")));
 
-    // 简化的回测模拟
     int days = startDate.daysTo(endDate);
     if (days <= 0) return result;
 
-    // 模拟每日收益
     double cumulativeReturn = 1.0;
     for (int i = 0; i < days; ++i) {
-        // 生成随机日收益（-3% 到 +3%）
         double dailyReturn = (QRandomGenerator::global()->bounded(60) - 30) / 1000.0;
         cumulativeReturn *= (1.0 + dailyReturn);
 
@@ -166,11 +146,9 @@ BacktestResult PortfolioOptimizer::backtest(const Portfolio& portfolio,
         result.cumulativeReturns.append((cumulativeReturn - 1.0) * 100.0);
     }
 
-    // 计算回测指标
     result.totalReturn = (cumulativeReturn - 1.0) * 100.0;
     result.annualizedReturn = (std::pow(cumulativeReturn, 365.0 / days) - 1.0) * 100.0;
 
-    // 计算最大回撤
     double peak = 1.0;
     double maxDD = 0.0;
     for (double cumRet : result.cumulativeReturns) {
@@ -181,7 +159,6 @@ BacktestResult PortfolioOptimizer::backtest(const Portfolio& portfolio,
     }
     result.maxDrawdown = maxDD * 100.0;
 
-    // 夏普比率
     double avgDailyReturn = 0.0;
     for (double r : result.dailyReturns) {
         avgDailyReturn += r;
@@ -197,14 +174,13 @@ BacktestResult PortfolioOptimizer::backtest(const Portfolio& portfolio,
     double dailyVol = std::sqrt(variance);
     result.sharpeRatio = (avgDailyReturn * 252) / (dailyVol * std::sqrt(252));
 
-    // 胜率
     int winDays = 0;
     for (double r : result.dailyReturns) {
         if (r > 0) winDays++;
     }
     result.winRate = (double)winDays / days * 100.0;
 
-    result.totalTrades = portfolio.allocations.size(); // 简化
+    result.totalTrades = portfolio.allocations.size();
 
     emit backtestCompleted(result);
 
@@ -216,14 +192,13 @@ BacktestResult PortfolioOptimizer::backtest(const Portfolio& portfolio,
     return result;
 }
 
-QVector<AssetAllocation> PortfolioOptimizer::getAllocationSuggestion(double totalAmount,
+QVector<PortfolioAssetAllocation> PortfolioOptimizer::getAllocationSuggestion(double totalAmount,
                                                                     InvestmentStyle style)
 {
-    QVector<AssetAllocation> allocations;
+    QVector<PortfolioAssetAllocation> allocations;
 
     if (style == InvestmentStyle::Conservative) {
-        // 保守型：债券50%，股票30%，现金20%
-        AssetAllocation bond;
+        PortfolioAssetAllocation bond;
         bond.symbol = "BOND_ETF";
         bond.type = AssetType::Bond;
         bond.weight = 50.0;
@@ -231,7 +206,7 @@ QVector<AssetAllocation> PortfolioOptimizer::getAllocationSuggestion(double tota
         bond.reason = QStringLiteral("债券提供稳定收益，降低波动");
         allocations.append(bond);
 
-        AssetAllocation stock;
+        PortfolioAssetAllocation stock;
         stock.symbol = "STOCK_ETF";
         stock.type = AssetType::Stock;
         stock.weight = 30.0;
@@ -239,7 +214,7 @@ QVector<AssetAllocation> PortfolioOptimizer::getAllocationSuggestion(double tota
         stock.reason = QStringLiteral("股票提供适度增长");
         allocations.append(stock);
 
-        AssetAllocation cash;
+        PortfolioAssetAllocation cash;
         cash.symbol = "CASH";
         cash.type = AssetType::Cash;
         cash.weight = 20.0;
@@ -248,8 +223,7 @@ QVector<AssetAllocation> PortfolioOptimizer::getAllocationSuggestion(double tota
         allocations.append(cash);
 
     } else if (style == InvestmentStyle::Aggressive) {
-        // 进取型：股票70%，基金20%，现金10%
-        AssetAllocation stock;
+        PortfolioAssetAllocation stock;
         stock.symbol = "GROWTH_STOCK";
         stock.type = AssetType::Stock;
         stock.weight = 70.0;
@@ -257,7 +231,7 @@ QVector<AssetAllocation> PortfolioOptimizer::getAllocationSuggestion(double tota
         stock.reason = QStringLiteral("成长股提供高收益潜力");
         allocations.append(stock);
 
-        AssetAllocation fund;
+        PortfolioAssetAllocation fund;
         fund.symbol = "THEMATIC_FUND";
         fund.type = AssetType::Fund;
         fund.weight = 20.0;
@@ -265,7 +239,7 @@ QVector<AssetAllocation> PortfolioOptimizer::getAllocationSuggestion(double tota
         fund.reason = QStringLiteral("主题基金把握行业机会");
         allocations.append(fund);
 
-        AssetAllocation cash;
+        PortfolioAssetAllocation cash;
         cash.symbol = "CASH";
         cash.type = AssetType::Cash;
         cash.weight = 10.0;
@@ -274,8 +248,7 @@ QVector<AssetAllocation> PortfolioOptimizer::getAllocationSuggestion(double tota
         allocations.append(cash);
 
     } else {
-        // 平衡型：股票50%，债券30%，基金15%，现金5%
-        AssetAllocation stock;
+        PortfolioAssetAllocation stock;
         stock.symbol = "BLUECHIP_ETF";
         stock.type = AssetType::Stock;
         stock.weight = 50.0;
@@ -283,7 +256,7 @@ QVector<AssetAllocation> PortfolioOptimizer::getAllocationSuggestion(double tota
         stock.reason = QStringLiteral("蓝筹股稳健增长");
         allocations.append(stock);
 
-        AssetAllocation bond;
+        PortfolioAssetAllocation bond;
         bond.symbol = "BOND_ETF";
         bond.type = AssetType::Bond;
         bond.weight = 30.0;
@@ -291,7 +264,7 @@ QVector<AssetAllocation> PortfolioOptimizer::getAllocationSuggestion(double tota
         bond.reason = QStringLiteral("债券平衡风险");
         allocations.append(bond);
 
-        AssetAllocation fund;
+        PortfolioAssetAllocation fund;
         fund.symbol = "MIXED_FUND";
         fund.type = AssetType::Fund;
         fund.weight = 15.0;
@@ -299,7 +272,7 @@ QVector<AssetAllocation> PortfolioOptimizer::getAllocationSuggestion(double tota
         fund.reason = QStringLiteral("混合基金专业管理");
         allocations.append(fund);
 
-        AssetAllocation cash;
+        PortfolioAssetAllocation cash;
         cash.symbol = "CASH";
         cash.type = AssetType::Cash;
         cash.weight = 5.0;
@@ -311,12 +284,11 @@ QVector<AssetAllocation> PortfolioOptimizer::getAllocationSuggestion(double tota
     return allocations;
 }
 
-QVector<AssetAllocation> PortfolioOptimizer::rebalanceSuggestion(const Portfolio& current,
+QVector<PortfolioAssetAllocation> PortfolioOptimizer::rebalanceSuggestion(const Portfolio& current,
                                                                 const Portfolio& target)
 {
-    QVector<AssetAllocation> suggestions;
+    QVector<PortfolioAssetAllocation> suggestions;
 
-    // 比较当前配置和目标配置
     QMap<QString, double> currentWeights;
     for (const auto& allocation : current.allocations) {
         currentWeights[allocation.symbol] = allocation.weight;
@@ -327,14 +299,13 @@ QVector<AssetAllocation> PortfolioOptimizer::rebalanceSuggestion(const Portfolio
         targetWeights[allocation.symbol] = allocation.weight;
     }
 
-    // 计算调整
     for (auto it = targetWeights.begin(); it != targetWeights.end(); ++it) {
         double currentWeight = currentWeights.value(it.key(), 0.0);
         double targetWeight = it.value();
         double diff = targetWeight - currentWeight;
 
-        if (std::abs(diff) > 1.0) { // 差异超过1%才调整
-            AssetAllocation adjustment;
+        if (std::abs(diff) > 1.0) {
+            PortfolioAssetAllocation adjustment;
             adjustment.symbol = it.key();
             adjustment.weight = diff;
 
@@ -358,11 +329,10 @@ Portfolio PortfolioOptimizer::optimizeMaxReturn(const QVector<QString>& assets,
 
     if (assets.isEmpty()) return portfolio;
 
-    // 简化实现：等权重配置
     double weight = 100.0 / assets.size();
 
     for (const QString& symbol : assets) {
-        AssetAllocation allocation;
+        PortfolioAssetAllocation allocation;
         allocation.symbol = symbol;
         allocation.type = AssetType::Stock;
         allocation.weight = weight;
@@ -380,11 +350,10 @@ Portfolio PortfolioOptimizer::optimizeMinRisk(const QVector<QString>& assets,
 
     if (assets.isEmpty()) return portfolio;
 
-    // 简化实现：等权重配置（实际应该优化协方差矩阵）
     double weight = 100.0 / assets.size();
 
     for (const QString& symbol : assets) {
-        AssetAllocation allocation;
+        PortfolioAssetAllocation allocation;
         allocation.symbol = symbol;
         allocation.type = AssetType::Stock;
         allocation.weight = weight;
@@ -402,11 +371,10 @@ Portfolio PortfolioOptimizer::optimizeMaxSharpe(const QVector<QString>& assets,
 
     if (assets.isEmpty()) return portfolio;
 
-    // 简化实现：等权重配置
     double weight = 100.0 / assets.size();
 
     for (const QString& symbol : assets) {
-        AssetAllocation allocation;
+        PortfolioAssetAllocation allocation;
         allocation.symbol = symbol;
         allocation.type = AssetType::Stock;
         allocation.weight = weight;
@@ -424,11 +392,10 @@ Portfolio PortfolioOptimizer::optimizeRiskParity(const QVector<QString>& assets,
 
     if (assets.isEmpty()) return portfolio;
 
-    // 简化实现：等权重配置
     double weight = 100.0 / assets.size();
 
     for (const QString& symbol : assets) {
-        AssetAllocation allocation;
+        PortfolioAssetAllocation allocation;
         allocation.symbol = symbol;
         allocation.type = AssetType::Stock;
         allocation.weight = weight;
@@ -441,7 +408,6 @@ Portfolio PortfolioOptimizer::optimizeRiskParity(const QVector<QString>& assets,
 
 double PortfolioOptimizer::calculateCovariance(const QString& asset1, const QString& asset2)
 {
-    // TODO: 实现协方差计算
     Q_UNUSED(asset1);
     Q_UNUSED(asset2);
     return 0.0;
@@ -449,14 +415,12 @@ double PortfolioOptimizer::calculateCovariance(const QString& asset1, const QStr
 
 double PortfolioOptimizer::calculateVariance(const QString& asset)
 {
-    // TODO: 实现方差计算
     Q_UNUSED(asset);
     return 0.0;
 }
 
 QVector<double> PortfolioOptimizer::getHistoricalReturns(const QString& asset, int days)
 {
-    // TODO: 从数据库获取历史收益
     Q_UNUSED(asset);
     Q_UNUSED(days);
     return QVector<double>();

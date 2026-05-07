@@ -19,7 +19,7 @@
 #include <QMap>
 #include <QVector>
 #include <QDateTime>
-#include "core/types/MarketTypes.h"
+#include "core/recommendation/PersonalizedRecommendation.h"  // 包含InvestmentStyle定义
 
 /**
  * @brief 资产类型
@@ -33,9 +33,9 @@ enum class AssetType {
 };
 
 /**
- * @brief 资产配置
+ * @brief 组合资产配置
  */
-struct AssetAllocation {
+struct PortfolioAssetAllocation {
     QString symbol;         ///< 资产代码
     AssetType type;         ///< 资产类型
     double weight = 0.0;    ///< 权重（百分比）
@@ -72,7 +72,7 @@ struct Portfolio {
     QString id;                             ///< 组合ID
     QString name;                           ///< 组合名称
     QString description;                    ///< 描述
-    QVector<AssetAllocation> allocations;   ///< 资产配置
+    QVector<PortfolioAssetAllocation> allocations;   ///< 资产配置
     PortfolioRiskMetrics riskMetrics;       ///< 风险指标
     PortfolioReturnMetrics returnMetrics;   ///< 收益指标
     QDateTime createTime;                   ///< 创建时间
@@ -102,9 +102,9 @@ struct OptimizationConstraint {
 };
 
 /**
- * @brief 回测结果
+ * @brief 组合回测结果
  */
-struct BacktestResult {
+struct PortfolioBacktestResult {
     double totalReturn = 0.0;       ///< 总收益
     double annualizedReturn = 0.0;  ///< 年化收益
     double maxDrawdown = 0.0;       ///< 最大回撤
@@ -155,25 +155,25 @@ public:
     /**
      * @brief 回测投资组合
      */
-    BacktestResult backtest(const Portfolio& portfolio,
+    PortfolioBacktestResult backtest(const Portfolio& portfolio,
                            const QDateTime& startDate,
                            const QDateTime& endDate);
 
     /**
      * @brief 获取资产配置建议
      */
-    QVector<AssetAllocation> getAllocationSuggestion(double totalAmount,
+    QVector<PortfolioAssetAllocation> getAllocationSuggestion(double totalAmount,
                                                     InvestmentStyle style);
 
     /**
      * @brief 再平衡建议
      */
-    QVector<AssetAllocation> rebalanceSuggestion(const Portfolio& current,
+    QVector<PortfolioAssetAllocation> rebalanceSuggestion(const Portfolio& current,
                                                 const Portfolio& target);
 
 signals:
     void optimizationCompleted(const Portfolio& portfolio);
-    void backtestCompleted(const BacktestResult& result);
+    void backtestCompleted(const PortfolioBacktestResult& result);
 
 private:
     explicit PortfolioOptimizer(QObject* parent = nullptr);

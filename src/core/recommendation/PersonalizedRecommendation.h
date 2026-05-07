@@ -19,7 +19,8 @@
 #include <QMap>
 #include <QVector>
 #include <QDateTime>
-#include "core/types/MarketTypes.h"
+#include "market/StockDataSource.h"
+#include "core/risk/RiskWarningSystem.h"  // 包含RiskLevel定义
 
 /**
  * @brief 用户偏好类型

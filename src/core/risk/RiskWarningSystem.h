@@ -21,7 +21,7 @@
 #include <QVector>
 #include <QDateTime>
 #include <QTimer>
-#include "core/types/MarketTypes.h"
+#include "market/StockDataSource.h"
 
 /**
  * @brief 风险等级

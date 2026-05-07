@@ -188,6 +188,24 @@ set(UTIL_SOURCES
         src/utils/ReportGenerator.cpp
 )
 
+# Risk 风险管理
+set(RISK_SOURCES
+        src/core/risk/RiskWarningSystem.h
+        src/core/risk/RiskWarningSystem.cpp
+)
+
+# Recommendation 推荐
+set(RECOMMENDATION_SOURCES
+        src/core/recommendation/PersonalizedRecommendation.h
+        src/core/recommendation/PersonalizedRecommendation.cpp
+)
+
+# Portfolio 组合
+set(PORTFOLIO_SOURCES
+        src/core/portfolio/PortfolioOptimizer.h
+        src/core/portfolio/PortfolioOptimizer.cpp
+)
+
 # Network 网络
 set(NETWORK_SOURCES
         src/network/NetworkManager.cpp
@@ -318,6 +336,12 @@ set(UI_COMPONENT_SOURCES
         src/ui/components/KLineChartWithSignals.cpp
         src/ui/components/StockInfoPanel.h
         src/ui/components/StockInfoPanel.cpp
+        src/ui/components/RiskIndicatorWidget.h
+        src/ui/components/RiskIndicatorWidget.cpp
+        src/ui/components/RecommendationListWidget.h
+        src/ui/components/RecommendationListWidget.cpp
+        src/ui/components/PortfolioOptimizationDialog.h
+        src/ui/components/PortfolioOptimizationDialog.cpp
         src/ui/ThemeManager.h
         src/ui/ThemeManager.cpp
 )
@@ -428,6 +452,9 @@ set(SOURCES
         ${MARKET_SOURCES}
         ${MODEL_SOURCES}
         ${UTIL_SOURCES}
+        ${RISK_SOURCES}
+        ${RECOMMENDATION_SOURCES}
+        ${PORTFOLIO_SOURCES}
         ${NETWORK_SOURCES}
         ${PLUGIN_SOURCES}
         ${ANALYSIS_CHANLUN_SOURCES}
