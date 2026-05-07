@@ -1,4 +1,4 @@
-﻿#ifndef THEMETOGGLEBUTTON_H
+#ifndef THEMETOGGLEBUTTON_H
 #define THEMETOGGLEBUTTON_H
 
 #include <QWidget>
@@ -53,13 +53,13 @@ public slots:
     // 设置背景颜色（用于动画）
     void setBackgroundColor(const QColor &color);
     // 外部主题变化响应
-    void onThemeChanged(ThemeManager::ThemeType newTheme);
+    void onThemeChanged(ThemeType newTheme);
 
-signals:
+    signals:
     void indicatorPositionChanged(qreal position);
     void backgroundColorChanged(const QColor &color);
     // 用户主动切换主题的信号
-    void themeSwitchRequested(ThemeManager::ThemeType targetTheme);
+    void themeSwitchRequested(ThemeType targetTheme);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -74,13 +74,13 @@ private:
     // 加载SVG图标（只加载一次，缓存）
     void loadIcons();
     // 根据位置计算目标主题
-    ThemeManager::ThemeType themeFromPosition(qreal position) const;
+    ThemeType themeFromPosition(qreal position) const;
     // 根据主题计算目标位置
-    qreal positionFromTheme(ThemeManager::ThemeType theme) const;
+    qreal positionFromTheme(ThemeType theme) const;
     // 更新颜色（从ThemeManager获取）
     void updateColors();
     // 执行切换动画
-    void animateTo(ThemeManager::ThemeType targetTheme);
+    void animateTo(ThemeType targetTheme);
 
     // 绘制各部分（优化：分层绘制，避免重复计算）
     void drawBackground(QPainter *painter);
@@ -98,7 +98,7 @@ private:
     int m_cornerRadius = 20;                ///< 圆角半径
 
     // 状态
-    ThemeManager::ThemeType m_currentTheme = ThemeManager::ThemeType::Dark;  ///< 当前主题
+    ThemeType m_currentTheme = ThemeType::Dark; ///< 当前主题
     qreal m_indicatorPosition = 0.0;        ///< 指示器位置（0=Light, 1=Dark, 2=EyeCare）
     bool m_isHovered = false;               ///< 是否悬停
 
@@ -108,19 +108,14 @@ private:
     QColor m_iconColorNormal;               ///< 图标正常颜色
     QColor m_iconColorActive;               ///< 图标激活颜色
 
-    // SVG渲染器（缓存，避免重复加载文件）
-    QSvgRenderer *m_iconLight = nullptr;    ///< 太阳/亮色图标
-    QSvgRenderer *m_iconDark = nullptr;     ///< 月亮/暗色图标
-    QSvgRenderer *m_iconEyeCare = nullptr;  ///< 眼睛/护眼图标
-
     // 动画
     QPropertyAnimation *m_positionAnimation = nullptr;  ///< 位置动画
     QPropertyAnimation *m_colorAnimation = nullptr;     ///< 颜色动画
 
-    // 绘图优化（缓存路径）
-    QPainterPath m_backgroundPath;          ///< 背景路径（用于避免重复计算）
-    QPainterPath m_indicatorPath;           ///< 指示器路径
-    bool m_pathCacheValid = false;          ///< 路径缓存是否有效
+    // SVG图标渲染器（静态缓存）
+    static QSvgRenderer* s_sunIcon; ///< 太阳图标
+    static QSvgRenderer* s_moonIcon; ///< 月亮图标
+    static QSvgRenderer* s_eyeIcon; ///< 护眼图标
 };
 
 #endif // THEMETOGGLEBUTTON_H

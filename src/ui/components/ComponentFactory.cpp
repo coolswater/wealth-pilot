@@ -133,8 +133,8 @@ void ComponentFactory::applyDefaultStyle(QWidget* widget)
     // 应用深色主题背景
     widget->setAutoFillBackground(true);
     QPalette pal = widget->palette();
-    pal.setColor(QPalette::Window, ThemeColors::backgroundPrimary());
-    pal.setColor(QPalette::WindowText, ThemeColors::textPrimary());
-    pal.setColor(QPalette::Text, ThemeColors::textPrimary());
+    pal.setColor(QPalette::Window, QColor(Tokens::Colors::BgBase));
+    pal.setColor(QPalette::WindowText, QColor(Tokens::Colors::TextPrimary));
+    pal.setColor(QPalette::Text, QColor(Tokens::Colors::TextPrimary));
     widget->setPalette(pal);
 }

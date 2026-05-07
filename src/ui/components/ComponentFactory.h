@@ -22,7 +22,7 @@
 #include <functional>
 #include <memory>
 
-#include "ThemeColors.h"
+#include "core/config/Tokens.h"
 
 /**
  * @brief 组件工厂类

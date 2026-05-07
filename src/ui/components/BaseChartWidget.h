@@ -24,8 +24,6 @@
 #include <QTimer>
 #include <memory>
 
-#include "ThemeColors.h"
-
 /**
  * @brief 图表组件基类
  *

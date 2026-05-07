@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file AlertSettingDialog.cpp
  * @brief 预警设置对话框实现
  */
@@ -10,6 +10,7 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHeaderView>
+#include <QLabel>
 #include <QMessageBox>
 
 using namespace Tokens;
@@ -46,13 +47,20 @@ void AlertSettingDialog::onAddAlert()
 
     // 设置预警类型
     switch (m_typeCombo->currentIndex()) {
-    case 0: condition.type = AlertType::PriceBreakUp; break;
-    case 1: condition.type = AlertType::PriceBreakDown; break;
-    case 2: condition.type = AlertType::MaGoldenCross; break;
-    case 3: condition.type = AlertType::MaDeathCross; break;
-    case 4: condition.type = AlertType::VolumeSpike; break;
-    case 5: condition.type = AlertType::RsiOverbought; break;
-    case 6: condition.type = AlertType::RsiOversold; break;
+    case 0: condition.type = SmartAlertType::PriceBreakUp;
+        break;
+    case 1: condition.type = SmartAlertType::PriceBreakDown;
+        break;
+    case 2: condition.type = SmartAlertType::MaGoldenCross;
+        break;
+    case 3: condition.type = SmartAlertType::MaDeathCross;
+        break;
+    case 4: condition.type = SmartAlertType::VolumeSpike;
+        break;
+    case 5: condition.type = SmartAlertType::RsiOverbought;
+        break;
+    case 6: condition.type = SmartAlertType::RsiOversold;
+        break;
     }
 
     condition.threshold = m_thresholdSpin->value();
@@ -129,7 +137,7 @@ void AlertSettingDialog::onTestWebhook()
     // 创建测试预警
     AlertTrigger testTrigger;
     testTrigger.symbol = m_currentSymbol.isEmpty() ? QStringLiteral("sh600000") : m_currentSymbol;
-    testTrigger.type = AlertType::PriceBreakUp;
+    testTrigger.type = SmartAlertType::PriceBreakUp;
     testTrigger.triggerValue = 10.50;
     testTrigger.threshold = 10.00;
     testTrigger.triggerTime = QDateTime::currentDateTime();
@@ -322,17 +330,17 @@ void AlertSettingDialog::updateAlertTable()
     }
 }
 
-QString AlertSettingDialog::alertTypeToString(AlertType type) const
+QString AlertSettingDialog::alertTypeToString(SmartAlertType type) const
 {
     switch (type) {
-    case AlertType::PriceBreakUp: return QStringLiteral("价格突破上限");
-    case AlertType::PriceBreakDown: return QStringLiteral("价格突破下限");
-    case AlertType::MaGoldenCross: return QStringLiteral("均线金叉");
-    case AlertType::MaDeathCross: return QStringLiteral("均线死叉");
-    case AlertType::VolumeSpike: return QStringLiteral("成交量异动");
-    case AlertType::RsiOverbought: return QStringLiteral("RSI超买");
-    case AlertType::RsiOversold: return QStringLiteral("RSI超卖");
-    case AlertType::Custom: return QStringLiteral("自定义");
+    case SmartAlertType::PriceBreakUp: return QStringLiteral("价格突破上限");
+    case SmartAlertType::PriceBreakDown: return QStringLiteral("价格突破下限");
+    case SmartAlertType::MaGoldenCross: return QStringLiteral("均线金叉");
+    case SmartAlertType::MaDeathCross: return QStringLiteral("均线死叉");
+    case SmartAlertType::VolumeSpike: return QStringLiteral("成交量异动");
+    case SmartAlertType::RsiOverbought: return QStringLiteral("RSI超买");
+    case SmartAlertType::RsiOversold: return QStringLiteral("RSI超卖");
+    case SmartAlertType::Custom: return QStringLiteral("自定义");
     default: return QStringLiteral("未知");
     }
 }

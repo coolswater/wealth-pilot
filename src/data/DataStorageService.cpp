@@ -539,8 +539,7 @@ bool DataStorageService::saveNews(const NewsItem& news)
     params[":title"] = news.title;
     params[":content"] = news.content;
     params[":source"] = news.source;
-    params[":category"] = news.categories.isEmpty() ? "" : news.categories.first();
-    params[":url"] = news.url;
+    params[":category"] = news.category;
     params[":importance"] = 0;  // NewsItem 没有 importance 字段
     params[":publish_time"] = news.publishTime;
     
@@ -567,8 +566,7 @@ bool DataStorageService::saveNewsBatch(const QVector<NewsItem>& newsList)
         params[":title"] = news.title;
         params[":content"] = news.content;
         params[":source"] = news.source;
-        params[":category"] = news.categories.isEmpty() ? "" : news.categories.first();
-        params[":url"] = news.url;
+        params[":category"] = news.category;
         params[":importance"] = 0;
         params[":publish_time"] = news.publishTime;
         batchData.append(params);
@@ -604,9 +602,8 @@ QVector<NewsItem> DataStorageService::getLatestNews(int count)
         item.source = row["source"].toString();
         QString category = row["category"].toString();
         if (!category.isEmpty()) {
-            item.categories.append(category);
+            item.category = category;
         }
-        item.url = row["url"].toString();
         item.publishTime = row["publish_time"].toDateTime();
         items.append(item);
     }

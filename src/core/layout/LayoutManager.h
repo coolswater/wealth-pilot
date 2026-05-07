@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file LayoutManager.h
  * @brief 布局管理器 - 多屏布局保存与恢复
  *
@@ -17,6 +17,7 @@
 
 #include <QObject>
 #include <QMap>
+#include <QDateTime>
 #include <QVector>
 #include <QString>
 #include <QRect>

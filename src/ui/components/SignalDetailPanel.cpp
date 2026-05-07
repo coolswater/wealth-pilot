@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file SignalDetailPanel.cpp
  * @brief 信号详情面板实现
  *
@@ -7,6 +7,7 @@
  */
 
 #include "SignalDetailPanel.h"
+#include "core/config/Tokens.h"
 #include <QScrollArea>
 #include <QProgressBar>
 #include <QHeaderView>

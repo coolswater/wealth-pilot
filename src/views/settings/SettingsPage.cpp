@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file SettingsPage.cpp
  * @brief 设置页面实现 - 参考风控页面样式优化
  */
@@ -429,8 +429,8 @@ void SettingsPage::onThemeChanged(int index)
 {
     Q_UNUSED(index);
     saveSettings();
-    
-    ThemeManager::ThemeType themeType = static_cast<ThemeManager::ThemeType>(d->themeCombo->currentIndex());
+
+    ThemeType themeType = static_cast<ThemeType>(d->themeCombo->currentIndex());
     ThemeManager::instance()->setTheme(themeType);
     
     LOG_INFO(QString("Theme changed to: %1").arg(d->themeCombo->currentText()));

@@ -137,7 +137,8 @@ void TitleBarWidget::initConnections()
 
     // 连接主题管理器的信号到主窗口
     connect(d->m_themeButton, &ThemeToggleButton::themeSwitchRequested,
-            [](ThemeManager::ThemeType type) {
+            [](ThemeType type)
+            {
                 qDebug() << "User requested theme change to:" << static_cast<int>(type);
             });
 }

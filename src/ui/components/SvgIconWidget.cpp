@@ -1,6 +1,7 @@
 #include "SvgIconWidget.h"
 #include "SvgIconEngine.h"
 #include "src/ui/ThemeManager.h"
+#include "core/config/Tokens.h"
 
 QIcon SvgIconWidget::icon(const QString& path, const QColor& color)
 {
@@ -8,7 +9,27 @@ QIcon SvgIconWidget::icon(const QString& path, const QColor& color)
 }
 QIcon SvgIconWidget::themedIcon(const QString& path, const QString& colorRole)
 {
-    QColor color = ThemeManager::instance()->color(colorRole);
+    QColor color;
+    if (colorRole == QStringLiteral("primary"))
+    {
+        color = QColor(Tokens::Colors::Primary);
+    }
+    else if (colorRole == QStringLiteral("danger"))
+    {
+        color = QColor(Tokens::Colors::Danger);
+    }
+    else if (colorRole == QStringLiteral("success"))
+    {
+        color = QColor(Tokens::Colors::Success);
+    }
+    else if (colorRole == QStringLiteral("warning"))
+    {
+        color = QColor(Tokens::Colors::Warning);
+    }
+    else
+    {
+        color = QColor(Tokens::Colors::TextPrimary);
+    }
     return QIcon(new SvgIconEngine(path, color));
 }
 QList<QIcon> SvgIconWidget::batchCreate(const QStringList& paths, const QSize& size)

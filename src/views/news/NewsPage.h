@@ -88,7 +88,7 @@ private slots:
     void onCategoryClicked(const QString& category);
     void onCardClicked();
     void onDetailRequested(const NewsCardData& data);
-    void onNewsReceived(const QVector<NewsItem>& news);
+    void onNewsReceived(const QString& symbol, const QVector<NewsItem>& news);
 
 private:
     void setupUI();

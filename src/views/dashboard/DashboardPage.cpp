@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file DashboardPage.cpp
  * @brief 金融行情综合看板页面实现 - 六宫格布局
  *
@@ -2483,7 +2483,7 @@ bool DashboardPage::loadFromDatabase()
         d->newsList->clear();
         for (const auto& news : newsItems) {
             QString timeStr = news.publishTime.toString("HH:mm");
-            QString category = news.categories.isEmpty() ? QStringLiteral("新闻") : news.categories.first();
+            QString category = news.category.isEmpty() ? QStringLiteral("新闻") : news.category;
             QString displayText = QString("[%1] %2").arg(category, news.title);
             QListWidgetItem* item = new QListWidgetItem(displayText);
             item->setData(Qt::UserRole, news.id);

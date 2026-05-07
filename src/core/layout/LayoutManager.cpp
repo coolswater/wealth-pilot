@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file LayoutManager.cpp
  * @brief 布局管理器实现
  */
@@ -12,6 +12,7 @@
 #include <QScreen>
 #include <QFile>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QJsonArray>
 #include <QUuid>
 

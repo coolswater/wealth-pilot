@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file AlertSettingDialog.h
  * @brief 预警设置对话框 - 配置预警条件和推送方式
  *
@@ -16,6 +16,7 @@
 #include <QPushButton>
 #include <QTableWidget>
 #include <QLineEdit>
+#include "src/trading/AlertManager.h"
 #include "core/alert/SmartAlertSystem.h"
 
 class AlertSettingDialog : public QDialog
@@ -38,7 +39,7 @@ private:
     void setupUI();
     void loadAlertConditions();
     void updateAlertTable();
-    QString alertTypeToString(AlertType type) const;
+    QString alertTypeToString(SmartAlertType type) const;
 
     // 预警设置
     QComboBox* m_typeCombo = nullptr;

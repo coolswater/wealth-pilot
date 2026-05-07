@@ -1,6 +1,6 @@
-/**
+﻿/**
  * @file SmartAlertSystem.cpp
- * @brief 智能预警系统实现
+ * @brief 鏅鸿兘棰勮绯荤粺瀹炵幇
  */
 
 #include "SmartAlertSystem.h"
@@ -13,6 +13,7 @@
 #include <QJsonObject>
 #include <QApplication>
 #include <QMessageBox>
+
 
 SmartAlertSystem* SmartAlertSystem::instance()
 {
@@ -183,9 +184,12 @@ void SmartAlertSystem::checkPriceAlert(const QString& symbol, double price)
 
         bool triggered = false;
 
-        if (condition.type == AlertType::PriceBreakUp) {
+        if (condition.type == SmartAlertType::PriceBreakUp)
+        {
             triggered = price >= condition.threshold;
-        } else if (condition.type == AlertType::PriceBreakDown) {
+        }
+        else if (condition.type == SmartAlertType::PriceBreakDown)
+        {
             triggered = price <= condition.threshold;
         }
 
@@ -247,14 +251,15 @@ void SmartAlertSystem::checkMaAlert(const QString& symbol)
             continue;
         }
 
-        if (condition.type == AlertType::MaGoldenCross) {
+        if (condition.type == SmartAlertType::MaGoldenCross)
+        {
             // 简化的金叉判断：MA5 > MA10
             if (ma5 > ma10) {
                 AlertTrigger trigger;
                 trigger.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
                 trigger.conditionId = condition.id;
                 trigger.symbol = symbol;
-                trigger.type = AlertType::MaGoldenCross;
+                trigger.type = SmartAlertType::MaGoldenCross;
                 trigger.triggerValue = ma5;
                 trigger.threshold = ma10;
                 trigger.triggerTime = QDateTime::currentDateTime();
@@ -267,14 +272,16 @@ void SmartAlertSystem::checkMaAlert(const QString& symbol)
                 emit alertTriggered(trigger);
                 pushDesktopNotification(trigger);
             }
-        } else if (condition.type == AlertType::MaDeathCross) {
+        }
+        else if (condition.type == SmartAlertType::MaDeathCross)
+        {
             // 死叉判断：MA5 < MA10
             if (ma5 < ma10) {
                 AlertTrigger trigger;
                 trigger.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
                 trigger.conditionId = condition.id;
                 trigger.symbol = symbol;
-                trigger.type = AlertType::MaDeathCross;
+                trigger.type = SmartAlertType::MaDeathCross;
                 trigger.triggerValue = ma5;
                 trigger.threshold = ma10;
                 trigger.triggerTime = QDateTime::currentDateTime();
@@ -298,17 +305,18 @@ void SmartAlertSystem::checkVolumeAlert(const QString& symbol, qint64 volume)
             continue;
         }
 
-        if (condition.type == AlertType::VolumeSpike) {
+        if (condition.type == SmartAlertType::VolumeSpike)
+        {
             // 成交量异动：超过阈值倍数
             qint64 avgVolume = condition.params[QStringLiteral("avgVolume")].toLongLong();
-            double multiplier = condition.params[QStringLiteral("multiplier")].toDouble(3.0);
+            double multiplier = condition.params[QStringLiteral("multiplier")].toDouble();
 
             if (avgVolume > 0 && volume > avgVolume * multiplier) {
                 AlertTrigger trigger;
                 trigger.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
                 trigger.conditionId = condition.id;
                 trigger.symbol = symbol;
-                trigger.type = AlertType::VolumeSpike;
+                trigger.type = SmartAlertType::VolumeSpike;
                 trigger.triggerValue = volume;
                 trigger.threshold = avgVolume * multiplier;
                 trigger.triggerTime = QDateTime::currentDateTime();
@@ -327,7 +335,7 @@ void SmartAlertSystem::checkVolumeAlert(const QString& symbol, qint64 volume)
 
 void SmartAlertSystem::checkRsiAlert(const QString& symbol)
 {
-    // TODO: 实现RSI计算和预警
+    /// TODO: 实现RSI计算和预警
     Q_UNUSED(symbol);
 }
 
@@ -388,17 +396,17 @@ QString SmartAlertSystem::generateConditionId() const
     return QUuid::createUuid().toString(QUuid::WithoutBraces);
 }
 
-QString SmartAlertSystem::alertTypeToString(AlertType type) const
+QString SmartAlertSystem::alertTypeToString(SmartAlertType type) const
 {
     switch (type) {
-    case AlertType::PriceBreakUp: return QStringLiteral("价格突破上限");
-    case AlertType::PriceBreakDown: return QStringLiteral("价格突破下限");
-    case AlertType::MaGoldenCross: return QStringLiteral("均线金叉");
-    case AlertType::MaDeathCross: return QStringLiteral("均线死叉");
-    case AlertType::VolumeSpike: return QStringLiteral("成交量异动");
-    case AlertType::RsiOverbought: return QStringLiteral("RSI超买");
-    case AlertType::RsiOversold: return QStringLiteral("RSI超卖");
-    case AlertType::Custom: return QStringLiteral("自定义条件");
+    case SmartAlertType::PriceBreakUp: return QStringLiteral("价格突破上限");
+    case SmartAlertType::PriceBreakDown: return QStringLiteral("价格突破下限");
+    case SmartAlertType::MaGoldenCross: return QStringLiteral("均线金叉");
+    case SmartAlertType::MaDeathCross: return QStringLiteral("均线死叉");
+    case SmartAlertType::VolumeSpike: return QStringLiteral("成交量异动");
+    case SmartAlertType::RsiOverbought: return QStringLiteral("RSI超买");
+    case SmartAlertType::RsiOversold: return QStringLiteral("RSI超卖");
+    case SmartAlertType::Custom: return QStringLiteral("自定义条件");
     default: return QStringLiteral("未知");
     }
 }
@@ -410,7 +418,7 @@ QString SmartAlertSystem::generateAlertMessage(const AlertTrigger& trigger) cons
     return QString(QStringLiteral("【%1】%2 %3，当前值：%4，阈值：%5"))
         .arg(typeStr)
         .arg(trigger.symbol)
-        .arg(trigger.triggerValue >= trigger.threshold ? QStringLiteral("触发") : QStringLiteral("触发"))
+        .arg(trigger.triggerValue >= trigger.threshold ? QStringLiteral("瑙﹀彂") : QStringLiteral("瑙﹀彂"))
         .arg(trigger.triggerValue, 0, 'f', 2)
         .arg(trigger.threshold, 0, 'f', 2);
 }

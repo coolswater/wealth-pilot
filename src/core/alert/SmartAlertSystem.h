@@ -26,7 +26,8 @@
 /**
  * @brief 预警类型
  */
-enum class AlertType {
+enum class SmartAlertType
+{
     PriceBreakUp,       ///< 价格突破上限
     PriceBreakDown,     ///< 价格突破下限
     MaGoldenCross,      ///< 均线金叉
@@ -56,7 +57,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(PushMethods)
 struct AlertCondition {
     QString id;                     ///< 条件ID
     QString symbol;                 ///< 股票代码
-    AlertType type;                 ///< 预警类型
+    SmartAlertType type; ///< 预警类型
     double threshold = 0.0;         ///< 阈值
     QString groupName;              ///< 分组名称
     bool enabled = true;            ///< 是否启用
@@ -76,7 +77,7 @@ struct AlertTrigger {
     QString id;                     ///< 记录ID
     QString conditionId;            ///< 条件ID
     QString symbol;                 ///< 股票代码
-    AlertType type;                 ///< 预警类型
+    SmartAlertType type; ///< 预警类型
     double triggerValue = 0.0;      ///< 触发值
     double threshold = 0.0;         ///< 阈值
     QDateTime triggerTime;          ///< 触发时间
@@ -198,7 +199,7 @@ private:
 
     // 辅助方法
     QString generateConditionId() const;
-    QString alertTypeToString(AlertType type) const;
+    QString alertTypeToString(SmartAlertType type) const;
     QString generateAlertMessage(const AlertTrigger& trigger) const;
 
     // 数据成员

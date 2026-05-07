@@ -174,7 +174,7 @@ void BaseChartWidget::paintCrosshair(QPainter& painter)
 
 void BaseChartWidget::paintBorder(QPainter& painter)
 {
-    painter.setPen(QPen(ThemeColors::border(), 1));
+    painter.setPen(QPen(QColor(Tokens::Colors::Border), 1));
     painter.drawRect(m_chartRect);
 }
 

@@ -1,10 +1,11 @@
-/**
+﻿/**
  * @file NewsPage.cpp
  * @brief 新闻资讯页面实现 - 垂直滚动卡片列表设计
  */
 
 #include "NewsPage.h"
 #include "core/config/Tokens.h"
+#include "market/NewsDataSource.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -260,8 +261,8 @@ void NewsPage::initializePage()
     if (isInitialized()) return;
     
     // 初始化数据源
-    d->dataSource = new NewsDataSource(this);
-    connect(d->dataSource, &NewsDataSource::newsReceived,
+    d->dataSource = NewsDataSource::instance();
+    connect(d->dataSource, &NewsDataSource::newsUpdated,
             this, &NewsPage::onNewsReceived);
     
     setInitialized(true);
@@ -499,7 +500,7 @@ void NewsPage::onDetailRequested(const NewsCardData& data)
     showDetailDialog(data);
 }
 
-void NewsPage::onNewsReceived(const QVector<NewsItem>& news)
+void NewsPage::onNewsReceived(const QString& symbol, const QVector<NewsItem>& news)
 {
     d->allNews.clear();
     
