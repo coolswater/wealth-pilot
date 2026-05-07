@@ -59,7 +59,7 @@ public:
     /**
      * @brief 设置信号列表
      */
-    void setSignals(const QVector<Analysis::UnifiedSignal>& signals);
+    void setSignals(const QVector<Analysis::UnifiedSignal>& signalList);
 
     /**
      * @brief 清空信号
@@ -139,7 +139,7 @@ private:
     void setupUI();
     void setupConnections();
     void updateSignalPositions();
-    void onSignalMarkerClicked(const SignalMarker& marker);
+    void onSignalMarkerClicked(const SignalMarkerData& marker);
     void onKLineCrosshairMoved(const QDateTime& time, double price);
     void onVisibleRangeChanged(int startIndex, int count);
 

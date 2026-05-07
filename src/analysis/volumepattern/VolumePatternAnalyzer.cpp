@@ -17,7 +17,7 @@ namespace VolumePattern {
 struct VolumePatternAnalyzer::Impl {
     QVector<Analysis::KLine> klines;
     VolumePatternResult result;
-    QVector<Analysis::UnifiedSignal> signals;
+    QVector<Analysis::UnifiedSignal> currentSignalList;
 
     // 参数
     int volumeMAPeriod = 20;        // 成交量均线周期
@@ -87,8 +87,8 @@ Analysis::AnalysisResult VolumePatternAnalyzer::analyze(const QVector<Analysis::
     d->result.analysisTime = QDateTime::currentDateTime();
 
     // 7. 生成信号
-    d->signals = generateSignals(d->result);
-    result.signals = d->signals;
+    d->currentSignalList = generateSignals(d->result);
+    result.generatedSignals = d->currentSignalList;
     result.isValid = true;
 
     emit analysisCompleted(result);
@@ -100,12 +100,12 @@ void VolumePatternAnalyzer::clear()
 {
     d->klines.clear();
     d->result = VolumePatternResult();
-    d->signals.clear();
+    d->currentSignalList.clear();
 }
 
 QVector<Analysis::UnifiedSignal> VolumePatternAnalyzer::currentSignals() const
 {
-    return d->signals;
+    return d->currentSignalList;
 }
 
 const VolumePatternResult& VolumePatternAnalyzer::volumeResult() const
@@ -383,9 +383,9 @@ double VolumePatternAnalyzer::calculateVolumeRatio(qint64 volume, double avgVolu
 
 QVector<Analysis::UnifiedSignal> VolumePatternAnalyzer::generateSignals(const VolumePatternResult& result)
 {
-    QVector<Analysis::UnifiedSignal> signals;
+    QVector<Analysis::UnifiedSignal> signalList;
 
-    if (result.bars.isEmpty()) return signals;
+    if (result.bars.isEmpty()) return signalList;
 
     const auto& lastBar = result.bars.last();
 
@@ -459,9 +459,9 @@ QVector<Analysis::UnifiedSignal> VolumePatternAnalyzer::generateSignals(const Vo
     signal.metadata["priceChange"] = lastBar.priceChange;
     signal.metadata["amplitude"] = lastBar.amplitude;
 
-    signals.append(signal);
+    signalList.append(signal);
 
-    return signals;
+    return signalList;
 }
 
 } // namespace VolumePattern

@@ -36,7 +36,7 @@ struct ChanLunAnalyzer::Impl {
 // ============================================================================
 
 ChanLunAnalyzer::ChanLunAnalyzer(QObject* parent)
-    : QObject(parent)
+    : IAnalyzer(parent)
     , d(std::make_unique<Impl>())
 {
     LOG_DEBUG("ChanLunAnalyzer created");
@@ -760,6 +760,76 @@ bool ChanLunAnalyzer::isPenBroken(const Pen& current, const Pen& previous)
     }
     
     return false;
+}
+
+// ============================================================================
+// IAnalyzer 接口实现
+// ============================================================================
+
+Analysis::AnalysisResult ChanLunAnalyzer::analyze(const QVector<Analysis::KLine>& klines)
+{
+    // 转换K线数据格式
+    QVector<RawKLine> rawKlines;
+    for (const auto& kline : klines) {
+        RawKLine raw;
+        raw.time = kline.time;
+        raw.open = kline.open;
+        raw.high = kline.high;
+        raw.low = kline.low;
+        raw.close = kline.close;
+        raw.volume = kline.volume;
+        rawKlines.append(raw);
+    }
+
+    // 执行缠论分析
+    auto result = analyze(rawKlines);
+
+    // 转换结果
+    Analysis::AnalysisResult analysisResult;
+    analysisResult.isValid = result.tradeSignals.size() > 0;
+    analysisResult.errorMessage = "";
+
+    // 转换信号
+    for (const auto& signal : result.tradeSignals) {
+        Analysis::UnifiedSignal unifiedSignal;
+        unifiedSignal.id = QString::number(signal.index);
+        unifiedSignal.source = Analysis::TheoryType::ChanLun;
+        unifiedSignal.direction = (signal.type == SignalType::Buy1 || signal.type == SignalType::Buy2 || signal.type == SignalType::Buy3) 
+                               ? Analysis::SignalDirection::Bullish :
+                           (signal.type == SignalType::Sell1 || signal.type == SignalType::Sell2 || signal.type == SignalType::Sell3) 
+                               ? Analysis::SignalDirection::Bearish :
+                               Analysis::SignalDirection::Neutral;
+        unifiedSignal.strength = Analysis::SignalStrength::Strong;
+        unifiedSignal.time = signal.time;
+        unifiedSignal.price = signal.price;
+        unifiedSignal.confidence = 75.0;
+        unifiedSignal.description = signal.description;
+        analysisResult.generatedSignals.append(unifiedSignal);
+    }
+
+    return analysisResult;
+}
+
+QVector<Analysis::UnifiedSignal> ChanLunAnalyzer::currentSignals() const
+{
+    QVector<Analysis::UnifiedSignal> signalList;
+    for (const auto& signal : d->result.tradeSignals) {
+        Analysis::UnifiedSignal unifiedSignal;
+        unifiedSignal.id = QString::number(signal.index);
+        unifiedSignal.source = Analysis::TheoryType::ChanLun;
+        unifiedSignal.direction = (signal.type == SignalType::Buy1 || signal.type == SignalType::Buy2 || signal.type == SignalType::Buy3) 
+                               ? Analysis::SignalDirection::Bullish :
+                           (signal.type == SignalType::Sell1 || signal.type == SignalType::Sell2 || signal.type == SignalType::Sell3) 
+                               ? Analysis::SignalDirection::Bearish :
+                               Analysis::SignalDirection::Neutral;
+        unifiedSignal.strength = Analysis::SignalStrength::Strong;
+        unifiedSignal.time = signal.time;
+        unifiedSignal.price = signal.price;
+        unifiedSignal.confidence = 75.0;
+        unifiedSignal.description = signal.description;
+        signalList.append(unifiedSignal);
+    }
+    return signalList;
 }
 
 } // namespace ChanLun

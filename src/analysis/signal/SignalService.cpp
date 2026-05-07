@@ -17,9 +17,9 @@ struct SignalService::Impl {
     QVector<IAnalyzer*> analyzers;
     SignalFilter* filter = nullptr;
 
-    QMap<QString, QVector<UnifiedSignal>> symbolSignals;
-    QMap<QString, CompositeSignal> compositeSignals;
-    QVector<SignalSubscription> subscriptions;
+    QMap<QString, QVector<UnifiedSignal>> symbolSignalMap;
+    QMap<QString, CompositeSignal> compositeSignalMap;
+    QVector<SignalSubscription> subscriptionList;
 
     AlertConfig alertConfig;
     QTimer* updateTimer = nullptr;
@@ -72,24 +72,24 @@ void SignalService::analyzeSymbol(const QString& symbol, const QVector<KLine>& k
 {
     if (klines.isEmpty()) return;
 
-    QVector<UnifiedSignal> allSignals;
+    QVector<UnifiedSignal> allSignalList;
 
     // 使用所有注册的分析器进行分析
     for (auto* analyzer : d->analyzers) {
         auto result = analyzer->analyze(klines);
         if (result.isValid) {
-            allSignals.append(result.signals);
+            allSignalList.append(result.generatedSignals);
         }
     }
 
     // 保存信号
-    d->symbolSignals[symbol] = allSignals;
+    d->symbolSignalMap[symbol] = allSignalList;
 
     // 使用信号过滤器生成综合信号
-    if (d->filter && !allSignals.isEmpty()) {
-        auto composite = d->filter->filter(allSignals);
+    if (d->filter && !allSignalList.isEmpty()) {
+        auto composite = d->filter->filter(allSignalList);
         composite.symbol = symbol;
-        d->compositeSignals[symbol] = composite;
+        d->compositeSignalMap[symbol] = composite;
 
         // 发送综合信号
         emit compositeSignalGenerated(composite);
@@ -101,7 +101,7 @@ void SignalService::analyzeSymbol(const QString& symbol, const QVector<KLine>& k
     }
 
     // 发送信号更新
-    emit signalsUpdated(symbol, allSignals);
+    emit signalsUpdated(symbol, allSignalList);
     emit analysisCompleted(symbol);
 }
 
@@ -114,31 +114,31 @@ void SignalService::analyzeBatch(const QMap<QString, QVector<KLine>>& data)
 
 QVector<UnifiedSignal> SignalService::getSignals(const QString& symbol) const
 {
-    return d->symbolSignals.value(symbol);
+    return d->symbolSignalMap.value(symbol);
 }
 
 QVector<CompositeSignal> SignalService::getCompositeSignals() const
 {
-    return d->compositeSignals.values();
+    return d->compositeSignalMap.values();
 }
 
 void SignalService::addSubscription(const SignalSubscription& subscription)
 {
-    d->subscriptions.append(subscription);
+    d->subscriptionList.append(subscription);
 }
 
 void SignalService::removeSubscription(const QString& symbol)
 {
-    for (int i = d->subscriptions.size() - 1; i >= 0; --i) {
-        if (d->subscriptions[i].symbol == symbol) {
-            d->subscriptions.removeAt(i);
+    for (int i = d->subscriptionList.size() - 1; i >= 0; --i) {
+        if (d->subscriptionList[i].symbol == symbol) {
+            d->subscriptionList.removeAt(i);
         }
     }
 }
 
 QVector<SignalSubscription> SignalService::subscriptions() const
 {
-    return d->subscriptions;
+    return d->subscriptionList;
 }
 
 void SignalService::setAlertConfig(const AlertConfig& config)
@@ -155,11 +155,11 @@ QMap<QString, QVariant> SignalService::getIndicatorData(const QString& symbol) c
 {
     QMap<QString, QVariant> data;
 
-    auto signals = d->symbolSignals.value(symbol);
-    auto composite = d->compositeSignals.value(symbol);
+    auto signalList = d->symbolSignalMap.value(symbol);
+    auto composite = d->compositeSignalMap.value(symbol);
 
     // 添加各理论指标数据
-    for (const auto& signal : signals) {
+    for (const auto& signal : signalList) {
         QString key = signal.theoryName() + "_signal";
         data[key] = QVariant::fromValue(signal);
     }
@@ -174,7 +174,7 @@ QMap<QString, QVariant> SignalService::getOverlayConfig(const QString& symbol) c
 {
     QMap<QString, QVariant> config;
 
-    auto composite = d->compositeSignals.value(symbol);
+    auto composite = d->compositeSignalMap.value(symbol);
 
     // 配置K线图叠加显示
     config["show_signals"] = true;
@@ -232,7 +232,7 @@ bool SignalService::shouldAlert(const CompositeSignal& signal)
 void SignalService::sendAlert(const QString& symbol, const CompositeSignal& signal)
 {
     qDebug() << "Alert triggered for" << symbol
-             << "Direction:" << signal.direction
+             << "Direction:" << static_cast<int>(signal.direction)
              << "Confidence:" << signal.confidence;
 
     // 发送预警信号
@@ -244,7 +244,7 @@ void SignalService::sendAlert(const QString& symbol, const CompositeSignal& sign
 
 void SignalService::notifySubscribers(const QString& symbol, const CompositeSignal& signal)
 {
-    for (const auto& subscription : d->subscriptions) {
+    for (const auto& subscription : d->subscriptionList) {
         if (subscription.symbol == symbol || subscription.symbol == "ALL") {
             // 检查订阅条件
             if (signal.confidence >= subscription.minConfidence) {
@@ -258,3 +258,4 @@ void SignalService::notifySubscribers(const QString& symbol, const CompositeSign
 
 } // namespace Analysis
 } // namespace WealthPilot
+

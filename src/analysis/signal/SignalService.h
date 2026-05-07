@@ -15,7 +15,7 @@
 #ifndef SIGNAL_SERVICE_H
 #define SIGNAL_SERVICE_H
 
-#include "AnalysisTypes.h"
+#include "../AnalysisTypes.h"
 #include "SignalFilter.h"
 #include "../IAnalyzer.h"
 #include <QObject>
@@ -145,7 +145,7 @@ signals:
     /**
      * @brief 信号更新
      */
-    void signalsUpdated(const QString& symbol, const QVector<UnifiedSignal>& signals);
+    void signalsUpdated(const QString& symbol, const QVector<UnifiedSignal>& updatedSignals);
 
     /**
      * @brief 综合信号生成

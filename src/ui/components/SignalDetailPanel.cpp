@@ -307,12 +307,12 @@ void SignalDetailPanel::updateSummary()
 
 void SignalDetailPanel::updateTheoryDetails()
 {
-    const auto& signals = d->compositeSignal.sourceSignals;
+    const auto& signalList = d->compositeSignal.sourceSignals;
 
-    d->theoryTable->setRowCount(signals.size());
+    d->theoryTable->setRowCount(signalList.size());
 
-    for (int i = 0; i < signals.size(); ++i) {
-        const auto& signal = signals[i];
+    for (int i = 0; i < signalList.size(); ++i) {
+        const auto& signal = signalList[i];
 
         // 理论名称
         auto* theoryItem = new QTableWidgetItem(signal.theoryName());

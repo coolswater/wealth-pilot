@@ -21,7 +21,7 @@ namespace ElliottWave {
 struct ElliottWaveAnalyzer::Impl {
     QVector<Analysis::KLine> klines;        // K线缓存
     ElliottWaveResult result;               // 分析结果
-    QVector<Analysis::UnifiedSignal> signals; // 当前信号
+    QVector<Analysis::UnifiedSignal> currentSignalList; // 当前信号
 
     // 波浪识别参数
     int minWaveBars = 3;                    // 最小波浪K线数
@@ -109,8 +109,8 @@ Analysis::AnalysisResult ElliottWaveAnalyzer::analyze(const QVector<Analysis::KL
     d->result.isValid = true;
 
     // 生成信号
-    d->signals = generateSignals(count);
-    result.signals = d->signals;
+    d->currentSignalList = generateSignals(count);
+    result.generatedSignals = d->currentSignalList;
     result.isValid = true;
 
     emit analysisCompleted(result);
@@ -129,12 +129,12 @@ void ElliottWaveAnalyzer::clear()
 {
     d->klines.clear();
     d->result = ElliottWaveResult();
-    d->signals.clear();
+    d->currentSignalList.clear();
 }
 
 QVector<Analysis::UnifiedSignal> ElliottWaveAnalyzer::currentSignals() const
 {
-    return d->signals;
+    return d->currentSignalList;
 }
 
 // ============================================================================
@@ -495,10 +495,10 @@ double ElliottWaveAnalyzer::checkFibonacciRatios(const QVector<Wave>& waves)
 
 QVector<Analysis::UnifiedSignal> ElliottWaveAnalyzer::generateSignals(const WaveCount& count)
 {
-    QVector<Analysis::UnifiedSignal> signals;
+    QVector<Analysis::UnifiedSignal> result;
 
     if (count.waves.isEmpty()) {
-        return signals;
+        return result;
     }
 
     const Wave& lastWave = count.waves.last();
@@ -548,9 +548,9 @@ QVector<Analysis::UnifiedSignal> ElliottWaveAnalyzer::generateSignals(const Wave
     signal.metadata["wavePattern"] = static_cast<int>(count.currentPattern);
     signal.metadata["fibonacciScore"] = count.confidence;
 
-    signals.append(signal);
+    result.append(signal);
 
-    return signals;
+    return result;
 }
 
 double ElliottWaveAnalyzer::calculateConfidence(const WaveCount& count, const Wave& wave)

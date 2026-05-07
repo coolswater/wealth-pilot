@@ -132,9 +132,9 @@ void KLineChartWithSignals::setCompositeSignal(const Analysis::CompositeSignal& 
     updateSignalPositions();
 }
 
-void KLineChartWithSignals::setSignals(const QVector<Analysis::UnifiedSignal>& signals)
+void KLineChartWithSignals::setSignals(const QVector<Analysis::UnifiedSignal>& signalList)
 {
-    d->signalMarker->setSignals(signals);
+    d->signalMarker->setSignals(signalList);
     updateSignalPositions();
 }
 
@@ -215,16 +215,16 @@ void KLineChartWithSignals::updateSignalPositions()
     d->signalMarker->updatePositions();
 }
 
-void KLineChartWithSignals::onSignalMarkerClicked(const SignalMarker& marker)
+void KLineChartWithSignals::onSignalMarkerClicked(const SignalMarkerData& markerData)
 {
     // 转换为UnifiedSignal
     Analysis::UnifiedSignal signal;
-    signal.source = marker.theory;
-    signal.direction = marker.direction;
-    signal.strength = marker.strength;
-    signal.time = marker.time;
-    signal.price = marker.price;
-    signal.description = marker.description;
+    signal.source = markerData.theory;
+    signal.direction = markerData.direction;
+    signal.strength = markerData.strength;
+    signal.time = markerData.time;
+    signal.price = markerData.price;
+    signal.description = markerData.description;
 
     emit signalClicked(signal);
 

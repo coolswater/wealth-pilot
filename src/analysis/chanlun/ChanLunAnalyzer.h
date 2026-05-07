@@ -18,6 +18,7 @@
 #ifndef CHANLUN_ANALYZER_H
 #define CHANLUN_ANALYZER_H
 
+#include "../IAnalyzer.h"
 #include "ChanLunTypes.h"
 #include <QObject>
 #include <QVector>
@@ -31,9 +32,10 @@ namespace ChanLun {
  *
  * @details 提供缠论完整分析功能，支持增量更新
  */
-class ChanLunAnalyzer : public QObject
+class ChanLunAnalyzer : public Analysis::IAnalyzer
 {
     Q_OBJECT
+    Q_INTERFACES(WealthPilot::Analysis::IAnalyzer)
 
 public:
     /**
@@ -46,6 +48,15 @@ public:
      * @brief 析构函数
      */
     ~ChanLunAnalyzer() override;
+
+    // ========== IAnalyzer 接口实现 ==========
+
+    QString name() const override { return QStringLiteral("缠论"); }
+    Analysis::TheoryType theoryType() const override { return Analysis::TheoryType::ChanLun; }
+
+    Analysis::AnalysisResult analyze(const QVector<Analysis::KLine>& klines) override;
+    void clear() override;
+    QVector<Analysis::UnifiedSignal> currentSignals() const override;
 
     // ========== 主要接口 ==========
     
@@ -67,11 +78,6 @@ public:
      * @brief 获取当前分析结果
      */
     const ChanLunResult& result() const;
-    
-    /**
-     * @brief 清空分析结果
-     */
-    void clear();
 
     // ========== 分步分析接口 ==========
     

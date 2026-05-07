@@ -26,6 +26,23 @@ namespace WealthPilot {
 namespace UI {
 
 /**
+ * @brief 单个信号标记数据
+ */
+struct SignalMarkerData {
+    int barIndex = -1;              // K线索引
+    double price = 0.0;             // 价格位置
+    Analysis::SignalDirection direction; // 信号方向
+    Analysis::SignalStrength strength;   // 信号强度
+    Analysis::TheoryType theory;    // 理论来源
+    QString description;            // 描述
+    QDateTime time;                 // 时间
+
+    // 绘制位置（由组件计算）
+    int x = 0;
+    int y = 0;
+};
+
+/**
  * @brief 信号标记样式
  */
 struct SignalMarkerStyle {
@@ -52,23 +69,6 @@ struct SignalMarkerStyle {
 };
 
 /**
- * @brief 单个信号标记
- */
-struct SignalMarker {
-    int barIndex = -1;              // K线索引
-    double price = 0.0;             // 价格位置
-    Analysis::SignalDirection direction; // 信号方向
-    Analysis::SignalStrength strength;   // 信号强度
-    Analysis::TheoryType theory;    // 理论来源
-    QString description;            // 描述
-    QDateTime time;                 // 时间
-
-    // 绘制位置（由组件计算）
-    int x = 0;
-    int y = 0;
-};
-
-/**
  * @brief 信号标记组件
  *
  * @details 作为K线图的叠加层，显示交易信号标记
@@ -86,7 +86,7 @@ public:
     /**
      * @brief 设置信号列表
      */
-    void setSignals(const QVector<Analysis::UnifiedSignal>& signals);
+    void setSignals(const QVector<Analysis::UnifiedSignal>& signalList);
 
     /**
      * @brief 添加信号
@@ -106,7 +106,7 @@ public:
     /**
      * @brief 获取信号列表
      */
-    QVector<SignalMarker> signals() const;
+    QVector<SignalMarkerData> markers() const;
 
     // ========== 样式设置 ==========
 
@@ -158,12 +158,12 @@ signals:
     /**
      * @brief 信号被点击
      */
-    void signalClicked(const SignalMarker& marker);
+    void signalClicked(const SignalMarkerData& marker);
 
     /**
      * @brief 信号被悬停
      */
-    void signalHovered(const SignalMarker& marker);
+    void signalHovered(const SignalMarkerData& marker);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -177,32 +177,32 @@ private:
     /**
      * @brief 绘制单个信号标记
      */
-    void drawMarker(QPainter& painter, const SignalMarker& marker);
+    void drawMarker(QPainter& painter, const SignalMarkerData& marker);
 
     /**
      * @brief 绘制买入信号
      */
-    void drawBuySignal(QPainter& painter, const SignalMarker& marker);
+    void drawBuySignal(QPainter& painter, const SignalMarkerData& marker);
 
     /**
      * @brief 绘制卖出信号
      */
-    void drawSellSignal(QPainter& painter, const SignalMarker& marker);
+    void drawSellSignal(QPainter& painter, const SignalMarkerData& marker);
 
     /**
      * @brief 绘制中性信号
      */
-    void drawNeutralSignal(QPainter& painter, const SignalMarker& marker);
+    void drawNeutralSignal(QPainter& painter, const SignalMarkerData& marker);
 
     /**
      * @brief 获取信号颜色
      */
-    QColor getMarkerColor(const SignalMarker& marker) const;
+    QColor getMarkerColor(const SignalMarkerData& marker) const;
 
     /**
      * @brief 检测鼠标悬停
      */
-    SignalMarker* getMarkerAt(const QPoint& pos);
+    SignalMarkerData* getMarkerAt(const QPoint& pos);
 
 private:
     struct Impl;

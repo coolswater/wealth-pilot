@@ -147,7 +147,7 @@ struct AnalysisResult {
     QDateTime analysisTime;             ///< 分析时间
     bool isValid = false;               ///< 是否有效
     QString errorMessage;               ///< 错误信息
-    QVector<UnifiedSignal> signals;     ///< 产生的信号
+    QVector<UnifiedSignal> generatedSignals;     ///< 产生的信号
 };
 
 // ============================================================================

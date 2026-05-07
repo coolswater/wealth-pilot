@@ -10,6 +10,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QToolTip>
+#include <QMouseEvent>
 #include <QDebug>
 #include <QtMath>
 
@@ -17,7 +18,7 @@ namespace WealthPilot {
 namespace UI {
 
 struct SignalMarker::Impl {
-    QVector<SignalMarker> signals;
+    QVector<SignalMarkerData> markers;
     SignalMarkerStyle style;
 
     // 坐标映射函数
@@ -33,7 +34,7 @@ struct SignalMarker::Impl {
     Analysis::TheoryType filterTheory = Analysis::TheoryType::ElliottWave; // 默认显示所有
 
     // 鼠标悬停
-    SignalMarker* hoveredMarker = nullptr;
+    SignalMarkerData* hoveredMarker = nullptr;
 
     Impl() {
         style.labelFont = QFont("Microsoft YaHei", 8);
@@ -50,55 +51,55 @@ SignalMarker::SignalMarker(QWidget* parent)
 
 SignalMarker::~SignalMarker() = default;
 
-void SignalMarker::setSignals(const QVector<Analysis::UnifiedSignal>& signals)
+void SignalMarker::setSignals(const QVector<Analysis::UnifiedSignal>& signalList)
 {
-    d->signals.clear();
+    d->markers.clear();
 
-    for (const auto& signal : signals) {
-        SignalMarker marker;
+    for (const auto& signal : signalList) {
+        SignalMarkerData marker;
         marker.direction = signal.direction;
         marker.strength = signal.strength;
         marker.theory = signal.source;
         marker.description = signal.description;
         marker.time = signal.time;
         marker.price = signal.price;
-        d->signals.append(marker);
+        d->markers.append(marker);
     }
 
     updatePositions();
     update();
 }
 
-void SignalMarker::addSignal(const Analysis::UnifiedSignal& signal)
+void SignalMarker::addSignal(const Analysis::UnifiedSignal& unifiedSignal)
 {
-    SignalMarker marker;
-    marker.direction = signal.direction;
-    marker.strength = signal.strength;
-    marker.theory = signal.source;
-    marker.description = signal.description;
-    marker.time = signal.time;
-    marker.price = signal.price;
+    SignalMarkerData marker;
+    marker.direction = unifiedSignal.direction;
+    marker.strength = unifiedSignal.strength;
+    marker.theory = unifiedSignal.source;
+    marker.description = unifiedSignal.description;
+    marker.time = unifiedSignal.time;
+    marker.price = unifiedSignal.price;
 
-    d->signals.append(marker);
+    d->markers.append(marker);
     updatePositions();
     update();
 }
 
-void SignalMarker::setCompositeSignal(const Analysis::CompositeSignal& signal)
+void SignalMarker::setCompositeSignal(const Analysis::CompositeSignal& compositeSignal)
 {
     clearSignals();
-    setSignals(signal.sourceSignals);
+    setSignals(compositeSignal.sourceSignals);
 }
 
 void SignalMarker::clearSignals()
 {
-    d->signals.clear();
+    d->markers.clear();
     update();
 }
 
-QVector<SignalMarker> SignalMarker::signals() const
+QVector<SignalMarkerData> SignalMarker::markers() const
 {
-    return d->signals;
+    return d->markers;
 }
 
 void SignalMarker::setStyle(const SignalMarkerStyle& style)
@@ -127,7 +128,7 @@ void SignalMarker::updatePositions()
         return;
     }
 
-    for (auto& marker : d->signals) {
+    for (auto& marker : d->markers) {
         // 计算X坐标（基于时间/K线索引）
         if (marker.barIndex >= 0) {
             marker.x = d->timeToX(marker.barIndex);
@@ -187,7 +188,7 @@ void SignalMarker::paintEvent(QPaintEvent* event)
     painter.setRenderHint(QPainter::Antialiasing);
 
     // 绘制所有信号标记
-    for (const auto& marker : d->signals) {
+    for (const auto& marker : d->markers) {
         // 应用理论过滤
         if (d->filterTheory != Analysis::TheoryType::ElliottWave &&
             marker.theory != d->filterTheory) {
@@ -205,7 +206,7 @@ void SignalMarker::paintEvent(QPaintEvent* event)
     }
 }
 
-void SignalMarker::drawMarker(QPainter& painter, const SignalMarker& marker)
+void SignalMarker::drawMarker(QPainter& painter, const SignalMarkerData& marker)
 {
     switch (marker.direction) {
         case Analysis::SignalDirection::Bullish:
@@ -234,7 +235,7 @@ void SignalMarker::drawMarker(QPainter& painter, const SignalMarker& marker)
     }
 }
 
-void SignalMarker::drawBuySignal(QPainter& painter, const SignalMarker& marker)
+void SignalMarker::drawBuySignal(QPainter& painter, const SignalMarkerData& marker)
 {
     QColor color = getMarkerColor(marker);
     painter.setPen(QPen(color, 2));
@@ -266,7 +267,7 @@ void SignalMarker::drawBuySignal(QPainter& painter, const SignalMarker& marker)
     }
 }
 
-void SignalMarker::drawSellSignal(QPainter& painter, const SignalMarker& marker)
+void SignalMarker::drawSellSignal(QPainter& painter, const SignalMarkerData& marker)
 {
     QColor color = getMarkerColor(marker);
     painter.setPen(QPen(color, 2));
@@ -297,7 +298,7 @@ void SignalMarker::drawSellSignal(QPainter& painter, const SignalMarker& marker)
     }
 }
 
-void SignalMarker::drawNeutralSignal(QPainter& painter, const SignalMarker& marker)
+void SignalMarker::drawNeutralSignal(QPainter& painter, const SignalMarkerData& marker)
 {
     QColor color = d->style.neutralColor;
     painter.setPen(QPen(color, 2));
@@ -308,7 +309,7 @@ void SignalMarker::drawNeutralSignal(QPainter& painter, const SignalMarker& mark
     painter.drawEllipse(QPoint(marker.x, marker.y), size, size);
 }
 
-QColor SignalMarker::getMarkerColor(const SignalMarker& marker) const
+QColor SignalMarker::getMarkerColor(const SignalMarkerData& marker) const
 {
     if (marker.direction == Analysis::SignalDirection::Bullish) {
         if (marker.strength == Analysis::SignalStrength::VeryStrong ||
@@ -327,9 +328,9 @@ QColor SignalMarker::getMarkerColor(const SignalMarker& marker) const
     return d->style.neutralColor;
 }
 
-SignalMarker* SignalMarker::getMarkerAt(const QPoint& pos)
+SignalMarkerData* SignalMarker::getMarkerAt(const QPoint& pos)
 {
-    for (auto& marker : d->signals) {
+    for (auto& marker : d->markers) {
         int dx = pos.x() - marker.x;
         int dy = pos.y() - marker.y;
         int distance = static_cast<int>(qSqrt(dx * dx + dy * dy));

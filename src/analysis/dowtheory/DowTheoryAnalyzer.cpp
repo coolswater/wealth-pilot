@@ -17,7 +17,7 @@ namespace DowTheory {
 struct DowTheoryAnalyzer::Impl {
     QVector<Analysis::KLine> klines;
     DowTheoryResult result;
-    QVector<Analysis::UnifiedSignal> signals;
+    QVector<Analysis::UnifiedSignal> currentSignalList;
 
     // 参数
     int minTrendBars = 5;           // 最小趋势K线数
@@ -69,8 +69,8 @@ Analysis::AnalysisResult DowTheoryAnalyzer::analyze(const QVector<Analysis::KLin
     d->result.analysisTime = QDateTime::currentDateTime();
 
     // 6. 生成信号
-    d->signals = generateSignals(d->result);
-    result.signals = d->signals;
+    d->currentSignalList = generateSignals(d->result);
+    result.generatedSignals = d->currentSignalList;
     result.isValid = true;
 
     emit analysisCompleted(result);
@@ -82,12 +82,12 @@ void DowTheoryAnalyzer::clear()
 {
     d->klines.clear();
     d->result = DowTheoryResult();
-    d->signals.clear();
+    d->currentSignalList.clear();
 }
 
 QVector<Analysis::UnifiedSignal> DowTheoryAnalyzer::currentSignals() const
 {
-    return d->signals;
+    return d->currentSignalList;
 }
 
 const DowTheoryResult& DowTheoryAnalyzer::dowResult() const
@@ -368,7 +368,7 @@ TrendDirection DowTheoryAnalyzer::currentTrend() const
 
 QVector<Analysis::UnifiedSignal> DowTheoryAnalyzer::generateSignals(const DowTheoryResult& result)
 {
-    QVector<Analysis::UnifiedSignal> signals;
+    QVector<Analysis::UnifiedSignal> signalList;
 
     // 主要趋势信号
     Analysis::UnifiedSignal primarySignal;
@@ -401,7 +401,7 @@ QVector<Analysis::UnifiedSignal> DowTheoryAnalyzer::generateSignals(const DowThe
         primarySignal.strength = Analysis::SignalStrength::Weak;
     }
 
-    signals.append(primarySignal);
+    signalList.append(primarySignal);
 
     // 趋势反转信号
     if (result.hasTrendReversal) {
@@ -416,10 +416,10 @@ QVector<Analysis::UnifiedSignal> DowTheoryAnalyzer::generateSignals(const DowThe
         reversalSignal.confidence = 75.0;
         reversalSignal.description = QStringLiteral("检测到趋势反转信号");
 
-        signals.append(reversalSignal);
+        signalList.append(reversalSignal);
     }
 
-    return signals;
+    return signalList;
 }
 
 } // namespace DowTheory

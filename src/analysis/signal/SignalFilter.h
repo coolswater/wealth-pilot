@@ -18,7 +18,7 @@
 #ifndef SIGNAL_FILTER_H
 #define SIGNAL_FILTER_H
 
-#include "AnalysisTypes.h"
+#include "../AnalysisTypes.h"
 #include <QObject>
 #include <QVector>
 #include <QMap>
@@ -78,15 +78,15 @@ public:
 
     /**
      * @brief 过滤信号
-     * @param signals 来自各理论的信号列表
+     * @param inputSignals 来自各理论的信号列表
      * @return 过滤后的综合信号
      */
-    CompositeSignal filter(const QVector<UnifiedSignal>& signals);
+    CompositeSignal filter(const QVector<UnifiedSignal>& inputSignals);
 
     /**
      * @brief 批量过滤信号
      */
-    QVector<CompositeSignal> filterBatch(const QVector<UnifiedSignal>& signals);
+    QVector<CompositeSignal> filterBatch(const QVector<UnifiedSignal>& inputSignals);
 
     /**
      * @brief 计算信号得分
@@ -96,7 +96,7 @@ public:
     /**
      * @brief 检查信号一致性
      */
-    bool checkConsistency(const QVector<UnifiedSignal>& signals);
+    bool checkConsistency(const QVector<UnifiedSignal>& inputSignals);
 
     /**
      * @brief 获取统计信息
@@ -112,7 +112,7 @@ signals:
     /**
      * @brief 过滤完成
      */
-    void filteringCompleted(const QVector<CompositeSignal>& signals);
+    void filteringCompleted(const QVector<CompositeSignal>& resultSignals);
 
 private:
     // ========== 内部方法 ==========
@@ -120,17 +120,17 @@ private:
     /**
      * @brief 按理论分组信号
      */
-    QMap<TheoryType, QVector<UnifiedSignal>> groupByTheory(const QVector<UnifiedSignal>& signals);
+    QMap<TheoryType, QVector<UnifiedSignal>> groupByTheory(const QVector<UnifiedSignal>& inputSignals);
 
     /**
      * @brief 计算综合置信度
      */
-    double calculateCompositeConfidence(const QVector<UnifiedSignal>& signals);
+    double calculateCompositeConfidence(const QVector<UnifiedSignal>& inputSignals);
 
     /**
      * @brief 确定综合方向
      */
-    SignalDirection determineCompositeDirection(const QVector<UnifiedSignal>& signals);
+    SignalDirection determineCompositeDirection(const QVector<UnifiedSignal>& inputSignals);
 
     /**
      * @brief 评估风险收益比

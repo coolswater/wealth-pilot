@@ -44,24 +44,24 @@ const SignalFilterConfig& SignalFilter::config() const
     return d->config;
 }
 
-CompositeSignal SignalFilter::filter(const QVector<UnifiedSignal>& signals)
+CompositeSignal SignalFilter::filter(const QVector<UnifiedSignal>& inputSignals)
 {
     CompositeSignal result;
     result.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     result.time = QDateTime::currentDateTime();
 
-    d->totalSignalsProcessed += signals.size();
+    d->totalSignalsProcessed += inputSignals.size();
 
-    if (signals.isEmpty()) {
+    if (inputSignals.isEmpty()) {
         return result;
     }
 
     // 1. 按理论分组
-    auto groups = groupByTheory(signals);
+    auto groups = groupByTheory(inputSignals);
 
     // 2. 过滤弱信号
-    QVector<UnifiedSignal> strongSignals;
-    for (const auto& signal : signals) {
+    QVector<UnifiedSignal> strongSignalList;
+    for (const auto& signal : inputSignals) {
         // 强度过滤
         if (signal.strength < d->config.minStrength) {
             d->signalsRejected++;
@@ -74,16 +74,16 @@ CompositeSignal SignalFilter::filter(const QVector<UnifiedSignal>& signals)
             continue;
         }
 
-        strongSignals.append(signal);
+        strongSignalList.append(signal);
         d->signalsPassed++;
     }
 
-    if (strongSignals.isEmpty()) {
+    if (strongSignalList.isEmpty()) {
         return result;
     }
 
     // 3. 检查理论数量
-    auto strongGroups = groupByTheory(strongSignals);
+    auto strongGroups = groupByTheory(strongSignalList);
     result.theoryCount = strongGroups.size();
 
     if (result.theoryCount < d->config.minTheoryCount) {
@@ -95,15 +95,15 @@ CompositeSignal SignalFilter::filter(const QVector<UnifiedSignal>& signals)
     }
 
     // 4. 计算综合方向
-    result.direction = determineCompositeDirection(strongSignals);
+    result.direction = determineCompositeDirection(strongSignalList);
 
     // 5. 计算综合置信度
-    result.confidence = calculateCompositeConfidence(strongSignals);
+    result.confidence = calculateCompositeConfidence(strongSignalList);
 
     // 6. 设置价格和时间
-    result.price = strongSignals.last().price;
-    result.symbol = strongSignals.last().symbol;
-    result.sourceSignals = strongSignals;
+    result.price = strongSignalList.last().price;
+    result.symbol = strongSignalList.last().symbol;
+    result.sourceSignals = strongSignalList;
 
     // 7. 评估风险收益比
     double riskReward = evaluateRiskReward(result);
@@ -120,20 +120,20 @@ CompositeSignal SignalFilter::filter(const QVector<UnifiedSignal>& signals)
     return result;
 }
 
-QVector<CompositeSignal> SignalFilter::filterBatch(const QVector<UnifiedSignal>& signals)
+QVector<CompositeSignal> SignalFilter::filterBatch(const QVector<UnifiedSignal>& inputSignals)
 {
     QVector<CompositeSignal> results;
 
     // 按时间和标的分组
-    QMap<QString, QVector<UnifiedSignal>> groupedSignals;
+    QMap<QString, QVector<UnifiedSignal>> groupedSignalMap;
 
-    for (const auto& signal : signals) {
+    for (const auto& signal : inputSignals) {
         QString key = signal.symbol + "_" + signal.time.toString("yyyyMMdd");
-        groupedSignals[key].append(signal);
+        groupedSignalMap[key].append(signal);
     }
 
     // 对每组信号进行过滤
-    for (auto it = groupedSignals.begin(); it != groupedSignals.end(); ++it) {
+    for (auto it = groupedSignalMap.begin(); it != groupedSignalMap.end(); ++it) {
         auto composite = filter(it.value());
         if (composite.confidence > 0) {
             results.append(composite);
@@ -163,15 +163,15 @@ double SignalFilter::calculateScore(const UnifiedSignal& signal)
     return score;
 }
 
-bool SignalFilter::checkConsistency(const QVector<UnifiedSignal>& signals)
+bool SignalFilter::checkConsistency(const QVector<UnifiedSignal>& inputSignals)
 {
-    if (signals.size() < 2) return true;
+    if (inputSignals.size() < 2) return true;
 
     int bullishCount = 0;
     int bearishCount = 0;
     int neutralCount = 0;
 
-    for (const auto& signal : signals) {
+    for (const auto& signal : inputSignals) {
         switch (signal.direction) {
             case SignalDirection::Bullish: bullishCount++; break;
             case SignalDirection::Bearish: bearishCount++; break;
@@ -180,7 +180,7 @@ bool SignalFilter::checkConsistency(const QVector<UnifiedSignal>& signals)
     }
 
     // 如果超过70%的信号方向一致，则认为一致
-    int total = signals.size();
+    int total = inputSignals.size();
     double maxRatio = qMax(bullishCount, bearishCount) * 1.0 / total;
 
     return maxRatio >= 0.7;
@@ -200,25 +200,25 @@ QMap<QString, QVariant> SignalFilter::statistics() const
 }
 
 QMap<TheoryType, QVector<UnifiedSignal>> SignalFilter::groupByTheory(
-    const QVector<UnifiedSignal>& signals)
+    const QVector<UnifiedSignal>& inputSignals)
 {
     QMap<TheoryType, QVector<UnifiedSignal>> groups;
 
-    for (const auto& signal : signals) {
+    for (const auto& signal : inputSignals) {
         groups[signal.source].append(signal);
     }
 
     return groups;
 }
 
-double SignalFilter::calculateCompositeConfidence(const QVector<UnifiedSignal>& signals)
+double SignalFilter::calculateCompositeConfidence(const QVector<UnifiedSignal>& inputSignals)
 {
-    if (signals.isEmpty()) return 0.0;
+    if (inputSignals.isEmpty()) return 0.0;
 
     double weightedSum = 0.0;
     double totalWeight = 0.0;
 
-    for (const auto& signal : signals) {
+    for (const auto& signal : inputSignals) {
         double weight = d->config.theoryWeights.value(signal.source, 1.0);
         weightedSum += signal.confidence * weight;
         totalWeight += weight;
@@ -227,21 +227,21 @@ double SignalFilter::calculateCompositeConfidence(const QVector<UnifiedSignal>& 
     double confidence = totalWeight > 0 ? weightedSum / totalWeight : 0.0;
 
     // 一致性加成
-    if (checkConsistency(signals)) {
+    if (checkConsistency(inputSignals)) {
         confidence *= 1.2; // 20%加成
     }
 
     return qMin(100.0, confidence);
 }
 
-SignalDirection SignalFilter::determineCompositeDirection(const QVector<UnifiedSignal>& signals)
+SignalDirection SignalFilter::determineCompositeDirection(const QVector<UnifiedSignal>& inputSignals)
 {
-    if (signals.isEmpty()) return SignalDirection::Neutral;
+    if (inputSignals.isEmpty()) return SignalDirection::Neutral;
 
     int bullishScore = 0;
     int bearishScore = 0;
 
-    for (const auto& signal : signals) {
+    for (const auto& signal : inputSignals) {
         double weight = d->config.theoryWeights.value(signal.source, 1.0);
         double score = static_cast<int>(signal.strength) * weight;
 
