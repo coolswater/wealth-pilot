@@ -1,5 +1,6 @@
 #include "OrderDialog.h"
-#include "ui/components/PageStyles.h"
+#include "ui/components/StyleHelper.h"
+#include "core/config/Tokens.h"
 #include <QMessageBox>
 #include <cmath>
 
@@ -27,22 +28,20 @@ void OrderDialog::initUI()
     mainLayout->setSpacing(12);
     mainLayout->setContentsMargins(20, 20, 20, 20);
     
-    QString groupBoxStyle = PageStyles::groupBox();
-    QString inputStyle = PageStyles::inputField();
-    QString btnStyle = PageStyles::secondaryButton();
+
     
     // Header
     QFrame *headerFrame = new QFrame(this);
     QHBoxLayout *headerLayout = new QHBoxLayout(headerFrame);
     
     m_instrumentLabel = new QLabel("选择合约", this);
-    m_instrumentLabel->setStyleSheet(PageStyles::titleText());
+
     
     m_priceLabel = new QLabel("--", this);
-    m_priceLabel->setStyleSheet(PageStyles::valueText());
+
     
     m_changeLabel = new QLabel("--", this);
-    m_changeLabel->setStyleSheet(PageStyles::subtitleText());
+
     
     headerLayout->addWidget(m_instrumentLabel);
     headerLayout->addStretch();
@@ -53,33 +52,33 @@ void OrderDialog::initUI()
     
     // Order Type Group
     QGroupBox *orderTypeGroup = new QGroupBox("订单类型", this);
-    orderTypeGroup->setStyleSheet(groupBoxStyle);
+
     QGridLayout *orderTypeLayout = new QGridLayout(orderTypeGroup);
     orderTypeLayout->setSpacing(10);
     
     orderTypeLayout->addWidget(new QLabel("类型:", this), 0, 0);
     m_orderTypeCombo = new QComboBox(this);
     m_orderTypeCombo->addItems({"市价", "限价", "止损", "止损限价", "冰山"});
-    m_orderTypeCombo->setStyleSheet(PageStyles::comboBox());
+
     orderTypeLayout->addWidget(m_orderTypeCombo, 0, 1);
     
     orderTypeLayout->addWidget(new QLabel("方向:", this), 1, 0);
     m_directionCombo = new QComboBox(this);
     m_directionCombo->addItems({"买入/多头", "卖出/空头"});
-    m_directionCombo->setStyleSheet(PageStyles::comboBox());
+
     orderTypeLayout->addWidget(m_directionCombo, 1, 1);
     
     orderTypeLayout->addWidget(new QLabel("开平:", this), 2, 0);
     m_openCloseCombo = new QComboBox(this);
     m_openCloseCombo->addItems({"开仓", "平仓", "平今", "平昨"});
-    m_openCloseCombo->setStyleSheet(PageStyles::comboBox());
+
     orderTypeLayout->addWidget(m_openCloseCombo, 2, 1);
     
     mainLayout->addWidget(orderTypeGroup);
     
     // Price & Quantity Group
     QGroupBox *priceGroup = new QGroupBox("价格与数量", this);
-    priceGroup->setStyleSheet(groupBoxStyle);
+
     QGridLayout *priceLayout = new QGridLayout(priceGroup);
     priceLayout->setSpacing(10);
     
@@ -89,7 +88,7 @@ void OrderDialog::initUI()
     m_priceSpinBox->setMinimum(0.0);
     m_priceSpinBox->setMaximum(999999.99);
     m_priceSpinBox->setSingleStep(0.01);
-    m_priceSpinBox->setStyleSheet(inputStyle);
+
     priceLayout->addWidget(m_priceSpinBox, 0, 1);
     
     priceLayout->addWidget(new QLabel("触发价:", this), 1, 0);
@@ -99,7 +98,7 @@ void OrderDialog::initUI()
     m_stopPriceSpinBox->setMaximum(999999.99);
     m_stopPriceSpinBox->setSingleStep(0.01);
     m_stopPriceSpinBox->setEnabled(false);
-    m_stopPriceSpinBox->setStyleSheet(inputStyle);
+
     priceLayout->addWidget(m_stopPriceSpinBox, 1, 1);
     
     priceLayout->addWidget(new QLabel("数量:", this), 2, 0);
@@ -107,7 +106,7 @@ void OrderDialog::initUI()
     m_quantitySpinBox->setMinimum(1);
     m_quantitySpinBox->setMaximum(99999);
     m_quantitySpinBox->setValue(1);
-    m_quantitySpinBox->setStyleSheet(inputStyle);
+
     priceLayout->addWidget(m_quantitySpinBox, 2, 1);
     
     // Quick quantity buttons
@@ -115,7 +114,7 @@ void OrderDialog::initUI()
     for (int qty : {1, 2, 5, 10, 20, 50, 100}) {
         QPushButton *btn = new QPushButton(QString::number(qty), this);
         btn->setFixedSize(40, 28);
-        btn->setStyleSheet(btnStyle);
+        StyleHelper::setSecondaryButton(btn);
         connect(btn, &QPushButton::clicked, this, [this, qty]() { m_quantitySpinBox->setValue(qty); });
         quickQtyLayout->addWidget(btn);
     }
@@ -124,105 +123,105 @@ void OrderDialog::initUI()
     
     // Calculation Group
     QGroupBox *calcGroup = new QGroupBox("计算", this);
-    calcGroup->setStyleSheet(groupBoxStyle);
+
     QGridLayout *calcLayout = new QGridLayout(calcGroup);
     calcLayout->setSpacing(10);
     
     calcLayout->addWidget(new QLabel("保证金:", this), 0, 0);
     m_marginLabel = new QLabel("0.00", this);
-    m_marginLabel->setStyleSheet(PageStyles::valueText());
+
     calcLayout->addWidget(m_marginLabel, 0, 1);
     
     calcLayout->addWidget(new QLabel("手续费:", this), 1, 0);
     m_commissionLabel = new QLabel("0.00", this);
-    m_commissionLabel->setStyleSheet(PageStyles::valueText());
+
     calcLayout->addWidget(m_commissionLabel, 1, 1);
     
     calcLayout->addWidget(new QLabel("合计:", this), 2, 0);
     m_totalLabel = new QLabel("0.00", this);
-    m_totalLabel->setStyleSheet(PageStyles::valueText(PageStyles::warningColor()));
+
     calcLayout->addWidget(m_totalLabel, 2, 1);
     
     m_calculateBtn = new QPushButton("计算", this);
-    m_calculateBtn->setStyleSheet(btnStyle);
+    StyleHelper::setSecondaryButton(m_calculateBtn);
     calcLayout->addWidget(m_calculateBtn, 3, 0, 1, 2);
     mainLayout->addWidget(calcGroup);
     
     // Stop Loss & Take Profit Group
     QGroupBox *slTpGroup = new QGroupBox("止盈止损", this);
-    slTpGroup->setStyleSheet(groupBoxStyle);
+
     QGridLayout *slTpLayout = new QGridLayout(slTpGroup);
     slTpLayout->setSpacing(10);
     
     m_enableTakeProfitCheck = new QCheckBox("止盈:", this);
-    m_enableTakeProfitCheck->setStyleSheet(PageStyles::checkBox());
+
     slTpLayout->addWidget(m_enableTakeProfitCheck, 0, 0);
     m_takeProfitSpinBox = new QDoubleSpinBox(this);
     m_takeProfitSpinBox->setDecimals(2);
     m_takeProfitSpinBox->setMinimum(0.0);
     m_takeProfitSpinBox->setMaximum(999999.99);
     m_takeProfitSpinBox->setEnabled(false);
-    m_takeProfitSpinBox->setStyleSheet(inputStyle);
+
     slTpLayout->addWidget(m_takeProfitSpinBox, 0, 1);
     
     m_enableStopLossCheck = new QCheckBox("止损:", this);
-    m_enableStopLossCheck->setStyleSheet(PageStyles::checkBox());
+
     slTpLayout->addWidget(m_enableStopLossCheck, 1, 0);
     m_stopLossSpinBox = new QDoubleSpinBox(this);
     m_stopLossSpinBox->setDecimals(2);
     m_stopLossSpinBox->setMinimum(0.0);
     m_stopLossSpinBox->setMaximum(999999.99);
     m_stopLossSpinBox->setEnabled(false);
-    m_stopLossSpinBox->setStyleSheet(inputStyle);
+
     slTpLayout->addWidget(m_stopLossSpinBox, 1, 1);
     mainLayout->addWidget(slTpGroup);
     
     // Position & Account Info Group
     QGroupBox *infoGroup = new QGroupBox("持仓与账户", this);
-    infoGroup->setStyleSheet(groupBoxStyle);
+
     QGridLayout *infoLayout = new QGridLayout(infoGroup);
     infoLayout->setSpacing(10);
     
     infoLayout->addWidget(new QLabel("多头持仓:", this), 0, 0);
     m_longPosLabel = new QLabel("0", this);
-    m_longPosLabel->setStyleSheet(PageStyles::valueText());
+
     infoLayout->addWidget(m_longPosLabel, 0, 1);
     
     infoLayout->addWidget(new QLabel("空头持仓:", this), 1, 0);
     m_shortPosLabel = new QLabel("0", this);
-    m_shortPosLabel->setStyleSheet(PageStyles::valueText());
+
     infoLayout->addWidget(m_shortPosLabel, 1, 1);
     
     infoLayout->addWidget(new QLabel("可用资金:", this), 2, 0);
     m_availableLabel = new QLabel("0.00", this);
-    m_availableLabel->setStyleSheet(PageStyles::valueText(PageStyles::successColor()));
+
     infoLayout->addWidget(m_availableLabel, 2, 1);
     mainLayout->addWidget(infoGroup);
     
     // Risk Display Group
     QGroupBox *riskGroup = new QGroupBox("风险分析", this);
-    riskGroup->setStyleSheet(groupBoxStyle);
+
     QGridLayout *riskLayout = new QGridLayout(riskGroup);
     riskLayout->setSpacing(10);
     
     riskLayout->addWidget(new QLabel("风险比例:", this), 0, 0);
     m_riskRatioLabel = new QLabel("0.00%", this);
-    m_riskRatioLabel->setStyleSheet(PageStyles::valueText());
+
     riskLayout->addWidget(m_riskRatioLabel, 0, 1);
     
     riskLayout->addWidget(new QLabel("风险金额:", this), 1, 0);
     m_riskAmountLabel = new QLabel("0.00", this);
-    m_riskAmountLabel->setStyleSheet(PageStyles::valueText());
+
     riskLayout->addWidget(m_riskAmountLabel, 1, 1);
     
     riskLayout->addWidget(new QLabel("盈利比例:", this), 2, 0);
     m_profitRatioLabel = new QLabel("0.00%", this);
-    m_profitRatioLabel->setStyleSheet(PageStyles::valueText());
+
     riskLayout->addWidget(m_profitRatioLabel, 2, 1);
     
     riskLayout->addWidget(new QLabel("盈利金额:", this), 3, 0);
     m_profitAmountLabel = new QLabel("0.00", this);
-    m_profitAmountLabel->setStyleSheet(PageStyles::valueText());
+
     riskLayout->addWidget(m_profitAmountLabel, 3, 1);
     mainLayout->addWidget(riskGroup);
     
@@ -232,15 +231,15 @@ void OrderDialog::initUI()
     
     m_submitBtn = new QPushButton("提交订单", this);
     m_submitBtn->setMinimumHeight(40);
-    m_submitBtn->setStyleSheet(PageStyles::primaryButton());
+    StyleHelper::setPrimaryButton(m_submitBtn);
     
     m_cancelBtn = new QPushButton("取消", this);
     m_cancelBtn->setMinimumHeight(40);
-    m_cancelBtn->setStyleSheet(btnStyle);
+    StyleHelper::setSecondaryButton(m_cancelBtn);
     
     m_resetBtn = new QPushButton("重置", this);
     m_resetBtn->setMinimumHeight(40);
-    m_resetBtn->setStyleSheet(btnStyle);
+    StyleHelper::setSecondaryButton(m_resetBtn);
     
     btnLayout->addWidget(m_resetBtn);
     btnLayout->addWidget(m_cancelBtn);
@@ -248,8 +247,7 @@ void OrderDialog::initUI()
     mainLayout->addLayout(btnLayout);
     mainLayout->addStretch();
     
-    // Apply page background style
-    setStyleSheet(PageStyles::pageBackground());
+
 }
 
 void OrderDialog::initConnections()
@@ -356,8 +354,8 @@ void OrderDialog::updateCalculations()
     double total = margin + commission;
     m_totalLabel->setText(QString::number(total, 'f', 2));
     
-    QString totalColor = total > m_available ? PageStyles::errorColor() : PageStyles::successColor();
-    m_totalLabel->setStyleSheet(PageStyles::valueText(totalColor));
+    QString totalColor = total > m_available ? Tokens::Colors::Danger : Tokens::Colors::Success;
+    m_totalLabel->setStyleSheet(QString("QLabel { color: %1; }").arg(totalColor));
 }
 
 void OrderDialog::updateRiskDisplay()
@@ -376,8 +374,8 @@ void OrderDialog::updateRiskDisplay()
         m_riskAmountLabel->setText(QString::number(riskAmount, 'f', 2));
         m_riskRatioLabel->setText(QString::number(riskRatio, 'f', 2) + "%");
         
-        QString riskColor = riskRatio > 10 ? PageStyles::errorColor() : (riskRatio > 5 ? PageStyles::warningColor() : PageStyles::successColor());
-        m_riskRatioLabel->setStyleSheet(PageStyles::valueText(riskColor));
+        QString riskColor = riskRatio > 10 ? Tokens::Colors::Danger : (riskRatio > 5 ? Tokens::Colors::Warning : Tokens::Colors::Success);
+        m_riskRatioLabel->setStyleSheet(QString("QLabel { color: %1; }").arg(riskColor));
     } else {
         m_riskAmountLabel->setText("--");
         m_riskRatioLabel->setText("--");
