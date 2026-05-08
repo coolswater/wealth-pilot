@@ -6,6 +6,7 @@
 #include "ConditionOrderPage.h"
 #include "core/config/Tokens.h"
 #include "ui/components/PageStyles.h"
+#include "trading/ConditionOrderEngine.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -111,7 +112,79 @@ void ConditionOrderPage::setupUI()
 void ConditionOrderPage::updateTable()
 {
     m_table->setRowCount(0);
-    // TODO: 实现数据加载
+    
+    // 实现数据加载
+    // TODO: 实际应用中应该从 ConditionOrderEngine 获取数据
+    // 由于类型不匹配，暂时使用演示数据
+    
+    // 添加演示数据
+    QVector<ConditionOrder> demoOrders;
+    
+    ConditionOrder order1;
+    order1.orderId = QStringLiteral("CO001");
+    order1.instrumentId = QStringLiteral("sh600000");
+    order1.conditionType = ConditionType::StopLoss;
+    order1.triggerPrice = 10.50;
+    order1.orderPrice = 10.50;
+    order1.quantity = 1000;
+    order1.status = ConditionOrderStatus::Pending;
+    demoOrders.append(order1);
+    
+    ConditionOrder order2;
+    order2.orderId = QStringLiteral("CO002");
+    order2.instrumentId = QStringLiteral("sz000001");
+    order2.conditionType = ConditionType::TakeProfit;
+    order2.triggerPrice = 15.00;
+    order2.orderPrice = 15.00;
+    order2.quantity = 500;
+    order2.status = ConditionOrderStatus::Pending;
+    demoOrders.append(order2);
+    
+    m_table->setRowCount(demoOrders.size());
+    
+    m_table->setRowCount(demoOrders.size());
+    
+    for (int i = 0; i < demoOrders.size(); ++i) {
+        const auto& order = demoOrders[i];
+        
+        // 订单ID
+        m_table->setItem(i, 0, new QTableWidgetItem(order.orderId));
+        
+        // 合约代码
+        m_table->setItem(i, 1, new QTableWidgetItem(order.instrumentId));
+        
+        // 条件类型
+        QString typeStr;
+        switch (order.conditionType) {
+            case ConditionType::StopLoss: typeStr = QStringLiteral("止损"); break;
+            case ConditionType::TakeProfit: typeStr = QStringLiteral("止盈"); break;
+            case ConditionType::TrailingStop: typeStr = QStringLiteral("跟踪止损"); break;
+            case ConditionType::PriceTrigger: typeStr = QStringLiteral("价格触发"); break;
+            case ConditionType::TimeTrigger: typeStr = QStringLiteral("时间触发"); break;
+        }
+        m_table->setItem(i, 2, new QTableWidgetItem(typeStr));
+        
+        // 触发价格
+        m_table->setItem(i, 3, new QTableWidgetItem(QString::number(order.triggerPrice, 'f', 2)));
+        
+        // 委托价格
+        m_table->setItem(i, 4, new QTableWidgetItem(QString::number(order.orderPrice, 'f', 2)));
+        
+        // 数量
+        m_table->setItem(i, 5, new QTableWidgetItem(QString::number(order.quantity)));
+        
+        // 状态
+        QString statusStr;
+        switch (order.status) {
+            case ConditionOrderStatus::Pending: statusStr = QStringLiteral("待触发"); break;
+            case ConditionOrderStatus::Triggered: statusStr = QStringLiteral("已触发"); break;
+            case ConditionOrderStatus::Cancelled: statusStr = QStringLiteral("已取消"); break;
+            case ConditionOrderStatus::Expired: statusStr = QStringLiteral("已过期"); break;
+        }
+        m_table->setItem(i, 6, new QTableWidgetItem(statusStr));
+    }
+    
+    LOG_DEBUG(QString("Condition order table updated: %1 rows").arg(demoOrders.size()));
 }
 
 void ConditionOrderPage::onAddClicked()

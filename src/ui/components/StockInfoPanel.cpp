@@ -291,9 +291,28 @@ bool StockInfoPanel::loadQuoteFromCache()
 
 bool StockInfoPanel::loadQuoteFromDatabase()
 {
-    // TODO: 从数据库加载行情数据
-    // 暂时返回false，等待数据库实现
-    return false;
+    // 从数据库加载行情数据
+    if (m_stockCode.isEmpty()) return false;
+    
+    auto* dbService = DataStorageService::instance();
+    if (!dbService) return false;
+    
+    CachedQuoteData cachedData = dbService->getQuoteCache(m_stockCode);
+    if (cachedData.symbol.isEmpty() || cachedData.lastPrice <= 0) {
+        return false;
+    }
+    
+    // 转换为StockQuote
+    m_currentQuote.symbol = cachedData.symbol;
+    m_currentQuote.name = cachedData.name;
+    m_currentQuote.lastPrice = cachedData.lastPrice;
+    
+    LOG_INFO(QString("Quote loaded from database for %1: price=%2")
+        .arg(m_stockCode).arg(cachedData.lastPrice));
+    
+    // 更新显示
+    updateQuote(m_currentQuote);
+    return true;
 }
 
 void StockInfoPanel::loadQuoteFromNetwork()
@@ -348,8 +367,23 @@ void StockInfoPanel::saveQuoteToCache()
 
 void StockInfoPanel::saveQuoteToDatabase()
 {
-    // TODO: 保存到数据库
-    // 暂时不实现，等待数据库服务完善
+    // 保存到数据库
+    if (!m_currentQuote.isValid()) return;
+    
+    auto* dbService = DataStorageService::instance();
+    if (!dbService) return;
+    
+    // 转换为CachedQuoteData
+    CachedQuoteData data;
+    data.symbol = m_currentQuote.symbol;
+    data.name = m_currentQuote.name;
+    data.lastPrice = m_currentQuote.lastPrice;
+    
+    if (dbService->saveQuoteCache(m_stockCode, data)) {
+        LOG_DEBUG(QString("Quote saved to database: %1").arg(m_stockCode));
+    } else {
+        LOG_WARNING(QString("Failed to save quote to database: %1").arg(m_stockCode));
+    }
 }
 
 QString StockInfoPanel::quoteCacheKey() const

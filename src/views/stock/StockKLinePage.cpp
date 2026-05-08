@@ -789,8 +789,34 @@ bool StockKLinePage::loadTimeShareFromCache()
     QVariant baseVariant = cache->get(key + "_base");
     
     if (pricesVariant.isValid() && volumesVariant.isValid() && baseVariant.isValid()) {
-        // TODO: 反序列化分时数据
-        // 暂时返回false
+        // 反序列化分时数据
+        QVariantList pricesList = pricesVariant.toList();
+        QVariantList volumesList = volumesVariant.toList();
+        double basePrice = baseVariant.toDouble();
+        
+        if (pricesList.isEmpty() || volumesList.isEmpty()) {
+            return false;
+        }
+        
+        QVector<QPair<QDateTime, double>> prices;
+        QVector<qint64> volumes;
+        
+        for (int i = 0; i < pricesList.size() && i < volumesList.size(); ++i) {
+            QVariantMap priceMap = pricesList[i].toMap();
+            prices.append({
+                QDateTime::fromString(priceMap["time"].toString(), Qt::ISODate),
+                priceMap["price"].toDouble()
+            });
+            volumes.append(volumesList[i].toLongLong());
+        }
+        
+        if (!prices.isEmpty()) {
+            auto* timeShareChart = static_cast<TimeShareChart*>(m_timeShareWidget);
+            timeShareChart->setData(prices, volumes, basePrice);
+            m_infoLabel->setText(QStringLiteral("已从缓存加载分时数据"));
+            LOG_INFO(QString("TimeShare data loaded from cache: %1 points").arg(prices.size()));
+            return true;
+        }
     }
     
     return false;

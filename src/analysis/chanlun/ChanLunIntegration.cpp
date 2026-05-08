@@ -8,6 +8,7 @@
 
 #include "ChanLunIntegration.h"
 #include "ui/components/KLineChart.h"
+#include "utils/Logger.h"
 #include <QGraphicsScene>
 #include <QGraphicsItem>
 #include <QDebug>
@@ -141,9 +142,71 @@ void ChanLunIntegration::updateChartOverlay()
         return;
     }
     
-    // TODO: 实现图表叠加层绘制
-    // 这需要 KLineChart 提供图形场景访问接口
-    // 当前版本先提供数据接口，图形绘制由 KLineChart 内部实现
+    // 实现图表叠加层绘制
+    // 使用 KLineChart 的 addIndicator 方法添加缠论指标
+    
+    // 1. 绘制笔标记
+    if (!m_result.pens.isEmpty()) {
+        QVector<double> penMarks;
+        penMarks.resize(m_result.klines.size());
+        
+        for (const auto& pen : m_result.pens) {
+            if (pen.startKLineIndex >= 0 && pen.startKLineIndex < penMarks.size()) {
+                penMarks[pen.startKLineIndex] = pen.isUp() ? 1.0 : -1.0;
+            }
+            if (pen.endKLineIndex >= 0 && pen.endKLineIndex < penMarks.size()) {
+                penMarks[pen.endKLineIndex] = pen.isUp() ? -1.0 : 1.0;
+            }
+        }
+        
+        m_chart->addIndicator(QStringLiteral("ChanLun_Pens"), penMarks, QColor(255, 165, 0));
+    }
+    
+    // 2. 绘制买卖点标记
+    if (!m_result.tradeSignals.isEmpty()) {
+        QVector<double> buyPoints, sellPoints;
+        buyPoints.resize(m_result.klines.size());
+        sellPoints.resize(m_result.klines.size());
+        
+        for (const auto& signal : m_result.tradeSignals) {
+            if (signal.index >= 0 && signal.index < m_result.klines.size()) {
+                if (signal.isBuy()) {
+                    buyPoints[signal.index] = m_result.klines[signal.index].low;
+                } else {
+                    sellPoints[signal.index] = m_result.klines[signal.index].high;
+                }
+            }
+        }
+        
+        m_chart->addIndicator(QStringLiteral("ChanLun_Buy"), buyPoints, QColor(0, 255, 0));
+        m_chart->addIndicator(QStringLiteral("ChanLun_Sell"), sellPoints, QColor(255, 0, 0));
+    }
+    
+    // 3. 绘制中枢区间（使用布林带方式显示）
+    if (!m_result.pivots.isEmpty()) {
+        QVector<double> upperLine, lowerLine, middleLine;
+        upperLine.resize(m_result.klines.size());
+        lowerLine.resize(m_result.klines.size());
+        middleLine.resize(m_result.klines.size());
+        
+        for (const auto& pivot : m_result.pivots) {
+            double midPrice = pivot.middle();
+            for (int i = pivot.startKLineIndex; i <= pivot.endKLineIndex && i < m_result.klines.size(); ++i) {
+                upperLine[i] = pivot.zd;
+                lowerLine[i] = pivot.zg;
+                middleLine[i] = midPrice;
+            }
+        }
+        
+        m_chart->addIndicator(QStringLiteral("ChanLun_PivotUpper"), upperLine, QColor(100, 100, 255, 150));
+        m_chart->addIndicator(QStringLiteral("ChanLun_PivotLower"), lowerLine, QColor(100, 100, 255, 150));
+        m_chart->addIndicator(QStringLiteral("ChanLun_PivotMid"), middleLine, QColor(150, 150, 255, 100));
+    }
+    
+    LOG_INFO(QString("ChanLun overlay updated: %1 pens, %2 signals, %3 pivots")
+        .arg(m_result.pens.size())
+        .arg(m_result.tradeSignals.size())
+        .arg(m_result.pivots.size()));
 }
 
 } // namespace ChanLun
