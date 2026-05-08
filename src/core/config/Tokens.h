@@ -29,63 +29,67 @@ namespace Tokens {
 
 namespace Colors {
     // ========== 主色调 ==========
-    inline const QString Primary = "#3B82F6";        //< 主色（蓝色）- 品牌标识
-    inline const QString PrimaryHover = "#2563EB";  //< 主色悬停
-    inline const QString PrimaryLight = "#60A5FA";  //< 浅主色
-    inline const QString PrimaryDark = "#1D4ED8";   //< 深主色
+    inline const QString Primary = "#58a6ff";        //< 主色（蓝色）- 品牌标识
+    inline const QString PrimaryHover = "#79c0ff";  //< 主色悬停
+    inline const QString PrimaryLight = "#58a6ff";  //< 浅主色
+    inline const QString PrimaryDark = "#1f6feb";   //< 深主色
 
     // ========== 辅助色 ==========
-    inline const QString Secondary = "#6366F1";     //< 辅助色（紫色）
-    inline const QString SecondaryLight = "#818CF8";
+    inline const QString Secondary = "#a371f7";     //< 辅助色（紫色）- 强调色
+    inline const QString SecondaryLight = "#a371f7";
 
     // ========== 功能色 ==========
-    inline const QString Success = "#10B981";       //< 成功/上涨
-    inline const QString SuccessLight = "#34D399";
-    inline const QString SuccessBg = "rgba(16, 185, 129, 0.1)";
+    inline const QString Success = "#3fb950";       //< 成功/上涨
+    inline const QString SuccessLight = "#3fb950";
+    inline const QString SuccessBg = "rgba(63, 185, 80, 0.1)";
 
-    inline const QString Danger = "#EF4444";        //< 错误/下跌
-    inline const QString DangerLight = "#F87171";
-    inline const QString DangerBg = "rgba(239, 68, 68, 0.1)";
+    inline const QString Danger = "#f85149";        //< 错误/下跌
+    inline const QString DangerLight = "#f85149";
+    inline const QString DangerBg = "rgba(248, 81, 73, 0.1)";
 
-    inline const QString Warning = "#F97316";       //< 警告
-    inline const QString WarningLight = "#FB923C";
-    inline const QString WarningBg = "rgba(249, 115, 22, 0.1)";
+    inline const QString Warning = "#f0883e";       //< 警告
+    inline const QString WarningLight = "#f0883e";
+    inline const QString WarningBg = "rgba(240, 136, 62, 0.1)";
 
-    inline const QString Info = "#0EA5E9";          //< 信息
-    inline const QString InfoLight = "#38BDF8";
-    inline const QString InfoBg = "rgba(14, 165, 233, 0.1)";
+    inline const QString Info = "#58a6ff";          //< 信息
+    inline const QString InfoLight = "#58a6ff";
+    inline const QString InfoBg = "rgba(88, 166, 255, 0.1)";
 
     // ========== 背景色 ==========
-    inline const QString BgBase = "#1A1F2E";        //< 主背景
-    inline const QString BgSurface = "#0F1419";     //< 表面色（侧边栏等）
-    inline const QString BgElevated = "#242937";    //< 抬升色（卡片、弹窗）
+    inline const QString BgBase = "#0d1117";        //< 主背景
+    inline const QString BgSurface = "#161b22";     //< 表面色（侧边栏等）
+    inline const QString BgElevated = "#161b22";    //< 抬升色（卡片、弹窗）
     inline const QString BgHover = "rgba(255, 255, 255, 0.05)";
-    inline const QString BgActive = "rgba(59, 130, 246, 0.15)";
+    inline const QString BgActive = "rgba(88, 166, 255, 0.15)";
     inline const QString BgOverlay = "rgba(0, 0, 0, 0.5)";
-    inline const QString BgCard = "rgba(255, 255, 255, 0.03)";
+    inline const QString BgCard = "#161b22";
 
     // ========== 文字色 ==========
-    inline const QString TextPrimary = "#FFFFFF";      //< 主文字
-    inline const QString TextSecondary = "#9CA3AF";    //< 次要文字
-    inline const QString TextTertiary = "#6B7280";     //< 第三级文字
-    inline const QString TextDisabled = "#4B5563";     //< 禁用文字
-    inline const QString TextInverse = "#1A1F2E";      //< 反色文字
+    inline const QString TextPrimary = "#e6edf3";      //< 主文字
+    inline const QString TextSecondary = "#8b949e";    //< 次要文字
+    inline const QString TextTertiary = "#6e7681";     //< 第三级文字
+    inline const QString TextDisabled = "#484f58";     //< 禁用文字
+    inline const QString TextInverse = "#0d1117";      //< 反色文字
 
     // ========== 边框色 ==========
-    inline const QString Border = "#14FFFFFF";
-    inline const QString BorderLight = "rgba(255, 255, 255, 0.05)";
+    inline const QString Border = "#30363d";
+    inline const QString BorderLight = "#21262d";
     inline const QString BorderHover = "rgba(255, 255, 255, 0.15)";
-    inline const QString BorderFocus = "#3B82F6";
+    inline const QString BorderFocus = "#58a6ff";
 
     // ========== 图表色系 ==========
-    inline const QString ChartBlue = "#3B82F6";
-    inline const QString ChartPurple = "#8B5CF6";
-    inline const QString ChartGreen = "#10B981";
-    inline const QString ChartYellow = "#F59E0B";
-    inline const QString ChartRed = "#EF4444";
-    inline const QString ChartCyan = "#06B6D4";
-    inline const QString ChartOrange = "#F97316";
-    inline const QString ChartGray = "#6B7280";
+    inline const QString ChartBlue = "#58a6ff";
+    inline const QString ChartPurple = "#a371f7";
+    inline const QString ChartGreen = "#3fb950";
+    inline const QString ChartYellow = "#f0883e";
+    inline const QString ChartRed = "#f85149";
+    inline const QString ChartCyan = "#58a6ff";
+    inline const QString ChartOrange = "#f0883e";
+    inline const QString ChartGray = "#6e7681";
+    
+    // A股涨跌色（红涨绿跌）
+    inline const QString ChartUp = "#f85149";      //< 上涨（红色）
+    inline const QString ChartDown = "#3fb950";    //< 下跌（绿色）
 
     // ========== 渐变 ==========
     inline const QString GradientPrimary = "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)";

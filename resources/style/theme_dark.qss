@@ -3,17 +3,18 @@
  * 基于 WealthPilot UI 设计规范
  * 
  * 颜色变量（由 ThemeManager 替换）：
- * ${bgPrimary} - 主背景色
- * ${bgSecondary} - 次背景色
- * ${bgElevated} - 提升背景色
- * ${bgSurface} - 表面背景色
- * ${textPrimary} - 主文本色
- * ${textSecondary} - 次文本色
- * ${primary} - 主品牌色
- * ${success} - 成功/上涨色
- * ${danger} - 危险/下跌色
- * ${warning} - 警告色
- * ${border} - 边框色
+ * ${bgPrimary} - 主背景色: #0d1117
+ * ${bgSecondary} - 次背景色: #161b22
+ * ${bgElevated} - 提升背景色: #161b22
+ * ${bgSurface} - 表面背景色: #1c2128
+ * ${textPrimary} - 主文本色: #e6edf3
+ * ${textSecondary} - 次文本色: #8b949e
+ * ${primary} - 主品牌色: #58a6ff
+ * ${success} - 成功/上涨色: #3fb950
+ * ${danger} - 危险/下跌色: #f85149
+ * ${warning} - 警告色: #f0883e
+ * ${border} - 边框色: #30363d
+ * ${accent} - 强调色: #a371f7
  */
 
 /* ==================== 全局样式 ==================== */
@@ -167,7 +168,7 @@ QPushButton[icon="true"]:checked {
 QLineEdit {
     background-color: ${bgElevated};
     border: 1px solid ${border};
-    border-radius: 6px;
+    border-radius: 12px;
     padding: 8px 12px;
     color: ${textPrimary};
     selection-background-color: ${primary};
@@ -179,7 +180,7 @@ QLineEdit:hover {
 
 QLineEdit:focus {
     border-color: ${primary};
-    background-color: rgba(59, 130, 246, 0.05);
+    background-color: rgba(88, 166, 255, 0.05);
 }
 
 QLineEdit:disabled {
@@ -191,7 +192,7 @@ QLineEdit:disabled {
 QComboBox {
     background-color: ${bgElevated};
     border: 1px solid ${border};
-    border-radius: 6px;
+    border-radius: 12px;
     padding: 8px 12px;
     padding-right: 32px;
     color: ${textPrimary};
@@ -220,15 +221,15 @@ QComboBox::down-arrow {
 QComboBox QAbstractItemView {
     background-color: ${bgSecondary};
     border: 1px solid ${border};
-    border-radius: 6px;
+    border-radius: 12px;
     padding: 4px;
-    selection-background-color: rgba(59, 130, 246, 0.2);
+    selection-background-color: rgba(88, 166, 255, 0.2);
     outline: none;
 }
 
 QComboBox QAbstractItemView::item {
     padding: 8px 12px;
-    border-radius: 4px;
+    border-radius: 8px;
     color: ${textPrimary};
 }
 
@@ -242,7 +243,7 @@ QTableView, QTableWidget {
     alternate-background-color: rgba(255, 255, 255, 0.02);
     border: none;
     gridline-color: ${border};
-    selection-background-color: rgba(59, 130, 246, 0.2);
+    selection-background-color: rgba(88, 166, 255, 0.2);
     selection-color: ${textPrimary};
     outline: none;
 }
@@ -257,7 +258,7 @@ QTableView::item:hover, QTableWidget::item:hover {
 }
 
 QTableView::item:selected, QTableWidget::item:selected {
-    background-color: rgba(59, 130, 246, 0.15);
+    background-color: rgba(88, 166, 255, 0.15);
     color: ${textPrimary};
 }
 
@@ -284,23 +285,23 @@ CardWidget {
 }
 
 CardWidget:hover {
-    border-color: rgba(59, 130, 246, 0.4);
+    border-color: rgba(88, 166, 255, 0.4);
 }
 
 CardWidget[theme="success"] {
-    border-color: rgba(16, 185, 129, 0.3);
+    border-color: rgba(63, 185, 80, 0.3);
 }
 
 CardWidget[theme="warning"] {
-    border-color: rgba(249, 115, 22, 0.3);
+    border-color: rgba(240, 136, 62, 0.3);
 }
 
 CardWidget[theme="danger"] {
-    border-color: rgba(239, 68, 68, 0.3);
+    border-color: rgba(248, 81, 73, 0.3);
 }
 
 CardWidget[theme="primary"] {
-    border-color: rgba(59, 130, 246, 0.3);
+    border-color: rgba(88, 166, 255, 0.3);
 }
 
 /* ==================== 涨跌颜色 ==================== */
@@ -317,11 +318,11 @@ CardWidget[theme="primary"] {
 }
 
 .bg-up {
-    background-color: rgba(239, 68, 68, 0.1);
+    background-color: rgba(248, 81, 73, 0.1);
 }
 
 .bg-down {
-    background-color: rgba(16, 185, 129, 0.1);
+    background-color: rgba(63, 185, 80, 0.1);
 }
 
 /* ==================== 标题栏 ==================== */
@@ -364,7 +365,7 @@ SidebarWidget QPushButton:hover {
 }
 
 SidebarWidget QPushButton:checked {
-    background-color: rgba(59, 130, 246, 0.15);
+    background-color: rgba(88, 166, 255, 0.15);
     color: ${primary};
     border-left-color: ${primary};
 }
@@ -397,18 +398,18 @@ StatusBarWidget QLabel#ctpStatus[connected="true"] {
 QMenu {
     background-color: ${bgSecondary};
     border: 1px solid ${border};
-    border-radius: 8px;
+    border-radius: 12px;
     padding: 8px;
 }
 
 QMenu::item {
     color: ${textPrimary};
     padding: 10px 16px;
-    border-radius: 6px;
+    border-radius: 8px;
 }
 
 QMenu::item:selected {
-    background-color: rgba(59, 130, 246, 0.2);
+    background-color: rgba(88, 166, 255, 0.2);
     color: ${textPrimary};
 }
 
@@ -425,7 +426,7 @@ QMenu::separator {
 /* ==================== 标签页 ==================== */
 QTabWidget::pane {
     border: 1px solid ${border};
-    border-radius: 8px;
+    border-radius: 12px;
     background-color: transparent;
 }
 
@@ -544,7 +545,7 @@ QToolTip {
     background-color: ${bgSecondary};
     color: ${textPrimary};
     border: 1px solid ${border};
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 6px 10px;
     font-size: 13px;
 }
@@ -554,7 +555,7 @@ QGroupBox {
     color: ${textPrimary};
     font-weight: 600;
     border: 1px solid ${border};
-    border-radius: 8px;
+    border-radius: 12px;
     margin-top: 12px;
     padding: 16px 14px 14px;
 }
@@ -576,7 +577,7 @@ QListWidget {
 
 QListWidget::item {
     padding: 10px 14px;
-    border-radius: 6px;
+    border-radius: 8px;
     color: ${textPrimary};
 }
 
@@ -585,7 +586,7 @@ QListWidget::item:hover {
 }
 
 QListWidget::item:selected {
-    background-color: rgba(59, 130, 246, 0.15);
+    background-color: rgba(88, 166, 255, 0.15);
     color: ${textPrimary};
 }
 
@@ -593,7 +594,7 @@ QListWidget::item:selected {
 QTextEdit, QPlainTextEdit {
     background-color: ${bgElevated};
     border: 1px solid ${border};
-    border-radius: 6px;
+    border-radius: 12px;
     padding: 10px;
     color: ${textPrimary};
     selection-background-color: ${primary};
@@ -641,7 +642,37 @@ ThemeToggleButton {
 }
 
 ThemeToggleButton:hover {
-    border-color: rgba(59, 130, 246, 0.3);
+    border-color: rgba(88, 166, 255, 0.3);
+}
+
+/* ==================== 标签样式 ==================== */
+QLabel#titleLabel {
+    font-size: 20px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+QLabel#subtitleLabel {
+    font-size: 14px;
+    color: ${textSecondary};
+}
+
+QLabel#valueLabel {
+    font-size: 18px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+QLabel#labelText {
+    font-size: 12px;
+    color: ${textSecondary};
+}
+
+QLabel#statCard {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 12px;
+    padding: 12px;
 }
 
 /* ==================== 页面特定样式 ==================== */
@@ -696,7 +727,7 @@ SettingsPage {
 SettingsPage QGroupBox {
     background-color: ${bgElevated};
     border: 1px solid ${border};
-    border-radius: 8px;
+    border-radius: 12px;
     margin-top: 16px;
     padding: 16px;
 }
@@ -710,41 +741,11 @@ AboutUSPage CardWidget {
     border: 1px solid ${border};
 }
 
-/* ==================== 标签样式 ==================== */
-QLabel#titleLabel {
-    font-size: 20px;
-    font-weight: bold;
-    color: ${textPrimary};
-}
-
-QLabel#subtitleLabel {
-    font-size: 14px;
-    color: ${textSecondary};
-}
-
-QLabel#valueLabel {
-    font-size: 18px;
-    font-weight: bold;
-    color: ${textPrimary};
-}
-
-QLabel#labelText {
-    font-size: 12px;
-    color: ${textSecondary};
-}
-
-QLabel#statCard {
-    background-color: ${bgElevated};
-    border: 1px solid ${border};
-    border-radius: 8px;
-    padding: 12px;
-}
-
 /* ==================== 数字输入框 ==================== */
 QSpinBox, QDoubleSpinBox {
     background-color: ${bgElevated};
     border: 1px solid ${border};
-    border-radius: 6px;
+    border-radius: 12px;
     padding: 6px 10px;
     color: ${textPrimary};
 }
@@ -757,7 +758,7 @@ QSpinBox:focus, QDoubleSpinBox:focus {
 QDateEdit, QTimeEdit, QDateTimeEdit {
     background-color: ${bgElevated};
     border: 1px solid ${border};
-    border-radius: 6px;
+    border-radius: 12px;
     padding: 6px 10px;
     padding-right: 24px;
     color: ${textPrimary};
@@ -785,6 +786,6 @@ QTreeView::item:hover, QTreeWidget::item:hover {
 }
 
 QTreeView::item:selected, QTreeWidget::item:selected {
-    background-color: rgba(59, 130, 246, 0.15);
+    background-color: rgba(88, 166, 255, 0.15);
     color: ${textPrimary};
 }
