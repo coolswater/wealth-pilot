@@ -44,15 +44,18 @@ struct ThemeColors {
     QString bgSecondary;            ///< 次背景色
     QString bgElevated;             ///< 提升背景色
     QString bgSurface;              ///< 表面背景色
+    QString bgHover;                ///< 悬停背景色
 
     // 文本色
     QString textPrimary;            ///< 主文本色
     QString textSecondary;          ///< 次文本色
+    QString textTertiary;           ///< 三级文本色
     QString textDisabled;           ///< 禁用文本色
 
     // 强调色
     QString primary;                ///< 主色调
     QString primaryHover;           ///< 主色调悬停
+    QString primaryDark;            ///< 主色调深色
     QString accent;                 ///< 强调色
 
     // 状态色

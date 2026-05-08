@@ -1,14 +1,19 @@
 /**
- * WealthPilot 共享基础样式 v1.0
- * 所有主题共用的样式定义，避免重复代码
- *
- * 使用方式：在主题文件开头 @import 或直接合并
+ * WealthPilot 基础样式表 v1.0
+ * 所有主题共用的样式定义
+ * 
+ * 使用方式：在主题文件开头导入或直接合并
  */
 
 /* ==================== 全局重置 ==================== */
 * {
     margin: 0;
     padding: 0;
+}
+
+/* ==================== 字体系统 ==================== */
+QWidget {
+    font-family: 'Roboto', 'Microsoft YaHei', 'PingFang SC', sans-serif;
 }
 
 /* ==================== 滚动条样式（通用）==================== */
@@ -50,7 +55,6 @@ QScrollBar::sub-page:horizontal {
 
 /* ==================== 滚动区域 ==================== */
 QScrollArea {
-    background-color: transparent;
     border: none;
 }
 
@@ -101,8 +105,136 @@ QListWidget {
     outline: none;
 }
 
-/* ==================== 工具按钮基础样式 ==================== */
-QToolButton {
-    border: none;
+QListWidget::item {
     border-radius: 6px;
+}
+
+/* ==================== 树形视图基础样式 ==================== */
+QTreeView,
+QTreeWidget {
+    outline: none;
+}
+
+/* ==================== 对话框按钮盒 ==================== */
+QDialogButtonBox QPushButton {
+    min-width: 80px;
+}
+
+/* ==================== 工具提示 ==================== */
+QToolTip {
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+/* ==================== 进度条基础 ==================== */
+QProgressBar {
+    border: none;
+    text-align: center;
+}
+
+/* ==================== 滑块基础 ==================== */
+QSlider::groove:horizontal {
+    border-radius: 2px;
+}
+
+QSlider::groove:vertical {
+    border-radius: 2px;
+}
+
+/* ==================== 日期时间控件 ==================== */
+QDateEdit,
+QTimeEdit,
+QDateTimeEdit {
+    padding-right: 24px;
+}
+
+QDateEdit::drop-down,
+QTimeEdit::drop-down,
+QDateTimeEdit::drop-down {
+    width: 20px;
+    border: none;
+}
+
+/* ==================== 数字输入框 ==================== */
+QSpinBox,
+QDoubleSpinBox {
+    padding-right: 20px;
+}
+
+QSpinBox::up-button,
+QSpinBox::down-button,
+QDoubleSpinBox::up-button,
+QDoubleSpinBox::down-button {
+    width: 16px;
+}
+
+/* ==================== 文本编辑器 ==================== */
+QTextEdit,
+QPlainTextEdit {
+    border-radius: 6px;
+}
+
+/* ==================== 属性选择器样式 ==================== */
+
+/* 主按钮 */
+QPushButton[primary="true"] {
+    font-weight: bold;
+}
+
+/* 次要按钮 */
+QPushButton[secondary="true"] {
+    font-weight: 500;
+}
+
+/* 危险按钮 */
+QPushButton[danger="true"] {
+    font-weight: bold;
+}
+
+/* 成功按钮 */
+QPushButton[success="true"] {
+    font-weight: bold;
+}
+
+/* 图标按钮 */
+QPushButton[icon="true"] {
+    padding: 4px;
+}
+
+/* 涨跌状态 */
+[status="up"],
+[trend="up"] {
+    font-weight: bold;
+}
+
+[status="down"],
+[trend="down"] {
+    font-weight: bold;
+}
+
+/* 卡片主题 */
+[theme="success"],
+[theme="warning"],
+[theme="danger"],
+[theme="primary"] {
+    border-radius: 0 0 15px 15px;
+}
+
+/* ==================== 布局辅助类 ==================== */
+
+/* 隐藏滚动条但保持滚动功能 */
+.no-scrollbar QScrollBar:vertical,
+.no-scrollbar QScrollBar:horizontal {
+    width: 0;
+    height: 0;
+}
+
+/* 紧凑布局 */
+.compact {
+    spacing: 8px;
+}
+
+/* 宽松布局 */
+.relaxed {
+    spacing: 24px;
 }

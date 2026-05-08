@@ -213,23 +213,36 @@ QString ThemeManager::replaceColorVariables(const QString& qss, const ThemeColor
 {
     QString result = qss;
     
-    // 替换颜色变量
+    // 背景色
     result.replace(QStringLiteral("${bgPrimary}"), theme.bgPrimary);
     result.replace(QStringLiteral("${bgSecondary}"), theme.bgSecondary);
     result.replace(QStringLiteral("${bgElevated}"), theme.bgElevated);
     result.replace(QStringLiteral("${bgSurface}"), theme.bgSurface);
+    result.replace(QStringLiteral("${bgHover}"), theme.bgHover);
+    
+    // 文本色
     result.replace(QStringLiteral("${textPrimary}"), theme.textPrimary);
     result.replace(QStringLiteral("${textSecondary}"), theme.textSecondary);
+    result.replace(QStringLiteral("${textTertiary}"), theme.textTertiary);
     result.replace(QStringLiteral("${textDisabled}"), theme.textDisabled);
+    
+    // 品牌色
     result.replace(QStringLiteral("${primary}"), theme.primary);
     result.replace(QStringLiteral("${primaryHover}"), theme.primaryHover);
+    result.replace(QStringLiteral("${primaryDark}"), theme.primaryDark);
     result.replace(QStringLiteral("${accent}"), theme.accent);
+    
+    // 状态色
     result.replace(QStringLiteral("${success}"), theme.success);
     result.replace(QStringLiteral("${danger}"), theme.danger);
     result.replace(QStringLiteral("${warning}"), theme.warning);
     result.replace(QStringLiteral("${info}"), theme.info);
+    
+    // 边框色
     result.replace(QStringLiteral("${border}"), theme.border);
     result.replace(QStringLiteral("${divider}"), theme.divider);
+    
+    // 图表色
     result.replace(QStringLiteral("${chartUp}"), theme.chartUp);
     result.replace(QStringLiteral("${chartDown}"), theme.chartDown);
     result.replace(QStringLiteral("${chartGrid}"), theme.chartGrid);
@@ -281,11 +294,14 @@ void ThemeManager::initBuiltInThemes()
     darkTheme.bgSecondary = QStringLiteral("#161b22");    // 卡片背景色
     darkTheme.bgElevated = QStringLiteral("#161b22");     // 提升背景色（卡片）
     darkTheme.bgSurface = QStringLiteral("#1c2128");      // 表面背景色
+    darkTheme.bgHover = QStringLiteral("rgba(255, 255, 255, 0.05)");
     darkTheme.textPrimary = QStringLiteral("#e6edf3");    // 主文本色
     darkTheme.textSecondary = QStringLiteral("#8b949e");  // 次文本色
-    darkTheme.textDisabled = QStringLiteral("#6e7681");   // 禁用文本色
+    darkTheme.textTertiary = QStringLiteral("#6e7681");   // 三级文本色
+    darkTheme.textDisabled = QStringLiteral("#484f58");   // 禁用文本色
     darkTheme.primary = QStringLiteral("#58a6ff");        // 主品牌色
     darkTheme.primaryHover = QStringLiteral("#79c0ff");   // 主色调悬停
+    darkTheme.primaryDark = QStringLiteral("#1f6feb");    // 主色调深色
     darkTheme.accent = QStringLiteral("#a371f7");         // 强调色
     darkTheme.success = QStringLiteral("#3fb950");        // 涨/成功色
     darkTheme.danger = QStringLiteral("#f85149");         // 跌/危险色
@@ -302,24 +318,27 @@ void ThemeManager::initBuiltInThemes()
     // 浅色主题
     ThemeColors lightTheme;
     lightTheme.name = QStringLiteral("浅色主题");
-    lightTheme.bgPrimary = QStringLiteral("#FFFFFF");
-    lightTheme.bgSecondary = QStringLiteral("#F3F4F6");
+    lightTheme.bgPrimary = QStringLiteral("#F8FAFC");
+    lightTheme.bgSecondary = QStringLiteral("#FFFFFF");
     lightTheme.bgElevated = QStringLiteral("#FFFFFF");
-    lightTheme.bgSurface = QStringLiteral("#F9FAFB");
+    lightTheme.bgSurface = QStringLiteral("#F1F5F9");
+    lightTheme.bgHover = QStringLiteral("#E2E8F0");
     lightTheme.textPrimary = QStringLiteral("#1F2937");
     lightTheme.textSecondary = QStringLiteral("#6B7280");
-    lightTheme.textDisabled = QStringLiteral("#9CA3AF");
-    lightTheme.primary = QStringLiteral("#58a6ff");
-    lightTheme.primaryHover = QStringLiteral("#79c0ff");
+    lightTheme.textTertiary = QStringLiteral("#9CA3AF");
+    lightTheme.textDisabled = QStringLiteral("#D1D5DB");
+    lightTheme.primary = QStringLiteral("#3B82F6");
+    lightTheme.primaryHover = QStringLiteral("#2563EB");
+    lightTheme.primaryDark = QStringLiteral("#1D4ED8");
     lightTheme.accent = QStringLiteral("#8B5CF6");
-    lightTheme.success = QStringLiteral("#3fb950");
-    lightTheme.danger = QStringLiteral("#f85149");
+    lightTheme.success = QStringLiteral("#10B981");
+    lightTheme.danger = QStringLiteral("#EF4444");
     lightTheme.warning = QStringLiteral("#F59E0B");
-    lightTheme.info = QStringLiteral("#58a6ff");
+    lightTheme.info = QStringLiteral("#3B82F6");
     lightTheme.border = QStringLiteral("#E5E7EB");
     lightTheme.divider = QStringLiteral("#F3F4F6");
-    lightTheme.chartUp = QStringLiteral("#3fb950");
-    lightTheme.chartDown = QStringLiteral("#f85149");
+    lightTheme.chartUp = QStringLiteral("#10B981");
+    lightTheme.chartDown = QStringLiteral("#EF4444");
     lightTheme.chartGrid = QStringLiteral("#E5E7EB");
 
     m_themes[ThemeType::Light] = lightTheme;
@@ -331,11 +350,14 @@ void ThemeManager::initBuiltInThemes()
     eyecareTheme.bgSecondary = QStringLiteral("#2A251E");
     eyecareTheme.bgElevated = QStringLiteral("#352F26");
     eyecareTheme.bgSurface = QStringLiteral("#3D372D");
+    eyecareTheme.bgHover = QStringLiteral("#453F35");
     eyecareTheme.textPrimary = QStringLiteral("#E8DCC8");
     eyecareTheme.textSecondary = QStringLiteral("#A89B85");
-    eyecareTheme.textDisabled = QStringLiteral("#8B7D66");
+    eyecareTheme.textTertiary = QStringLiteral("#8B7D66");
+    eyecareTheme.textDisabled = QStringLiteral("#6B5F4F");
     eyecareTheme.primary = QStringLiteral("#D4A574");
     eyecareTheme.primaryHover = QStringLiteral("#E5B785");
+    eyecareTheme.primaryDark = QStringLiteral("#C49564");
     eyecareTheme.accent = QStringLiteral("#C49564");
     eyecareTheme.success = QStringLiteral("#7CB342");
     eyecareTheme.danger = QStringLiteral("#E57373");
@@ -356,11 +378,14 @@ void ThemeManager::initBuiltInThemes()
     highContrastTheme.bgSecondary = QStringLiteral("#1A1A1A");
     highContrastTheme.bgElevated = QStringLiteral("#2A2A2A");
     highContrastTheme.bgSurface = QStringLiteral("#333333");
+    highContrastTheme.bgHover = QStringLiteral("#444444");
     highContrastTheme.textPrimary = QStringLiteral("#FFFFFF");
     highContrastTheme.textSecondary = QStringLiteral("#CCCCCC");
-    highContrastTheme.textDisabled = QStringLiteral("#888888");
+    highContrastTheme.textTertiary = QStringLiteral("#999999");
+    highContrastTheme.textDisabled = QStringLiteral("#666666");
     highContrastTheme.primary = QStringLiteral("#00FF00");
     highContrastTheme.primaryHover = QStringLiteral("#00CC00");
+    highContrastTheme.primaryDark = QStringLiteral("#009900");
     highContrastTheme.accent = QStringLiteral("#FFFF00");
     highContrastTheme.success = QStringLiteral("#00FF00");
     highContrastTheme.danger = QStringLiteral("#FF0000");

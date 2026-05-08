@@ -4,6 +4,7 @@
         <file>images/app_logo.png</file>
         <file>images/appicon.ico</file>
         <file>i18n/wealth-pilot_zh_CN.ts</file>
+        <file>style/base.qss</file>
         <file>style/theme_dark.qss</file>
         <file>style/theme_eyecare.qss</file>
         <file>style/theme_light.qss</file>
