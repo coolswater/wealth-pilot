@@ -62,9 +62,12 @@ void AIAssistantPanelWidget::connectToAIService() const
 
 void AIAssistantPanelWidget::setupUI()
 {
+    // 使用 ThemeManager 获取主题颜色
+    ThemeColors theme = ThemeManager::instance()->currentTheme();
+
     setStyleSheet(QString(
         "background-color: %1; border-left: 1px solid %2;")
-        .arg(Colors::BgSurface, Colors::BorderLight));
+        .arg(theme.bgSecondary, theme.border));
 
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(Spacing::MD, Spacing::MD, Spacing::MD, Spacing::MD);
@@ -74,11 +77,18 @@ void AIAssistantPanelWidget::setupUI()
     setupQuickActions();
     setupMessagesArea();
     setupInputArea();
+
+    // 注册主题监听器
+    ThemeManager::instance()->registerThemeChangeListener(this, [this]() {
+        updateTheme();
+    });
 }
 
 void AIAssistantPanelWidget::setupHeader()
 {
     auto* mainLayout = qobject_cast<QVBoxLayout*>(layout());
+
+    ThemeColors theme = ThemeManager::instance()->currentTheme();
 
     auto* headerLayout = new QHBoxLayout();
     headerLayout->setSpacing(Spacing::SM);
@@ -90,7 +100,7 @@ void AIAssistantPanelWidget::setupHeader()
         background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
             stop:0 %1, stop:1 %2);
         border-radius: %3px;
-    )").arg(Colors::Primary, Colors::Secondary).arg(Size::AvatarLG / 2));
+    )").arg(theme.primary, theme.accent).arg(Size::AvatarLG / 2));
     headerLayout->addWidget(avatarLabel);
 
     // 名称和状态
@@ -100,13 +110,13 @@ void AIAssistantPanelWidget::setupHeader()
     auto* nameLabel = new QLabel("WealthPilot AI", this);
     nameLabel->setStyleSheet(QString(
         "font-size: %1px; font-weight: 600; color: %2;")
-        .arg(Font::Size::H3).arg(Colors::TextPrimary));
+        .arg(Font::Size::H3).arg(theme.textPrimary));
     infoLayout->addWidget(nameLabel);
 
-    auto* statusLabel = new QLabel("�?在线", this);
+    auto* statusLabel = new QLabel("在线", this);
     statusLabel->setStyleSheet(QString(
         "font-size: %1px; color: %2;")
-        .arg(Font::Size::Small).arg(Colors::Success));
+        .arg(Font::Size::Small).arg(theme.success));
     infoLayout->addWidget(statusLabel);
 
     headerLayout->addLayout(infoLayout);
@@ -116,6 +126,12 @@ void AIAssistantPanelWidget::setupHeader()
     d->collapseBtn = new QPushButton("◀", this);
     d->collapseBtn->setFixedSize(32, 32);
     d->collapseBtn->setCursor(Qt::PointingHandCursor);
+
+    QString hoverRgba = QString("rgba(%1, %2, %3, 0.05)")
+        .arg(QColor(theme.textPrimary).red())
+        .arg(QColor(theme.textPrimary).green())
+        .arg(QColor(theme.textPrimary).blue());
+
     d->collapseBtn->setStyleSheet(QString(R"(
         QPushButton {
             background-color: transparent;
@@ -126,7 +142,7 @@ void AIAssistantPanelWidget::setupHeader()
         QPushButton:hover {
             background-color: %2;
         }
-    )").arg(Colors::TextSecondary, Colors::BgHover));
+    )").arg(theme.textSecondary, hoverRgba));
     connect(d->collapseBtn, &QPushButton::clicked, this, [this]() {
         setCollapsed(!d->isCollapsed);
     });
@@ -147,7 +163,7 @@ void AIAssistantPanelWidget::setupQuickActions()
         auto* btn = new QPushButton(action, this);
         btn->setFixedHeight(Size::ButtonHeightSM);
         btn->setCursor(Qt::PointingHandCursor);
-        
+
         // 使用主题颜色
         ThemeColors theme = ThemeManager::instance()->currentTheme();
         QString primaryRgba = QString("rgba(%1, %2, %3, 0.15)")
@@ -158,7 +174,7 @@ void AIAssistantPanelWidget::setupQuickActions()
             .arg(QColor(theme.primary).red())
             .arg(QColor(theme.primary).green())
             .arg(QColor(theme.primary).blue());
-        
+
         btn->setStyleSheet(QString(R"(
             QPushButton {
                 background-color: %1;
@@ -209,7 +225,7 @@ void AIAssistantPanelWidget::checkAIConfiguration()
     // 检查是否已配置 API Key
     QString apiKey = ConfigManager::instance()->getSecure("secure/ai_api_key");
     bool aiEnabled = ConfigManager::instance()->getBool("ai/enabled", false);
-    
+
     if (apiKey.isEmpty() || !aiEnabled) {
         // 显示配置引导
         showConfigurationGuide();
@@ -221,24 +237,26 @@ void AIAssistantPanelWidget::checkAIConfiguration()
 
 void AIAssistantPanelWidget::showConfigurationGuide()
 {
+    ThemeColors theme = ThemeManager::instance()->currentTheme();
+
     // 创建配置引导消息
     QWidget* guideWidget = new QWidget(d->messagesContainer);
     QVBoxLayout* guideLayout = new QVBoxLayout(guideWidget);
     guideLayout->setContentsMargins(Spacing::MD, Spacing::MD, Spacing::MD, Spacing::MD);
     guideLayout->setSpacing(Spacing::SM);
-    
+
     // 背景
     guideWidget->setStyleSheet(QString(
         "background-color: %1; border-radius: %2px;")
-        .arg(Colors::BgElevated)
+        .arg(theme.bgElevated)
         .arg(Radius::MD));
-    
+
     // 标题
     QLabel* titleLabel = new QLabel(QStringLiteral("AI 配置未完成"), guideWidget);
     titleLabel->setStyleSheet(QString("color: %1; font-weight: bold; font-size: 14px;")
-        .arg(Colors::TextPrimary));
+        .arg(theme.textPrimary));
     guideLayout->addWidget(titleLabel);
-    
+
     // 说明文字
     QLabel* descLabel = new QLabel(
         QStringLiteral("要使用 AI 助手，请先完成以下配置：\n\n"
@@ -249,36 +267,35 @@ void AIAssistantPanelWidget::showConfigurationGuide()
         guideWidget);
     descLabel->setWordWrap(true);
     descLabel->setStyleSheet(QString("color: %1; font-size: 13px;")
-        .arg(Colors::TextSecondary));
+        .arg(theme.textSecondary));
     guideLayout->addWidget(descLabel);
-    
+
     // 跳转按钮
     QPushButton* gotoSettingsBtn = new QPushButton(QStringLiteral("前往设置"), guideWidget);
     gotoSettingsBtn->setStyleSheet(QString(
         "QPushButton {"
         "  background-color: %1;"
-        "  color: %2;"
+        "  color: white;"
         "  border: none;"
-        "  border-radius: %3px;"
+        "  border-radius: %2px;"
         "  padding: 8px 16px;"
         "  font-weight: bold;"
         "}"
         "QPushButton:hover {"
-        "  background-color: %4;"
+        "  background-color: %3;"
         "}")
-        .arg(Colors::Primary)
-        .arg(Colors::TextPrimary)
+        .arg(theme.primary)
         .arg(Radius::SM)
-        .arg(Colors::PrimaryHover));
-    
+        .arg(theme.primaryHover));
+
     connect(gotoSettingsBtn, &QPushButton::clicked, this, [this]() {
         // 跳转到设置页面（页面ID是 "settings"）
         LOG_INFO("Navigating to settings page from AI panel");
         PageNavigator::instance().navigateTo(QStringLiteral("settings"));
     });
-    
+
     guideLayout->addWidget(gotoSettingsBtn);
-    
+
     // 添加到消息区域
     d->messagesLayout->insertWidget(d->messagesLayout->count() - 1, guideWidget);
 }
@@ -286,6 +303,8 @@ void AIAssistantPanelWidget::showConfigurationGuide()
 void AIAssistantPanelWidget::setupInputArea()
 {
     auto* mainLayout = qobject_cast<QVBoxLayout*>(layout());
+
+    ThemeColors theme = ThemeManager::instance()->currentTheme();
 
     auto* inputLayout = new QHBoxLayout();
     inputLayout->setSpacing(Spacing::SM);
@@ -305,12 +324,12 @@ void AIAssistantPanelWidget::setupInputArea()
         QLineEdit:focus {
             border-color: %7;
         }
-    )").arg(Colors::BgHover, Colors::Border)
+    )").arg(theme.bgPrimary, theme.border)
        .arg(Radius::Full)
        .arg(Spacing::MD)
-       .arg(Colors::TextPrimary)
+       .arg(theme.textPrimary)
        .arg(Font::Size::Body)
-       .arg(Colors::Primary));
+       .arg(theme.primary));
 
     connect(d->inputField, &QLineEdit::returnPressed, this, &AIAssistantPanelWidget::onSendClicked);
     inputLayout->addWidget(d->inputField);
@@ -329,10 +348,10 @@ void AIAssistantPanelWidget::setupInputArea()
         QPushButton:hover {
             background-color: %4;
         }
-    )").arg(Colors::Primary)
+    )").arg(theme.primary)
        .arg(Size::InputHeightLG / 2)
        .arg(Font::Size::Body)
-       .arg(Colors::PrimaryHover));
+       .arg(theme.primaryHover));
     connect(sendBtn, &QPushButton::clicked, this, &AIAssistantPanelWidget::onSendClicked);
     inputLayout->addWidget(sendBtn);
 
@@ -368,27 +387,39 @@ void AIAssistantPanelWidget::showSystemMessage(const QString& message, const QSt
     QString bgColor, borderColor;
     // 使用 ThemeManager 获取主题颜色
     ThemeColors theme = ThemeManager::instance()->currentTheme();
-    
+
     if (type == "warning") {
-        bgColor = Colors::WarningBg;
+        bgColor = QString("rgba(%1, %2, %3, 0.1)")
+            .arg(QColor(theme.warning).red())
+            .arg(QColor(theme.warning).green())
+            .arg(QColor(theme.warning).blue());
         borderColor = QString("rgba(%1, %2, %3, 0.3)")
             .arg(QColor(theme.warning).red())
             .arg(QColor(theme.warning).green())
             .arg(QColor(theme.warning).blue());
     } else if (type == "error") {
-        bgColor = Colors::DangerBg;
+        bgColor = QString("rgba(%1, %2, %3, 0.1)")
+            .arg(QColor(theme.danger).red())
+            .arg(QColor(theme.danger).green())
+            .arg(QColor(theme.danger).blue());
         borderColor = QString("rgba(%1, %2, %3, 0.3)")
             .arg(QColor(theme.danger).red())
             .arg(QColor(theme.danger).green())
             .arg(QColor(theme.danger).blue());
     } else if (type == "success") {
-        bgColor = Colors::SuccessBg;
+        bgColor = QString("rgba(%1, %2, %3, 0.1)")
+            .arg(QColor(theme.success).red())
+            .arg(QColor(theme.success).green())
+            .arg(QColor(theme.success).blue());
         borderColor = QString("rgba(%1, %2, %3, 0.3)")
             .arg(QColor(theme.success).red())
             .arg(QColor(theme.success).green())
             .arg(QColor(theme.success).blue());
     } else {
-        bgColor = Colors::InfoBg;
+        bgColor = QString("rgba(%1, %2, %3, 0.1)")
+            .arg(QColor(theme.primary).red())
+            .arg(QColor(theme.primary).green())
+            .arg(QColor(theme.primary).blue());
         borderColor = QString("rgba(%1, %2, %3, 0.3)")
             .arg(QColor(theme.primary).red())
             .arg(QColor(theme.primary).green())
@@ -411,7 +442,7 @@ void AIAssistantPanelWidget::showSystemMessage(const QString& message, const QSt
     label->setWordWrap(true);
     label->setStyleSheet(QString(
         "color: %1; font-size: %2px;")
-        .arg(Colors::TextPrimary).arg(Font::Size::Small));
+        .arg(theme.textPrimary).arg(Font::Size::Small));
     layout->addWidget(label);
 
     d->messagesLayout->insertWidget(d->messagesLayout->count() - 1, frame);
@@ -508,6 +539,8 @@ void AIAssistantPanelWidget::addMessage(const QString& text, bool isUser) const
     label->setTextInteractionFlags(Qt::TextSelectableByMouse);
     label->setMaximumWidth(280);
 
+    ThemeColors theme = ThemeManager::instance()->currentTheme();
+
     if (isUser) {
         bubbleLayout->addStretch();
         label->setStyleSheet(QString(R"(
@@ -516,13 +549,18 @@ void AIAssistantPanelWidget::addMessage(const QString& text, bool isUser) const
             border-radius: %2px;
             padding: %3px %4px;
             font-size: %5px;
-        )").arg(Colors::Primary)
+        )").arg(theme.primary)
            .arg(Radius::LG)
            .arg(Spacing::SM)
            .arg(Spacing::MD)
            .arg(Font::Size::Body));
         bubbleLayout->addWidget(label);
     } else {
+        QString hoverRgba = QString("rgba(%1, %2, %3, 0.05)")
+            .arg(QColor(theme.textPrimary).red())
+            .arg(QColor(theme.textPrimary).green())
+            .arg(QColor(theme.textPrimary).blue());
+
         label->setStyleSheet(QString(R"(
             background-color: %1;
             color: %2;
@@ -530,7 +568,7 @@ void AIAssistantPanelWidget::addMessage(const QString& text, bool isUser) const
             padding: %4px %5px;
             font-size: %6px;
             line-height: 1.5;
-        )").arg(Colors::BgHover, Colors::TextPrimary)
+        )").arg(hoverRgba, theme.textPrimary)
            .arg(Radius::LG)
            .arg(Spacing::SM)
            .arg(Spacing::MD)
@@ -560,14 +598,20 @@ void AIAssistantPanelWidget::addTypingIndicator() const
     auto* layout = new QHBoxLayout(d->typingIndicator);
     layout->setContentsMargins(0, 0, 0, 0);
 
-    auto* label = new QLabel("AI 正在思�?..", d->typingIndicator);
+    ThemeColors theme = ThemeManager::instance()->currentTheme();
+    QString hoverRgba = QString("rgba(%1, %2, %3, 0.05)")
+        .arg(QColor(theme.textPrimary).red())
+        .arg(QColor(theme.textPrimary).green())
+        .arg(QColor(theme.textPrimary).blue());
+
+    auto* label = new QLabel("AI 正在思考...", d->typingIndicator);
     label->setStyleSheet(QString(R"(
         background-color: %1;
         color: %2;
         border-radius: %3px;
         padding: %4px %5px;
         font-size: %6px;
-    )").arg(Colors::BgHover, Colors::TextSecondary)
+    )").arg(hoverRgba, theme.textSecondary)
        .arg(Radius::LG)
        .arg(Spacing::SM)
        .arg(Spacing::MD)
@@ -593,5 +637,56 @@ void AIAssistantPanelWidget::removeTypingIndicator() const
     }
 }
 
+void AIAssistantPanelWidget::updateTheme()
+{
+    ThemeColors theme = ThemeManager::instance()->currentTheme();
 
+    // 更新面板背景
+    setStyleSheet(QString("background-color: %1; border-left: 1px solid %2;")
+        .arg(theme.bgSecondary, theme.border));
 
+    // 更新输入框样式
+    if (d->inputField) {
+        d->inputField->setStyleSheet(QString(R"(
+            QLineEdit {
+                background-color: %1;
+                border: 1px solid %2;
+                border-radius: %3px;
+                padding: 0 %4px;
+                color: %5;
+                font-size: %6px;
+            }
+            QLineEdit:focus {
+                border-color: %7;
+            }
+        )").arg(theme.bgPrimary, theme.border)
+           .arg(Radius::Full)
+           .arg(Spacing::MD)
+           .arg(theme.textPrimary)
+           .arg(Font::Size::Body)
+           .arg(theme.primary));
+    }
+
+    // 更新折叠按钮样式
+    if (d->collapseBtn) {
+        QString hoverRgba = QString("rgba(%1, %2, %3, 0.05)")
+            .arg(QColor(theme.textPrimary).red())
+            .arg(QColor(theme.textPrimary).green())
+            .arg(QColor(theme.textPrimary).blue());
+
+        d->collapseBtn->setStyleSheet(QString(R"(
+            QPushButton {
+                background-color: transparent;
+                color: %1;
+                border: none;
+                border-radius: 6px;
+            }
+            QPushButton:hover {
+                background-color: %2;
+            }
+        )").arg(theme.textSecondary, hoverRgba));
+    }
+
+    // 强制刷新
+    update();
+}

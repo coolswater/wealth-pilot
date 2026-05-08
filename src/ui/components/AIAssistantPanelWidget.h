@@ -91,6 +91,7 @@ private:
     void addTypingIndicator() const;
     void removeTypingIndicator() const;
     void connectToAIService() const;
+    void updateTheme();  // 主题更新方法
 
     struct Impl;
     std::unique_ptr<Impl> d;

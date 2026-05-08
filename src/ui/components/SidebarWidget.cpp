@@ -1,5 +1,6 @@
 #include "SidebarWidget.h"
 #include "utils/Logger.h"
+#include "../ThemeManager.h"
 
 #include <QPushButton>
 #include <QVBoxLayout>
@@ -29,6 +30,14 @@ SidebarWidget::SidebarWidget(QWidget *parent)
 {
     setFixedWidth(d->expandedWidth);
     setupUI();
+    
+    // 注册主题监听器
+    ThemeManager::instance()->registerThemeChangeListener(this, [this]() {
+        updateTheme();
+    });
+    
+    // 应用初始主题
+    updateTheme();
 }
 
 SidebarWidget::~SidebarWidget() = default;
@@ -224,4 +233,53 @@ void SidebarWidget::animateCollapse(bool collapse)
     });
 
     group->start(QAbstractAnimation::DeleteWhenStopped);
+}
+
+void SidebarWidget::updateTheme()
+{
+    ThemeColors theme = ThemeManager::instance()->currentTheme();
+    
+    // 更新侧边栏背景
+    setStyleSheet(QString("SidebarWidget { background-color: %1; border-right: 1px solid %2; }")
+        .arg(theme.bgSecondary, theme.border));
+    
+    // 更新所有按钮样式
+    for (auto it = d->items.begin(); it != d->items.end(); ++it) {
+        QPushButton* btn = it.value();
+        
+        QString primaryRgba = QString("rgba(%1, %2, %3, 0.15)")
+            .arg(QColor(theme.primary).red())
+            .arg(QColor(theme.primary).green())
+            .arg(QColor(theme.primary).blue());
+        
+        QString hoverRgba = QString("rgba(%1, %2, %3, 0.05)")
+            .arg(QColor(theme.textPrimary).red())
+            .arg(QColor(theme.textPrimary).green())
+            .arg(QColor(theme.textPrimary).blue());
+        
+        btn->setStyleSheet(QString(R"(
+            QPushButton {
+                background-color: transparent;
+                color: %1;
+                border: none;
+                border-left: 3px solid transparent;
+                padding: 14px 20px;
+                text-align: left;
+            }
+            QPushButton:hover {
+                background-color: %2;
+                color: %3;
+            }
+            QPushButton:checked {
+                background-color: %4;
+                color: %5;
+                border-left-color: %6;
+            }
+        )").arg(theme.textSecondary)
+          .arg(hoverRgba)
+          .arg(theme.textPrimary)
+          .arg(primaryRgba)
+          .arg(theme.primary)
+          .arg(theme.primary));
+    }
 }

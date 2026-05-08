@@ -57,7 +57,8 @@ private:
     void setupUI();
     void updateLayout();
     void animateCollapse(bool collapse);
-     void updateToggleButtonIcon() const;
+    void updateToggleButtonIcon() const;
+    void updateTheme();  // 主题更新方法
 
     struct Impl;
     std::unique_ptr<Impl> d;
