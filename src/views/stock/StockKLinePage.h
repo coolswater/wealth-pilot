@@ -107,6 +107,7 @@ private:
     bool loadTimeShareFromCache();
     bool loadTimeShareFromDatabase();
     void loadTimeShareFromNetwork();
+    void generateDemoTimeShareData();
     void saveTimeShareToCache();
     void saveTimeShareToDatabase();
     

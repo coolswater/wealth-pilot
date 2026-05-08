@@ -830,9 +830,18 @@ void StockKLinePage::loadTimeShareFromNetwork()
     
     LOG_INFO(QString("Loading TimeShare data from network for %1").arg(m_stockCode));
     
-    // 暂时生成演示数据
-    // TODO: 接入真实分时数据API
-    
+    // 使用真实分时数据API
+    if (m_dataSource) {
+        m_dataSource->requestTimeShare(m_stockCode);
+    } else {
+        // 如果数据源未初始化，生成演示数据
+        LOG_WARNING("DataSource not initialized, using demo data");
+        generateDemoTimeShareData();
+    }
+}
+
+void StockKLinePage::generateDemoTimeShareData()
+{
     auto* timeShareChart = static_cast<TimeShareChart*>(m_timeShareWidget);
     
     QVector<QPair<QDateTime, double>> prices;
@@ -864,7 +873,7 @@ void StockKLinePage::loadTimeShareFromNetwork()
     }
     
     timeShareChart->setData(prices, volumes, basePrice);
-    m_infoLabel->setText(QStringLiteral("分时图已加载"));
+    m_infoLabel->setText(QStringLiteral("分时图已加载（演示数据）"));
     
     // 保存到缓存和数据库
     saveTimeShareToCache();

@@ -49,16 +49,54 @@ void PersonalizedRecommendation::setUserPreference(const UserPreference& prefere
 
 void PersonalizedRecommendation::analyzePreferenceFromHistory()
 {
-    // TODO: 从历史交易数据分析用户偏好
+    // 从历史交易数据分析用户偏好
     // 1. 分析持仓周期
     // 2. 分析风险承受能力
     // 3. 分析行业偏好
     // 4. 分析交易频率
-
+    
+    // TODO: 实际应用中应该从交易历史数据库加载
+    // 这里使用模拟数据进行演示
+    
+    // 模拟分析结果
+    double avgHoldingDays = 30.0; // 平均持仓天数
+    double maxDrawdown = 15.0;    // 最大回撤
+    double winRate = 0.55;        // 胜率
+    int tradeCount = 50;          // 交易次数
+    
+    // 根据持仓周期判断风格
+    if (avgHoldingDays > 60) {
+        m_preference.style = InvestmentStyle::Conservative;
+        m_preference.tradingFrequency = 1; // 低频
+    } else if (avgHoldingDays > 20) {
+        m_preference.style = InvestmentStyle::Balanced;
+        m_preference.tradingFrequency = 2; // 中频
+    } else {
+        m_preference.style = InvestmentStyle::Aggressive;
+        m_preference.tradingFrequency = 3; // 高频
+    }
+    
+    // 根据最大回撤调整风险承受能力
+    if (maxDrawdown > 20) {
+        m_preference.riskTolerance = 70.0; // 高风险承受
+    } else if (maxDrawdown > 10) {
+        m_preference.riskTolerance = 50.0; // 中等
+    } else {
+        m_preference.riskTolerance = 30.0; // 低风险承受
+    }
+    
+    // 根据胜率调整
+    if (winRate > 0.6) {
+        m_preference.riskTolerance = qMin(100.0, m_preference.riskTolerance + 10);
+    }
+    
     InvestmentStyle style = determineStyleFromHistory();
     m_preference.style = style;
 
-    LOG_INFO(QString("Preference analyzed from history: %1").arg(styleToString(style)));
+    LOG_INFO(QString("Preference analyzed from history: style=%1, riskTolerance=%2, tradingFreq=%3")
+        .arg(styleToString(style))
+        .arg(m_preference.riskTolerance)
+        .arg(m_preference.tradingFrequency));
 }
 
 QVector<StockRecommendation> PersonalizedRecommendation::getRecommendations(int count)
@@ -178,9 +216,35 @@ double PersonalizedRecommendation::calculateRecommendationScore(const QString& s
 
     // 2. 行业偏好
     // TODO: 根据股票行业和用户偏好调整
+    // 实际应用中应该查询股票的行业信息
+    // 这里使用简化的行业偏好模拟
+    QString industry = getStockIndustry(symbol); // 获取股票行业
+    if (m_preference.style == InvestmentStyle::Conservative) {
+        // 保守型偏好稳健行业（银行、公用事业等）
+        if (industry.contains(QStringLiteral("银行")) || industry.contains(QStringLiteral("公用"))) {
+            score += 10;
+        }
+    } else if (m_preference.style == InvestmentStyle::Aggressive) {
+        // 进取型偏好成长行业（科技、新能源等）
+        if (industry.contains(QStringLiteral("科技")) || industry.contains(QStringLiteral("新能源"))) {
+            score += 15;
+        }
+    }
 
     // 3. 市值偏好
     // TODO: 根据市值范围调整
+    double marketCap = getStockMarketCap(symbol); // 获取市值
+    if (m_preference.style == InvestmentStyle::Conservative) {
+        // 保守型偏好大盘股
+        if (marketCap > 1000) { // 1000亿以上
+            score += 8;
+        }
+    } else if (m_preference.style == InvestmentStyle::Aggressive) {
+        // 进取型偏好中小盘股
+        if (marketCap < 500) { // 500亿以下
+            score += 12;
+        }
+    }
 
     // 限制在0-100范围
     return qBound(0.0, score, 100.0);
@@ -299,12 +363,52 @@ double PersonalizedRecommendation::calculateRiskScore(const QMap<QString, double
 
 InvestmentStyle PersonalizedRecommendation::determineStyleFromHistory()
 {
-    // TODO: 从历史交易数据分析投资风格
+    // 从历史交易数据分析投资风格
     // 1. 分析持仓周期
     // 2. 分析风险偏好
     // 3. 分析收益波动
+    
+    // TODO: 实际应用中应该从交易历史数据库分析
+    // 这里返回当前设置的偏好
+    return m_preference.style;
+}
 
-    return InvestmentStyle::Balanced;
+QString PersonalizedRecommendation::getStockIndustry(const QString& symbol)
+{
+    // TODO: 实际应用中应该从数据库或API查询
+    // 这里返回模拟的行业信息
+    static QMap<QString, QString> industryMap = {
+        {"sh600000", QStringLiteral("银行")},
+        {"sh600519", QStringLiteral("白酒")},
+        {"sz000001", QStringLiteral("银行")},
+        {"sh600036", QStringLiteral("银行")},
+        {"sh601318", QStringLiteral("保险")},
+        {"sz000002", QStringLiteral("房地产")},
+        {"sz300750", QStringLiteral("新能源")},
+        {"sz002594", QStringLiteral("汽车")},
+        {"sh688981", QStringLiteral("科技")},
+    };
+    
+    return industryMap.value(symbol, QStringLiteral("其他"));
+}
+
+double PersonalizedRecommendation::getStockMarketCap(const QString& symbol)
+{
+    // TODO: 实际应用中应该从数据库或API查询
+    // 这里返回模拟的市值信息（单位：亿元）
+    static QMap<QString, double> marketCapMap = {
+        {"sh600000", 3500.0},
+        {"sh600519", 22000.0},
+        {"sz000001", 2800.0},
+        {"sh600036", 12000.0},
+        {"sh601318", 9000.0},
+        {"sz000002", 1800.0},
+        {"sz300750", 9500.0},
+        {"sz002594", 7500.0},
+        {"sh688981", 450.0},
+    };
+    
+    return marketCapMap.value(symbol, 500.0);
 }
 
 QString PersonalizedRecommendation::styleToString(InvestmentStyle style) const
