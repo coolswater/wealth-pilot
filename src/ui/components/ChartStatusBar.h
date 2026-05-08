@@ -1,9 +1,9 @@
 /**
  * @file ChartStatusBar.h
- * @brief 图表状态栏 - 显示账户、连接、坐标信息
+ * @brief 图表状态栏 - 显示账户、连接、坐标信�?
  *
- * @details 功能：
- * - 账户信息（账户ID、可用资金、保证金）
+ * @details 功能�?
+ * - 账户信息（账户ID、可用资金、保证金�?
  * - 连接状态（CTP连接状态）
  * - 坐标信息（十字光标位置）
  * - 时间显示
@@ -23,15 +23,15 @@
 /**
  * @brief 图表状态栏组件
  *
- * @details 显示K线图表的状态信息，包括：
+ * @details 显示K线图表的状态信息，包括�?
  * - 账户资金信息
- * - CTP连接状态
+ * - CTP连接状�?
  * - 十字光标坐标
  *
  * @example
  * @code
  * ChartStatusBar* statusBar = new ChartStatusBar(this);
- * statusBar->setConnectionStatus("CTP 已连接", QColor("#10B981"));
+ * statusBar->setConnectionStatus("CTP 已连�?, QColor("#3fb950"));
  * statusBar->setCrosshairInfo(QDateTime::currentDateTime(), 3850.0, 100);
  * @endcode
  */
@@ -43,8 +43,8 @@ public:
     // ========== 构造与析构 ==========
 
     /**
-     * @brief 构造函数
-     * @param parent 父控件
+     * @brief 构造函�?
+     * @param parent 父控�?
      */
     explicit ChartStatusBar(QWidget *parent = nullptr);
 
@@ -59,14 +59,14 @@ public:
      * @brief 设置账户信息
      * @param account 账户ID
      * @param available 可用资金
-     * @param margin 占用保证金
+     * @param margin 占用保证�?
      */
     void setAccountInfo(const QString& account, double available, double margin);
 
     /**
-     * @brief 设置连接状态
-     * @param status 状态文本
-     * @param color 状态颜色
+     * @brief 设置连接状�?
+     * @param status 状态文�?
+     * @param color 状态颜�?
      */
     void setConnectionStatus(const QString& status, const QColor& color);
 
@@ -80,7 +80,7 @@ public:
      * @brief 设置十字光标信息
      * @param time 时间
      * @param price 价格
-     * @param volume 成交量
+     * @param volume 成交�?
      */
     void setCrosshairInfo(const QDateTime& time, double price, qint64 volume);
 

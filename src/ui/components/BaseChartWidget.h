@@ -203,7 +203,7 @@ private:
     bool m_mousePressed = false;
 
     QColor m_backgroundColor = QColor(Tokens::Colors::BgBase);
-    QColor m_gridColor = QColor("#2A2A3E");
+    QColor m_gridColor = QColor("#30363d");
     QColor m_crosshairColor = QColor(Tokens::Colors::TextDisabled);
 
     QRect m_chartRect;

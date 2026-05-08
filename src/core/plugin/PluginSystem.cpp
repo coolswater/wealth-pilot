@@ -71,8 +71,7 @@ bool PluginSystem::installPlugin(const QString& scriptPath)
         return false;
     }
 
-    // 解析插件元数据
-    PluginInfo info;
+    // 解析插件元数�?    PluginInfo info;
     if (!parsePluginMetadata(scriptPath, info)) {
         LOG_ERROR(QString("Failed to parse plugin metadata: %1").arg(scriptPath));
         return false;
@@ -168,13 +167,12 @@ IndicatorResult PluginSystem::calculateIndicator(const QString& pluginId,
     if (executePython(script, params, output)) {
         result.name = output.value(QStringLiteral("name"), plugin.name).toString();
 
-        // 解析指标值
-        QVariantList values = output.value(QStringLiteral("values")).toList();
+        // 解析指标�?        QVariantList values = output.value(QStringLiteral("values")).toList();
         for (const QVariant& v : values) {
             result.values.append(v.toDouble());
         }
 
-        result.color = output.value(QStringLiteral("color"), QStringLiteral("#3B82F6")).toString();
+        result.color = output.value(QStringLiteral("color"), QStringLiteral("#58a6ff")).toString();
         result.lineWidth = output.value(QStringLiteral("lineWidth"), 1).toInt();
         result.lineStyle = output.value(QStringLiteral("lineStyle"), QStringLiteral("solid")).toString();
         result.visible = output.value(QStringLiteral("visible"), true).toBool();
@@ -274,7 +272,7 @@ QString PluginSystem::getScriptTemplate(PluginType type) const
             "        dict: {\n"
             "            'name': '指标名称',\n"
             "            'values': [指标值数组],\n"
-            "            'color': '#3B82F6',\n"
+            "            'color': '#58a6ff',\n"
             "            'lineWidth': 1,\n"
             "            'lineStyle': 'solid',\n"
             "            'visible': True\n"
@@ -294,7 +292,7 @@ QString PluginSystem::getScriptTemplate(PluginType type) const
             "    return {\n"
             "        'name': f'MA{period}',\n"
             "        'values': values,\n"
-            "        'color': '#3B82F6',\n"
+            "        'color': '#58a6ff',\n"
             "        'lineWidth': 1,\n"
             "        'lineStyle': 'solid',\n"
             "        'visible': True\n"
@@ -336,7 +334,7 @@ QString PluginSystem::getScriptTemplate(PluginType type) const
             "    elif ma5 < ma20:\n"
             "        return {'signal': 'sell', 'strength': 70, 'reason': 'MA5下穿MA20'}\n"
             "    else:\n"
-            "        return {'signal': 'hold', 'strength': 30, 'reason': '无明确信号'}\n"
+            "        return {'signal': 'hold', 'strength': 30, 'reason': '无明确信�?}\n"
         );
     } else if (type == PluginType::Alert) {
         template_ = QStringLiteral(
@@ -410,8 +408,7 @@ bool PluginSystem::executePython(const QString& script, const QVariantMap& param
         return false;
     }
 
-    // 发送输入数据
-    process.write(inputJson.toUtf8());
+    // 发送输入数�?    process.write(inputJson.toUtf8());
     process.closeWriteChannel();
 
     if (!process.waitForFinished(30000)) {
@@ -450,8 +447,7 @@ QString PluginSystem::buildScript(const QString& scriptPath, const PluginContext
     QString script = QString::fromUtf8(file.readAll());
     file.close();
 
-    // 包装脚本，添加数据输入
-    QString wrapper = QStringLiteral(
+    // 包装脚本，添加数据输�?    QString wrapper = QStringLiteral(
         "import json\n"
         "import sys\n"
         "\n"

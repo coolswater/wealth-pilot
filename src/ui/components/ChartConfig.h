@@ -41,7 +41,7 @@
  * int ma5Period = ChartConfig::instance()->indicatorPeriod("MA5");
  *
  * // 设置配置
- * ChartConfig::instance()->setUpColor(QColor("#EF4444"));
+ * ChartConfig::instance()->setUpColor(QColor("#f85149"));
  * ChartConfig::instance()->save();
  * @endcode
  */
