@@ -6,7 +6,7 @@
 #include "TradingPanel.h"
 #include "ui/components/OrderDialog.h"
 #include "trading/TradingService.h"
-#include "ui/components/PageStyles.h"
+#include "ui/components/StyleHelper.h"
 #include "utils/Logger.h"
 
 #include <QMessageBox>
@@ -32,17 +32,16 @@ void TradingPanel::initUI()
 
     // 合约信息区域
     QGroupBox *infoGroup = new QGroupBox("合约信息", this);
-    infoGroup->setStyleSheet(PageStyles::groupBox());
     QHBoxLayout *infoLayout = new QHBoxLayout(infoGroup);
 
     m_instrumentLabel = new QLabel("选择合约", this);
-    m_instrumentLabel->setStyleSheet(PageStyles::titleText());
+    StyleHelper::setTitleLabel(m_instrumentLabel);
 
     m_priceLabel = new QLabel("--", this);
-    m_priceLabel->setStyleSheet(PageStyles::valueText());
+    StyleHelper::setValueLabel(m_priceLabel);
 
     m_availableLabel = new QLabel("可用: --", this);
-    m_availableLabel->setStyleSheet(PageStyles::labelText());
+    StyleHelper::setLabelText(m_availableLabel);
 
     infoLayout->addWidget(m_instrumentLabel);
     infoLayout->addStretch();
@@ -53,49 +52,24 @@ void TradingPanel::initUI()
 
     // 快捷下单按钮区域
     QGroupBox *orderGroup = new QGroupBox("快捷下单", this);
-    orderGroup->setStyleSheet(PageStyles::groupBox());
     QGridLayout *orderLayout = new QGridLayout(orderGroup);
     orderLayout->setSpacing(10);
 
     m_buyOpenBtn = new QPushButton("买入开仓", this);
     m_buyOpenBtn->setMinimumHeight(50);
-    m_buyOpenBtn->setStyleSheet(QString(R"(
-        QPushButton {
-            background-color: %1;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        QPushButton:hover {
-            background-color: %2;
-        }
-    )").arg(Tokens::Colors::Danger, Tokens::Colors::DangerLight));
+    StyleHelper::setDangerButton(m_buyOpenBtn);
 
     m_sellOpenBtn = new QPushButton("卖出开仓", this);
     m_sellOpenBtn->setMinimumHeight(50);
-    m_sellOpenBtn->setStyleSheet(QString(R"(
-        QPushButton {
-            background-color: %1;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        QPushButton:hover {
-            background-color: %2;
-        }
-    )").arg(Tokens::Colors::Success, Tokens::Colors::SuccessLight));
+    StyleHelper::setSuccessButton(m_sellOpenBtn);
 
     m_buyCloseBtn = new QPushButton("买入平仓", this);
     m_buyCloseBtn->setMinimumHeight(50);
-    m_buyCloseBtn->setStyleSheet(PageStyles::secondaryButton());
+    StyleHelper::setSecondaryButton(m_buyCloseBtn);
 
     m_sellCloseBtn = new QPushButton("卖出平仓", this);
     m_sellCloseBtn->setMinimumHeight(50);
-    m_sellCloseBtn->setStyleSheet(PageStyles::secondaryButton());
+    StyleHelper::setSecondaryButton(m_sellCloseBtn);
 
     orderLayout->addWidget(m_buyOpenBtn, 0, 0);
     orderLayout->addWidget(m_sellOpenBtn, 0, 1);
@@ -105,7 +79,6 @@ void TradingPanel::initUI()
 
     // 委托列表区域
     QGroupBox *listGroup = new QGroupBox("当日委托", this);
-    listGroup->setStyleSheet(PageStyles::groupBox());
     QVBoxLayout *listLayout = new QVBoxLayout(listGroup);
 
     m_orderTable = new QTableWidget(0, 6, this);
@@ -113,17 +86,13 @@ void TradingPanel::initUI()
     m_orderTable->horizontalHeader()->setStretchLastSection(true);
     m_orderTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_orderTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_orderTable->setStyleSheet(PageStyles::table());
     listLayout->addWidget(m_orderTable);
 
     m_statusLabel = new QLabel("就绪", this);
-    m_statusLabel->setStyleSheet(PageStyles::labelText());
+    StyleHelper::setLabelText(m_statusLabel);
     listLayout->addWidget(m_statusLabel);
 
     mainLayout->addWidget(listGroup);
-
-    // 设置页面背景
-    setStyleSheet(PageStyles::pageBackground());
 }
 
 void TradingPanel::initConnections()

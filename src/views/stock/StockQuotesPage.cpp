@@ -7,7 +7,7 @@
  */
 
 #include "StockQuotesPage.h"
-#include "ui/components/PageStyles.h"
+#include "ui/components/StyleHelper.h"
 #include "core/config/Tokens.h"
 #include "utils/Logger.h"
 
@@ -232,14 +232,14 @@ void StockQuotesPage::setupUI()
     headerLayout->setSpacing(12);
     
     QLabel* titleLabel = new QLabel(QStringLiteral("股票行情"), this);
-    titleLabel->setStyleSheet(PageStyles::titleText());
+    StyleHelper::setTitleLabel(titleLabel);
     headerLayout->addWidget(titleLabel);
     
     headerLayout->addStretch();
     
     // 状态标签
     m_statusLabel->setText(QStringLiteral("未加载数据"));
-    m_statusLabel->setStyleSheet(PageStyles::labelText());
+    StyleHelper::setLabelText(m_statusLabel);
     headerLayout->addWidget(m_statusLabel);
     
     mainLayout->addLayout(headerLayout);
@@ -250,7 +250,7 @@ void StockQuotesPage::setupUI()
 
     // 搜索框
     m_searchEdit->setPlaceholderText(QStringLiteral("搜索股票代码或名称"));
-    m_searchEdit->setStyleSheet(PageStyles::inputField());
+    m_searchEdit->setObjectName(QStringLiteral("searchEdit"));
     m_searchEdit->setFixedWidth(220);
     toolbarLayout->addWidget(m_searchEdit);
 
@@ -260,7 +260,7 @@ void StockQuotesPage::setupUI()
     m_filterCombo->addItem(QStringLiteral("深A"), QStringLiteral("sz"));
     m_filterCombo->addItem(QStringLiteral("创业板"), QStringLiteral("sz300"));
     m_filterCombo->addItem(QStringLiteral("科创板"), QStringLiteral("sh688"));
-    m_filterCombo->setStyleSheet(PageStyles::comboBox());
+    m_filterCombo->setObjectName(QStringLiteral("filterCombo"));
     m_filterCombo->setFixedWidth(100);
     toolbarLayout->addWidget(m_filterCombo);
 
@@ -268,7 +268,7 @@ void StockQuotesPage::setupUI()
 
     // 刷新按钮
     m_refreshBtn->setText(QStringLiteral("刷新"));
-    m_refreshBtn->setStyleSheet(PageStyles::primaryButton());
+    StyleHelper::setPrimaryButton(m_refreshBtn);
     m_refreshBtn->setFixedWidth(80);
     toolbarLayout->addWidget(m_refreshBtn);
 
@@ -287,7 +287,7 @@ void StockQuotesPage::setupUI()
     m_tableView->setSortingEnabled(true);
     m_tableView->horizontalHeader()->setStretchLastSection(true);
     m_tableView->verticalHeader()->setVisible(false);
-    m_tableView->setStyleSheet(PageStyles::table());
+    m_tableView->setObjectName(QStringLiteral("stockTableView"));
     
     // 设置列宽
     m_tableView->setColumnWidth(StockQuoteModel::ColCode, 80);

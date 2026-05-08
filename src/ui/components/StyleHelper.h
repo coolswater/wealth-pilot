@@ -301,6 +301,21 @@ public:
         refreshStyle(label);
     }
 
+    // 兼容别名
+    static void setTitleText(QLabel* label) { setTitleLabel(label); }
+    static void setSubtitleText(QLabel* label) { setSubtitleLabel(label); }
+    static void setValueText(QLabel* label) { setValueLabel(label); }
+
+    /**
+     * @brief 设置统计卡片样式
+     */
+    static void setStatCard(QWidget* widget)
+    {
+        if (!widget) return;
+        widget->setObjectName(QStringLiteral("statCard"));
+        refreshStyle(widget);
+    }
+
     // ========================================================================
     // 状态样式
     // ========================================================================

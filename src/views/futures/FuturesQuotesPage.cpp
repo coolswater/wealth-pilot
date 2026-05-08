@@ -15,7 +15,7 @@
  */
 
 #include "FuturesQuotesPage.h"
-#include "ui/components/PageStyles.h"
+#include "ui/components/StyleHelper.h"
 #include "core/config/Tokens.h"
 #include "utils/Logger.h"
 #include "models/FuturesQuoteModel.h"
@@ -882,10 +882,16 @@ void FuturesQuotesPage::updateConnectionStatus(const QString& text, const QStrin
 
     QMetaObject::invokeMethod(d->m_statusLabel, [this, text, color]() {
         d->m_statusLabel->setText(text);
-        d->m_statusLabel->setStyleSheet(
-            QString("color: %1; padding: 5px; border-top: 1px solid #ddd; font-weight: bold;")
-                .arg(color)
-            );
+        // 使用 StyleHelper 设置状态样式
+        if (color == Tokens::Colors::Success) {
+            StyleHelper::setSuccess(d->m_statusLabel);
+        } else if (color == Tokens::Colors::Danger) {
+            StyleHelper::setDanger(d->m_statusLabel);
+        } else if (color == Tokens::Colors::Warning) {
+            StyleHelper::setWarning(d->m_statusLabel);
+        } else {
+            StyleHelper::setInfo(d->m_statusLabel);
+        }
     }, Qt::QueuedConnection);
 }
 
@@ -1009,14 +1015,14 @@ void FuturesQuotesPage::setupUI()
     headerLayout->setSpacing(12);
 
     QLabel* titleLabel = new QLabel(QStringLiteral("期货行情"), this);
-    titleLabel->setStyleSheet(PageStyles::titleText());
+    StyleHelper::setTitleLabel(titleLabel);
     headerLayout->addWidget(titleLabel);
 
     headerLayout->addStretch();
 
     // 状态标签
     d->m_statusLabel = new QLabel(QStringLiteral("正在连接CTP..."), this);
-    d->m_statusLabel->setStyleSheet(PageStyles::labelText());
+    StyleHelper::setLabelText(d->m_statusLabel);
     headerLayout->addWidget(d->m_statusLabel);
 
     mainLayout->addLayout(headerLayout);
@@ -1027,20 +1033,19 @@ void FuturesQuotesPage::setupUI()
 
     // 刷新按钮
     QPushButton* refreshBtn = new QPushButton(QStringLiteral("刷新"), this);
-    refreshBtn->setStyleSheet(PageStyles::secondaryButton());
+    StyleHelper::setSecondaryButton(refreshBtn);
     refreshBtn->setFixedWidth(80);
     toolbarLayout->addWidget(refreshBtn);
 
     // 合约输入框
     d->m_contractInput = new QLineEdit(this);
     d->m_contractInput->setPlaceholderText(QStringLiteral("合约代码"));
-    d->m_contractInput->setStyleSheet(PageStyles::inputField());
     d->m_contractInput->setFixedWidth(150);
     toolbarLayout->addWidget(d->m_contractInput);
 
     // 订阅按钮
     d->m_subscribeBtn = new QPushButton(QStringLiteral("订阅"), this);
-    d->m_subscribeBtn->setStyleSheet(PageStyles::primaryButton());
+    StyleHelper::setPrimaryButton(d->m_subscribeBtn);
     d->m_subscribeBtn->setFixedWidth(80);
     toolbarLayout->addWidget(d->m_subscribeBtn);
 
@@ -1048,7 +1053,7 @@ void FuturesQuotesPage::setupUI()
 
     // 活跃度筛选
     QLabel* activityLabel = new QLabel(QStringLiteral("显示:"), this);
-    activityLabel->setStyleSheet(PageStyles::labelText());
+    StyleHelper::setLabelText(activityLabel);
     toolbarLayout->addWidget(activityLabel);
 
     d->m_activityFilter = new QComboBox(this);
@@ -1057,7 +1062,6 @@ void FuturesQuotesPage::setupUI()
     d->m_activityFilter->addItem(QStringLiteral("高流动性"), 2);
     d->m_activityFilter->addItem(QStringLiteral("低流动性"), 3);
     d->m_activityFilter->setCurrentIndex(1);
-    d->m_activityFilter->setStyleSheet(PageStyles::comboBox());
     d->m_activityFilter->setFixedWidth(120);
     toolbarLayout->addWidget(d->m_activityFilter);
 
@@ -1065,12 +1069,11 @@ void FuturesQuotesPage::setupUI()
 
     // 筛选输入框
     QLabel* filterLabel = new QLabel(QStringLiteral("筛选:"), this);
-    filterLabel->setStyleSheet(PageStyles::labelText());
+    StyleHelper::setLabelText(filterLabel);
     toolbarLayout->addWidget(filterLabel);
 
     d->m_filterInput = new QLineEdit(this);
     d->m_filterInput->setPlaceholderText(QStringLiteral("输入合约代码"));
-    d->m_filterInput->setStyleSheet(PageStyles::inputField());
     d->m_filterInput->setFixedWidth(120);
     toolbarLayout->addWidget(d->m_filterInput);
 
@@ -1080,7 +1083,6 @@ void FuturesQuotesPage::setupUI()
     d->m_tableView->setModel(d->m_proxyModel);
 
     // ========== 表格视图 ==========
-    d->m_tableView->setStyleSheet(PageStyles::table());
     d->m_tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     d->m_tableView->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     d->m_tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);

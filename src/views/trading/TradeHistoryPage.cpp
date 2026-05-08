@@ -5,7 +5,7 @@
 
 #include "TradeHistoryPage.h"
 #include "core/config/Tokens.h"
-#include "ui/components/PageStyles.h"
+#include "ui/components/StyleHelper.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -101,34 +101,9 @@ void TradeHistoryPage::setupUI()
 
     mainLayout->addWidget(m_table);
 
-    // 设置样式
-    m_table->setStyleSheet(QString(R"(
-        QTableWidget {
-            background-color: %1;
-            alternate-background-color: %2;
-            gridline-color: %3;
-            border: 1px solid %3;
-            border-radius: 4px;
-        }
-        QTableWidget::item {
-            padding: 4px;
-        }
-        QHeaderView::section {
-            background-color: %2;
-            color: %4;
-            padding: 6px;
-            border: none;
-            border-bottom: 1px solid %3;
-            font-weight: bold;
-        }
-    )").arg(Tokens::Colors::BgSurface, Tokens::Colors::BgBase, Tokens::Colors::Border, Tokens::Colors::TextSecondary));
-
-    m_refreshBtn->setStyleSheet(PageStyles::primaryButton());
-    m_exportBtn->setStyleSheet(PageStyles::secondaryButton());
-
-    m_filterCombo->setStyleSheet(PageStyles::comboBox());
-    m_startDate->setStyleSheet(PageStyles::dateEdit());
-    m_endDate->setStyleSheet(PageStyles::dateEdit());
+    // 使用 StyleHelper 设置按钮样式
+    StyleHelper::setPrimaryButton(m_refreshBtn);
+    StyleHelper::setSecondaryButton(m_exportBtn);
 }
 
 void TradeHistoryPage::setupConnections()

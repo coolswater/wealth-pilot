@@ -13,7 +13,8 @@
  */
 
 #include "AccountPage.h"
-#include "ui/components/PageStyles.h"
+#include "ui/components/StyleHelper.h"
+#include "core/config/Tokens.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>
@@ -59,12 +60,12 @@ void AccountPage::initUI()
     // Header
     QHBoxLayout *headerLayout = new QHBoxLayout();
     QLabel *titleLabel = new QLabel("账户资金", this);
-    titleLabel->setStyleSheet(PageStyles::titleText());
+    StyleHelper::setTitleText(titleLabel);
     
     m_refreshBtn = new QPushButton("刷新", this);
     m_exportBtn = new QPushButton("导出", this);
-    m_refreshBtn->setStyleSheet(PageStyles::secondaryButton());
-    m_exportBtn->setStyleSheet(PageStyles::secondaryButton());
+    StyleHelper::setSecondaryButton(m_refreshBtn);
+    StyleHelper::setSecondaryButton(m_exportBtn);
     
     headerLayout->addWidget(titleLabel);
     headerLayout->addStretch();
@@ -78,13 +79,13 @@ void AccountPage::initUI()
     
     auto createCard = [](const QString &title) -> QFrame* {
         QFrame *card = new QFrame();
-        card->setStyleSheet(PageStyles::statCard());
         QVBoxLayout *layout = new QVBoxLayout(card);
         layout->setSpacing(4);
         QLabel *tLabel = new QLabel(title, card);
-        tLabel->setStyleSheet(PageStyles::labelText());
         QLabel *vLabel = new QLabel("0.00", card);
-        vLabel->setStyleSheet(PageStyles::valueText());
+        StyleHelper::setStatCard(card);
+        StyleHelper::setLabelText(tLabel);
+        StyleHelper::setValueText(vLabel);
         layout->addWidget(tLabel);
         layout->addWidget(vLabel);
         return card;
@@ -126,12 +127,10 @@ void AccountPage::initUI()
     
     QFrame *totalProfitCard = createCard("总盈利");
     m_totalProfitLabel = totalProfitCard->findChildren<QLabel*>().last();
-    m_totalProfitLabel->setStyleSheet(PageStyles::valueText(PageStyles::upColor()));
     pnlLayout->addWidget(totalProfitCard);
     
     QFrame *totalLossCard = createCard("总亏损");
     m_totalLossLabel = totalLossCard->findChildren<QLabel*>().last();
-    m_totalLossLabel->setStyleSheet(PageStyles::valueText(PageStyles::downColor()));
     pnlLayout->addWidget(totalLossCard);
     
     QFrame *winRateCard = createCard("胜率");
@@ -146,21 +145,18 @@ void AccountPage::initUI()
     filterLayout->addWidget(new QLabel("类型:", this));
     m_typeFilterCombo = new QComboBox(this);
     m_typeFilterCombo->addItems({"全部", "入金", "出金", "盈利", "亏损", "手续费", "转账"});
-    m_typeFilterCombo->setStyleSheet(PageStyles::comboBox());
     filterLayout->addWidget(m_typeFilterCombo);
     
     filterLayout->addWidget(new QLabel("从:", this));
     m_startDateEdit = new QDateEdit(QDate::currentDate().addDays(-30), this);
     m_startDateEdit->setCalendarPopup(true);
     m_startDateEdit->setDisplayFormat("yyyy-MM-dd");
-    m_startDateEdit->setStyleSheet(PageStyles::dateEdit());
     filterLayout->addWidget(m_startDateEdit);
     
     filterLayout->addWidget(new QLabel("到:", this));
     m_endDateEdit = new QDateEdit(QDate::currentDate(), this);
     m_endDateEdit->setCalendarPopup(true);
     m_endDateEdit->setDisplayFormat("yyyy-MM-dd");
-    m_endDateEdit->setStyleSheet(PageStyles::dateEdit());
     filterLayout->addWidget(m_endDateEdit);
     
     filterLayout->addStretch();
@@ -175,7 +171,6 @@ void AccountPage::initUI()
     m_fundFlowTable->setAlternatingRowColors(true);
     m_fundFlowTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_fundFlowTable->verticalHeader()->setVisible(false);
-    m_fundFlowTable->setStyleSheet(PageStyles::table());
     mainLayout->addWidget(m_fundFlowTable, 1);
 }
 
@@ -261,12 +256,12 @@ void AccountPage::updateSummary()
     
     // P&L with color
     m_closeProfitLabel->setText(QString::number(m_closeProfit, 'f', 2));
-    m_closeProfitLabel->setStyleSheet(PageStyles::valueText(
-        m_closeProfit >= 0 ? PageStyles::upColor() : PageStyles::downColor()));
+    m_closeProfitLabel->setStyleSheet(QString("color: %1;").arg(
+        m_closeProfit >= 0 ? Tokens::Colors::Success : Tokens::Colors::Danger));
     
     m_positionProfitLabel->setText(QString::number(m_positionProfit, 'f', 2));
-    m_positionProfitLabel->setStyleSheet(PageStyles::valueText(
-        m_positionProfit >= 0 ? PageStyles::upColor() : PageStyles::downColor()));
+    m_positionProfitLabel->setStyleSheet(QString("color: %1;").arg(
+        m_positionProfit >= 0 ? Tokens::Colors::Success : Tokens::Colors::Danger));
     
     m_totalProfitLabel->setText(QString::number(m_totalProfit, 'f', 2));
     m_totalLossLabel->setText(QString::number(m_totalLoss, 'f', 2));
@@ -294,7 +289,7 @@ void AccountPage::updateFundFlowTable()
         m_fundFlowTable->setItem(i, 1, new QTableWidgetItem(r.type));
         
         auto *amountItem = new QTableWidgetItem(QString::number(r.amount, 'f', 2));
-        amountItem->setForeground(QColor(r.amount >= 0 ? PageStyles::upColor() : PageStyles::downColor()));
+        amountItem->setForeground(QColor(r.amount >= 0 ? Tokens::Colors::Success : Tokens::Colors::Danger));
         m_fundFlowTable->setItem(i, 2, amountItem);
         
         m_fundFlowTable->setItem(i, 3, new QTableWidgetItem(QString::number(r.balance, 'f', 2)));

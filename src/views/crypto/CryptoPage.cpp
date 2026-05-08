@@ -5,7 +5,7 @@
 
 #include "CryptoPage.h"
 #include "core/config/Tokens.h"
-#include "ui/components/PageStyles.h"
+#include "ui/components/StyleHelper.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -104,31 +104,9 @@ void CryptoPage::setupUI()
     connect(refreshBtn, &QPushButton::clicked, this, &CryptoPage::onRefreshData);
     connect(d->cryptoListTable, &QTableWidget::cellClicked, this, &CryptoPage::onCryptoListClicked);
 
-    // 设置样式
-    d->cryptoListTable->setStyleSheet(QString(R"(
-        QTableWidget {
-            background-color: %1;
-            alternate-background-color: %2;
-            gridline-color: %3;
-            border: 1px solid %3;
-            border-radius: 4px;
-        }
-        QTableWidget::item {
-            padding: 4px;
-        }
-        QHeaderView::section {
-            background-color: %2;
-            color: %4;
-            padding: 6px;
-            border: none;
-            border-bottom: 1px solid %3;
-            font-weight: bold;
-        }
-    )").arg(Tokens::Colors::BgSurface, Tokens::Colors::BgBase, Tokens::Colors::Border, Tokens::Colors::TextSecondary));
-
-    refreshBtn->setStyleSheet(PageStyles::primaryButton());
-
-    d->priceLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::TextSecondary));
+    // 设置样式（使用 StyleHelper）
+    StyleHelper::setPrimaryButton(refreshBtn);
+    StyleHelper::setLabelText(d->priceLabel);
 }
 
 void CryptoPage::onCryptoListClicked(int row, int column)

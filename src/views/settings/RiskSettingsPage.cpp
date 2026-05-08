@@ -13,7 +13,7 @@
  */
 
 #include "RiskSettingsPage.h"
-#include "ui/components/PageStyles.h"
+#include "ui/components/StyleHelper.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>
@@ -52,12 +52,12 @@ void RiskSettingsPage::initUI()
     // Header
     QHBoxLayout *headerLayout = new QHBoxLayout();
     QLabel *titleLabel = new QLabel("风控设置", this);
-    titleLabel->setStyleSheet(PageStyles::titleText());
+    StyleHelper::setTitleLabel(titleLabel);
     
     m_saveBtn = new QPushButton("保存", this);
     m_resetBtn = new QPushButton("重置", this);
-    m_saveBtn->setStyleSheet(PageStyles::primaryButton());
-    m_resetBtn->setStyleSheet(PageStyles::secondaryButton());
+    StyleHelper::setPrimaryButton(m_saveBtn);
+    StyleHelper::setSecondaryButton(m_resetBtn);
     
     headerLayout->addWidget(titleLabel);
     headerLayout->addStretch();
@@ -65,13 +65,8 @@ void RiskSettingsPage::initUI()
     headerLayout->addWidget(m_saveBtn);
     mainLayout->addLayout(headerLayout);
     
-    QString groupBoxStyle = PageStyles::groupBox();
-    QString inputStyle = PageStyles::inputField();
-    QString checkStyle = PageStyles::checkBox();
-    
     // Position Risk Group
     QGroupBox *positionGroup = new QGroupBox("持仓风险控制", this);
-    positionGroup->setStyleSheet(groupBoxStyle);
     QFormLayout *positionLayout = new QFormLayout(positionGroup);
     positionLayout->setSpacing(12);
     
@@ -79,20 +74,17 @@ void RiskSettingsPage::initUI()
     m_maxPositionValueSpin->setRange(0, 100000000);
     m_maxPositionValueSpin->setSuffix(" 元");
     m_maxPositionValueSpin->setDecimals(0);
-    m_maxPositionValueSpin->setStyleSheet(inputStyle);
     positionLayout->addRow("最大持仓金额:", m_maxPositionValueSpin);
     
     m_maxPositionCountSpin = new QSpinBox(this);
     m_maxPositionCountSpin->setRange(0, 100);
     m_maxPositionCountSpin->setSuffix(" 手");
-    m_maxPositionCountSpin->setStyleSheet(inputStyle);
     positionLayout->addRow("最大持仓数量:", m_maxPositionCountSpin);
     
     mainLayout->addWidget(positionGroup);
     
     // Loss Risk Group
     QGroupBox *lossGroup = new QGroupBox("亏损风险控制", this);
-    lossGroup->setStyleSheet(groupBoxStyle);
     QFormLayout *lossLayout = new QFormLayout(lossGroup);
     lossLayout->setSpacing(12);
     
@@ -100,28 +92,24 @@ void RiskSettingsPage::initUI()
     m_maxDailyLossSpin->setRange(0, 1000000);
     m_maxDailyLossSpin->setSuffix(" 元");
     m_maxDailyLossSpin->setDecimals(0);
-    m_maxDailyLossSpin->setStyleSheet(inputStyle);
     lossLayout->addRow("日最大亏损:", m_maxDailyLossSpin);
     
     m_maxSingleLossSpin = new QDoubleSpinBox(this);
     m_maxSingleLossSpin->setRange(0, 100000);
     m_maxSingleLossSpin->setSuffix(" 元");
     m_maxSingleLossSpin->setDecimals(0);
-    m_maxSingleLossSpin->setStyleSheet(inputStyle);
     lossLayout->addRow("单笔最大亏损:", m_maxSingleLossSpin);
     
     m_maxDrawdownSpin = new QDoubleSpinBox(this);
     m_maxDrawdownSpin->setRange(0, 100);
     m_maxDrawdownSpin->setSuffix(" %");
     m_maxDrawdownSpin->setDecimals(1);
-    m_maxDrawdownSpin->setStyleSheet(inputStyle);
     lossLayout->addRow("最大回撤:", m_maxDrawdownSpin);
     
     mainLayout->addWidget(lossGroup);
     
     // Leverage Risk Group
     QGroupBox *leverageGroup = new QGroupBox("杠杆风险控制", this);
-    leverageGroup->setStyleSheet(groupBoxStyle);
     QFormLayout *leverageLayout = new QFormLayout(leverageGroup);
     leverageLayout->setSpacing(12);
     
@@ -129,37 +117,32 @@ void RiskSettingsPage::initUI()
     m_maxLeverageSpin->setRange(1, 100);
     m_maxLeverageSpin->setSuffix(" 倍");
     m_maxLeverageSpin->setDecimals(1);
-    m_maxLeverageSpin->setStyleSheet(inputStyle);
     leverageLayout->addRow("最大杠杆:", m_maxLeverageSpin);
     
     m_maxMarginRatioSpin = new QDoubleSpinBox(this);
     m_maxMarginRatioSpin->setRange(0, 100);
     m_maxMarginRatioSpin->setSuffix(" %");
     m_maxMarginRatioSpin->setDecimals(1);
-    m_maxMarginRatioSpin->setStyleSheet(inputStyle);
     leverageLayout->addRow("最大保证金比例:", m_maxMarginRatioSpin);
     
     mainLayout->addWidget(leverageGroup);
     
     // Trading Restriction Group
     QGroupBox *restrictGroup = new QGroupBox("交易限制", this);
-    restrictGroup->setStyleSheet(groupBoxStyle);
     QFormLayout *restrictLayout = new QFormLayout(restrictGroup);
     restrictLayout->setSpacing(12);
     
     m_enableNightTradeCheck = new QCheckBox("允许夜盘交易", this);
-    m_enableNightTradeCheck->setStyleSheet(checkStyle);
     restrictLayout->addRow(m_enableNightTradeCheck);
     
     m_enableReverseTradeCheck = new QCheckBox("允许反向交易", this);
-    m_enableReverseTradeCheck->setStyleSheet(checkStyle);
     restrictLayout->addRow(m_enableReverseTradeCheck);
     
     mainLayout->addWidget(restrictGroup);
     
     // Info
     QLabel *infoLabel = new QLabel("提示: 风控规则将在下单时自动检查，违规订单将被拒绝。", this);
-    infoLabel->setStyleSheet(PageStyles::labelText());
+    StyleHelper::setLabelText(infoLabel);
     mainLayout->addWidget(infoLabel);
     
     mainLayout->addStretch();

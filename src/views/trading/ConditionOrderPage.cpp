@@ -5,7 +5,7 @@
 
 #include "ConditionOrderPage.h"
 #include "core/config/Tokens.h"
-#include "ui/components/PageStyles.h"
+#include "ui/components/StyleHelper.h"
 #include "trading/ConditionOrderEngine.h"
 #include "utils/Logger.h"
 
@@ -81,32 +81,15 @@ void ConditionOrderPage::setupUI()
     connect(m_deleteBtn, &QPushButton::clicked, this, &ConditionOrderPage::onDeleteClicked);
     connect(m_refreshBtn, &QPushButton::clicked, this, &ConditionOrderPage::onRefreshClicked);
 
-    // 设置样式
-    m_table->setStyleSheet(QString(R"(
-        QTableWidget {
-            background-color: %1;
-            alternate-background-color: %2;
-            gridline-color: %3;
-            border: 1px solid %3;
-            border-radius: 4px;
-        }
-        QTableWidget::item {
-            padding: 4px;
-        }
-        QHeaderView::section {
-            background-color: %2;
-            color: %4;
-            padding: 6px;
-            border: none;
-            border-bottom: 1px solid %3;
-            font-weight: bold;
-        }
-    )").arg(Tokens::Colors::BgSurface, Tokens::Colors::BgBase, Tokens::Colors::Border, Tokens::Colors::TextSecondary));
+    // 设置按钮样式
+    StyleHelper::setPrimaryButton(m_addBtn);
+    StyleHelper::setSecondaryButton(m_editBtn);
+    StyleHelper::setSecondaryButton(m_deleteBtn);
+    StyleHelper::setSecondaryButton(m_refreshBtn);
 
-    m_addBtn->setStyleSheet(PageStyles::primaryButton());
-    m_editBtn->setStyleSheet(PageStyles::secondaryButton());
-    m_deleteBtn->setStyleSheet(PageStyles::secondaryButton());
-    m_refreshBtn->setStyleSheet(PageStyles::secondaryButton());
+    // 设置表格属性
+    m_table->setProperty("dataTable", true);
+    StyleHelper::refreshStyle(m_table);
 }
 
 void ConditionOrderPage::updateTable()
