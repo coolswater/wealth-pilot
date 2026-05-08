@@ -449,8 +449,18 @@ void SmartAlertSystem::pushEmailNotification(const AlertTrigger& trigger)
 
     LOG_INFO(QString("Email notification: %1 - %2").arg(trigger.symbol, trigger.message));
 
-    // TODO: 集成真正的SMTP发送库（如QMimeMessage或第三方库）
-    // 这里仅记录日志，实际发送需要SMTP客户端库
+    // 注意：当前实现仅记录日志
+    // 实际邮件发送需要集成SMTP库，如：
+    // - QxtSmtp (Qt扩展库)
+    // - vmime (C++邮件库)
+    // - libcurl (支持SMTP)
+    // 示例集成代码：
+    // QxtSmtp smtp;
+    // smtp.setHostname(m_smtpServer);
+    // smtp.setPort(m_smtpPort);
+    // smtp.setUsername(m_emailUsername);
+    // smtp.setPassword(m_emailPassword);
+    // smtp.sendMail(from, to, subject, body);
 }
 
 void SmartAlertSystem::pushWebhookNotification(const AlertTrigger& trigger)

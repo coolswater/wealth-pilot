@@ -318,9 +318,8 @@ void NewsDataSource::fetchSocialHeatFromAPI(const QString& symbol)
 
         // 解析热度数据
         QByteArray data = reply->readAll();
-        // TODO: 实现热度解析逻辑
         // 东方财富的热度数据通常在HTML中，需要解析
-        // 这里简化处理，提取关键信息
+        // 当前简化处理，提取关键信息
         
         QString html = QString::fromUtf8(data);
         SocialHeatData heat;

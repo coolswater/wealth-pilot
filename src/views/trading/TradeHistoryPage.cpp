@@ -167,13 +167,46 @@ void TradeHistoryPage::onFilterChanged()
     QDate startDate = m_startDate->date();
     QDate endDate = m_endDate->date();
 
-    // TODO: 实现筛选逻辑
-    LOG_DEBUG(QString("Filter changed: %1, %2 - %3")
-              .arg(filterText)
-              .arg(startDate.toString("yyyy-MM-dd"))
-              .arg(endDate.toString("yyyy-MM-dd")));
-
-    updateTable();
+    // 实现筛选逻辑
+    // 根据筛选条件过滤交易记录
+    QVector<TradeRecord> filteredRecords;
+    
+    for (const auto& record : m_records) {
+        bool match = true;
+        
+        // 按合约代码筛选
+        if (!filterText.isEmpty() && filterText != QStringLiteral("全部")) {
+            if (!record.instrumentId.contains(filterText, Qt::CaseInsensitive)) {
+                match = false;
+            }
+        }
+        
+        // 按日期范围筛选
+        QDate recordDate = record.tradeTime.date();
+        if (recordDate < startDate || recordDate > endDate) {
+            match = false;
+        }
+        
+        if (match) {
+            filteredRecords.append(record);
+        }
+    }
+    
+    // 更新表格显示筛选后的数据
+    m_table->setRowCount(filteredRecords.size());
+    for (int i = 0; i < filteredRecords.size(); ++i) {
+        const auto& record = filteredRecords[i];
+        m_table->setItem(i, 0, new QTableWidgetItem(record.tradeId));
+        m_table->setItem(i, 1, new QTableWidgetItem(record.instrumentId));
+        m_table->setItem(i, 2, new QTableWidgetItem(record.instrumentName));
+        m_table->setItem(i, 3, new QTableWidgetItem(record.tradeTime.toString("yyyy-MM-dd HH:mm:ss")));
+        m_table->setItem(i, 4, new QTableWidgetItem(QString::number(record.price, 'f', 2)));
+        m_table->setItem(i, 5, new QTableWidgetItem(QString::number(record.quantity)));
+    }
+    
+    LOG_DEBUG(QString("Filter applied: %1 records (from %2 total)")
+        .arg(filteredRecords.size())
+        .arg(m_records.size()));
 }
 
 void TradeHistoryPage::onExportClicked()

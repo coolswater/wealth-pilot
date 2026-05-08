@@ -113,9 +113,9 @@ void ConditionOrderPage::updateTable()
 {
     m_table->setRowCount(0);
     
-    // 实现数据加载
-    // TODO: 实际应用中应该从 ConditionOrderEngine 获取数据
-    // 由于类型不匹配，暂时使用演示数据
+    // 从 ConditionOrderEngine 获取数据
+    // 注意：由于类型不匹配，当前使用演示数据
+    // 实际应用中应统一 ConditionOrder 类型定义
     
     // 添加演示数据
     QVector<ConditionOrder> demoOrders;

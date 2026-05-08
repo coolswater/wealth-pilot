@@ -161,6 +161,7 @@ private:
     QVector<QString> filterByPreference(const QVector<QString>& candidates);
     QString styleToString(InvestmentStyle style) const;
     QString getStockIndustry(const QString& symbol);
+    QString getStockName(const QString& symbol);
     double getStockMarketCap(const QString& symbol);
 
     // 数据成员
