@@ -134,9 +134,9 @@ void SettingsPage::setupUI()
     // 主题选择
     QHBoxLayout* themeLayout = new QHBoxLayout();
     d->themeCombo = new QComboBox(this);
-    d->themeCombo->addItem(QStringLiteral("浅色"), 0);
-    d->themeCombo->addItem(QStringLiteral("深色"), 1);
-    d->themeCombo->addItem(QStringLiteral("自动"), 2);
+    d->themeCombo->addItem(QStringLiteral("深色"), static_cast<int>(ThemeType::Dark));
+    d->themeCombo->addItem(QStringLiteral("浅色"), static_cast<int>(ThemeType::Light));
+    d->themeCombo->addItem(QStringLiteral("护眼"), static_cast<int>(ThemeType::EyeCare));
     // 全局样式自动生效
     d->themeCombo->setMinimumWidth(150);
     themeLayout->addWidget(d->themeCombo);
@@ -335,7 +335,13 @@ void SettingsPage::setupUI()
 void SettingsPage::loadSettings()
 {
     int themeIndex = ConfigManager::instance()->get("appearance/theme", 0).toInt();
-    d->themeCombo->setCurrentIndex(themeIndex);
+    // 根据主题类型找到对应的下拉框索引
+    for (int i = 0; i < d->themeCombo->count(); ++i) {
+        if (d->themeCombo->itemData(i).toInt() == themeIndex) {
+            d->themeCombo->setCurrentIndex(i);
+            break;
+        }
+    }
 
     int fontSize = ConfigManager::instance()->get("appearance/fontSize", 14).toInt();
     d->fontSlider->setValue(fontSize);
@@ -368,7 +374,7 @@ void SettingsPage::loadSettings()
 
 void SettingsPage::saveSettings()
 {
-    ConfigManager::instance()->set("appearance/theme", d->themeCombo->currentIndex());
+    ConfigManager::instance()->set("appearance/theme", d->themeCombo->currentData().toInt());
     ConfigManager::instance()->set("appearance/fontSize", d->fontSlider->value());
     ConfigManager::instance()->set("appearance/colorBlind", d->colorBlindCheck->isChecked());
     ConfigManager::instance()->set("notifications/priceAlerts", d->priceAlertCheck->isChecked());
@@ -424,7 +430,8 @@ void SettingsPage::onThemeChanged(int index)
     Q_UNUSED(index);
     saveSettings();
 
-    ThemeType themeType = static_cast<ThemeType>(d->themeCombo->currentIndex());
+    // 使用下拉框的 userData 获取正确的主题类型
+    ThemeType themeType = static_cast<ThemeType>(d->themeCombo->currentData().toInt());
     ThemeManager::instance()->setTheme(themeType);
     
     LOG_INFO(QString("Theme changed to: %1").arg(d->themeCombo->currentText()));

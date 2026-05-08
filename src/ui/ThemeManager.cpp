@@ -9,6 +9,7 @@
 #include <QJsonDocument>
 #include <QApplication>
 #include <QPalette>
+#include <QWidget>
 
 ThemeManager* ThemeManager::instance()
 {
@@ -139,6 +140,15 @@ void ThemeManager::applyTheme()
     for (const auto& listener : m_listeners) {
         if (listener.first) {
             listener.second();
+        }
+    }
+    
+    // 强制刷新所有顶级窗口
+    for (QWidget* widget : qApp->topLevelWidgets()) {
+        if (widget) {
+            widget->setStyleSheet(widget->styleSheet());
+            widget->update();
+            widget->repaint();
         }
     }
     
