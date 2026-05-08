@@ -1,9 +1,10 @@
-/**
+﻿/**
  * @file RiskWarningSystem.cpp
  * @brief 风险预警系统实现
  */
 
 #include "RiskWarningSystem.h"
+#include "trading/PositionManager.h"
 #include "utils/Logger.h"
 #include <QUuid>
 #include <QJsonObject>
@@ -413,7 +414,30 @@ double RiskWarningSystem::calculateDrawdown(const QString& symbol)
 
 double RiskWarningSystem::calculatePositionConcentration(const QString& symbol)
 {
-    // TODO: 实现持仓集中度计算
+    // 计算单个股票在总资产中的占比
+    double totalValue = 0.0;
+    double symbolValue = 0.0;
+
+    // 获取所有持仓
+    QVector<PositionInfo> positions = PositionManager::instance().getPositions();
+
+    for (const auto& pos : positions)
+    {
+        double value = pos.volume * pos.marketPrice;
+        totalValue += value;
+
+        if (pos.instrumentId == symbol)
+        {
+            symbolValue = value;
+        }
+    }
+
+    // 返回集中度（百分比）
+    if (totalValue > 0)
+    {
+        return (symbolValue / totalValue) * 100.0;
+    }
+
     return 0.0;
 }
 

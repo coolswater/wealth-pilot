@@ -335,8 +335,90 @@ void SmartAlertSystem::checkVolumeAlert(const QString& symbol, qint64 volume)
 
 void SmartAlertSystem::checkRsiAlert(const QString& symbol)
 {
-    /// TODO: 实现RSI计算和预警
-    Q_UNUSED(symbol);
+    if (!m_priceHistory.contains(symbol) || m_priceHistory[symbol].size() < 14)
+    {
+        return;
+    }
+
+    const auto& prices = m_priceHistory[symbol];
+    int n = prices.size();
+
+    // 计算RSI（14周期）
+    double gainSum = 0.0, lossSum = 0.0;
+    for (int i = n - 14; i < n; ++i)
+    {
+        double change = prices[i] - prices[i - 1];
+        if (change > 0)
+        {
+            gainSum += change;
+        }
+        else
+        {
+            lossSum += qAbs(change);
+        }
+    }
+
+    double avgGain = gainSum / 14.0;
+    double avgLoss = lossSum / 14.0;
+
+    double rs = avgLoss > 0 ? avgGain / avgLoss : 100.0;
+    double rsi = 100.0 - (100.0 / (1.0 + rs));
+
+    // 检查RSI预警条件
+    for (auto& condition : m_conditions)
+    {
+        if (!condition.enabled || condition.symbol != symbol)
+        {
+            continue;
+        }
+
+        if (condition.type == SmartAlertType::RsiOverbought)
+        {
+            // RSI超买（>70）
+            if (rsi > 70.0)
+            {
+                AlertTrigger trigger;
+                trigger.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+                trigger.conditionId = condition.id;
+                trigger.symbol = symbol;
+                trigger.type = SmartAlertType::RsiOverbought;
+                trigger.triggerValue = rsi;
+                trigger.threshold = 70.0;
+                trigger.triggerTime = QDateTime::currentDateTime();
+                trigger.message = generateAlertMessage(trigger);
+
+                m_triggers[symbol].append(trigger);
+                condition.lastTriggerTime = trigger.triggerTime;
+                condition.triggerCount++;
+
+                emit alertTriggered(trigger);
+                pushDesktopNotification(trigger);
+            }
+        }
+        else if (condition.type == SmartAlertType::RsiOversold)
+        {
+            // RSI超卖（<30）
+            if (rsi < 30.0)
+            {
+                AlertTrigger trigger;
+                trigger.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+                trigger.conditionId = condition.id;
+                trigger.symbol = symbol;
+                trigger.type = SmartAlertType::RsiOversold;
+                trigger.triggerValue = rsi;
+                trigger.threshold = 30.0;
+                trigger.triggerTime = QDateTime::currentDateTime();
+                trigger.message = generateAlertMessage(trigger);
+
+                m_triggers[symbol].append(trigger);
+                condition.lastTriggerTime = trigger.triggerTime;
+                condition.triggerCount++;
+
+                emit alertTriggered(trigger);
+                pushDesktopNotification(trigger);
+            }
+        }
+    }
 }
 
 void SmartAlertSystem::pushDesktopNotification(const AlertTrigger& trigger)
@@ -349,8 +431,26 @@ void SmartAlertSystem::pushDesktopNotification(const AlertTrigger& trigger)
 
 void SmartAlertSystem::pushEmailNotification(const AlertTrigger& trigger)
 {
-    // TODO: 实现邮件发送
-    LOG_INFO(QString("Email notification: %1").arg(trigger.message));
+    if (m_smtpServer.isEmpty() || m_emailUsername.isEmpty())
+    {
+        LOG_WARNING("Email not configured");
+        return;
+    }
+
+    // 使用Qt发送邮件（简化版本）
+    QString subject = QStringLiteral("【WealthPilot预警】%1").arg(trigger.symbol);
+    QString body = trigger.message;
+
+    // 构建mailto链接（实际应用中应使用SMTP库）
+    QString mailto = QString("mailto:%1?subject=%2&body=%3")
+                     .arg(m_emailUsername)
+                     .arg(QUrl::toPercentEncoding(subject))
+                     .arg(QUrl::toPercentEncoding(body));
+
+    LOG_INFO(QString("Email notification: %1 - %2").arg(trigger.symbol, trigger.message));
+
+    // TODO: 集成真正的SMTP发送库（如QMimeMessage或第三方库）
+    // 这里仅记录日志，实际发送需要SMTP客户端库
 }
 
 void SmartAlertSystem::pushWebhookNotification(const AlertTrigger& trigger)

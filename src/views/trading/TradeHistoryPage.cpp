@@ -13,6 +13,7 @@
 #include <QHeaderView>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QStringConverter>
 
 namespace WealthPilot {
 
@@ -161,8 +162,18 @@ void TradeHistoryPage::onRefreshClicked()
 
 void TradeHistoryPage::onFilterChanged()
 {
+    // 获取筛选条件
+    QString filterText = m_filterCombo->currentText();
+    QDate startDate = m_startDate->date();
+    QDate endDate = m_endDate->date();
+
     // TODO: 实现筛选逻辑
-    LOG_DEBUG("Filter changed");
+    LOG_DEBUG(QString("Filter changed: %1, %2 - %3")
+              .arg(filterText)
+              .arg(startDate.toString("yyyy-MM-dd"))
+              .arg(endDate.toString("yyyy-MM-dd")));
+
+    updateTable();
 }
 
 void TradeHistoryPage::onExportClicked()
@@ -173,9 +184,41 @@ void TradeHistoryPage::onExportClicked()
         QStringLiteral("CSV文件 (*.csv)"));
     
     if (!fileName.isEmpty()) {
-        // TODO: 实现导出逻辑
-        QMessageBox::information(this, QStringLiteral("提示"), QStringLiteral("导出成功"));
-        LOG_DEBUG(QString("Export to: %1").arg(fileName));
+        QFile file(fileName);
+
+        if (file.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            QTextStream out(&file);
+            // Qt6 使用 setEncoding 替代 setCodec
+            out.setEncoding(QStringConverter::Utf8);
+
+            // 写入CSV头部
+            out << QStringLiteral("交易ID,订单ID,合约代码,合约名称,交易时间,价格,数量\n");
+
+            // 写入数据
+            for (const auto& record : m_records)
+            {
+                out << QString("%1,%2,%3,%4,%5,%6,%7\n")
+                       .arg(record.tradeId)
+                       .arg(record.orderId)
+                       .arg(record.instrumentId)
+                       .arg(record.instrumentName)
+                       .arg(record.tradeTime.toString("yyyy-MM-dd HH:mm:ss"))
+                       .arg(record.price, 0, 'f', 2)
+                       .arg(record.quantity);
+            }
+
+            file.close();
+
+            QMessageBox::information(this, QStringLiteral("提示"),
+                                     QStringLiteral("成功导出 %1 条记录").arg(m_records.size()));
+
+            LOG_INFO(QString("Exported %1 records to: %2").arg(m_records.size()).arg(fileName));
+        }
+        else
+        {
+            QMessageBox::warning(this, QStringLiteral("错误"), QStringLiteral("无法创建文件"));
+        }
     }
 }
 

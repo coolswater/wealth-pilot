@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file StockKLinePage.cpp
  * @brief 股票K线图页面实现
  */
@@ -977,7 +977,58 @@ void StockKLinePage::onTimeShareReceived(const QString& symbol, const QVector<Ti
     
     // 更新分时图显示
     if (m_chartType == ChartType::TimeShare && !data.isEmpty()) {
-        // TODO: 实现分时图绘制
+        // 绘制分时图
+        QPainter painter(m_timeShareWidget);
+        painter.setRenderHint(QPainter::Antialiasing);
+
+        QRect chartRect = m_timeShareWidget->rect().adjusted(60, 20, -20, -40);
+
+        // 绘制背景网格
+        painter.setPen(QPen(QColor(Tokens::Colors::Border), 1));
+        for (int i = 0; i <= 4; ++i)
+        {
+            int y = chartRect.top() + i * chartRect.height() / 4;
+            painter.drawLine(chartRect.left(), y, chartRect.right(), y);
+        }
+
+        // 计算价格范围
+        double minPrice = std::numeric_limits<double>::max();
+        double maxPrice = std::numeric_limits<double>::min();
+        for (const auto& point : data)
+        {
+            minPrice = qMin(minPrice, point.price);
+            maxPrice = qMax(maxPrice, point.price);
+        }
+
+        // 绘制分时线
+        if (maxPrice > minPrice)
+        {
+            painter.setPen(QPen(QColor(Tokens::Colors::Primary), 2));
+            QPainterPath path;
+
+            for (int i = 0; i < data.size(); ++i)
+            {
+                double x = chartRect.left() + i * chartRect.width() / (data.size() - 1);
+                double y = chartRect.bottom() - (data[i].price - minPrice) / (maxPrice - minPrice) * chartRect.height();
+
+                if (i == 0)
+                {
+                    path.moveTo(x, y);
+                }
+                else
+                {
+                    path.lineTo(x, y);
+                }
+            }
+
+            painter.drawPath(path);
+        }
+
+        // 绘制价格标签
+        painter.setPen(QColor(Tokens::Colors::TextPrimary));
+        painter.drawText(chartRect.left() - 50, chartRect.top(), QString::number(maxPrice, 'f', 2));
+        painter.drawText(chartRect.left() - 50, chartRect.bottom(), QString::number(minPrice, 'f', 2));
+
         m_infoLabel->setText(QStringLiteral("分时数据已更新"));
     }
     

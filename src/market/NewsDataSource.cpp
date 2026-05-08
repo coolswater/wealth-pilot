@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file NewsDataSource.cpp
  * @brief 新闻数据源实现
  */
@@ -266,15 +266,59 @@ void NewsDataSource::onPeriodicUpdate()
 
 void NewsDataSource::fetchNewsFromAPI(const QString& symbol, const QString& category)
 {
-    // TODO: 实现真实的API调用
-    Q_UNUSED(symbol);
-    Q_UNUSED(category);
+    // 使用新浪财经API获取新闻
+    QString url = QString("https://newsapi.sina.cn/api/news/list?symbol=%1&category=%2")
+        .arg(symbol, category);
+
+    QNetworkRequest request((QUrl(url)));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    QNetworkReply* reply = m_networkManager->get(request);
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply, symbol]()
+    {
+        reply->deleteLater();
+
+        if (reply->error() != QNetworkReply::NoError)
+        {
+            LOG_ERROR(QString("News API error: %1").arg(reply->errorString()));
+            return;
+        }
+
+        QByteArray data = reply->readAll();
+        QVector<NewsItem> newsList = parseNewsResponse(data);
+
+        if (!newsList.isEmpty())
+        {
+            m_newsCache[symbol] = newsList;
+            emit newsUpdated(symbol, newsList);
+        }
+    });
 }
 
 void NewsDataSource::fetchSocialHeatFromAPI(const QString& symbol)
 {
-    // TODO: 实现真实的API调用
-    Q_UNUSED(symbol);
+    // 使用东方财富API获取社交热度
+    QString url = QString("https://emweb.eastmoney.com/PC_HSF10/NewFinance/Index?type=web&code=%1").arg(symbol);
+
+    QNetworkRequest request((QUrl(url)));
+    QNetworkReply* reply = m_networkManager->get(request);
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply, symbol]()
+    {
+        reply->deleteLater();
+
+        if (reply->error() != QNetworkReply::NoError)
+        {
+            LOG_ERROR(QString("Social heat API error: %1").arg(reply->errorString()));
+            return;
+        }
+
+        // 解析热度数据
+        QByteArray data = reply->readAll();
+        // TODO: 实现热度解析逻辑
+        Q_UNUSED(data);
+    });
 }
 
 QVector<NewsItem> NewsDataSource::parseNewsResponse(const QByteArray& data)
