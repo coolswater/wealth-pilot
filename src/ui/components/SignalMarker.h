@@ -47,15 +47,15 @@ struct SignalMarkerData {
  */
 struct SignalMarkerStyle {
     // 买入信号颜色
-    QColor buyColor = QColor("#00AA00");
-    QColor buyStrongColor = QColor("#00FF00");
+    QColor buyColor = QColor("#3fb950");
+    QColor buyStrongColor = QColor("#3fb950");
 
     // 卖出信号颜色
-    QColor sellColor = QColor("#AA0000");
-    QColor sellStrongColor = QColor("#FF0000");
+    QColor sellColor = QColor("#f85149");
+    QColor sellStrongColor = QColor("#f85149");
 
     // 中性信号颜色
-    QColor neutralColor = QColor("#AAAAAA");
+    QColor neutralColor = QColor("#6e7681");
 
     // 标记大小
     int markerSize = 12;

@@ -34,29 +34,29 @@ namespace ChartStyles {
 
 namespace Colors {
     // 主色调
-    constexpr const char* Primary     = "#3B82F6";   ///< 主蓝色
-    constexpr const char* Secondary   = "#6366F1";   ///< 紫色
-    constexpr const char* Success     = "#10B981";   ///< 涨/成功（绿色）
-    constexpr const char* Danger      = "#EF4444";   ///< 跌/错误（红色）
-    constexpr const char* Warning     = "#F97316";   ///< 警告（橙色）
-    constexpr const char* Info        = "#0EA5E9";   ///< 信息（青色）
+    constexpr const char* Primary     = "#58a6ff";   ///< 主蓝色
+    constexpr const char* Secondary   = "#a371f7";   ///< 紫色
+    constexpr const char* Success     = "#3fb950";   ///< 涨/成功（绿色）
+    constexpr const char* Danger      = "#f85149";   ///< 跌/错误（红色）
+    constexpr const char* Warning     = "#f0883e";   ///< 警告（橙色）
+    constexpr const char* Info        = "#58a6ff";   ///< 信息（蓝色）
 
     // 背景色
-    constexpr const char* BgBase      = "#1A1F2E";   ///< 主背景
-    constexpr const char* BgSurface   = "#0F1419";   ///< 侧边栏/表头
-    constexpr const char* BgElevated  = "#242937";   ///< 卡片/弹出层
-    constexpr const char* BgHover     = "#374151";   ///< 悬停背景
+    constexpr const char* BgBase      = "#0d1117";   ///< 主背景
+    constexpr const char* BgSurface   = "#161b22";   ///< 侧边栏/表头
+    constexpr const char* BgElevated  = "#161b22";   ///< 卡片/弹出层
+    constexpr const char* BgHover     = "rgba(255, 255, 255, 0.05)";   ///< 悬停背景
 
     // 文字颜色
-    constexpr const char* TextPrimary   = "#FFFFFF";   ///< 主文字
-    constexpr const char* TextSecondary = "#9CA3AF";   ///< 次文字
-    constexpr const char* TextTertiary  = "#6B7280";   ///< 三级文字
-    constexpr const char* TextDisabled  = "#4B5563";   ///< 禁用文字
+    constexpr const char* TextPrimary   = "#e6edf3";   ///< 主文字
+    constexpr const char* TextSecondary = "#8b949e";   ///< 次文字
+    constexpr const char* TextTertiary  = "#6e7681";   ///< 三级文字
+    constexpr const char* TextDisabled  = "#484f58";   ///< 禁用文字
 
     // 边框颜色
-    constexpr const char* Border       = "#374151";   ///< 边框
-    constexpr const char* BorderLight  = "#4B5563";   ///< 浅边框
-    constexpr const char* Divider      = "#2D3748";   ///< 分隔线
+    constexpr const char* Border       = "#30363d";   ///< 边框
+    constexpr const char* BorderLight  = "#21262d";   ///< 浅边框
+    constexpr const char* Divider      = "#21262d";   ///< 分隔线
 
     // 指标颜色
     constexpr const char* MA5   = "#FFD700";   ///< MA5 金色
@@ -137,54 +137,54 @@ namespace StyleSheets {
 inline QString chartToolBarStyle() {
     return R"(
         ChartToolBar {
-            background-color: #0F1419;
-            border-bottom: 1px solid #374151;
+            background-color: #161b22;
+            border-bottom: 1px solid #30363d;
             padding: 0 16px;
         }
         ChartToolBar QComboBox {
-            background-color: #1A1F2E;
-            border: 1px solid #374151;
+            background-color: #0d1117;
+            border: 1px solid #30363d;
             border-radius: 6px;
             padding: 6px 12px;
             padding-right: 28px;
-            color: #FFFFFF;
+            color: #e6edf3;
             font-size: 13px;
             min-width: 80px;
         }
         ChartToolBar QComboBox:hover {
-            border-color: #4B5563;
-            background-color: #242937;
+            border-color: #21262d;
+            background-color: #161b22;
         }
         ChartToolBar QComboBox::drop-down {
             border: none;
             width: 24px;
         }
         ChartToolBar QComboBox QAbstractItemView {
-            background-color: #0F1419;
-            border: 1px solid #374151;
+            background-color: #161b22;
+            border: 1px solid #30363d;
             border-radius: 6px;
             padding: 4px;
-            selection-background-color: #3B82F6;
+            selection-background-color: #58a6ff;
         }
         ChartToolBar QToolButton {
             background-color: transparent;
-            color: #9CA3AF;
+            color: #8b949e;
             border: none;
             border-radius: 6px;
             padding: 6px 12px;
             font-size: 13px;
         }
         ChartToolBar QToolButton:hover {
-            background-color: #242937;
-            color: #FFFFFF;
+            background-color: #161b22;
+            color: #e6edf3;
         }
         ChartToolBar QToolButton:pressed,
         ChartToolBar QToolButton:checked {
-            background-color: #3B82F6;
-            color: #FFFFFF;
+            background-color: #58a6ff;
+            color: #e6edf3;
         }
         ChartToolBar QFrame[frameShape="4"] {
-            background-color: #374151;
+            background-color: #30363d;
             max-width: 1px;
         }
     )";
@@ -196,11 +196,11 @@ inline QString chartToolBarStyle() {
 inline QString marketDepthStyle() {
     return R"(
         MarketDepthWidget {
-            background-color: #0F1419;
+            background-color: #161b22;
             border: none;
         }
         MarketDepthWidget QLabel {
-            color: #E4E6EB;
+            color: #e6edf3;
         }
         MarketDepthWidget QLabel#priceLabel {
             font-size: 24px;
@@ -209,10 +209,10 @@ inline QString marketDepthStyle() {
         MarketDepthWidget QLabel#instrumentLabel {
             font-size: 14px;
             font-weight: bold;
-            color: #FFFFFF;
+            color: #e6edf3;
         }
         MarketDepthWidget QFrame[frameShape="4"] {
-            background-color: #374151;
+            background-color: #30363d;
         }
     )";
 }
@@ -223,23 +223,23 @@ inline QString marketDepthStyle() {
 inline QString tickTableStyle() {
     return R"(
         TickTableView {
-            background-color: #0F1419;
+            background-color: #161b22;
             border: none;
             gridline-color: transparent;
         }
         TickTableView::item {
             padding: 4px 8px;
-            border-bottom: 1px solid #1A1F2E;
+            border-bottom: 1px solid #0d1117;
         }
         TickTableView::item:selected {
-            background-color: #3B82F6;
+            background-color: #58a6ff;
         }
         TickTableView QHeaderView::section {
-            background-color: #1A1F2E;
-            color: #9CA3AF;
+            background-color: #0d1117;
+            color: #8b949e;
             padding: 6px 8px;
             border: none;
-            border-bottom: 1px solid #374151;
+            border-bottom: 1px solid #30363d;
             font-size: 12px;
             font-weight: 500;
         }
@@ -252,16 +252,16 @@ inline QString tickTableStyle() {
 inline QString chartStatusBarStyle() {
     return R"(
         ChartStatusBar {
-            background-color: #0F1419;
-            border-top: 1px solid #374151;
+            background-color: #161b22;
+            border-top: 1px solid #30363d;
             padding: 0 16px;
         }
         ChartStatusBar QLabel {
-            color: #9CA3AF;
+            color: #8b949e;
             font-size: 12px;
         }
         ChartStatusBar QFrame[frameShape="4"] {
-            background-color: #374151;
+            background-color: #30363d;
             max-width: 1px;
         }
     )";
@@ -273,7 +273,7 @@ inline QString chartStatusBarStyle() {
 inline QString klineChartStyle() {
     return R"(
         KLineChart {
-            background-color: #0F1419;
+            background-color: #161b22;
             border: none;
         }
     )";
@@ -285,10 +285,10 @@ inline QString klineChartStyle() {
 inline QString splitterStyle() {
     return R"(
         QSplitter::handle {
-            background-color: #374151;
+            background-color: #30363d;
         }
         QSplitter::handle:hover {
-            background-color: #3B82F6;
+            background-color: #58a6ff;
         }
         QSplitter::handle:horizontal {
             width: 2px;

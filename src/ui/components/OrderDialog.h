@@ -18,6 +18,7 @@
 #include <QMap>
 #include <QString>
 #include "trading/TradingTypes.h"
+#include "../../core/config/Tokens.h"
 
 // Use types from TradingTypes.h
 // OrderType, PositionDirection, OpenCloseFlag are already defined there
@@ -160,13 +161,20 @@ private:
     int m_longPosition;
     int m_shortPosition;
     
-    // Colors
-    const QString COLOR_UP = "#FF3B30";     // Red for up (China style)
-    const QString COLOR_DOWN = "#34C759";   // Green for down
-    const QString COLOR_BG = "#1E1F24";
-    const QString COLOR_CARD = "#2C2D33";
-    const QString COLOR_TEXT = "#FFFFFF";
-    const QString COLOR_TEXT_SECONDARY = "#8E8E93";
+    // Colors - using design tokens from Tokens.h
+    // These map to the standard WealthPilot color palette:
+    // - COLOR_UP: Danger (#f85149) - 涨/红色 (China: red for up)
+    // - COLOR_DOWN: Success (#3fb950) - 跌/绿色 (China: green for down)
+    // - COLOR_BG: BgBase (#0d1117) - 主背景
+    // - COLOR_CARD: BgCard (#161b22) - 卡片背景
+    // - COLOR_TEXT: TextPrimary (#e6edf3) - 主文字
+    // - COLOR_TEXT_SECONDARY: TextSecondary (#8b949e) - 次要文字
+    const QString COLOR_UP = Tokens::Colors::Danger;
+    const QString COLOR_DOWN = Tokens::Colors::Success;
+    const QString COLOR_BG = Tokens::Colors::BgBase;
+    const QString COLOR_CARD = Tokens::Colors::BgCard;
+    const QString COLOR_TEXT = Tokens::Colors::TextPrimary;
+    const QString COLOR_TEXT_SECONDARY = Tokens::Colors::TextSecondary;
 };
 
 #endif // ORDERDIALOG_H
