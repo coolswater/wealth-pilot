@@ -4,7 +4,8 @@
  */
 
 #include "AboutUSPage.h"
-#include "ui/components/PageStyles.h"
+#include "ui/components/StyleHelper.h"
+#include "ui/ThemeManager.h"
 #include "core/config/Tokens.h"
 #include "utils/Logger.h"
 
@@ -59,7 +60,7 @@ void AboutUSPage::setupUI()
     QHBoxLayout* headerLayout = new QHBoxLayout();
     
     QLabel* titleLabel = new QLabel(QStringLiteral("关于"), this);
-    titleLabel->setStyleSheet(PageStyles::titleText());
+    StyleHelper::setTitleLabel(titleLabel);
     headerLayout->addWidget(titleLabel);
     
     headerLayout->addStretch();
@@ -78,6 +79,9 @@ void AboutUSPage::setupUI()
     d->logoLabel->setFixedSize(80, 80);
     d->logoLabel->setText(QStringLiteral("WP"));
     d->logoLabel->setAlignment(Qt::AlignCenter);
+    
+    // 获取主题颜色
+    ThemeColors theme = ThemeManager::instance()->currentTheme();
     d->logoLabel->setStyleSheet(QString(
         "QLabel {"
         "  font-size: 32px; font-weight: bold; color: white;"
@@ -85,7 +89,7 @@ void AboutUSPage::setupUI()
         "    stop:0 %1, stop:1 %2);"
         "  border-radius: 16px;"
         "}")
-        .arg(Colors::Primary, Colors::PrimaryDark));
+        .arg(theme.primary, theme.primaryDark));
     appInfoLayout->addWidget(d->logoLabel);
     
     // 应用名称和标语
@@ -94,12 +98,12 @@ void AboutUSPage::setupUI()
     
     d->appNameLabel = new QLabel(QStringLiteral("WealthPilot"), this);
     d->appNameLabel->setStyleSheet(QString("font-size: 24px; font-weight: bold; color: %1;")
-        .arg(Colors::TextPrimary));
+        .arg(theme.textPrimary));
     nameLayout->addWidget(d->appNameLabel);
     
     d->sloganLabel = new QLabel(QStringLiteral("智能金融信息分析平台"), this);
     d->sloganLabel->setStyleSheet(QString("font-size: 14px; color: %1;")
-        .arg(Colors::TextSecondary));
+        .arg(theme.textSecondary));
     nameLayout->addWidget(d->sloganLabel);
     
     appInfoLayout->addLayout(nameLayout);
@@ -107,42 +111,37 @@ void AboutUSPage::setupUI()
     
     mainLayout->addWidget(appInfoWidget);
     
-    // 样式变量
-    QString groupBoxStyle = PageStyles::groupBox();
-    QString labelText = PageStyles::labelText();
-    QString valueText = PageStyles::valueText();
-    
     // ========== 版本信息 ==========
     QGroupBox* versionGroup = new QGroupBox(QStringLiteral("版本信息"), this);
-    versionGroup->setStyleSheet(groupBoxStyle);
+    // 全局样式自动生效
     QFormLayout* versionLayout = new QFormLayout(versionGroup);
     versionLayout->setSpacing(12);
     
     QLabel* versionValue = new QLabel(QStringLiteral("v2.0.0"), this);
-    versionValue->setStyleSheet(valueText);
+    StyleHelper::setValueLabel(versionValue);
     versionLayout->addRow(QStringLiteral("当前版本:"), versionValue);
     
     QLabel* buildDateValue = new QLabel(QString(__DATE__) + " " + QString(__TIME__), this);
-    buildDateValue->setStyleSheet(labelText);
+    StyleHelper::setLabelText(buildDateValue);
     versionLayout->addRow(QStringLiteral("构建日期:"), buildDateValue);
     
     QLabel* qtVersionValue = new QLabel(QString(qVersion()), this);
-    qtVersionValue->setStyleSheet(labelText);
+    StyleHelper::setLabelText(qtVersionValue);
     versionLayout->addRow(QStringLiteral("Qt 版本:"), qtVersionValue);
     
     QLabel* compilerValue = new QLabel(QStringLiteral("MinGW 13.1.0 (GCC)"), this);
-    compilerValue->setStyleSheet(labelText);
+    StyleHelper::setLabelText(compilerValue);
     versionLayout->addRow(QStringLiteral("编译器:"), compilerValue);
     
     QLabel* archValue = new QLabel(QStringLiteral("x86_64 (64-bit)"), this);
-    archValue->setStyleSheet(labelText);
+    StyleHelper::setLabelText(archValue);
     versionLayout->addRow(QStringLiteral("架构:"), archValue);
     
     mainLayout->addWidget(versionGroup);
     
     // ========== 产品介绍 ==========
     QGroupBox* introGroup = new QGroupBox(QStringLiteral("产品介绍"), this);
-    introGroup->setStyleSheet(groupBoxStyle);
+    // 全局样式自动生效
     QVBoxLayout* introLayout = new QVBoxLayout(introGroup);
     introLayout->setSpacing(8);
     
@@ -153,13 +152,13 @@ void AboutUSPage::setupUI()
         this);
     introLabel->setWordWrap(true);
     introLabel->setStyleSheet(QString("font-size: 13px; color: %1; line-height: 1.6;")
-        .arg(Colors::TextSecondary));
+        .arg(theme.textSecondary));
     introLayout->addWidget(introLabel);
     
     // 功能特性
     QLabel* featuresTitle = new QLabel(QStringLiteral("主要功能："), this);
     featuresTitle->setStyleSheet(QString("font-size: 13px; font-weight: bold; color: %1;")
-        .arg(Colors::TextPrimary));
+        .arg(theme.textPrimary));
     introLayout->addWidget(featuresTitle);
     
     QStringList features = {
@@ -174,7 +173,7 @@ void AboutUSPage::setupUI()
     for (const QString& feature : features) {
         QLabel* featureLabel = new QLabel(feature, this);
         featureLabel->setStyleSheet(QString("font-size: 12px; color: %1;")
-            .arg(Colors::TextSecondary));
+            .arg(theme.textSecondary));
         introLayout->addWidget(featureLabel);
     }
     
@@ -182,21 +181,21 @@ void AboutUSPage::setupUI()
     
     // ========== 开发团队 ==========
     QGroupBox* teamGroup = new QGroupBox(QStringLiteral("开发团队"), this);
-    teamGroup->setStyleSheet(groupBoxStyle);
+    // 全局样式自动生效
     QFormLayout* teamLayout = new QFormLayout(teamGroup);
     teamLayout->setSpacing(12);
     
     QLabel* teamName = new QLabel(QStringLiteral("WealthPilot Team"), this);
-    teamName->setStyleSheet(valueText);
+    StyleHelper::setValueLabel(teamName);
     teamLayout->addRow(QStringLiteral("团队:"), teamName);
     
     QLabel* copyrightLabel = new QLabel(QStringLiteral("© 2024-2026 WealthPilot Team. All rights reserved."), this);
-    copyrightLabel->setStyleSheet(labelText);
+    StyleHelper::setLabelText(copyrightLabel);
     teamLayout->addRow(QStringLiteral("版权:"), copyrightLabel);
     
     QLabel* websiteLabel = new QLabel(QStringLiteral("https://github.com/openclaw/wealth-pilot"), this);
     websiteLabel->setStyleSheet(QString("font-size: 13px; color: %1;")
-        .arg(Colors::Primary));
+        .arg(theme.primary));
     websiteLabel->setCursor(Qt::PointingHandCursor);
     connect(websiteLabel, &QLabel::linkActivated, this, [](const QString& link) {
         QDesktopServices::openUrl(QUrl(link));
@@ -207,7 +206,7 @@ void AboutUSPage::setupUI()
     
     // ========== 技术支持 ==========
     QGroupBox* supportGroup = new QGroupBox(QStringLiteral("技术支持"), this);
-    supportGroup->setStyleSheet(groupBoxStyle);
+    // 全局样式自动生效
     QVBoxLayout* supportLayout = new QVBoxLayout(supportGroup);
     supportLayout->setSpacing(12);
     
@@ -216,19 +215,19 @@ void AboutUSPage::setupUI()
     btnLayout->setSpacing(12);
     
     d->checkUpdateBtn = new QPushButton(QStringLiteral("检查更新"), this);
-    d->checkUpdateBtn->setStyleSheet(PageStyles::primaryButton());
+    StyleHelper::setPrimaryButton(d->checkUpdateBtn);
     d->checkUpdateBtn->setFixedWidth(100);
     connect(d->checkUpdateBtn, &QPushButton::clicked, this, &AboutUSPage::onCheckUpdateClicked);
     btnLayout->addWidget(d->checkUpdateBtn);
     
     d->visitWebsiteBtn = new QPushButton(QStringLiteral("访问官网"), this);
-    d->visitWebsiteBtn->setStyleSheet(PageStyles::secondaryButton());
+    StyleHelper::setSecondaryButton(d->visitWebsiteBtn);
     d->visitWebsiteBtn->setFixedWidth(100);
     connect(d->visitWebsiteBtn, &QPushButton::clicked, this, &AboutUSPage::onVisitWebsiteClicked);
     btnLayout->addWidget(d->visitWebsiteBtn);
     
     d->viewLicenseBtn = new QPushButton(QStringLiteral("查看许可"), this);
-    d->viewLicenseBtn->setStyleSheet(PageStyles::secondaryButton());
+    StyleHelper::setSecondaryButton(d->viewLicenseBtn);
     d->viewLicenseBtn->setFixedWidth(100);
     connect(d->viewLicenseBtn, &QPushButton::clicked, this, &AboutUSPage::onViewLicenseClicked);
     btnLayout->addWidget(d->viewLicenseBtn);

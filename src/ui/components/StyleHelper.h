@@ -12,6 +12,7 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QLabel>
+#include <QStyle>
 #include <QString>
 
 /**
