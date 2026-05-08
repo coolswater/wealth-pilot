@@ -9,6 +9,7 @@
 #include "../../core/config/EnvironmentConfig.h"
 #include "../../core/config/Tokens.h"
 #include "../../core/navigation/PageNavigator.h"
+#include "../../ui/ThemeManager.h"
 #include "../../ui/components/ThemeEngine.h"
 #include "../../ui/components/LayoutConstants.h"
 #include "../../ui/components/ChartStyles.h"
@@ -721,10 +722,44 @@ void MainWindow::saveSettings() const
 
 void MainWindow::applyTheme()
 {
-    // Save current page ID
-    // setStyleSheet(styleSheet);
-
-    LOG_DEBUG("Theme applied");
+    // 应用主题管理器的主题
+    auto* themeManager = ThemeManager::instance();
+    if (!themeManager) {
+        LOG_WARNING("ThemeManager not available");
+        return;
+    }
+    
+    // 获取当前主题配色
+    ThemeColors theme = themeManager->currentTheme();
+    
+    // 构建主窗口样式表
+    QString styleSheet = QString(
+        "QMainWindow {"
+        "  background-color: %1;"
+        "}"
+        "QWidget#centralWidget {"
+        "  background-color: %1;"
+        "}"
+    ).arg(theme.bgPrimary);
+    
+    // 应用样式表
+    setStyleSheet(styleSheet);
+    
+    // 应用主题到整个应用程序
+    themeManager->applyTheme();
+    
+    // 更新子组件主题
+    if (d->titleBar) {
+        d->titleBar->update();
+    }
+    if (d->sidebar) {
+        d->sidebar->update();
+    }
+    if (d->statusBar) {
+        d->statusBar->update();
+    }
+    
+    LOG_INFO(QString("Theme applied: %1").arg(theme.name));
 }
 
 void MainWindow::showSplashScreen()
