@@ -4,7 +4,7 @@
  */
 
 #include "SettingsPage.h"
-#include "ui/components/PageStyles.h"
+#include "ui/components/StyleHelper.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -91,19 +91,19 @@ void SettingsPage::setupUI()
     QHBoxLayout* headerLayout = new QHBoxLayout();
     
     QLabel* titleLabel = new QLabel(QStringLiteral("系统设置"), this);
-    titleLabel->setStyleSheet(PageStyles::titleText());
+    StyleHelper::setTitleLabel(titleLabel);
     headerLayout->addWidget(titleLabel);
     
     headerLayout->addStretch();
     
     // 保存和重置按钮
     d->resetBtn = new QPushButton(QStringLiteral("重置"), this);
-    d->resetBtn->setStyleSheet(PageStyles::secondaryButton());
+    StyleHelper::setSecondaryButton(d->resetBtn);
     d->resetBtn->setFixedWidth(80);
     headerLayout->addWidget(d->resetBtn);
     
     d->saveBtn = new QPushButton(QStringLiteral("保存"), this);
-    d->saveBtn->setStyleSheet(PageStyles::primaryButton());
+    StyleHelper::setPrimaryButton(d->saveBtn);
     d->saveBtn->setFixedWidth(80);
     headerLayout->addWidget(d->saveBtn);
     
@@ -125,15 +125,9 @@ void SettingsPage::setupUI()
     scrollArea->setWidget(scrollContent);
     mainLayout->addWidget(scrollArea, 1);
     
-    // 样式变量
-    QString groupBoxStyle = PageStyles::groupBox();
-    QString inputStyle = PageStyles::inputField();
-    QString checkStyle = PageStyles::checkBox();
-    QString comboStyle = PageStyles::comboBox();
-    
     // ========== 外观设置 ==========
     QGroupBox* appearanceGroup = new QGroupBox(QStringLiteral("外观设置"), this);
-    appearanceGroup->setStyleSheet(groupBoxStyle);
+    // 全局样式自动生效
     QFormLayout* appearanceLayout = new QFormLayout(appearanceGroup);
     appearanceLayout->setSpacing(12);
     
@@ -143,7 +137,7 @@ void SettingsPage::setupUI()
     d->themeCombo->addItem(QStringLiteral("浅色"), 0);
     d->themeCombo->addItem(QStringLiteral("深色"), 1);
     d->themeCombo->addItem(QStringLiteral("自动"), 2);
-    d->themeCombo->setStyleSheet(comboStyle);
+    // 全局样式自动生效
     d->themeCombo->setMinimumWidth(150);
     themeLayout->addWidget(d->themeCombo);
     themeLayout->addStretch();
@@ -176,7 +170,7 @@ void SettingsPage::setupUI()
     fontLayout->addWidget(d->fontSlider);
     
     d->fontValueLabel = new QLabel("14px", this);
-    d->fontValueLabel->setStyleSheet(PageStyles::labelText());
+    StyleHelper::setLabelText(d->fontValueLabel);
     d->fontValueLabel->setMinimumWidth(40);
     fontLayout->addWidget(d->fontValueLabel);
     fontLayout->addStretch();
@@ -184,51 +178,51 @@ void SettingsPage::setupUI()
     
     // 色盲模式
     d->colorBlindCheck = new QCheckBox(QStringLiteral("启用色盲模式"), this);
-    d->colorBlindCheck->setStyleSheet(checkStyle);
+    // 全局样式自动生效
     appearanceLayout->addRow(d->colorBlindCheck);
     
     contentLayout->addWidget(appearanceGroup);
     
     // ========== 通知设置 ==========
     QGroupBox* notifyGroup = new QGroupBox(QStringLiteral("通知设置"), this);
-    notifyGroup->setStyleSheet(groupBoxStyle);
+    // 全局样式自动生效
     QVBoxLayout* notifyLayout = new QVBoxLayout(notifyGroup);
     notifyLayout->setSpacing(8);
     
     d->priceAlertCheck = new QCheckBox(QStringLiteral("价格提醒 - 当股票达到设定价格时通知"), this);
-    d->priceAlertCheck->setStyleSheet(checkStyle);
+    // 全局样式自动生效
     notifyLayout->addWidget(d->priceAlertCheck);
     
     d->riskAlertCheck = new QCheckBox(QStringLiteral("风险预警 - 当持仓风险超过阈值时通知"), this);
-    d->riskAlertCheck->setStyleSheet(checkStyle);
+    // 全局样式自动生效
     notifyLayout->addWidget(d->riskAlertCheck);
     
     d->tradeNotifyCheck = new QCheckBox(QStringLiteral("交易通知 - 交易成交时发送通知"), this);
-    d->tradeNotifyCheck->setStyleSheet(checkStyle);
+    // 全局样式自动生效
     notifyLayout->addWidget(d->tradeNotifyCheck);
     
     d->systemNotifyCheck = new QCheckBox(QStringLiteral("系统通知 - 系统更新和维护通知"), this);
-    d->systemNotifyCheck->setStyleSheet(checkStyle);
+    // 全局样式自动生效
     notifyLayout->addWidget(d->systemNotifyCheck);
     
     d->dailySummaryCheck = new QCheckBox(QStringLiteral("每日汇总 - 每日收盘后发送投资日报"), this);
-    d->dailySummaryCheck->setStyleSheet(checkStyle);
+    // 全局样式自动生效
     notifyLayout->addWidget(d->dailySummaryCheck);
     
     contentLayout->addWidget(notifyGroup);
     
     // ========== 安全设置 ==========
     QGroupBox* securityGroup = new QGroupBox(QStringLiteral("安全设置"), this);
-    securityGroup->setStyleSheet(groupBoxStyle);
+    // 全局样式自动生效
     QVBoxLayout* securityLayout = new QVBoxLayout(securityGroup);
     securityLayout->setSpacing(8);
     
     d->twoFactorCheck = new QCheckBox(QStringLiteral("双因素认证 - 登录时需要验证码"), this);
-    d->twoFactorCheck->setStyleSheet(checkStyle);
+    // 全局样式自动生效
     securityLayout->addWidget(d->twoFactorCheck);
     
     d->bioCheck = new QCheckBox(QStringLiteral("生物识别认证 - 使用指纹或面部识别登录"), this);
-    d->bioCheck->setStyleSheet(checkStyle);
+    // 全局样式自动生效
     securityLayout->addWidget(d->bioCheck);
     
     // 数据管理按钮
@@ -236,13 +230,13 @@ void SettingsPage::setupUI()
     dataBtnLayout->setSpacing(12);
     
     QPushButton* clearCacheBtn = new QPushButton(QStringLiteral("清除缓存"), this);
-    clearCacheBtn->setStyleSheet(PageStyles::secondaryButton());
+    StyleHelper::setSecondaryButton(clearCacheBtn);
     clearCacheBtn->setFixedWidth(100);
     connect(clearCacheBtn, &QPushButton::clicked, this, &SettingsPage::onClearCacheClicked);
     dataBtnLayout->addWidget(clearCacheBtn);
     
     QPushButton* exportDataBtn = new QPushButton(QStringLiteral("导出数据"), this);
-    exportDataBtn->setStyleSheet(PageStyles::secondaryButton());
+    StyleHelper::setSecondaryButton(exportDataBtn);
     exportDataBtn->setFixedWidth(100);
     connect(exportDataBtn, &QPushButton::clicked, this, &SettingsPage::onExportDataClicked);
     dataBtnLayout->addWidget(exportDataBtn);
@@ -254,13 +248,13 @@ void SettingsPage::setupUI()
     
     // ========== AI 配置 ==========
     QGroupBox* aiGroup = new QGroupBox(QStringLiteral("AI 配置"), this);
-    aiGroup->setStyleSheet(groupBoxStyle);
+    // 全局样式自动生效
     QFormLayout* aiLayout = new QFormLayout(aiGroup);
     aiLayout->setSpacing(12);
     
     // 启用 AI
     d->aiEnabledCheck = new QCheckBox(QStringLiteral("启用 AI 助手功能"), this);
-    d->aiEnabledCheck->setStyleSheet(checkStyle);
+    // 全局样式自动生效
     aiLayout->addRow(d->aiEnabledCheck);
     
     // AI 提供商
@@ -271,7 +265,7 @@ void SettingsPage::setupUI()
     d->aiProviderCombo->addItem(QStringLiteral("Anthropic"), "anthropic");
     d->aiProviderCombo->addItem(QStringLiteral("本地模型"), "local");
     d->aiProviderCombo->addItem(QStringLiteral("自定义"), "custom");
-    d->aiProviderCombo->setStyleSheet(comboStyle);
+    // 全局样式自动生效
     d->aiProviderCombo->setMinimumWidth(150);
     providerLayout->addWidget(d->aiProviderCombo);
     providerLayout->addStretch();
@@ -281,7 +275,7 @@ void SettingsPage::setupUI()
     QHBoxLayout* urlLayout = new QHBoxLayout();
     d->aiApiUrlEdit = new QLineEdit(this);
     d->aiApiUrlEdit->setPlaceholderText(QStringLiteral("https://api.openai.com/v1"));
-    d->aiApiUrlEdit->setStyleSheet(inputStyle);
+    // 全局样式自动生效
     d->aiApiUrlEdit->setMinimumWidth(300);
     urlLayout->addWidget(d->aiApiUrlEdit);
     urlLayout->addStretch();
@@ -292,12 +286,12 @@ void SettingsPage::setupUI()
     d->aiApiKeyEdit = new QLineEdit(this);
     d->aiApiKeyEdit->setPlaceholderText(QStringLiteral("请输入您的 API 密钥"));
     d->aiApiKeyEdit->setEchoMode(QLineEdit::Password);
-    d->aiApiKeyEdit->setStyleSheet(inputStyle);
+    // 全局样式自动生效
     d->aiApiKeyEdit->setMinimumWidth(250);
     keyLayout->addWidget(d->aiApiKeyEdit);
     
     QPushButton* toggleKeyBtn = new QPushButton(QStringLiteral("显示"), this);
-    toggleKeyBtn->setStyleSheet(PageStyles::secondaryButton());
+    StyleHelper::setSecondaryButton(toggleKeyBtn);
     toggleKeyBtn->setFixedWidth(50);
     connect(toggleKeyBtn, &QPushButton::clicked, this, [this, toggleKeyBtn]() {
         if (d->aiApiKeyEdit->echoMode() == QLineEdit::Password) {
@@ -316,7 +310,7 @@ void SettingsPage::setupUI()
     QHBoxLayout* modelLayout = new QHBoxLayout();
     d->aiModelEdit = new QLineEdit(this);
     d->aiModelEdit->setPlaceholderText(QStringLiteral("gpt-4, gpt-3.5-turbo, claude-3 等"));
-    d->aiModelEdit->setStyleSheet(inputStyle);
+    // 全局样式自动生效
     d->aiModelEdit->setMinimumWidth(200);
     modelLayout->addWidget(d->aiModelEdit);
     modelLayout->addStretch();
@@ -324,7 +318,7 @@ void SettingsPage::setupUI()
     
     // 提示信息
     QLabel* hintLabel = new QLabel(QStringLiteral("提示：API 密钥使用 Windows DPAPI 加密安全存储"), this);
-    hintLabel->setStyleSheet(PageStyles::labelText());
+    StyleHelper::setLabelText(hintLabel);
     aiLayout->addRow(hintLabel);
     
     contentLayout->addWidget(aiGroup);
