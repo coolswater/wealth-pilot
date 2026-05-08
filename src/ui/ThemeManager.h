@@ -7,6 +7,7 @@
  * - 浅色主题
  * - 高对比度主题
  * - 自定义主题
+ * - QSS样式表加载
  *
  * @author WealthPilot Team
  * @version 1.0.0
@@ -28,6 +29,7 @@ enum class ThemeType {
     Dark,           ///< 深色主题
     Light,          ///< 浅色主题
     HighContrast,   ///< 高对比度主题
+    EyeCare,        ///< 护眼主题
     Custom          ///< 自定义主题
 };
 
@@ -129,6 +131,16 @@ public:
      */
     void registerThemeChangeListener(QObject* object, const std::function<void()>& callback);
 
+    /**
+     * @brief 获取主题名称
+     */
+    static QString themeTypeToString(ThemeType type);
+
+    /**
+     * @brief 从名称获取主题类型
+     */
+    static ThemeType stringToThemeType(const QString& name);
+
 signals:
     /**
      * @brief 主题变化信号
@@ -141,6 +153,14 @@ private:
 
     // 初始化内置主题
     void initBuiltInThemes();
+
+    // 加载QSS样式表
+    QString loadQssFile(const QString& fileName) const;
+    QString loadBaseQss() const;
+    QString loadThemeQss(ThemeType type) const;
+
+    // 替换QSS中的颜色变量
+    QString replaceColorVariables(const QString& qss, const ThemeColors& theme) const;
 
     // 主题转换
     ThemeColors fromJsonObject(const QJsonObject& json) const;

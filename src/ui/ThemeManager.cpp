@@ -105,6 +105,15 @@ bool ThemeManager::saveCustomTheme(const QString& filePath)
 
 void ThemeManager::applyTheme()
 {
+    // 加载基础样式
+    QString styleSheet = loadBaseQss();
+    
+    // 加载主题特定样式
+    styleSheet += "\n" + loadThemeQss(m_currentType);
+    
+    // 替换颜色变量
+    styleSheet = replaceColorVariables(styleSheet, m_currentTheme);
+    
     // 应用QPalette
     QPalette palette;
 
@@ -119,12 +128,12 @@ void ThemeManager::applyTheme()
     palette.setColor(QPalette::ButtonText, QColor(m_currentTheme.textPrimary));
     palette.setColor(QPalette::BrightText, QColor(m_currentTheme.danger));
     palette.setColor(QPalette::Highlight, QColor(m_currentTheme.primary));
-    palette.setColor(QPalette::HighlightedText, QColor(QStringLiteral("#FFFFFF")));
+    palette.setColor(QPalette::HighlightedText, QStringLiteral("#FFFFFF"));
 
     qApp->setPalette(palette);
 
     // 应用样式表
-    qApp->setStyleSheet(getThemeStyleSheet());
+    qApp->setStyleSheet(styleSheet);
 
     // 通知所有监听器
     for (const auto& listener : m_listeners) {
@@ -132,85 +141,121 @@ void ThemeManager::applyTheme()
             listener.second();
         }
     }
+    
+    LOG_INFO(QString("Theme applied: %1").arg(m_currentTheme.name));
 }
 
 QString ThemeManager::getThemeStyleSheet() const
 {
-    QString style;
+    // 返回当前已加载的样式表
+    return qApp->styleSheet();
+}
 
-    // 全局样式
-    style += QString(
-        "QWidget {"
-        "  background-color: %1;"
-        "  color: %2;"
-        "  border: none;"
-        "}"
-    ).arg(m_currentTheme.bgPrimary, m_currentTheme.textPrimary);
+QString ThemeManager::loadQssFile(const QString& fileName) const
+{
+    // 尝试从资源文件加载
+    QString resourcePath = QStringLiteral(":/style/%1").arg(fileName);
+    QFile resourceFile(resourcePath);
+    
+    if (resourceFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QString content = QString::fromUtf8(resourceFile.readAll());
+        resourceFile.close();
+        LOG_DEBUG(QString("Loaded QSS from resource: %1").arg(fileName));
+        return content;
+    }
+    
+    // 尝试从文件系统加载
+    QString filePath = QStringLiteral("resources/style/%1").arg(fileName);
+    QFile file(filePath);
+    
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QString content = QString::fromUtf8(file.readAll());
+        file.close();
+        LOG_DEBUG(QString("Loaded QSS from file: %1").arg(filePath));
+        return content;
+    }
+    
+    LOG_WARNING(QString("Failed to load QSS file: %1").arg(fileName));
+    return QString();
+}
 
-    // 按钮样式
-    style += QString(
-        "QPushButton {"
-        "  background-color: %1;"
-        "  color: white;"
-        "  border-radius: 4px;"
-        "  padding: 6px 12px;"
-        "}"
-        "QPushButton:hover {"
-        "  background-color: %2;"
-        "}"
-        "QPushButton:pressed {"
-        "  background-color: %3;"
-        "}"
-    ).arg(m_currentTheme.primary, m_currentTheme.primaryHover, m_currentTheme.primary);
+QString ThemeManager::loadBaseQss() const
+{
+    return loadQssFile(QStringLiteral("base.qss"));
+}
 
-    // 输入框样式
-    style += QString(
-        "QLineEdit, QTextEdit, QPlainTextEdit {"
-        "  background-color: %1;"
-        "  color: %2;"
-        "  border: 1px solid %3;"
-        "  border-radius: 4px;"
-        "  padding: 4px 8px;"
-        "}"
-        "QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {"
-        "  border-color: %4;"
-        "}"
-    ).arg(m_currentTheme.bgSecondary, m_currentTheme.textPrimary,
-          m_currentTheme.border, m_currentTheme.primary);
+QString ThemeManager::loadThemeQss(ThemeType type) const
+{
+    QString fileName;
+    
+    switch (type) {
+        case ThemeType::Dark:
+            fileName = QStringLiteral("theme_dark.qss");
+            break;
+        case ThemeType::Light:
+            fileName = QStringLiteral("theme_light.qss");
+            break;
+        case ThemeType::EyeCare:
+            fileName = QStringLiteral("theme_eyecare.qss");
+            break;
+        case ThemeType::HighContrast:
+            fileName = QStringLiteral("theme_dark.qss"); // 使用深色主题
+            break;
+        default:
+            fileName = QStringLiteral("theme_dark.qss");
+            break;
+    }
+    
+    return loadQssFile(fileName);
+}
 
-    // 表格样式
-    style += QString(
-        "QTableWidget {"
-        "  background-color: %1;"
-        "  color: %2;"
-        "  gridline-color: %3;"
-        "}"
-        "QTableWidget::item {"
-        "  padding: 4px;"
-        "}"
-        "QTableWidget::item:selected {"
-        "  background-color: %4;"
-        "  color: white;"
-        "}"
-    ).arg(m_currentTheme.bgSecondary, m_currentTheme.textPrimary,
-          m_currentTheme.border, m_currentTheme.primary);
+QString ThemeManager::replaceColorVariables(const QString& qss, const ThemeColors& theme) const
+{
+    QString result = qss;
+    
+    // 替换颜色变量
+    result.replace(QStringLiteral("${bgPrimary}"), theme.bgPrimary);
+    result.replace(QStringLiteral("${bgSecondary}"), theme.bgSecondary);
+    result.replace(QStringLiteral("${bgElevated}"), theme.bgElevated);
+    result.replace(QStringLiteral("${bgSurface}"), theme.bgSurface);
+    result.replace(QStringLiteral("${textPrimary}"), theme.textPrimary);
+    result.replace(QStringLiteral("${textSecondary}"), theme.textSecondary);
+    result.replace(QStringLiteral("${textDisabled}"), theme.textDisabled);
+    result.replace(QStringLiteral("${primary}"), theme.primary);
+    result.replace(QStringLiteral("${primaryHover}"), theme.primaryHover);
+    result.replace(QStringLiteral("${accent}"), theme.accent);
+    result.replace(QStringLiteral("${success}"), theme.success);
+    result.replace(QStringLiteral("${danger}"), theme.danger);
+    result.replace(QStringLiteral("${warning}"), theme.warning);
+    result.replace(QStringLiteral("${info}"), theme.info);
+    result.replace(QStringLiteral("${border}"), theme.border);
+    result.replace(QStringLiteral("${divider}"), theme.divider);
+    result.replace(QStringLiteral("${chartUp}"), theme.chartUp);
+    result.replace(QStringLiteral("${chartDown}"), theme.chartDown);
+    result.replace(QStringLiteral("${chartGrid}"), theme.chartGrid);
+    
+    return result;
+}
 
-    // 滚动条样式
-    style += QString(
-        "QScrollBar:vertical {"
-        "  background-color: %1;"
-        "  width: 10px;"
-        "}"
-        "QScrollBar::handle:vertical {"
-        "  background-color: %2;"
-        "  border-radius: 5px;"
-        "}"
-        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {"
-        "  height: 0px;"
-        "}"
-    ).arg(m_currentTheme.bgSecondary, m_currentTheme.border);
+QString ThemeManager::themeTypeToString(ThemeType type)
+{
+    switch (type) {
+        case ThemeType::Dark: return QStringLiteral("dark");
+        case ThemeType::Light: return QStringLiteral("light");
+        case ThemeType::HighContrast: return QStringLiteral("highcontrast");
+        case ThemeType::EyeCare: return QStringLiteral("eyecare");
+        case ThemeType::Custom: return QStringLiteral("custom");
+        default: return QStringLiteral("dark");
+    }
+}
 
-    return style;
+ThemeType ThemeManager::stringToThemeType(const QString& name)
+{
+    if (name == QStringLiteral("light")) return ThemeType::Light;
+    if (name == QStringLiteral("highcontrast")) return ThemeType::HighContrast;
+    if (name == QStringLiteral("eyecare")) return ThemeType::EyeCare;
+    if (name == QStringLiteral("custom")) return ThemeType::Custom;
+    return ThemeType::Dark;
 }
 
 void ThemeManager::registerThemeChangeListener(QObject* object, const std::function<void()>& callback)
@@ -229,28 +274,28 @@ void ThemeManager::registerThemeChangeListener(QObject* object, const std::funct
 
 void ThemeManager::initBuiltInThemes()
 {
-    // 深色主题
+    // 深色主题 - WealthPilot设计规范
     ThemeColors darkTheme;
     darkTheme.name = QStringLiteral("深色主题");
-    darkTheme.bgPrimary = QStringLiteral("#1E1E1E");
-    darkTheme.bgSecondary = QStringLiteral("#252526");
-    darkTheme.bgElevated = QStringLiteral("#2D2D30");
-    darkTheme.bgSurface = QStringLiteral("#333333");
-    darkTheme.textPrimary = QStringLiteral("#FFFFFF");
-    darkTheme.textSecondary = QStringLiteral("#9CA3AF");
-    darkTheme.textDisabled = QStringLiteral("#6B7280");
-    darkTheme.primary = QStringLiteral("#3B82F6");
-    darkTheme.primaryHover = QStringLiteral("#2563EB");
-    darkTheme.accent = QStringLiteral("#8B5CF6");
-    darkTheme.success = QStringLiteral("#10B981");
-    darkTheme.danger = QStringLiteral("#EF4444");
-    darkTheme.warning = QStringLiteral("#F59E0B");
-    darkTheme.info = QStringLiteral("#3B82F6");
-    darkTheme.border = QStringLiteral("#404040");
-    darkTheme.divider = QStringLiteral("#303030");
-    darkTheme.chartUp = QStringLiteral("#10B981");
-    darkTheme.chartDown = QStringLiteral("#EF4444");
-    darkTheme.chartGrid = QStringLiteral("#404040");
+    darkTheme.bgPrimary = QStringLiteral("#0d1117");      // 主背景色
+    darkTheme.bgSecondary = QStringLiteral("#161b22");    // 卡片背景色
+    darkTheme.bgElevated = QStringLiteral("#161b22");     // 提升背景色（卡片）
+    darkTheme.bgSurface = QStringLiteral("#1c2128");      // 表面背景色
+    darkTheme.textPrimary = QStringLiteral("#e6edf3");    // 主文本色
+    darkTheme.textSecondary = QStringLiteral("#8b949e");  // 次文本色
+    darkTheme.textDisabled = QStringLiteral("#6e7681");   // 禁用文本色
+    darkTheme.primary = QStringLiteral("#58a6ff");        // 主品牌色
+    darkTheme.primaryHover = QStringLiteral("#79c0ff");   // 主色调悬停
+    darkTheme.accent = QStringLiteral("#a371f7");         // 强调色
+    darkTheme.success = QStringLiteral("#3fb950");        // 涨/成功色
+    darkTheme.danger = QStringLiteral("#f85149");         // 跌/危险色
+    darkTheme.warning = QStringLiteral("#f0883e");        // 警告色
+    darkTheme.info = QStringLiteral("#58a6ff");           // 信息色
+    darkTheme.border = QStringLiteral("#30363d");         // 边框色
+    darkTheme.divider = QStringLiteral("#21262d");        // 分割线色
+    darkTheme.chartUp = QStringLiteral("#3fb950");        // 图表上涨色
+    darkTheme.chartDown = QStringLiteral("#f85149");      // 图表下跌色
+    darkTheme.chartGrid = QStringLiteral("#30363d");      // 图表网格色
 
     m_themes[ThemeType::Dark] = darkTheme;
 
@@ -264,20 +309,45 @@ void ThemeManager::initBuiltInThemes()
     lightTheme.textPrimary = QStringLiteral("#1F2937");
     lightTheme.textSecondary = QStringLiteral("#6B7280");
     lightTheme.textDisabled = QStringLiteral("#9CA3AF");
-    lightTheme.primary = QStringLiteral("#3B82F6");
-    lightTheme.primaryHover = QStringLiteral("#2563EB");
+    lightTheme.primary = QStringLiteral("#58a6ff");
+    lightTheme.primaryHover = QStringLiteral("#79c0ff");
     lightTheme.accent = QStringLiteral("#8B5CF6");
-    lightTheme.success = QStringLiteral("#10B981");
-    lightTheme.danger = QStringLiteral("#EF4444");
+    lightTheme.success = QStringLiteral("#3fb950");
+    lightTheme.danger = QStringLiteral("#f85149");
     lightTheme.warning = QStringLiteral("#F59E0B");
-    lightTheme.info = QStringLiteral("#3B82F6");
+    lightTheme.info = QStringLiteral("#58a6ff");
     lightTheme.border = QStringLiteral("#E5E7EB");
     lightTheme.divider = QStringLiteral("#F3F4F6");
-    lightTheme.chartUp = QStringLiteral("#10B981");
-    lightTheme.chartDown = QStringLiteral("#EF4444");
+    lightTheme.chartUp = QStringLiteral("#3fb950");
+    lightTheme.chartDown = QStringLiteral("#f85149");
     lightTheme.chartGrid = QStringLiteral("#E5E7EB");
 
     m_themes[ThemeType::Light] = lightTheme;
+
+    // 护眼主题
+    ThemeColors eyecareTheme;
+    eyecareTheme.name = QStringLiteral("护眼主题");
+    eyecareTheme.bgPrimary = QStringLiteral("#1E1A14");
+    eyecareTheme.bgSecondary = QStringLiteral("#2A251E");
+    eyecareTheme.bgElevated = QStringLiteral("#352F26");
+    eyecareTheme.bgSurface = QStringLiteral("#3D372D");
+    eyecareTheme.textPrimary = QStringLiteral("#E8DCC8");
+    eyecareTheme.textSecondary = QStringLiteral("#A89B85");
+    eyecareTheme.textDisabled = QStringLiteral("#8B7D66");
+    eyecareTheme.primary = QStringLiteral("#D4A574");
+    eyecareTheme.primaryHover = QStringLiteral("#E5B785");
+    eyecareTheme.accent = QStringLiteral("#C49564");
+    eyecareTheme.success = QStringLiteral("#7CB342");
+    eyecareTheme.danger = QStringLiteral("#E57373");
+    eyecareTheme.warning = QStringLiteral("#FFB74D");
+    eyecareTheme.info = QStringLiteral("#D4A574");
+    eyecareTheme.border = QStringLiteral("#3D372D");
+    eyecareTheme.divider = QStringLiteral("#2A251E");
+    eyecareTheme.chartUp = QStringLiteral("#7CB342");
+    eyecareTheme.chartDown = QStringLiteral("#E57373");
+    eyecareTheme.chartGrid = QStringLiteral("#3D372D");
+
+    m_themes[ThemeType::EyeCare] = eyecareTheme;
 
     // 高对比度主题
     ThemeColors highContrastTheme;
