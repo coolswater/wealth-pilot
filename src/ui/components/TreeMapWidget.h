@@ -8,6 +8,7 @@
 #include <QPainter>
 
 #include "models/StockQuoteItem.h"
+#include "ui/ThemeManager.h"
 
 /**
  * @brief 板块（行业）结构

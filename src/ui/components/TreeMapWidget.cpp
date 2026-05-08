@@ -1,4 +1,6 @@
 #include "TreeMapWidget.h"
+#include "core/config/Tokens.h"
+#include "ui/ThemeManager.h"
 #include <QPainter>
 #include <QFontMetrics>
 #include <QMouseEvent>
@@ -32,8 +34,8 @@ TreeMapWidget::TreeMapWidget(QWidget* parent)
     // 设置强焦点策略，确保能接收键盘事件
     setFocusPolicy(Qt::StrongFocus);
 
-    // 设置黑色背景，符合金融终端暗色主题
-    setStyleSheet("background-color: #000000;");
+    // 使用主题管理器设置背景色
+    setStyleSheet(QString("background-color: %1;").arg(Tokens::Colors::BgBase));
 }
 
 /**
@@ -752,12 +754,14 @@ void TreeMapWidget::paintEvent(QPaintEvent* event)
 
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing); // 开启抗锯齿
-    p.fillRect(rect(), QColor(0, 0, 0)); // 纯黑背景
+
+    // 使用主题背景色
+    p.fillRect(rect(), QColor(Tokens::Colors::BgBase));
 
     // 数据为空时显示提示
     if (m_visibleItems.isEmpty())
     {
-        p.setPen(Qt::white);
+        p.setPen(QColor(Tokens::Colors::TextPrimary));
         p.setFont(QFont("Microsoft YaHei", 14));
         p.drawText(rect(), Qt::AlignCenter, "暂无数据");
         return;
@@ -855,7 +859,7 @@ void TreeMapWidget::drawBlockLabels(QPainter* p)
                         .arg(avgChange, 0, 'f', 2);
 
         // 绘制文字
-        p->setPen(Qt::white);
+        p->setPen(QColor(Tokens::Colors::TextPrimary));
         QFont font("Microsoft YaHei", 9, QFont::Bold);
         p->setFont(font);
 
@@ -902,20 +906,22 @@ void TreeMapWidget::drawTiles(QPainter* p)
  */
 void TreeMapWidget::drawBorders(QPainter* p)
 {
-    // 默认细边框（深灰色，几乎看不见但提供分隔感）
-    p->setPen(QPen(QColor(20, 20, 20), 1));
+    QColor borderColor(Tokens::Colors::Border);
+
+    // 默认细边框
+    p->setPen(QPen(borderColor, 1));
 
     for (auto item : m_visibleItems)
     {
         if (!item->rect.isValid()) continue;
         p->drawRect(item->rect);
 
-        // 选中项：白色粗边框
+        // 选中项：使用主题强调色粗边框
         if (item == m_selectedItem)
         {
-            p->setPen(QPen(Qt::white, 3));
+            p->setPen(QPen(QColor(Tokens::Colors::Primary), 3));
             p->drawRect(item->rect.adjusted(1, 1, -1, -1));
-            p->setPen(QPen(QColor(20, 20, 20), 1)); // 恢复默认
+            p->setPen(QPen(borderColor, 1)); // 恢复默认
         }
     }
 }
@@ -1014,13 +1020,15 @@ void TreeMapWidget::drawTooltip(QPainter* p)
     if (tipRect.right() > rect().right()) tipRect.moveRight(m_mousePos.x() - 10);
     if (tipRect.bottom() > rect().bottom()) tipRect.moveBottom(m_mousePos.y() - 10);
 
-    // 绘制半透明黑色背景
-    p->fillRect(tipRect, QColor(0, 0, 0, 200));
-    p->setPen(QPen(Qt::white, 1));
+    // 绘制半透明背景
+    QColor bgColor(Tokens::Colors::BgElevated);
+    bgColor.setAlpha(230);
+    p->fillRect(tipRect, bgColor);
+    p->setPen(QPen(QColor(Tokens::Colors::Border), 1));
     p->drawRect(tipRect);
 
     // 绘制文字
-    p->setPen(Qt::white);
+    p->setPen(QColor(Tokens::Colors::TextPrimary));
     int y = static_cast<int>(tipRect.top() + padding);
     for (const QString& line : lines)
     {
@@ -1037,28 +1045,51 @@ void TreeMapWidget::drawTooltip(QPainter* p)
  */
 QColor TreeMapWidget::interpolateColor(double percent)
 {
+    QColor upColor(Tokens::Colors::ChartRed);
+    QColor downColor(Tokens::Colors::ChartGreen);
+
     if (percent > 0)
     {
-        // 上涨：红色系。涨幅越大，红色越饱和（从深红#3c0000到亮红#ff0000）
+        // 上涨：使用主题上涨色，涨幅越大越饱和
         double ratio = qMin(percent / 10.0, 1.0); // 10%封顶
-        int r = 60 + static_cast<int>(195 * ratio);
-        int g = static_cast<int>(60 * (1 - ratio));
-        int b = static_cast<int>(60 * (1 - ratio));
-        return QColor(r, g, b);
+        int r = upColor.red();
+        int g = upColor.green();
+        int b = upColor.blue();
+
+        // 从暗到亮渐变
+        int baseR = static_cast<int>(r * 0.3);
+        int baseG = static_cast<int>(g * 0.3);
+        int baseB = static_cast<int>(b * 0.3);
+
+        return QColor(
+            baseR + static_cast<int>((r - baseR) * ratio),
+            baseG + static_cast<int>((g - baseG) * ratio),
+            baseB + static_cast<int>((b - baseB) * ratio)
+        );
     }
     else if (percent < 0)
     {
-        // 下跌：绿色系。跌幅越大，绿色越饱和（从深绿#003c00到亮绿#00ff00）
+        // 下跌：使用主题下跌色，跌幅越大越饱和
         double ratio = qMin(qAbs(percent) / 10.0, 1.0);
-        int r = static_cast<int>(60 * (1 - ratio));
-        int g = 60 + static_cast<int>(195 * ratio);
-        int b = static_cast<int>(60 * (1 - ratio));
-        return QColor(r, g, b);
+        int r = downColor.red();
+        int g = downColor.green();
+        int b = downColor.blue();
+
+        // 从暗到亮渐变
+        int baseR = static_cast<int>(r * 0.3);
+        int baseG = static_cast<int>(g * 0.3);
+        int baseB = static_cast<int>(b * 0.3);
+
+        return QColor(
+            baseR + static_cast<int>((r - baseR) * ratio),
+            baseG + static_cast<int>((g - baseG) * ratio),
+            baseB + static_cast<int>((b - baseB) * ratio)
+        );
     }
     else
     {
-        // 平盘：灰色
-        return QColor(60, 60, 60);
+        // 平盘：使用主题边框色作为中性色
+        return QColor(Tokens::Colors::Border);
     }
 }
 

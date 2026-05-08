@@ -86,7 +86,7 @@ QWidget* SignalDetailPanel::createSummaryWidget()
     headerLayout->addWidget(d->symbolLabel);
 
     d->timeLabel = new QLabel("--");
-    d->timeLabel->setStyleSheet("color: #888;");
+    d->timeLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::TextTertiary));
     headerLayout->addStretch();
     headerLayout->addWidget(d->timeLabel);
 

@@ -128,24 +128,30 @@ void TickTableView::setupUI()
     setColumnWidth(2, 80);   // 成交量
     setColumnWidth(3, 50);   // 方向
 
-    // 样式
-    setStyleSheet(R"(
+    // 样式（使用主题令牌）
+    QString style = QString(R"(
         QTableWidget {
-            background-color: #111827;
+            background-color: %1;
             border: none;
-            gridline-color: #374151;
+            gridline-color: %2;
         }
         QTableWidget::item {
             padding: 2px;
         }
         QHeaderView::section {
-            background-color: #1F2937;
-            color: #9CA3AF;
+            background-color: %3;
+            color: %4;
             padding: 4px;
             border: none;
-            border-bottom: 1px solid #374151;
+            border-bottom: 1px solid %2;
         }
-    )");
+    )")
+        .arg(Tokens::Colors::BgSurface)       // 表格背景
+        .arg(Tokens::Colors::Border)           // 网格线颜色
+        .arg(Tokens::Colors::BgElevated)       // 表头背景
+        .arg(Tokens::Colors::TextSecondary);   // 表头文字
+    
+    setStyleSheet(style);
 }
 
 void TickTableView::setupHeader()

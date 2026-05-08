@@ -87,7 +87,7 @@ void StatusBarWidget::setupUI()
     d->networkIndicator->startMonitoring();
     d->networkIndicator->setIndicatorSize(20, 13);
 
-    d->networkIndicator->setColorScheme(NetworkIndicator::ExcellentSignal, QColor(0, 255, 0));
+    d->networkIndicator->setColorScheme(NetworkIndicator::ExcellentSignal, QColor(Tokens::Colors::Success));
     d->layout->addWidget(d->networkIndicator);
 
     // 搜索框
@@ -95,7 +95,7 @@ void StatusBarWidget::setupUI()
 
     // Latency label
     d->latencyLabel = new QLabel("Checking...");
-    d->latencyLabel->setStyleSheet("QLabel { color: #888; font-size: 12px; }");
+    d->latencyLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 12px; }").arg(Tokens::Colors::TextTertiary));
     d->layout->addWidget(d->latencyLabel);
 
     // Time display
