@@ -147,19 +147,33 @@ void AIAssistantPanelWidget::setupQuickActions()
         auto* btn = new QPushButton(action, this);
         btn->setFixedHeight(Size::ButtonHeightSM);
         btn->setCursor(Qt::PointingHandCursor);
+        
+        // 使用主题颜色
+        ThemeColors theme = ThemeManager::instance()->currentTheme();
+        QString primaryRgba = QString("rgba(%1, %2, %3, 0.15)")
+            .arg(QColor(theme.primary).red())
+            .arg(QColor(theme.primary).green())
+            .arg(QColor(theme.primary).blue());
+        QString primaryRgbaHover = QString("rgba(%1, %2, %3, 0.25)")
+            .arg(QColor(theme.primary).red())
+            .arg(QColor(theme.primary).green())
+            .arg(QColor(theme.primary).blue());
+        
         btn->setStyleSheet(QString(R"(
             QPushButton {
-                background-color: rgba(59, 130, 246, 0.15);
-                color: %1;
+                background-color: %1;
+                color: %2;
                 border: none;
-                border-radius: %2px;
-                padding: 0 %3px;
-                font-size: %4px;
+                border-radius: %3px;
+                padding: 0 %4px;
+                font-size: %5px;
             }
             QPushButton:hover {
-                background-color: rgba(59, 130, 246, 0.25);
+                background-color: %6;
             }
-        )").arg(Colors::Primary).arg(Radius::Full).arg(Spacing::MD).arg(Font::Size::Small));
+        )").arg(primaryRgba, theme.primary)
+          .arg(Radius::Full).arg(Spacing::MD).arg(Font::Size::Small)
+          .arg(primaryRgbaHover));
         connect(btn, &QPushButton::clicked, this, &AIAssistantPanelWidget::onQuickActionClicked);
         quickActionsLayout->addWidget(btn);
     }
@@ -352,18 +366,33 @@ void AIAssistantPanelWidget::showSystemMessage(const QString& message, const QSt
     auto* frame = new QFrame(d->messagesContainer);
 
     QString bgColor, borderColor;
+    // 使用 ThemeManager 获取主题颜色
+    ThemeColors theme = ThemeManager::instance()->currentTheme();
+    
     if (type == "warning") {
         bgColor = Colors::WarningBg;
-        borderColor = "rgba(249, 115, 22, 0.3)";
+        borderColor = QString("rgba(%1, %2, %3, 0.3)")
+            .arg(QColor(theme.warning).red())
+            .arg(QColor(theme.warning).green())
+            .arg(QColor(theme.warning).blue());
     } else if (type == "error") {
         bgColor = Colors::DangerBg;
-        borderColor = "rgba(239, 68, 68, 0.3)";
+        borderColor = QString("rgba(%1, %2, %3, 0.3)")
+            .arg(QColor(theme.danger).red())
+            .arg(QColor(theme.danger).green())
+            .arg(QColor(theme.danger).blue());
     } else if (type == "success") {
         bgColor = Colors::SuccessBg;
-        borderColor = "rgba(16, 185, 129, 0.3)";
+        borderColor = QString("rgba(%1, %2, %3, 0.3)")
+            .arg(QColor(theme.success).red())
+            .arg(QColor(theme.success).green())
+            .arg(QColor(theme.success).blue());
     } else {
         bgColor = Colors::InfoBg;
-        borderColor = "rgba(59, 130, 246, 0.3)";
+        borderColor = QString("rgba(%1, %2, %3, 0.3)")
+            .arg(QColor(theme.primary).red())
+            .arg(QColor(theme.primary).green())
+            .arg(QColor(theme.primary).blue());
     }
 
     frame->setStyleSheet(QString(R"(

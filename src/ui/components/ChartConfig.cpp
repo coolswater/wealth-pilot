@@ -129,7 +129,7 @@ void ChartConfig::setIndicatorPeriod(const QString& name, int period)
 
 QColor ChartConfig::indicatorColor(const QString& name) const
 {
-    return m_indicatorColors.value(name, QColor("#FFFFFF"));
+    return m_indicatorColors.value(name, QColor(Tokens::Colors::TextPrimary));
 }
 
 void ChartConfig::setIndicatorColor(const QString& name, const QColor& color)

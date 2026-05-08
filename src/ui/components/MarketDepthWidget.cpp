@@ -5,6 +5,8 @@
 
 #include "MarketDepthWidget.h"
 #include "core/config/Tokens.h"
+#include "ui/ThemeManager.h"
+#include "ui/components/StyleHelper.h"
 #include "ui/utils/PageStyleHelper.h"
 #include "plugins/ICTPPlugin.h"
 #include <QVBoxLayout>
@@ -284,7 +286,7 @@ QLayout* MarketDepthWidget::createPriceLayout()
     // 涨跌行
     QHBoxLayout* changeRow = new QHBoxLayout();
     QLabel* changeTitle = new QLabel(QStringLiteral("涨跌"), this);
-    changeTitle->setStyleSheet("color: #9CA3AF;");
+    StyleHelper::setLabelText(changeTitle);
     changeRow->addWidget(changeTitle);
     d->changeLabel = new QLabel("--", this);
     changeRow->addWidget(d->changeLabel);
@@ -300,43 +302,46 @@ QLayout* MarketDepthWidget::createStatisticsLayout()
 {
     QGridLayout* layout = new QGridLayout();
     layout->setSpacing(8);
+    
+    // 获取主题颜色
+    ThemeColors theme = ThemeManager::instance()->currentTheme();
 
     // 第一行
     QLabel* openTitle = new QLabel(QStringLiteral("开盘"), this);
-    openTitle->setStyleSheet("color: #9CA3AF;");
+    StyleHelper::setLabelText(openTitle);
     layout->addWidget(openTitle, 0, 0);
     d->openLabel = new QLabel("--", this);
-    d->openLabel->setStyleSheet("color: #F3F4F6;");
+    StyleHelper::setValueLabel(d->openLabel);
     layout->addWidget(d->openLabel, 0, 1);
 
     QLabel* highTitle = new QLabel(QStringLiteral("最高"), this);
-    highTitle->setStyleSheet("color: #9CA3AF;");
+    StyleHelper::setLabelText(highTitle);
     layout->addWidget(highTitle, 0, 2);
     d->highLabel = new QLabel("--", this);
-    d->highLabel->setStyleSheet("color: #EF4444;");
+    d->highLabel->setStyleSheet(QString("color: %1;").arg(theme.danger));
     layout->addWidget(d->highLabel, 0, 3);
 
     // 第二行
     QLabel* lowTitle = new QLabel(QStringLiteral("最低"), this);
-    lowTitle->setStyleSheet("color: #9CA3AF;");
+    StyleHelper::setLabelText(lowTitle);
     layout->addWidget(lowTitle, 1, 0);
     d->lowLabel = new QLabel("--", this);
-    d->lowLabel->setStyleSheet("color: #10B981;");
+    d->lowLabel->setStyleSheet(QString("color: %1;").arg(theme.success));
     layout->addWidget(d->lowLabel, 1, 1);
 
     QLabel* volTitle = new QLabel(QStringLiteral("成交量"), this);
-    volTitle->setStyleSheet("color: #9CA3AF;");
+    StyleHelper::setLabelText(volTitle);
     layout->addWidget(volTitle, 1, 2);
     d->volumeLabel = new QLabel("--", this);
-    d->volumeLabel->setStyleSheet("color: #F3F4F6;");
+    StyleHelper::setValueLabel(d->volumeLabel);
     layout->addWidget(d->volumeLabel, 1, 3);
 
     // 第三行
     QLabel* oiTitle = new QLabel(QStringLiteral("持仓量"), this);
-    oiTitle->setStyleSheet("color: #9CA3AF;");
+    StyleHelper::setLabelText(oiTitle);
     layout->addWidget(oiTitle, 2, 0);
     d->openInterestLabel = new QLabel("--", this);
-    d->openInterestLabel->setStyleSheet("color: #F3F4F6;");
+    StyleHelper::setValueLabel(d->openInterestLabel);
     layout->addWidget(d->openInterestLabel, 2, 1);
 
     return layout;
