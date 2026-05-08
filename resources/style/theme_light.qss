@@ -578,6 +578,36 @@ QDateEdit:focus, QTimeEdit:focus, QDateTimeEdit:focus {
     border-color: ${primary};
 }
 
+/* ==================== 标签样式 ==================== */
+QLabel#titleLabel {
+    font-size: 20px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+QLabel#subtitleLabel {
+    font-size: 14px;
+    color: ${textSecondary};
+}
+
+QLabel#valueLabel {
+    font-size: 18px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+QLabel#labelText {
+    font-size: 12px;
+    color: ${textSecondary};
+}
+
+QLabel#statCard {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 8px;
+    padding: 12px;
+}
+
 /* ==================== 树形视图 ==================== */
 QTreeView, QTreeWidget {
     background-color: ${bgSecondary};

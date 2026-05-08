@@ -710,6 +710,36 @@ AboutUSPage CardWidget {
     border: 1px solid ${border};
 }
 
+/* ==================== 标签样式 ==================== */
+QLabel#titleLabel {
+    font-size: 20px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+QLabel#subtitleLabel {
+    font-size: 14px;
+    color: ${textSecondary};
+}
+
+QLabel#valueLabel {
+    font-size: 18px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+QLabel#labelText {
+    font-size: 12px;
+    color: ${textSecondary};
+}
+
+QLabel#statCard {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 8px;
+    padding: 12px;
+}
+
 /* ==================== 数字输入框 ==================== */
 QSpinBox, QDoubleSpinBox {
     background-color: ${bgElevated};

@@ -10,6 +10,7 @@
 #include "../../core/config/Tokens.h"
 #include "../../core/navigation/PageNavigator.h"
 #include "../../ui/ThemeManager.h"
+#include "../../ui/components/StyleHelper.h"
 #include "../../ui/components/ThemeEngine.h"
 #include "../../ui/components/LayoutConstants.h"
 #include "../../ui/components/ChartStyles.h"
@@ -729,34 +730,34 @@ void MainWindow::applyTheme()
         return;
     }
     
+    // 先调用 ThemeManager 应用全局主题（包括 QSS 和 Palette）
+    themeManager->applyTheme();
+    
     // 获取当前主题配色
     ThemeColors theme = themeManager->currentTheme();
     
-    // 构建主窗口样式表
-    QString styleSheet = QString(
-        "QMainWindow {"
-        "  background-color: %1;"
-        "}"
-        "QWidget#centralWidget {"
-        "  background-color: %1;"
-        "}"
-    ).arg(theme.bgPrimary);
-    
-    // 应用样式表
-    setStyleSheet(styleSheet);
-    
-    // 应用主题到整个应用程序
-    themeManager->applyTheme();
-    
-    // 更新子组件主题
+    // 更新子组件样式
     if (d->titleBar) {
-        d->titleBar->update();
+        d->titleBar->setStyleSheet(QString("TitleBarWidget { background-color: %1; border-bottom: 1px solid %2; }")
+            .arg(theme.bgPrimary, theme.border));
+        // 刷新所有子控件样式
+        StyleHelper::refreshAll(d->titleBar);
     }
     if (d->sidebar) {
-        d->sidebar->update();
+        d->sidebar->setStyleSheet(QString("SidebarWidget { background-color: %1; border-right: 1px solid %2; }")
+            .arg(theme.bgSecondary, theme.border));
+        StyleHelper::refreshAll(d->sidebar);
     }
     if (d->statusBar) {
-        d->statusBar->update();
+        d->statusBar->setStyleSheet(QString("StatusBarWidget { background-color: %1; border-top: 1px solid %2; }")
+            .arg(theme.bgSecondary, theme.border));
+        StyleHelper::refreshAll(d->statusBar);
+    }
+    
+    // 刷新当前页面
+    QWidget* currentPage = d->contentStack ? d->contentStack->currentWidget() : nullptr;
+    if (currentPage) {
+        StyleHelper::refreshAll(currentPage);
     }
     
     LOG_INFO(QString("Theme applied: %1").arg(theme.name));
