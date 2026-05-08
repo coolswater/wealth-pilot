@@ -316,6 +316,7 @@ private:
     void loadSectorData();
     
     // UI更新
+    void updateTheme();           ///< 主题切换更新
     void updateIndexDisplay();
     void updateSectorHeatmap();
     

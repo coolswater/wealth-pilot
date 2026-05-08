@@ -18,6 +18,7 @@
 #include "utils/Logger.h"
 #include "ui/ThemeManager.h"
 #include "ui/components/StyleHelper.h"
+#include "ui/ThemeManager.h"
 #include "core/config/Tokens.h"
 
 #include <QVBoxLayout>
@@ -294,6 +295,11 @@ PortfolioPage::PortfolioPage(QWidget* parent)
     d->updateTimer = new QTimer(this);
     d->updateTimer->setInterval(3000);
     connect(d->updateTimer, &QTimer::timeout, this, &PortfolioPage::updateRealTimeData);
+
+    // 注册主题监听器
+    ThemeManager::instance()->registerThemeChangeListener(this, [this]() {
+        updateTheme();
+    });
 }
 
 PortfolioPage::~PortfolioPage() = default;
@@ -317,9 +323,6 @@ void PortfolioPage::setupUI()
     d->mainLayout->setContentsMargins(20, 20, 20, 20);
     d->mainLayout->setSpacing(16);
 
-    // 设置背景
-    setStyleSheet(QString("background-color: %1;").arg(Tokens::Colors::BgBase));
-
     // 1. 头部
     setupHeader();
 
@@ -331,6 +334,9 @@ void PortfolioPage::setupUI()
 
     // 4. 持仓表格
     setupPositionTable();
+
+    // 应用主题样式
+    updateTheme();
 }
 
 void PortfolioPage::setupHeader()
@@ -343,8 +349,7 @@ void PortfolioPage::setupHeader()
 
     // 页面标题
     QLabel* titleLabel = new QLabel(QStringLiteral("我的看板"), this);
-    titleLabel->setStyleSheet(QString("font-size: 24px; font-weight: bold; color: %1;")
-        .arg(Tokens::Colors::TextPrimary));
+    titleLabel->setObjectName("pageTitleLabel");
     layout->addWidget(titleLabel);
 
     layout->addStretch();
@@ -1043,6 +1048,147 @@ void PortfolioPage::hideEvent(QHideEvent* event)
     BasePage::hideEvent(event);
     d->updateTimer->stop();
     LOG_DEBUG("PortfolioPage hidden, timer stopped");
+}
+
+void PortfolioPage::updateTheme()
+{
+    // 获取当前主题配置
+    ThemeColors theme = ThemeManager::instance()->currentTheme();
+
+    // 更新页面背景色
+    setStyleSheet(QString("background-color: %1;").arg(theme.bgPrimary));
+
+    // 更新卡片样式
+    QString cardStyle = QString(R"(
+        QFrame {
+            background-color: %1;
+            border-radius: 8px;
+        }
+    )").arg(theme.bgElevated);
+
+    if (d->totalAssetCard) d->totalAssetCard->setStyleSheet(cardStyle);
+    if (d->dailyPnLCard) d->dailyPnLCard->setStyleSheet(cardStyle);
+    if (d->returnCard) d->returnCard->setStyleSheet(cardStyle);
+    if (d->riskCard) d->riskCard->setStyleSheet(cardStyle);
+
+    // 更新文本颜色
+    QString titleStyle = QString("color: %1; font-size: 14px;").arg(theme.textSecondary);
+    QString valueStyle = QString("color: %1; font-size: 28px; font-weight: bold;").arg(theme.textPrimary);
+    QString detailStyle = QString("color: %1; font-size: 12px;").arg(theme.textTertiary);
+
+    // 更新汇总卡片中的标签样式
+    if (d->totalAssetLabel) {
+        d->totalAssetLabel->setStyleSheet(valueStyle);
+    }
+    if (d->totalAssetChangeLabel) {
+        d->totalAssetChangeLabel->setStyleSheet(detailStyle);
+    }
+
+    // 更新搜索框样式
+    if (d->searchEdit) {
+        d->searchEdit->setStyleSheet(QString(R"(
+            QLineEdit {
+                background-color: %1;
+                border: 1px solid %2;
+                border-radius: 8px;
+                padding: 0 12px;
+                color: %3;
+                font-size: 14px;
+            }
+            QLineEdit::placeholder {
+                color: %4;
+            }
+        )").arg(theme.bgElevated, theme.border, theme.textPrimary, theme.textTertiary));
+    }
+
+    // 更新时间标签样式
+    if (d->updateTimeLabel) {
+        d->updateTimeLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(theme.textTertiary));
+    }
+
+    // 更新饼图颜色
+    if (d->pieSeries && d->pieSeries->count() > 0) {
+        // 重新应用图表颜色
+        updateAssetAllocation();
+    }
+
+    // 更新折线图颜色
+    if (d->profitSeries && d->benchmarkSeries) {
+        QPen profitPen(QColor(theme.danger));
+        profitPen.setWidth(2);
+        d->profitSeries->setPen(profitPen);
+
+        QPen benchmarkPen(QColor(theme.info));
+        benchmarkPen.setWidth(2);
+        d->benchmarkSeries->setPen(benchmarkPen);
+    }
+
+    // 更新表格样式
+    QString tableStyle = QString(R"(
+        QTableView {
+            background-color: %1;
+            border: none;
+            gridline-color: %5;
+            selection-background-color: %1;
+        }
+        QTableView::item {
+            padding: 8px;
+            color: %2;
+        }
+        QHeaderView::section {
+            background-color: %4;
+            color: %3;
+            padding: 8px;
+            border: none;
+            font-size: 12px;
+        }
+    )").arg(theme.bgElevated, theme.textPrimary, theme.textSecondary, theme.bgSurface, theme.border);
+
+    if (d->stockTable) d->stockTable->setStyleSheet(tableStyle);
+    if (d->futuresTable) d->futuresTable->setStyleSheet(tableStyle);
+    if (d->fundTable) d->fundTable->setStyleSheet(tableStyle);
+
+    // 更新Tab样式
+    if (d->positionTabs) {
+        d->positionTabs->setStyleSheet(QString(R"(
+            QTabWidget::pane {
+                border: 1px solid %5;
+                border-radius: 8px;
+                background-color: %1;
+            }
+            QTabBar::tab {
+                background-color: transparent;
+                color: %2;
+                padding: 8px 16px;
+                border: none;
+                font-size: 13px;
+            }
+            QTabBar::tab:selected {
+                color: %3;
+                border-bottom: 2px solid %3;
+            }
+            QTabBar::tab:hover {
+                color: %4;
+            }
+        )").arg(theme.bgElevated, theme.textSecondary, theme.primary, theme.textPrimary, theme.border));
+    }
+
+    // 更新进度条样式
+    if (d->riskBar) {
+        d->riskBar->setStyleSheet(QString(R"(
+            QProgressBar {
+                background-color: %1;
+                border: none;
+                border-radius: 4px;
+            }
+            QProgressBar::chunk {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 %2, stop:0.5 %3, stop:1 %4);
+                border-radius: 4px;
+            }
+        )").arg(theme.bgSurface, theme.success, theme.warning, theme.danger));
+    }
+
+    LOG_DEBUG("PortfolioPage theme updated");
 }
 
 

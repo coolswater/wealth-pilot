@@ -152,6 +152,7 @@ private slots:
     void onTabChanged(int index);
     void onRowDoubleClicked(const QModelIndex& index);
     void updateRealTimeData();
+    void updateTheme();
 
 private:
     void setupUI();
