@@ -1,6 +1,6 @@
 /**
  * @file NewsPanelWidget.cpp
- * @brief 新闻资讯面板实现
+ * @brief 新闻资讯面板实现 - 使用属性选择器替代硬编码样式
  */
 
 #include "NewsPanelWidget.h"
@@ -13,6 +13,7 @@ using namespace Tokens;
 NewsPanelWidget::NewsPanelWidget(QWidget* parent)
     : QWidget(parent)
 {
+    setObjectName("NewsPanelWidget");
     setupUI();
 
     // 连接新闻数据源信号
@@ -100,21 +101,19 @@ void NewsPanelWidget::onNewsDoubleClicked(int row, int column)
 void NewsPanelWidget::setupUI()
 {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(10);
-    mainLayout->setContentsMargins(10, 10, 10, 10);
+    mainLayout->setSpacing(Spacing::MD);
+    mainLayout->setContentsMargins(Spacing::MD, Spacing::MD, Spacing::MD, Spacing::MD);
 
     // 标题栏
     QHBoxLayout* titleLayout = new QHBoxLayout();
     m_titleLabel = new QLabel(QStringLiteral("新闻资讯"));
-    m_titleLabel->setStyleSheet(QString("font-size: 16px; font-weight: bold; color: %1;")
-        .arg(Colors::TextPrimary));
+    m_titleLabel->setObjectName("newsTitle");
     titleLayout->addWidget(m_titleLabel);
     titleLayout->addStretch();
 
     // 分类筛选
     QLabel* categoryLabel = new QLabel(QStringLiteral("分类:"));
-    categoryLabel->setStyleSheet(QString("font-size: 12px; color: %1;")
-        .arg(Colors::TextSecondary));
+    categoryLabel->setProperty("dataType", "label");
     titleLayout->addWidget(categoryLabel);
 
     m_categoryFilter = new QComboBox();
@@ -130,6 +129,7 @@ void NewsPanelWidget::setupUI()
 
     m_refreshBtn = new QPushButton(QStringLiteral("刷新"));
     m_refreshBtn->setFixedWidth(60);
+    m_refreshBtn->setProperty("secondary", true);
     connect(m_refreshBtn, &QPushButton::clicked, this, &NewsPanelWidget::onRefreshClicked);
     titleLayout->addWidget(m_refreshBtn);
 
@@ -138,19 +138,18 @@ void NewsPanelWidget::setupUI()
     // 社交热度
     QHBoxLayout* heatLayout = new QHBoxLayout();
     QLabel* heatTitleLabel = new QLabel(QStringLiteral("社交热度:"));
-    heatTitleLabel->setStyleSheet(QString("font-size: 12px; color: %1;")
-        .arg(Colors::TextSecondary));
+    heatTitleLabel->setProperty("dataType", "label");
     heatLayout->addWidget(heatTitleLabel);
 
     m_socialHeatLabel = new QLabel(QStringLiteral("--"));
-    m_socialHeatLabel->setStyleSheet(QString("font-size: 12px; color: %1;")
-        .arg(Colors::TextPrimary));
+    m_socialHeatLabel->setObjectName("heatLabel");
     heatLayout->addWidget(m_socialHeatLabel);
     heatLayout->addStretch();
     mainLayout->addLayout(heatLayout);
 
     // 新闻列表
     m_newsTable = new QTableWidget();
+    m_newsTable->setObjectName("newsTable");
     m_newsTable->setColumnCount(6);
     m_newsTable->setHorizontalHeaderLabels({
         QStringLiteral("时间"),
@@ -170,22 +169,14 @@ void NewsPanelWidget::setupUI()
     m_newsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_newsTable->setAlternatingRowColors(true);
     m_newsTable->verticalHeader()->setVisible(false);
-    m_newsTable->setStyleSheet(QString(
-        "QTableWidget { background-color: %1; border: 1px solid %2; }"
-        "QTableWidget::item { padding: 5px; }"
-    ).arg(Colors::BgSurface, Colors::Border));
     connect(m_newsTable, &QTableWidget::cellDoubleClicked,
             this, &NewsPanelWidget::onNewsDoubleClicked);
     mainLayout->addWidget(m_newsTable, 1);
 
     // 提示信息
     QLabel* tipLabel = new QLabel(QStringLiteral("双击查看新闻详情"));
-    tipLabel->setStyleSheet(QString("font-size: 12px; color: %1;")
-        .arg(Colors::TextSecondary));
+    tipLabel->setProperty("dataType", "label");
     mainLayout->addWidget(tipLabel);
-
-    setStyleSheet(QString("background-color: %1; border-radius: 8px;")
-        .arg(Colors::BgElevated));
 }
 
 void NewsPanelWidget::updateNewsList(const QVector<NewsItem>& news)
@@ -249,19 +240,22 @@ void NewsPanelWidget::updateSocialHeat(const SocialHeatData& heat)
         .arg(heat.changePercent >= 0 ? QStringLiteral("+") : QString())
         .arg(heat.changePercent, 0, 'f', 1);
 
-    QString color;
-    if (heat.changePercent > 20) {
-        color = Colors::Danger;
-    } else if (heat.changePercent > 0) {
-        color = Colors::Warning;
-    } else if (heat.changePercent < -20) {
-        color = Colors::Success;
-    } else {
-        color = Colors::TextPrimary;
-    }
-
     m_socialHeatLabel->setText(text);
-    m_socialHeatLabel->setStyleSheet(QString("font-size: 12px; color: %1;").arg(color));
+
+    // 使用属性选择器设置热度状态
+    QString status;
+    if (heat.changePercent > 20) {
+        status = "hot";
+    } else if (heat.changePercent > 0) {
+        status = "warm";
+    } else if (heat.changePercent < -20) {
+        status = "cold";
+    } else {
+        status = "normal";
+    }
+    m_socialHeatLabel->setProperty("heatStatus", status);
+    m_socialHeatLabel->style()->unpolish(m_socialHeatLabel);
+    m_socialHeatLabel->style()->polish(m_socialHeatLabel);
 }
 
 QString NewsPanelWidget::sentimentToColor(SentimentType sentiment) const

@@ -215,8 +215,14 @@ QString ThemeManager::loadThemeQss(ThemeType type) const
             fileName = QStringLiteral("theme_dark.qss");
             break;
     }
-    
-    return loadQssFile(fileName);
+
+    // 加载主题样式
+    QString themeQss = loadQssFile(fileName);
+
+    // 加载组件样式（所有主题共用）
+    QString componentsQss = loadQssFile(QStringLiteral("components.qss"));
+
+    return themeQss + "\n" + componentsQss;
 }
 
 QString ThemeManager::replaceColorVariables(const QString& qss, const ThemeColors& theme) const

@@ -1060,13 +1060,10 @@ void AnimationManager::buttonHoverEnter(QPushButton* button)
         d->originalButtonStyles[button] = button->styleSheet();
     }
 
-    // 计算高亮颜色
-    QColor baseColor = button->palette().color(QPalette::Button);
-    QColor hoverColor = baseColor.lighter(110);
-
-    QString newStyle = QString("QPushButton { background-color: %1; border: none; padding: 5px; }")
-                           .arg(hoverColor.name());
-    button->setStyleSheet(newStyle);
+    // 使用属性选择器标记悬停状态
+    button->setProperty("hover", true);
+    button->style()->unpolish(button);
+    button->style()->polish(button);
 }
 
 /**
@@ -1076,12 +1073,14 @@ void AnimationManager::buttonHoverLeave(QPushButton* button)
 {
     if (!button || !d->animationsEnabled) return;
 
+    // 移除悬停属性
+    button->setProperty("hover", false);
+    button->style()->unpolish(button);
+    button->style()->polish(button);
+
     auto it = d->originalButtonStyles.find(button);
     if (it != d->originalButtonStyles.end()) {
-        button->setStyleSheet(it.value());
         d->originalButtonStyles.erase(it);
-    } else {
-        button->setStyleSheet("");
     }
 }
 
@@ -1089,13 +1088,20 @@ void AnimationManager::buttonPress(QPushButton* button)
 {
     if (!button || !d->animationsEnabled) return;
 
-    QString pressedStyle = "QPushButton { padding-top: 3px; padding-left: 3px; }";
-    button->setStyleSheet(button->styleSheet() + pressedStyle);
+    // 使用属性选择器标记按下状态
+    button->setProperty("pressed", true);
+    button->style()->unpolish(button);
+    button->style()->polish(button);
 }
 
 void AnimationManager::buttonRelease(QPushButton* button)
 {
     if (!button || !d->animationsEnabled) return;
+
+    // 移除按下属性
+    button->setProperty("pressed", false);
+    button->style()->unpolish(button);
+    button->style()->polish(button);
 
     buttonHoverLeave(button);
 }

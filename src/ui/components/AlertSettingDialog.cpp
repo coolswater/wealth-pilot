@@ -5,6 +5,7 @@
 
 #include "AlertSettingDialog.h"
 #include "core/config/Tokens.h"
+#include "ui/components/StyleHelper.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>
@@ -18,6 +19,7 @@ using namespace Tokens;
 AlertSettingDialog::AlertSettingDialog(QWidget* parent)
     : QDialog(parent)
 {
+    setObjectName("AlertSettingDialog");
     setupUI();
     loadAlertConditions();
 }
@@ -68,15 +70,9 @@ void AlertSettingDialog::onAddAlert()
 
     // 设置推送方式
     PushMethods methods;
-    if (m_desktopCheck->isChecked()) {
-        methods |= PushMethod::Desktop;
-    }
-    if (m_emailCheck->isChecked()) {
-        methods |= PushMethod::Email;
-    }
-    if (m_webhookCheck->isChecked()) {
-        methods |= PushMethod::Webhook;
-    }
+    if (m_desktopCheck->isChecked()) methods |= PushMethod::Desktop;
+    if (m_emailCheck->isChecked()) methods |= PushMethod::Email;
+    if (m_webhookCheck->isChecked()) methods |= PushMethod::Webhook;
     condition.pushMethods = methods;
 
     // 添加到预警系统
@@ -163,8 +159,8 @@ void AlertSettingDialog::setupUI()
     setMinimumSize(700, 500);
 
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(15);
-    mainLayout->setContentsMargins(20, 20, 20, 20);
+    mainLayout->setSpacing(Spacing::MD);
+    mainLayout->setContentsMargins(Spacing::LG, Spacing::LG, Spacing::LG, Spacing::LG);
 
     // 预警条件设置组
     QGroupBox* conditionGroup = new QGroupBox(QStringLiteral("添加预警条件"));
@@ -173,6 +169,7 @@ void AlertSettingDialog::setupUI()
     // 第一行：股票代码和预警类型
     QHBoxLayout* row1 = new QHBoxLayout();
     QLabel* symbolLabel = new QLabel(QStringLiteral("股票代码:"));
+    symbolLabel->setProperty("dataType", "label");
     m_symbolEdit = new QLineEdit();
     m_symbolEdit->setPlaceholderText(QStringLiteral("如: sh600000"));
     m_symbolEdit->setMaximumWidth(120);
@@ -180,6 +177,7 @@ void AlertSettingDialog::setupUI()
     row1->addWidget(m_symbolEdit);
 
     QLabel* typeLabel = new QLabel(QStringLiteral("预警类型:"));
+    typeLabel->setProperty("dataType", "label");
     m_typeCombo = new QComboBox();
     m_typeCombo->addItem(QStringLiteral("价格突破上限"));
     m_typeCombo->addItem(QStringLiteral("价格突破下限"));
@@ -192,6 +190,7 @@ void AlertSettingDialog::setupUI()
     row1->addWidget(m_typeCombo);
 
     QLabel* thresholdLabel = new QLabel(QStringLiteral("阈值:"));
+    thresholdLabel->setProperty("dataType", "label");
     m_thresholdSpin = new QDoubleSpinBox();
     m_thresholdSpin->setRange(-10000, 10000);
     m_thresholdSpin->setDecimals(2);
@@ -205,7 +204,9 @@ void AlertSettingDialog::setupUI()
     // 添加/删除按钮
     QHBoxLayout* btnLayout = new QHBoxLayout();
     m_addBtn = new QPushButton(QStringLiteral("添加预警"));
+    StyleHelper::setPrimaryButton(m_addBtn);
     m_removeBtn = new QPushButton(QStringLiteral("删除选中"));
+    StyleHelper::setSecondaryButton(m_removeBtn);
     btnLayout->addWidget(m_addBtn);
     btnLayout->addWidget(m_removeBtn);
     btnLayout->addStretch();
@@ -221,6 +222,7 @@ void AlertSettingDialog::setupUI()
     QVBoxLayout* listLayout = new QVBoxLayout(listGroup);
 
     m_alertTable = new QTableWidget();
+    m_alertTable->setObjectName("alertTable");
     m_alertTable->setColumnCount(5);
     m_alertTable->setHorizontalHeaderLabels({
         QStringLiteral("股票代码"),
@@ -261,6 +263,7 @@ void AlertSettingDialog::setupUI()
     m_webhookUrlEdit->setPlaceholderText(QStringLiteral("https://oapi.dingtalk.com/robot/send?access_token=xxx"));
     m_testWebhookBtn = new QPushButton(QStringLiteral("测试"));
     m_testWebhookBtn->setFixedWidth(60);
+    StyleHelper::setSecondaryButton(m_testWebhookBtn);
     webhookLayout->addWidget(m_webhookCheck);
     webhookLayout->addWidget(m_webhookUrlEdit);
     webhookLayout->addWidget(m_testWebhookBtn);
@@ -276,22 +279,18 @@ void AlertSettingDialog::setupUI()
 
     m_saveBtn = new QPushButton(QStringLiteral("保存"));
     m_saveBtn->setFixedWidth(80);
-    m_saveBtn->setStyleSheet(QString(
-        "QPushButton { background-color: %1; color: white; border-radius: 4px; }"
-        "QPushButton:hover { background-color: %2; }"
-    ).arg(Colors::Primary, Colors::PrimaryHover));
+    m_saveBtn->setObjectName("saveBtn");
+    StyleHelper::setPrimaryButton(m_saveBtn);
     connect(m_saveBtn, &QPushButton::clicked, this, &AlertSettingDialog::onSaveClicked);
 
     QPushButton* cancelBtn = new QPushButton(QStringLiteral("取消"));
     cancelBtn->setFixedWidth(80);
+    StyleHelper::setSecondaryButton(cancelBtn);
     connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
 
     bottomLayout->addWidget(m_saveBtn);
     bottomLayout->addWidget(cancelBtn);
     mainLayout->addLayout(bottomLayout);
-
-    setStyleSheet(QString("QDialog { background-color: %1; }")
-        .arg(Colors::BgSurface));
 }
 
 void AlertSettingDialog::loadAlertConditions()
@@ -315,20 +314,15 @@ void AlertSettingDialog::updateAlertTable()
 
         // 推送方式
         QStringList methods;
-        if (condition.pushMethods & PushMethod::Desktop) {
-            methods << QStringLiteral("桌面");
-        }
-        if (condition.pushMethods & PushMethod::Email) {
-            methods << QStringLiteral("邮件");
-        }
-        if (condition.pushMethods & PushMethod::Webhook) {
-            methods << QStringLiteral("Webhook");
-        }
+        if (condition.pushMethods & PushMethod::Desktop) methods << QStringLiteral("桌面");
+        if (condition.pushMethods & PushMethod::Email) methods << QStringLiteral("邮件");
+        if (condition.pushMethods & PushMethod::Webhook) methods << QStringLiteral("Webhook");
         m_alertTable->setItem(row, 3, new QTableWidgetItem(methods.join(QStringLiteral(", "))));
 
         // 状态
         QString status = condition.enabled ? QStringLiteral("启用") : QStringLiteral("禁用");
         QTableWidgetItem* statusItem = new QTableWidgetItem(status);
+        statusItem->setProperty("status", condition.enabled ? "success" : "disabled");
         statusItem->setForeground(QColor(condition.enabled ? Colors::Success : Colors::TextSecondary));
         m_alertTable->setItem(row, 4, statusItem);
     }

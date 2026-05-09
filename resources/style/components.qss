@@ -1,0 +1,913 @@
+/**
+ * WealthPilot 组件样式表 v1.0
+ * 集中管理 UI 组件样式，避免代码中硬编码
+ * 
+ * 使用方式：在 ThemeManager 中加载并应用
+ * 颜色变量由 ThemeManager 动态替换
+ */
+
+/* ==================== AI 助理面板 ==================== */
+AIAssistantPanelWidget {
+    border-left: 1px solid ${border};
+}
+
+AIAssistantPanelWidget #messagesScrollArea {
+    border: none;
+    background-color: transparent;
+}
+
+AIAssistantPanelWidget #messagesContainer {
+    background-color: transparent;
+}
+
+/* AI 头像 */
+AIAssistantPanelWidget #aiAvatar {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+        stop:0 ${primary}, stop:1 ${accent});
+    border-radius: 20px;
+}
+
+/* AI 名称 */
+AIAssistantWidget #aiName {
+    font-size: 14px;
+    font-weight: 600;
+    color: ${textPrimary};
+}
+
+/* AI 状态 */
+AIAssistantPanelWidget #aiStatus {
+    font-size: 12px;
+    color: ${success};
+}
+
+AIAssistantPanelWidget #aiStatus[status="connected"] {
+    color: ${success};
+}
+
+AIAssistantPanelWidget #aiStatus[status="disconnected"] {
+    color: ${danger};
+}
+
+/* 输入框 */
+AIAssistantPanelWidget #aiInputField {
+    background-color: ${bgPrimary};
+    border: 1px solid ${border};
+    border-radius: 9999px;
+    padding: 0 16px;
+    color: ${textPrimary};
+    font-size: 14px;
+}
+
+AIAssistantPanelWidget #aiInputField:focus {
+    border-color: ${primary};
+}
+
+/* 发送按钮 */
+AIAssistantPanelWidget #sendBtn {
+    background-color: ${primary};
+    color: white;
+    border: none;
+    border-radius: 24px;
+    font-size: 14px;
+}
+
+AIAssistantPanelWidget #sendBtn:hover {
+    background-color: ${primaryHover};
+}
+
+AIAssistantPanelWidget #sendBtn:disabled {
+    background-color: ${border};
+}
+
+/* 折叠按钮 */
+AIAssistantPanelWidget #collapseBtn {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: none;
+    border-radius: 6px;
+}
+
+AIAssistantPanelWidget #collapseBtn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 快捷操作按钮 */
+AIAssistantPanelWidget QPushButton[quickAction="true"] {
+    background-color: rgba(88, 166, 255, 0.15);
+    color: ${primary};
+    border: none;
+    border-radius: 9999px;
+    padding: 0 16px;
+    font-size: 13px;
+}
+
+AIAssistantPanelWidget QPushButton[quickAction="true"]:hover {
+    background-color: rgba(88, 166, 255, 0.25);
+}
+
+/* 消息气泡 */
+AIAssistantPanelWidget QFrame[messageType="user"] {
+    background-color: ${primary};
+    color: white;
+    border-radius: 12px;
+    padding: 8px 16px;
+}
+
+AIAssistantPanelWidget QFrame[messageType="user"] QLabel {
+    color: white;
+}
+
+AIAssistantPanelWidget QFrame[messageType="assistant"] {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 8px 16px;
+}
+
+AIAssistantPanelWidget QFrame[messageType="assistant"] QLabel {
+    color: ${textPrimary};
+}
+
+AIAssistantPanelWidget QFrame[messageType="typing"] {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 8px 16px;
+}
+
+AIAssistantPanelWidget QFrame[messageType="typing"] QLabel {
+    color: ${textSecondary};
+    font-size: 12px;
+}
+
+AIAssistantPanelWidget QFrame[messageType="error"] {
+    background-color: rgba(248, 81, 73, 0.1);
+    border: 1px solid rgba(248, 81, 73, 0.3);
+    border-radius: 12px;
+    padding: 8px 16px;
+}
+
+AIAssistantPanelWidget QFrame[messageType="error"] QLabel {
+    color: ${danger};
+}
+
+AIAssistantPanelWidget QFrame[messageType="warning"] {
+    background-color: rgba(240, 136, 62, 0.1);
+    border: 1px solid rgba(240, 136, 62, 0.3);
+    border-radius: 12px;
+    padding: 8px 16px;
+}
+
+AIAssistantPanelWidget QFrame[messageType="warning"] QLabel {
+    color: ${warning};
+}
+
+AIAssistantPanelWidget QFrame[messageType="success"] {
+    background-color: rgba(63, 185, 80, 0.1);
+    border: 1px solid rgba(63, 185, 80, 0.3);
+    border-radius: 12px;
+    padding: 8px 16px;
+}
+
+AIAssistantPanelWidget QFrame[messageType="success"] QLabel {
+    color: ${success};
+}
+
+AIAssistantPanelWidget QFrame[messageType="info"] {
+    background-color: rgba(88, 166, 255, 0.1);
+    border: 1px solid rgba(88, 166, 255, 0.3);
+    border-radius: 12px;
+    padding: 8px 16px;
+}
+
+AIAssistantPanelWidget QFrame[messageType="info"] QLabel {
+    color: ${primary};
+}
+
+/* 引导提示 */
+AIAssistantPanelWidget #guideWidget {
+    background-color: ${bgElevated};
+    border-radius: 12px;
+}
+
+AIAssistantPanelWidget #gotoSettingsBtn {
+    background-color: ${primary};
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-weight: bold;
+}
+
+AIAssistantPanelWidget #gotoSettingsBtn:hover {
+    background-color: ${primaryHover};
+}
+
+/* ==================== 盘口组件 ==================== */
+MarketDepthWidget {
+    background-color: ${bgElevated};
+    border: none;
+}
+
+MarketDepthWidget #priceLabel {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+MarketDepthWidget #instrumentLabel {
+    font-size: 14px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+MarketDepthWidget #bidPriceLabel {
+    font-size: 16px;
+}
+
+MarketDepthWidget #askPriceLabel {
+    font-size: 16px;
+}
+
+MarketDepthWidget QLabel[status="up"] {
+    color: ${danger};
+}
+
+MarketDepthWidget QLabel[status="down"] {
+    color: ${success};
+}
+
+MarketDepthWidget QLabel[status="flat"] {
+    color: ${textSecondary};
+}
+
+MarketDepthWidget QFrame#dividerLine {
+    background-color: ${border};
+    max-height: 1px;
+}
+
+/* 买盘标题 */
+MarketDepthWidget QLabel[bidTitle="true"] {
+    color: ${success};
+    font-weight: bold;
+}
+
+/* 卖盘标题 */
+MarketDepthWidget QLabel[askTitle="true"] {
+    color: ${danger};
+    font-weight: bold;
+}
+
+/* 最高价 */
+MarketDepthWidget QLabel[dataType="high"] {
+    color: ${danger};
+}
+
+/* 最低价 */
+MarketDepthWidget QLabel[dataType="low"] {
+    color: ${success};
+}
+
+/* ==================== 新闻面板 ==================== */
+NewsPanelWidget {
+    background-color: ${bgElevated};
+    border-radius: 8px;
+}
+
+NewsPanelWidget #newsTitle {
+    font-size: 16px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+NewsPanelWidget #heatLabel {
+    font-size: 12px;
+    color: ${textPrimary};
+}
+
+NewsPanelWidget #heatLabel[heatStatus="hot"] {
+    color: ${danger};
+}
+
+NewsPanelWidget #heatLabel[heatStatus="warm"] {
+    color: ${warning};
+}
+
+NewsPanelWidget #heatLabel[heatStatus="cold"] {
+    color: ${success};
+}
+
+NewsPanelWidget #heatLabel[heatStatus="normal"] {
+    color: ${textPrimary};
+}
+
+NewsPanelWidget #newsTable {
+    background-color: transparent;
+    border: 1px solid ${border};
+    gridline-color: transparent;
+}
+
+NewsPanelWidget #newsTable::item {
+    padding: 5px;
+}
+
+NewsPanelWidget QComboBox {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: ${textPrimary};
+    font-size: 12px;
+}
+
+NewsPanelWidget QPushButton[secondary="true"] {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: 1px solid ${border};
+    border-radius: 4px;
+    padding: 4px 12px;
+}
+
+NewsPanelWidget QPushButton[secondary="true"]:hover {
+    background-color: ${bgHover};
+}
+
+/* ==================== 订单对话框 ==================== */
+OrderDialog {
+    background-color: ${bgPrimary};
+}
+
+OrderDialog QLabel#totalLabel {
+    font-weight: bold;
+}
+
+OrderDialog QLabel#riskRatioLabel {
+    font-size: 12px;
+}
+
+OrderDialog QPushButton#submitBtn {
+    background-color: ${primary};
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-weight: bold;
+}
+
+OrderDialog QPushButton#submitBtn:hover {
+    background-color: ${primaryHover};
+}
+
+OrderDialog QPushButton#cancelBtn {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: 1px solid ${border};
+    border-radius: 6px;
+    padding: 10px 20px;
+}
+
+OrderDialog QPushButton#cancelBtn:hover {
+    background-color: ${bgHover};
+    border-color: ${primary};
+}
+
+/* ==================== 警报设置对话框 ==================== */
+AlertSettingDialog {
+    background-color: ${bgPrimary};
+}
+
+AlertSettingDialog QPushButton#saveBtn {
+    background-color: ${primary};
+    color: white;
+    border-radius: 4px;
+    padding: 10px 20px;
+}
+
+AlertSettingDialog QPushButton#saveBtn:hover {
+    background-color: ${primaryHover};
+}
+
+AlertSettingDialog QPushButton#cancelBtn {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: 1px solid ${border};
+    border-radius: 4px;
+    padding: 10px 20px;
+}
+
+AlertSettingDialog QPushButton#cancelBtn:hover {
+    background-color: ${bgHover};
+}
+
+/* ==================== 图表工具栏 ==================== */
+ChartToolBar {
+    background-color: ${bgElevated};
+    border-bottom: 1px solid ${border};
+    padding: 0 16px;
+}
+
+ChartToolBar QComboBox {
+    background-color: ${bgPrimary};
+    border: 1px solid ${border};
+    border-radius: 6px;
+    padding: 6px 12px;
+    padding-right: 28px;
+    color: ${textPrimary};
+    font-size: 13px;
+    min-width: 80px;
+}
+
+ChartToolBar QComboBox:hover {
+    border-color: ${borderLight};
+    background-color: ${bgElevated};
+}
+
+ChartToolBar QComboBox::drop-down {
+    border: none;
+    width: 24px;
+}
+
+ChartToolBar QComboBox QAbstractItemView {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 6px;
+    padding: 4px;
+    selection-background-color: ${primary};
+}
+
+ChartToolBar QToolButton {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+ChartToolBar QToolButton:hover {
+    background-color: ${bgElevated};
+    color: ${textPrimary};
+}
+
+ChartToolBar QToolButton:pressed,
+ChartToolBar QToolButton:checked {
+    background-color: ${primary};
+    color: ${textPrimary};
+}
+
+ChartToolBar QFrame[frameShape="4"] {
+    background-color: ${border};
+    max-width: 1px;
+}
+
+/* ==================== 图表状态栏 ==================== */
+ChartStatusBar {
+    background-color: ${bgElevated};
+    border-top: 1px solid ${border};
+    padding: 0 16px;
+}
+
+ChartStatusBar QLabel {
+    color: ${textSecondary};
+    font-size: 12px;
+}
+
+ChartStatusBar #accountLabel {
+    font-weight: 500;
+}
+
+ChartStatusBar #availableLabel {
+    color: ${success};
+}
+
+ChartStatusBar #marginLabel {
+    color: ${warning};
+}
+
+ChartStatusBar #connectionLabel {
+    font-weight: 500;
+}
+
+ChartStatusBar #connectionLabel[status="connected"] {
+    color: ${success};
+}
+
+ChartStatusBar #connectionLabel[status="disconnected"] {
+    color: ${danger};
+}
+
+ChartStatusBar #connectionLabel[status="connecting"] {
+    color: ${warning};
+}
+
+ChartStatusBar #coordinateLabel {
+    font-family: 'Roboto Mono', 'Consolas', monospace;
+}
+
+ChartStatusBar QFrame[lineType="vertical"] {
+    background-color: ${border};
+    max-width: 1px;
+}
+
+/* ==================== 分笔成交表 ==================== */
+TickTableView {
+    background-color: ${bgElevated};
+    border: none;
+    gridline-color: transparent;
+}
+
+TickTableView::item {
+    padding: 4px 8px;
+    border-bottom: 1px solid ${bgPrimary};
+}
+
+TickTableView::item:selected {
+    background-color: ${primary};
+}
+
+TickTableView QHeaderView::section {
+    background-color: ${bgPrimary};
+    color: ${textSecondary};
+    padding: 6px 8px;
+    border: none;
+    border-bottom: 1px solid ${border};
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ==================== K线图 ==================== */
+KLineChart {
+    background-color: ${bgElevated};
+    border: none;
+}
+
+KLineChartWithSignals {
+    background-color: ${bgElevated};
+    border: none;
+}
+
+/* ==================== 分割器 ==================== */
+QSplitter::handle {
+    background-color: ${border};
+}
+
+QSplitter::handle:hover {
+    background-color: ${primary};
+}
+
+QSplitter::handle:horizontal {
+    width: 2px;
+}
+
+QSplitter::handle:vertical {
+    height: 2px;
+}
+
+/* ==================== 资产卡片 ==================== */
+AssetCardWidget {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 15px;
+}
+
+AssetCardWidget:hover {
+    border-color: rgba(88, 166, 255, 0.4);
+}
+
+AssetCardWidget QLabel#titleLabel {
+    font-size: 14px;
+    color: ${textSecondary};
+}
+
+AssetCardWidget QLabel#valueLabel {
+    font-size: 24px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+AssetCardWidget QLabel#changeLabel {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* ==================== 推荐列表 ==================== */
+RecommendationListWidget {
+    background-color: transparent;
+}
+
+RecommendationListWidget QFrame#itemFrame {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 8px;
+    margin: 4px 0;
+}
+
+RecommendationListWidget QFrame#itemFrame:hover {
+    border-color: ${primary};
+}
+
+RecommendationListWidget QLabel#symbolLabel {
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+RecommendationListWidget QLabel#recommendationLabel {
+    font-size: 12px;
+    color: ${textSecondary};
+}
+
+/* ==================== 风险指标 ==================== */
+RiskIndicatorWidget {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 8px;
+}
+
+RiskIndicatorWidget QLabel#riskLevelLabel {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+RiskIndicatorWidget QLabel[risk="low"] {
+    color: ${success};
+}
+
+RiskIndicatorWidget QLabel[risk="medium"] {
+    color: ${warning};
+}
+
+RiskIndicatorWidget QLabel[risk="high"] {
+    color: ${danger};
+}
+
+/* ==================== 信号详情面板 ==================== */
+SignalDetailPanel {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 8px;
+}
+
+SignalDetailPanel QLabel#signalTitle {
+    font-size: 16px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+SignalDetailPanel QLabel#signalType {
+    font-size: 12px;
+    color: ${textSecondary};
+}
+
+/* ==================== 股票信息面板 ==================== */
+StockInfoPanel {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 8px;
+}
+
+StockInfoPanel QLabel#stockName {
+    font-size: 18px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+StockInfoPanel QLabel#stockCode {
+    font-size: 12px;
+    color: ${textSecondary};
+}
+
+StockInfoPanel QLabel#priceLabel {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* ==================== 网络指示器 ==================== */
+NetworkIndicator {
+    background-color: transparent;
+}
+
+NetworkIndicator QLabel#statusLabel {
+    font-size: 12px;
+}
+
+NetworkIndicator QLabel[status="connected"] {
+    color: ${success};
+}
+
+NetworkIndicator QLabel[status="disconnected"] {
+    color: ${danger};
+}
+
+NetworkIndicator QLabel[status="connecting"] {
+    color: ${warning};
+}
+
+/* ==================== CTP 经纪商对话框 ==================== */
+CTPBrokerDialog {
+    background-color: ${bgPrimary};
+}
+
+CTPBrokerDialog QLineEdit {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: ${textPrimary};
+}
+
+CTPBrokerDialog QLineEdit:focus {
+    border-color: ${primary};
+}
+
+CTPBrokerDialog QPushButton#connectBtn {
+    background-color: ${primary};
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-weight: bold;
+}
+
+CTPBrokerDialog QPushButton#connectBtn:hover {
+    background-color: ${primaryHover};
+}
+
+CTPBrokerDialog QPushButton#testBtn {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: 1px solid ${border};
+    border-radius: 6px;
+    padding: 10px 20px;
+}
+
+CTPBrokerDialog QPushButton#testBtn:hover {
+    background-color: ${bgHover};
+}
+
+/* ==================== 投资组合优化对话框 ==================== */
+PortfolioOptimizationDialog {
+    background-color: ${bgPrimary};
+}
+
+PortfolioOptimizationDialog QLabel#resultLabel {
+    font-size: 16px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+PortfolioOptimizationDialog QPushButton#applyBtn {
+    background-color: ${primary};
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+}
+
+PortfolioOptimizationDialog QPushButton#applyBtn:hover {
+    background-color: ${primaryHover};
+}
+
+/* ==================== 添加股票对话框 ==================== */
+AddSymbolDialog {
+    background-color: ${bgPrimary};
+}
+
+AddSymbolDialog QLineEdit#searchInput {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: ${textPrimary};
+    font-size: 14px;
+}
+
+AddSymbolDialog QLineEdit#searchInput:focus {
+    border-color: ${primary};
+}
+
+AddSymbolDialog QListWidget {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 8px;
+}
+
+AddSymbolDialog QListWidget::item {
+    padding: 10px 14px;
+    border-radius: 6px;
+}
+
+AddSymbolDialog QListWidget::item:hover {
+    background-color: ${bgHover};
+}
+
+AddSymbolDialog QListWidget::item:selected {
+    background-color: rgba(88, 166, 255, 0.15);
+}
+
+/* ==================== 树形图 ==================== */
+TreeMapWidget {
+    background-color: ${bgElevated};
+    border: none;
+}
+
+/* ==================== 资产饼图 ==================== */
+AssetPieChart {
+    background-color: transparent;
+}
+
+/* ==================== 主题切换按钮 ==================== */
+ThemeToggleButton {
+    background-color: transparent;
+    border: 1px solid ${border};
+    border-radius: 15px;
+}
+
+ThemeToggleButton:hover {
+    border-color: rgba(88, 166, 255, 0.3);
+}
+
+ThemeToggleButton QPushButton {
+    background-color: transparent;
+    border: none;
+    border-radius: 12px;
+}
+
+ThemeToggleButton QPushButton:checked {
+    background-color: ${primary};
+}
+
+/* ==================== 通用数据标签样式 ==================== */
+QLabel[dataType="value"] {
+    font-size: 18px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+QLabel[dataType="change"] {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+QLabel[dataType="label"] {
+    font-size: 12px;
+    color: ${textSecondary};
+}
+
+QLabel[dataType="title"] {
+    font-size: 16px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+/* ==================== 通用按钮样式扩展 ==================== */
+QPushButton[buttonType="icon"] {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: none;
+    border-radius: 4px;
+    padding: 4px;
+}
+
+QPushButton[buttonType="icon"]:hover {
+    background-color: ${bgHover};
+    color: ${textPrimary};
+}
+
+QPushButton[buttonType="link"] {
+    background-color: transparent;
+    color: ${primary};
+    border: none;
+    padding: 0;
+    text-decoration: underline;
+}
+
+QPushButton[buttonType="link"]:hover {
+    color: ${primaryHover};
+}
+
+/* ==================== 通用分割线样式 ==================== */
+QFrame[lineType="horizontal"] {
+    background-color: ${border};
+    max-height: 1px;
+}
+
+QFrame[lineType="vertical"] {
+    background-color: ${border};
+    max-width: 1px;
+}
+
+/* ==================== 通用卡片样式扩展 ==================== */
+QFrame[cardType="elevated"] {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 12px;
+}
+
+QFrame[cardType="outlined"] {
+    background-color: transparent;
+    border: 1px solid ${border};
+    border-radius: 12px;
+}
+
+QFrame[cardType="filled"] {
+    background-color: ${bgSurface};
+    border: none;
+    border-radius: 12px;
+}

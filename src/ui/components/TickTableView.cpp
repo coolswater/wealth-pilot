@@ -9,25 +9,23 @@
 #include <QScrollBar>
 #include <QHeaderView>
 
-// ========== PIMPL 实现 ==========
+using namespace Tokens;
 
 struct TickTableView::Impl {
     int maxRows = 500;              ///< 最大行数
     int currentRow = 0;             ///< 当前行索引
 
-    // 颜色定义（使用主题令牌）
-    QColor buyColor{Tokens::Colors::Danger};     ///< 买入红色
-    QColor sellColor{Tokens::Colors::Success};    ///< 卖出绿色
-    QColor textColor{Tokens::Colors::TextPrimary};    ///< 文字颜色
-    QColor altRowColor{Tokens::Colors::BgElevated};  ///< 交替行颜色
+    QColor buyColor{Colors::Danger};
+    QColor sellColor{Colors::Success};
+    QColor textColor{Colors::TextPrimary};
+    QColor altRowColor{Colors::BgElevated};
 };
-
-// ========== 构造与析构 ==========
 
 TickTableView::TickTableView(QWidget *parent)
     : QTableWidget(parent)
     , d(std::make_unique<Impl>())
 {
+    setObjectName("TickTableView");
     setupUI();
 }
 
@@ -127,31 +125,6 @@ void TickTableView::setupUI()
     setColumnWidth(0, 80);   // 时间
     setColumnWidth(2, 80);   // 成交量
     setColumnWidth(3, 50);   // 方向
-
-    // 样式（使用主题令牌）
-    QString style = QString(R"(
-        QTableWidget {
-            background-color: %1;
-            border: none;
-            gridline-color: %2;
-        }
-        QTableWidget::item {
-            padding: 2px;
-        }
-        QHeaderView::section {
-            background-color: %3;
-            color: %4;
-            padding: 4px;
-            border: none;
-            border-bottom: 1px solid %2;
-        }
-    )")
-        .arg(Tokens::Colors::BgSurface)       // 表格背景
-        .arg(Tokens::Colors::Border)           // 网格线颜色
-        .arg(Tokens::Colors::BgElevated)       // 表头背景
-        .arg(Tokens::Colors::TextSecondary);   // 表头文字
-    
-    setStyleSheet(style);
 }
 
 void TickTableView::setupHeader()
@@ -204,9 +177,8 @@ void TickTableView::updateRowStyle(int row, const QString& flag)
     if (flagItem) {
         flagItem->setForeground(QBrush(priceColor));
     }
-
     // 设置背景色（交替行）
-    QColor bgColor = (row % 2 == 0) ? QColor(Tokens::Colors::BgSurface) : QColor(Tokens::Colors::BgElevated);
+    QColor bgColor = (row % 2 == 0) ? QColor(Colors::BgSurface) : QColor(Colors::BgElevated);
     for (int col = 0; col < columnCount(); ++col) {
         QTableWidgetItem* cellItem = item(row, col);
         if (cellItem) {

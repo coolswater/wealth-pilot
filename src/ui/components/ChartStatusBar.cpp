@@ -4,36 +4,21 @@
  */
 
 #include "ChartStatusBar.h"
-#include "ui/utils/PageStyleHelper.h"
+#include "ui/components/StyleHelper.h"
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QFrame>
 
 using namespace Tokens;
 
-// ========== PIMPL 实现 ==========
-
 struct ChartStatusBar::Impl {
-    // 标签
     QLabel* accountLabel = nullptr;
     QLabel* availableLabel = nullptr;
     QLabel* marginLabel = nullptr;
     QLabel* connectionLabel = nullptr;
     QLabel* coordinateLabel = nullptr;
     QLabel* timeLabel = nullptr;
-
-    // 分隔线
-    QFrame* createSeparator()
-    {
-        QFrame* line = new QFrame();
-        line->setFrameShape(QFrame::VLine);
-        line->setStyleSheet(QString("background-color: %1;").arg(Colors::Border));
-        line->setFixedWidth(1);
-        return line;
-    }
 };
-
-// ========== 构造与析构 ==========
 
 ChartStatusBar::ChartStatusBar(QWidget *parent)
     : QWidget(parent)
@@ -41,12 +26,10 @@ ChartStatusBar::ChartStatusBar(QWidget *parent)
 {
     setupUI();
     setObjectName("ChartStatusBar");
-    setFixedHeight(28);
+    setFixedHeight(ChartStyles::Sizes::StatusBarHeight);
 }
 
 ChartStatusBar::~ChartStatusBar() = default;
-
-// ========== 公共接口 ==========
 
 void ChartStatusBar::setAccountInfo(const QString& account, double available, double margin)
 {
@@ -65,7 +48,20 @@ void ChartStatusBar::setConnectionStatus(const QString& status, const QColor& co
 {
     if (d->connectionLabel) {
         d->connectionLabel->setText(status);
-        d->connectionLabel->setStyleSheet(QString("color: %1;").arg(color.name()));
+        // 动态颜色 - 根据连接状态设置属性
+        if (color.name() == Colors::Success)
+        {
+            d->connectionLabel->setProperty("status", "connected");
+        }
+        else if (color.name() == Colors::Danger)
+        {
+            d->connectionLabel->setProperty("status", "disconnected");
+        }
+        else
+        {
+            d->connectionLabel->setProperty("status", "connecting");
+        }
+        StyleHelper::refreshStyle(d->connectionLabel);
     }
 }
 
@@ -92,11 +88,14 @@ void ChartStatusBar::clear()
     if (d->accountLabel) d->accountLabel->setText("账户: --");
     if (d->availableLabel) d->availableLabel->setText("可用: --");
     if (d->marginLabel) d->marginLabel->setText("保证金: --");
-    if (d->connectionLabel) d->connectionLabel->setText("未连接");
+    if (d->connectionLabel)
+    {
+        d->connectionLabel->setText("未连接");
+        d->connectionLabel->setProperty("status", "disconnected");
+        StyleHelper::refreshStyle(d->connectionLabel);
+    }
     if (d->coordinateLabel) d->coordinateLabel->setText("--");
 }
-
-// ========== 私有方法 ==========
 
 void ChartStatusBar::setupUI()
 {
@@ -106,26 +105,27 @@ void ChartStatusBar::setupUI()
 
     // 账户信息
     d->accountLabel = new QLabel(QStringLiteral("账户: --"), this);
-    d->accountLabel->setStyleSheet(PageStyleHelper::dataLabelStyle());
+    d->accountLabel->setObjectName("accountLabel");
     layout->addWidget(d->accountLabel);
 
-    layout->addWidget(d->createSeparator());
+    layout->addWidget(createSeparator());
 
     d->availableLabel = new QLabel(QStringLiteral("可用: --"), this);
-    d->availableLabel->setStyleSheet(QString("color: %1;").arg(Colors::Success));
+    d->availableLabel->setObjectName("availableLabel");
     layout->addWidget(d->availableLabel);
 
-    layout->addWidget(d->createSeparator());
+    layout->addWidget(createSeparator());
 
     d->marginLabel = new QLabel(QStringLiteral("保证金: --"), this);
-    d->marginLabel->setStyleSheet(QString("color: %1;").arg(Colors::Warning));
+    d->marginLabel->setObjectName("marginLabel");
     layout->addWidget(d->marginLabel);
 
-    layout->addWidget(d->createSeparator());
+    layout->addWidget(createSeparator());
 
     // 连接状态
     d->connectionLabel = new QLabel(QStringLiteral("未连接"), this);
-    d->connectionLabel->setStyleSheet(PageStyleHelper::errorStyle());
+    d->connectionLabel->setObjectName("connectionLabel");
+    d->connectionLabel->setProperty("status", "disconnected");
     layout->addWidget(d->connectionLabel);
 
     // 弹性空间
@@ -133,22 +133,17 @@ void ChartStatusBar::setupUI()
 
     // 坐标信息
     d->coordinateLabel = new QLabel(QStringLiteral("--"), this);
-    d->coordinateLabel->setStyleSheet(PageStyleHelper::dataLabelStyle());
+    d->coordinateLabel->setObjectName("coordinateLabel");
     layout->addWidget(d->coordinateLabel);
+}
 
-    // 设置整体样式
-    setStyleSheet(QString(
-        "ChartStatusBar {"
-        "  background-color: %1;"
-        "  border-top: 1px solid %2;"
-        "}"
-        "QLabel {"
-        "  font-size: %3px;"
-        "}"
-    )
-    .arg(Colors::BgSurface)
-    .arg(Colors::Border)
-    .arg(Font::Size::Small));
+QFrame* ChartStatusBar::createSeparator()
+{
+    QFrame* line = new QFrame();
+    line->setFrameShape(QFrame::VLine);
+    line->setProperty("lineType", "vertical");
+    line->setFixedWidth(1);
+    return line;
 }
 
 QString ChartStatusBar::formatMoney(double value)

@@ -5,6 +5,7 @@
 
 #include "RecommendationListWidget.h"
 #include "core/config/Tokens.h"
+#include "ui/components/StyleHelper.h"
 #include <QHeaderView>
 
 using namespace Tokens;
@@ -12,6 +13,7 @@ using namespace Tokens;
 RecommendationListWidget::RecommendationListWidget(QWidget* parent)
     : QWidget(parent)
 {
+    setObjectName("RecommendationListWidget");
     setupUI();
 
     // 连接推荐系统信号
@@ -40,15 +42,15 @@ void RecommendationListWidget::onStyleFilterChanged(int index)
     UserPreference preference;
 
     switch (index) {
-    case 0: // 保守型
+    case 0:
         preference.style = InvestmentStyle::Conservative;
         preference.riskTolerance = 30.0;
         break;
-    case 1: // 平衡型
+    case 1:
         preference.style = InvestmentStyle::Balanced;
         preference.riskTolerance = 50.0;
         break;
-    case 2: // 进取型
+    case 2:
         preference.style = InvestmentStyle::Aggressive;
         preference.riskTolerance = 70.0;
         break;
@@ -74,28 +76,26 @@ void RecommendationListWidget::onStockDoubleClicked(int row, int column)
 void RecommendationListWidget::setupUI()
 {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(10);
-    mainLayout->setContentsMargins(10, 10, 10, 10);
+    mainLayout->setSpacing(Spacing::MD);
+    mainLayout->setContentsMargins(Spacing::MD, Spacing::MD, Spacing::MD, Spacing::MD);
 
     // 标题栏
     QHBoxLayout* titleLayout = new QHBoxLayout();
     m_titleLabel = new QLabel(QStringLiteral("智能推荐"));
-    m_titleLabel->setStyleSheet(QString("font-size: 16px; font-weight: bold; color: %1;")
-        .arg(Colors::TextPrimary));
+    m_titleLabel->setProperty("dataType", "title");
     titleLayout->addWidget(m_titleLabel);
     titleLayout->addStretch();
 
     // 投资风格筛选
     QLabel* styleLabel = new QLabel(QStringLiteral("投资风格:"));
-    styleLabel->setStyleSheet(QString("font-size: 12px; color: %1;")
-        .arg(Colors::TextSecondary));
+    styleLabel->setProperty("dataType", "label");
     titleLayout->addWidget(styleLabel);
 
     m_styleFilter = new QComboBox();
     m_styleFilter->addItem(QStringLiteral("保守型"));
     m_styleFilter->addItem(QStringLiteral("平衡型"));
     m_styleFilter->addItem(QStringLiteral("进取型"));
-    m_styleFilter->setCurrentIndex(1); // 默认平衡型
+    m_styleFilter->setCurrentIndex(1);
     m_styleFilter->setFixedWidth(100);
     connect(m_styleFilter, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &RecommendationListWidget::onStyleFilterChanged);
@@ -103,6 +103,7 @@ void RecommendationListWidget::setupUI()
 
     m_refreshBtn = new QPushButton(QStringLiteral("刷新"));
     m_refreshBtn->setFixedWidth(60);
+    StyleHelper::setSecondaryButton(m_refreshBtn);
     connect(m_refreshBtn, &QPushButton::clicked, this, &RecommendationListWidget::onRefreshClicked);
     titleLayout->addWidget(m_refreshBtn);
 
@@ -110,6 +111,7 @@ void RecommendationListWidget::setupUI()
 
     // 推荐列表
     m_recommendationTable = new QTableWidget();
+    m_recommendationTable->setObjectName("recommendationTable");
     m_recommendationTable->setColumnCount(5);
     m_recommendationTable->setHorizontalHeaderLabels({
         QStringLiteral("股票代码"),
@@ -123,22 +125,14 @@ void RecommendationListWidget::setupUI()
     m_recommendationTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_recommendationTable->setAlternatingRowColors(true);
     m_recommendationTable->verticalHeader()->setVisible(false);
-    m_recommendationTable->setStyleSheet(QString(
-        "QTableWidget { background-color: %1; border: 1px solid %2; }"
-        "QTableWidget::item { padding: 5px; }"
-    ).arg(Colors::BgSurface, Colors::Border));
     connect(m_recommendationTable, &QTableWidget::cellDoubleClicked,
             this, &RecommendationListWidget::onStockDoubleClicked);
     mainLayout->addWidget(m_recommendationTable, 1);
 
     // 提示信息
     QLabel* tipLabel = new QLabel(QStringLiteral("双击股票代码查看详情"));
-    tipLabel->setStyleSheet(QString("font-size: 12px; color: %1;")
-        .arg(Colors::TextSecondary));
+    tipLabel->setProperty("dataType", "tip");
     mainLayout->addWidget(tipLabel);
-
-    setStyleSheet(QString("background-color: %1; border-radius: 8px;")
-        .arg(Colors::BgElevated));
 }
 
 void RecommendationListWidget::updateRecommendationList(const QVector<StockRecommendation>& recommendations)

@@ -67,7 +67,7 @@ public:
             }
             QPushButton:hover { background-color: %2; }
             QPushButton:pressed { background-color: %3; }
-        )").arg(Tokens::Colors::Primary, Tokens::Colors::PrimaryHover, "#1D4ED8");
+        )").arg(Tokens::Colors::Primary, Tokens::Colors::PrimaryHover, Tokens::Colors::PrimaryDark);
     }
     
     static QString inputField() {

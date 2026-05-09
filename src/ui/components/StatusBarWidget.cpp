@@ -1,10 +1,11 @@
 /**
  * @file StatusBarWidget.cpp
- * @brief Status Bar Widget Implementation
+ * @brief Status Bar Widget Implementation - 使用属性选择器替代硬编码样式
  */
 
 #include "StatusBarWidget.h"
 #include "core/config/Tokens.h"
+#include "ui/components/StyleHelper.h"
 
 #include <QDateTime>
 #include <QHBoxLayout>
@@ -23,6 +24,7 @@
 #include "NetworkIndicator.h"
 #include "utils/Logger.h"
 
+using namespace Tokens;
 
 struct StatusBarWidget::Impl {
     QHBoxLayout * layout = nullptr;
@@ -48,6 +50,7 @@ StatusBarWidget::StatusBarWidget(QWidget *parent)
     : BaseWidget(parent)
     , d(std::make_unique<Impl>())
 {
+    setObjectName("StatusBarWidget");
     setupUI();
 }
 
@@ -61,12 +64,13 @@ StatusBarWidget::~StatusBarWidget()
 void StatusBarWidget::setupUI()
 {
     d->layout = new QHBoxLayout(this);
-    d->layout->setContentsMargins(10, 0, 10, 0);
-    d->layout->setSpacing(15);
+    d->layout->setContentsMargins(Spacing::SM, 0, Spacing::SM, 0);
+    d->layout->setSpacing(Spacing::MD);
 
     // Version label
     d->versionLabel = new QLabel("v2.0.0", this);
     d->versionLabel->setObjectName("versionLabel");
+    d->versionLabel->setProperty("dataType", "label");
     d->layout->addWidget(d->versionLabel);
 
     d->layout->addStretch(1);
@@ -74,11 +78,13 @@ void StatusBarWidget::setupUI()
     // AI status
     d->aiStatusLabel = new QLabel("AI: Ready", this);
     d->aiStatusLabel->setObjectName("aiStatus");
+    d->aiStatusLabel->setProperty("dataType", "status");
     d->layout->addWidget(d->aiStatusLabel);
 
     // CTP status
     d->ctpStatusLabel = new QLabel("CTP: Disconnected", this);
     d->ctpStatusLabel->setObjectName("ctpStatus");
+    d->ctpStatusLabel->setProperty("dataType", "status");
     d->layout->addWidget(d->ctpStatusLabel);
 
     // Network indicator
@@ -86,8 +92,7 @@ void StatusBarWidget::setupUI()
     d->networkIndicator->setCheckInterval(3000);
     d->networkIndicator->startMonitoring();
     d->networkIndicator->setIndicatorSize(20, 13);
-
-    d->networkIndicator->setColorScheme(NetworkIndicator::ExcellentSignal, QColor(Tokens::Colors::Success));
+    d->networkIndicator->setColorScheme(NetworkIndicator::ExcellentSignal, QColor(Colors::Success));
     d->layout->addWidget(d->networkIndicator);
 
     // 搜索框
@@ -95,12 +100,13 @@ void StatusBarWidget::setupUI()
 
     // Latency label
     d->latencyLabel = new QLabel("Checking...");
-    d->latencyLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 12px; }").arg(Tokens::Colors::TextTertiary));
+    d->latencyLabel->setProperty("dataType", "latency");
     d->layout->addWidget(d->latencyLabel);
 
     // Time display
     d->timeLabel = new QLabel(this);
     d->timeLabel->setObjectName("timeLabel");
+    d->timeLabel->setProperty("dataType", "time");
     d->layout->addWidget(d->timeLabel);
 
     // Timer for time update
@@ -141,28 +147,10 @@ void StatusBarWidget::setupSearch()
 {
     // 搜索框
     d->searchEdit = new QLineEdit(this);
+    d->searchEdit->setObjectName("stockSearchEdit");
     d->searchEdit->setPlaceholderText(QStringLiteral("搜索股票"));
     d->searchEdit->setFixedWidth(120);
     d->searchEdit->setFixedHeight(24);
-    d->searchEdit->setStyleSheet(QString(
-        "QLineEdit {"
-        "  background: %1;"
-        "  color: %2;"
-        "  border: none;"
-        "  padding: 0 %3px;"
-        "  font-size: %4px;"
-        "  border-radius: %5px;"
-        "}"
-        "QLineEdit::placeholder {"
-        "  color: %6;"
-        "}"
-    )
-    .arg(Tokens::Colors::BgElevated)
-    .arg(Tokens::Colors::TextPrimary)
-    .arg(Tokens::Spacing::SM)
-    .arg(Tokens::Font::Size::Small)
-    .arg(Tokens::Radius::SM)
-    .arg(Tokens::Colors::TextSecondary));
     connect(d->searchEdit, &QLineEdit::textChanged, this, &StatusBarWidget::onSearchTextChanged);
     d->layout->addWidget(d->searchEdit);
 }
@@ -181,15 +169,14 @@ void StatusBarWidget::onSearchTextChanged(const QString& text)
     if (!d->searchPopupWidget) {
         d->searchPopupWidget = new QWidget(this);
         d->searchPopupWidget->setWindowFlags(Qt::Popup | Qt::FramelessWindowHint);
-        d->searchPopupWidget->setStyleSheet(QString(
-            "QWidget { background: %1; border: 1px solid %2; }"
-        ).arg(Tokens::Colors::BgBase, Tokens::Colors::Border));
-        
+        d->searchPopupWidget->setObjectName("searchPopup");
+
         auto* popupLayout = new QVBoxLayout(d->searchPopupWidget);
         popupLayout->setContentsMargins(0, 0, 0, 0);
         popupLayout->setSpacing(0);
         
         d->searchResultPopup = new QTableWidget(d->searchPopupWidget);
+        d->searchResultPopup->setObjectName("searchResultTable");
         d->searchResultPopup->setColumnCount(3);
         d->searchResultPopup->setHorizontalHeaderLabels({QStringLiteral("代码"), QStringLiteral("名称"), QStringLiteral("板块")});
         d->searchResultPopup->horizontalHeader()->setStretchLastSection(true);
@@ -198,36 +185,6 @@ void StatusBarWidget::onSearchTextChanged(const QString& text)
         d->searchResultPopup->setSelectionMode(QAbstractItemView::SingleSelection);
         d->searchResultPopup->verticalHeader()->setVisible(false);
         d->searchResultPopup->setShowGrid(false);
-        d->searchResultPopup->setStyleSheet(QString(
-            "QTableWidget {"
-            "  background: %1;"
-            "  color: %2;"
-            "  border: none;"
-            "  font-size: %3px;"
-            "}"
-            "QTableWidget::item {"
-            "  padding: %4px %5px;"
-            "}"
-            "QTableWidget::item:selected {"
-            "  background: %6;"
-            "}"
-            "QHeaderView::section {"
-            "  background: %7;"
-            "  color: %8;"
-            "  border: none;"
-            "  padding: %4px;"
-            "  font-size: %9px;"
-            "}"
-        )
-        .arg(Tokens::Colors::BgBase)
-        .arg(Tokens::Colors::TextPrimary)
-        .arg(Tokens::Font::Size::Small)
-        .arg(Tokens::Spacing::XS)
-        .arg(Tokens::Spacing::SM)
-        .arg(Tokens::Colors::Primary)
-        .arg(Tokens::Colors::BgElevated)
-        .arg(Tokens::Colors::TextSecondary)
-        .arg(Tokens::Font::Size::Small - 1));
         d->searchResultPopup->setMinimumWidth(300);
         d->searchResultPopup->setMinimumHeight(200);
         
@@ -272,7 +229,7 @@ void StatusBarWidget::onSearchTextChanged(const QString& text)
         for (int j = 0; j < 3; ++j) {
             auto* item = new QTableWidgetItem(results[i][j]);
             if (j == 0) {
-                item->setForeground(QColor(Tokens::Colors::Primary));  // 代码蓝色
+                item->setForeground(QColor(Colors::Primary));
             }
             d->searchResultPopup->setItem(i, j, item);
         }

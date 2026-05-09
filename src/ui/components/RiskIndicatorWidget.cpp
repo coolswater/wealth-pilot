@@ -5,6 +5,7 @@
 
 #include "RiskIndicatorWidget.h"
 #include "core/config/Tokens.h"
+#include "ui/components/StyleHelper.h"
 #include <QHeaderView>
 #include <QDateTime>
 
@@ -13,9 +14,9 @@ using namespace Tokens;
 RiskIndicatorWidget::RiskIndicatorWidget(QWidget* parent)
     : QWidget(parent)
 {
+    setObjectName("RiskIndicatorWidget");
     setupUI();
 
-    // 连接风险预警系统信号
     auto* riskSystem = RiskWarningSystem::instance();
     connect(riskSystem, &RiskWarningSystem::riskAlertTriggered,
             this, &RiskIndicatorWidget::onRiskAlertTriggered);
@@ -105,20 +106,18 @@ void RiskIndicatorWidget::onViewDetailsClicked()
 void RiskIndicatorWidget::setupUI()
 {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(10);
-    mainLayout->setContentsMargins(10, 10, 10, 10);
+    mainLayout->setSpacing(Spacing::MD);
+    mainLayout->setContentsMargins(Spacing::MD, Spacing::MD, Spacing::MD, Spacing::MD);
 
     // 标题
     QLabel* titleLabel = new QLabel(QStringLiteral("风险监控"));
-    titleLabel->setStyleSheet(QString("font-size: 16px; font-weight: bold; color: %1;")
-        .arg(Colors::TextPrimary));
+    titleLabel->setProperty("dataType", "title");
     mainLayout->addWidget(titleLabel);
 
     // 股票信息
     QHBoxLayout* symbolLayout = new QHBoxLayout();
     m_symbolLabel = new QLabel(QStringLiteral("股票: --"));
-    m_symbolLabel->setStyleSheet(QString("font-size: 14px; color: %1;")
-        .arg(Colors::TextSecondary));
+    m_symbolLabel->setProperty("dataType", "label");
     symbolLayout->addWidget(m_symbolLabel);
     symbolLayout->addStretch();
     mainLayout->addLayout(symbolLayout);
@@ -126,18 +125,18 @@ void RiskIndicatorWidget::setupUI()
     // 风险等级指示器
     QHBoxLayout* riskLayout = new QHBoxLayout();
     QLabel* riskLabel = new QLabel(QStringLiteral("风险等级:"));
-    riskLabel->setStyleSheet(QString("font-size: 14px; color: %1;")
-        .arg(Colors::TextPrimary));
+    riskLabel->setProperty("dataType", "label");
     riskLayout->addWidget(riskLabel);
 
     m_riskLevelLabel = new QLabel(QStringLiteral("低风险"));
-    m_riskLevelLabel->setStyleSheet(QString("font-size: 16px; font-weight: bold; color: %1;")
-        .arg(Colors::Success));
+    m_riskLevelLabel->setObjectName("riskLevelLabel");
+    m_riskLevelLabel->setProperty("risk", "low");
     riskLayout->addWidget(m_riskLevelLabel);
     riskLayout->addStretch();
 
     m_viewDetailsBtn = new QPushButton(QStringLiteral("查看详情"));
     m_viewDetailsBtn->setFixedWidth(80);
+    StyleHelper::setSecondaryButton(m_viewDetailsBtn);
     connect(m_viewDetailsBtn, &QPushButton::clicked, this, &RiskIndicatorWidget::onViewDetailsClicked);
     riskLayout->addWidget(m_viewDetailsBtn);
 
@@ -146,8 +145,7 @@ void RiskIndicatorWidget::setupUI()
     // 风险分数进度条
     QHBoxLayout* scoreLayout = new QHBoxLayout();
     QLabel* scoreLabel = new QLabel(QStringLiteral("风险分数:"));
-    scoreLabel->setStyleSheet(QString("font-size: 14px; color: %1;")
-        .arg(Colors::TextPrimary));
+    scoreLabel->setProperty("dataType", "label");
     scoreLayout->addWidget(scoreLabel);
 
     m_riskScoreBar = new QProgressBar();
@@ -155,24 +153,24 @@ void RiskIndicatorWidget::setupUI()
     m_riskScoreBar->setValue(0);
     m_riskScoreBar->setFixedHeight(20);
     m_riskScoreBar->setTextVisible(false);
+    m_riskScoreBar->setObjectName("riskScoreBar");
     scoreLayout->addWidget(m_riskScoreBar, 1);
 
     m_riskScoreLabel = new QLabel(QStringLiteral("0"));
     m_riskScoreLabel->setFixedWidth(40);
-    m_riskScoreLabel->setStyleSheet(QString("font-size: 14px; color: %1;")
-        .arg(Colors::TextPrimary));
+    m_riskScoreLabel->setProperty("dataType", "value");
     scoreLayout->addWidget(m_riskScoreLabel);
 
     mainLayout->addLayout(scoreLayout);
 
     // 预警列表标题
     QLabel* alertTitleLabel = new QLabel(QStringLiteral("预警记录"));
-    alertTitleLabel->setStyleSheet(QString("font-size: 14px; font-weight: bold; color: %1; margin-top: 10px;")
-        .arg(Colors::TextPrimary));
+    alertTitleLabel->setProperty("dataType", "title");
     mainLayout->addWidget(alertTitleLabel);
 
     // 预警列表
     m_alertTable = new QTableWidget();
+    m_alertTable->setObjectName("alertTable");
     m_alertTable->setColumnCount(5);
     m_alertTable->setHorizontalHeaderLabels({
         QStringLiteral("时间"),
@@ -186,24 +184,37 @@ void RiskIndicatorWidget::setupUI()
     m_alertTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_alertTable->setAlternatingRowColors(true);
     m_alertTable->verticalHeader()->setVisible(false);
-    m_alertTable->setStyleSheet(QString(
-        "QTableWidget { background-color: %1; border: 1px solid %2; }"
-        "QTableWidget::item { padding: 5px; }"
-    ).arg(Colors::BgSurface, Colors::Border));
     mainLayout->addWidget(m_alertTable, 1);
-
-    setStyleSheet(QString("background-color: %1; border-radius: 8px;")
-        .arg(Colors::BgElevated));
 }
 
 void RiskIndicatorWidget::updateRiskLevelIndicator(RiskLevel level)
 {
-    QString color = riskLevelToColor(level);
     QString text = riskLevelToText(level);
+    QString riskStatus;
 
     m_riskLevelLabel->setText(text);
-    m_riskLevelLabel->setStyleSheet(QString("font-size: 16px; font-weight: bold; color: %1;")
-        .arg(color));
+
+    // 使用属性选择器设置风险等级
+    switch (level)
+    {
+    case RiskLevel::Low:
+        riskStatus = "low";
+        break;
+    case RiskLevel::Medium:
+        riskStatus = "medium";
+        break;
+    case RiskLevel::High:
+        riskStatus = "high";
+        break;
+    case RiskLevel::Critical:
+        riskStatus = "critical";
+        break;
+    default:
+        riskStatus = "unknown";
+    }
+
+    m_riskLevelLabel->setProperty("risk", riskStatus);
+    StyleHelper::refreshStyle(m_riskLevelLabel);
 
     // 更新进度条
     int score = 0;
@@ -215,13 +226,9 @@ void RiskIndicatorWidget::updateRiskLevelIndicator(RiskLevel level)
     }
 
     m_riskScoreBar->setValue(score);
+    m_riskScoreBar->setProperty("riskLevel", riskStatus);
+    StyleHelper::refreshStyle(m_riskScoreBar);
     m_riskScoreLabel->setText(QString::number(score));
-
-    // 更新进度条颜色
-    QString barStyle = QString(
-        "QProgressBar::chunk { background-color: %1; border-radius: 2px; }"
-    ).arg(color);
-    m_riskScoreBar->setStyleSheet(barStyle);
 }
 
 QString RiskIndicatorWidget::riskLevelToColor(RiskLevel level) const

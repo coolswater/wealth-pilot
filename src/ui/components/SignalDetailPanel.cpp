@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file SignalDetailPanel.cpp
  * @brief 信号详情面板实现
  *
@@ -8,6 +8,7 @@
 
 #include "SignalDetailPanel.h"
 #include "core/config/Tokens.h"
+#include "ui/components/StyleHelper.h"
 #include <QScrollArea>
 #include <QProgressBar>
 #include <QHeaderView>
@@ -44,6 +45,7 @@ SignalDetailPanel::SignalDetailPanel(QWidget* parent)
     : QWidget(parent)
     , d(std::make_unique<Impl>())
 {
+    setObjectName("SignalDetailPanel");
     setupUI();
 }
 
@@ -52,8 +54,8 @@ SignalDetailPanel::~SignalDetailPanel() = default;
 void SignalDetailPanel::setupUI()
 {
     auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(10, 10, 10, 10);
-    mainLayout->setSpacing(10);
+    mainLayout->setContentsMargins(Spacing::MD, Spacing::MD, Spacing::MD, Spacing::MD);
+    mainLayout->setSpacing(Spacing::MD);
 
     // 摘要区域
     auto* summaryWidget = createSummaryWidget();
@@ -82,11 +84,12 @@ QWidget* SignalDetailPanel::createSummaryWidget()
     // 标的和时间
     auto* headerLayout = new QHBoxLayout();
     d->symbolLabel = new QLabel("--");
-    d->symbolLabel->setStyleSheet("font-size: 16px; font-weight: bold;");
+    d->symbolLabel->setObjectName("signalTitle");
+    d->symbolLabel->setProperty("dataType", "title");
     headerLayout->addWidget(d->symbolLabel);
 
     d->timeLabel = new QLabel("--");
-    d->timeLabel->setStyleSheet(QString("color: %1;").arg(Tokens::Colors::TextTertiary));
+    d->timeLabel->setProperty("dataType", "label");
     headerLayout->addStretch();
     headerLayout->addWidget(d->timeLabel);
 
@@ -96,14 +99,20 @@ QWidget* SignalDetailPanel::createSummaryWidget()
     auto* infoLayout = new QHBoxLayout();
 
     auto* dirLayout = new QVBoxLayout();
-    dirLayout->addWidget(new QLabel(QStringLiteral("信号方向:")));
+    auto* dirTitleLabel = new QLabel(QStringLiteral("信号方向:"));
+    dirTitleLabel->setProperty("dataType", "label");
+    dirLayout->addWidget(dirTitleLabel);
+
     d->directionLabel = new QLabel("--");
-    d->directionLabel->setStyleSheet("font-size: 14px; font-weight: bold;");
+    d->directionLabel->setObjectName("directionLabel");
     dirLayout->addWidget(d->directionLabel);
     infoLayout->addLayout(dirLayout);
 
     auto* confLayout = new QVBoxLayout();
-    confLayout->addWidget(new QLabel(QStringLiteral("置信度:")));
+    auto* confTitleLabel = new QLabel(QStringLiteral("置信度:"));
+    confTitleLabel->setProperty("dataType", "label");
+    confLayout->addWidget(confTitleLabel);
+
     d->confidenceBar = new QProgressBar();
     d->confidenceBar->setRange(0, 100);
     d->confidenceBar->setTextVisible(true);
@@ -115,15 +124,22 @@ QWidget* SignalDetailPanel::createSummaryWidget()
 
     // 理论数量和得分
     auto* scoreLayout = new QHBoxLayout();
-    scoreLayout->addWidget(new QLabel(QStringLiteral("支持理论:")));
+    auto* theoryTitleLabel = new QLabel(QStringLiteral("支持理论:"));
+    theoryTitleLabel->setProperty("dataType", "label");
+    scoreLayout->addWidget(theoryTitleLabel);
+
     d->theoryCountLabel = new QLabel("0 / 4");
+    d->theoryCountLabel->setProperty("dataType", "value");
     scoreLayout->addWidget(d->theoryCountLabel);
 
     scoreLayout->addSpacing(20);
 
-    scoreLayout->addWidget(new QLabel(QStringLiteral("综合得分:")));
+    auto* scoreTitleLabel = new QLabel(QStringLiteral("综合得分:"));
+    scoreTitleLabel->setProperty("dataType", "label");
+    scoreLayout->addWidget(scoreTitleLabel);
+
     d->scoreLabel = new QLabel("0");
-    d->scoreLabel->setStyleSheet("font-weight: bold;");
+    d->scoreLabel->setProperty("dataType", "value");
     scoreLayout->addWidget(d->scoreLabel);
 
     scoreLayout->addStretch();
@@ -132,9 +148,7 @@ QWidget* SignalDetailPanel::createSummaryWidget()
     // 描述
     d->descriptionLabel = new QLabel(QStringLiteral("暂无信号"));
     d->descriptionLabel->setWordWrap(true);
-    d->descriptionLabel->setStyleSheet(QString(
-        "color: %1; padding: 5px; background: %2; border-radius: 3px;"
-    ).arg(Tokens::Colors::TextSecondary, Tokens::Colors::BgHover));
+    d->descriptionLabel->setObjectName("descriptionLabel");
     layout->addWidget(d->descriptionLabel);
 
     return group;
@@ -146,6 +160,7 @@ QWidget* SignalDetailPanel::createTheoryDetailsWidget()
     auto* layout = new QVBoxLayout(group);
 
     d->theoryTable = new QTableWidget();
+    d->theoryTable->setObjectName("theoryTable");
     d->theoryTable->setColumnCount(4);
     d->theoryTable->setHorizontalHeaderLabels({
         QStringLiteral("理论"),
@@ -187,10 +202,12 @@ QWidget* SignalDetailPanel::createActionWidget()
 
     d->subscribeBtn = new QPushButton(QStringLiteral("订阅信号"));
     d->subscribeBtn->setIcon(QIcon(":/icons/subscribe.png"));
+    StyleHelper::setPrimaryButton(d->subscribeBtn);
     layout->addWidget(d->subscribeBtn);
 
     d->historyBtn = new QPushButton(QStringLiteral("历史信号"));
     d->historyBtn->setIcon(QIcon(":/icons/history.png"));
+    StyleHelper::setSecondaryButton(d->historyBtn);
     layout->addWidget(d->historyBtn);
 
     layout->addStretch();
@@ -266,37 +283,37 @@ void SignalDetailPanel::updateSummary()
     // 时间
     d->timeLabel->setText(signal.time.toString("yyyy-MM-dd hh:mm:ss"));
 
-    // 方向
+    // 方向 - 使用属性选择器
     QString directionText;
-    QColor directionColor;
+    QString directionStatus;
     if (signal.direction == Analysis::SignalDirection::Bullish) {
         directionText = QStringLiteral("📈 看涨");
-        directionColor = QColor(Tokens::Colors::Success);
+        directionStatus = "up";
     } else if (signal.direction == Analysis::SignalDirection::Bearish) {
         directionText = QStringLiteral("📉 看跌");
-        directionColor = QColor(Tokens::Colors::Danger);
+        directionStatus = "down";
     } else {
         directionText = QStringLiteral("➡️ 中性");
-        directionColor = QColor(Tokens::Colors::TextSecondary);
+        directionStatus = "flat";
     }
     d->directionLabel->setText(directionText);
-    d->directionLabel->setStyleSheet(QString("font-size: %1px; font-weight: bold; color: %2;")
-        .arg(Tokens::Font::Size::Body)
-        .arg(directionColor.name()));
+    d->directionLabel->setProperty("status", directionStatus);
+    StyleHelper::refreshStyle(d->directionLabel);
 
     // 置信度
     d->confidenceBar->setValue(static_cast<int>(signal.confidence));
 
-    // 设置置信度颜色
-    QString barStyle;
+    // 设置置信度属性
+    QString confidenceLevel;
     if (signal.confidence >= 80) {
-        barStyle = QString("QProgressBar::chunk { background-color: %1; }").arg(Tokens::Colors::Success);
+        confidenceLevel = "high";
     } else if (signal.confidence >= 60) {
-        barStyle = QString("QProgressBar::chunk { background-color: %1; }").arg(Tokens::Colors::Warning);
+        confidenceLevel = "medium";
     } else {
-        barStyle = QString("QProgressBar::chunk { background-color: %1; }").arg(Tokens::Colors::Danger);
+        confidenceLevel = "low";
     }
-    d->confidenceBar->setStyleSheet(barStyle);
+    d->confidenceBar->setProperty("confidenceLevel", confidenceLevel);
+    StyleHelper::refreshStyle(d->confidenceBar);
 
     // 理论数量
     d->theoryCountLabel->setText(QString("%1 / 4").arg(signal.theoryCount));

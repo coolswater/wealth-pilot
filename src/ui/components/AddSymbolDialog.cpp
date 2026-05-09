@@ -4,9 +4,13 @@
  */
 
 #include "AddSymbolDialog.h"
+#include "core/config/Tokens.h"
+#include "ui/components/StyleHelper.h"
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMessageBox>
+
+using namespace Tokens;
 
 AddSymbolDialog::AddSymbolDialog(const QStringList &availableSymbols,
                                  const QStringList &existingSymbols,
@@ -15,6 +19,7 @@ AddSymbolDialog::AddSymbolDialog(const QStringList &availableSymbols,
     , m_allSymbols(availableSymbols)
     , m_existingSymbols(existingSymbols)
 {
+    setObjectName("AddSymbolDialog");
     setupUI();
     setWindowTitle(tr("添加自选"));
     setMinimumSize(400, 500);
@@ -23,18 +28,27 @@ AddSymbolDialog::AddSymbolDialog(const QStringList &availableSymbols,
 void AddSymbolDialog::setupUI()
 {
     auto *layout = new QVBoxLayout(this);
+    layout->setSpacing(Spacing::MD);
+    layout->setContentsMargins(Spacing::LG, Spacing::LG, Spacing::LG, Spacing::LG);
 
     // 搜索框
     auto *searchLayout = new QHBoxLayout();
-    searchLayout->addWidget(new QLabel(tr("搜索:")));
+    auto* searchLabel = new QLabel(tr("搜索:"));
+    searchLabel->setProperty("dataType", "label");
+    searchLayout->addWidget(searchLabel);
+
     m_searchEdit = new QLineEdit(this);
+    m_searchEdit->setObjectName("searchInput");
     m_searchEdit->setPlaceholderText(tr("输入交易对，如 BTC-USDT"));
     searchLayout->addWidget(m_searchEdit);
     layout->addLayout(searchLayout);
 
     // 分类筛选
     auto *categoryLayout = new QHBoxLayout();
-    categoryLayout->addWidget(new QLabel(tr("分类:")));
+    auto* categoryLabel = new QLabel(tr("分类:"));
+    categoryLabel->setProperty("dataType", "label");
+    categoryLayout->addWidget(categoryLabel);
+
     m_categoryCombo = new QComboBox(this);
     m_categoryCombo->addItem(tr("全部"));
     m_categoryCombo->addItem(tr("USDT交易对"));
@@ -45,16 +59,22 @@ void AddSymbolDialog::setupUI()
 
     // 交易对列表
     m_symbolList = new QListWidget(this);
+    m_symbolList->setObjectName("symbolList");
     m_symbolList->setSelectionMode(QAbstractItemView::MultiSelection);
     m_symbolList->setAlternatingRowColors(true);
     layout->addWidget(m_symbolList);
 
     // 按钮
     auto *buttonLayout = new QHBoxLayout();
+    buttonLayout->addStretch();
+
     m_addButton = new QPushButton(tr("添加选中"), this);
     m_addButton->setEnabled(false);
+    StyleHelper::setPrimaryButton(m_addButton);
+
     m_cancelButton = new QPushButton(tr("取消"), this);
-    buttonLayout->addStretch();
+    StyleHelper::setSecondaryButton(m_cancelButton);
+
     buttonLayout->addWidget(m_addButton);
     buttonLayout->addWidget(m_cancelButton);
     layout->addLayout(buttonLayout);
@@ -84,7 +104,7 @@ void AddSymbolDialog::setupUI()
 
 void AddSymbolDialog::onSearchTextChanged(const QString &text) const
 {
-    // 防抖处理，避免频繁搜索
+    Q_UNUSED(text);
     m_searchTimer->stop();
     m_searchTimer->start();
 }
@@ -111,18 +131,16 @@ void AddSymbolDialog::filterSymbols(const QString &filter)
             continue;
         }
 
-        // 分类过滤
         int categoryIndex = m_categoryCombo->currentIndex();
-        if (categoryIndex == 1 && !symbol.endsWith("-USDT")) continue;  // USDT交易对
-        if (categoryIndex == 2 && !symbol.endsWith("-USD")) continue;   // USD交易对
+        if (categoryIndex == 1 && !symbol.endsWith("-USDT")) continue;
+        if (categoryIndex == 2 && !symbol.endsWith("-USD")) continue;
         if (categoryIndex == 3 && (symbol.contains("-USDT") || symbol.contains("-USD"))) continue;
 
         auto *item = new QListWidgetItem(symbol);
 
-        // 高亮显示热门交易对
+        // 使用属性标记热门交易对
         if (symbol == "BTC-USDT" || symbol == "ETH-USDT") {
-            item->setBackground(QColor(60, 60, 60));
-            item->setForeground(Qt::yellow);
+            item->setData(Qt::UserRole, "hot");
         }
 
         m_symbolList->addItem(item);

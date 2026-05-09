@@ -3,6 +3,7 @@
 #include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include <QPainter>
+#include "ui/components/StyleHelper.h"
 
 struct CardWidget::Impl {
     QString title;
@@ -23,7 +24,6 @@ CardWidget::CardWidget(const QString& title, QWidget *parent)
 {
     d->title = title;
     setupUI();
-    applyStyle();
 
     // 设置阴影效果
     QGraphicsDropShadowEffect* shadow = new QGraphicsDropShadowEffect(this);
@@ -77,26 +77,37 @@ void CardWidget::setBorderColor(const QColor& color)
 {
     d->customBorderColor = color;
     d->hasCustomBorder = true;
-    applyStyle();
+    // 使用属性标记自定义边框颜色
+    setProperty("customBorder", true);
+    StyleHelper::refreshStyle(this);
 }
 
 void CardWidget::resetBorderColor()
 {
     d->hasCustomBorder = false;
-    applyStyle();
+    setProperty("customBorder", false);
+    StyleHelper::refreshStyle(this);
 }
 
 void CardWidget::setBackgroundColor(const QColor& color)
 {
     d->customBgColor = color;
     d->hasCustomBg = true;
-    applyStyle();
+    setProperty("customBg", true);
+    StyleHelper::refreshStyle(this);
 }
 
 void CardWidget::resetBackgroundColor()
 {
     d->hasCustomBg = false;
-    applyStyle();
+    setProperty("customBg", false);
+    StyleHelper::refreshStyle(this);
+}
+
+void CardWidget::setTheme(const QString& theme)
+{
+    // 设置卡片主题：success, warning, danger, primary
+    StyleHelper::setCardTheme(this, theme);
 }
 
 void CardWidget::onHoverEnter()
@@ -203,6 +214,7 @@ void CardWidget::setupUI()
 
         d->titleLabel = new QLabel(d->title, this);
         d->titleLabel->setObjectName("cardTitle");
+        d->titleLabel->setProperty("dataType", "title");
         titleLayout->addWidget(d->titleLabel);
 
         titleLayout->addStretch();
@@ -216,16 +228,4 @@ void CardWidget::setupUI()
     d->mainLayout->addLayout(d->contentLayout);
 
     d->mainLayout->addStretch();
-}
-
-void CardWidget::applyStyle()
-{
-    // 样式由QSS管理，这里只设置自定义属性
-    if (d->hasCustomBorder) {
-        setStyleSheet(QString("CardWidget { border-color: %1; }").arg(d->customBorderColor.name()));
-    }
-    if (d->hasCustomBg) {
-        QString currentStyle = styleSheet();
-        setStyleSheet(currentStyle + QString("\nCardWidget { background-color: %1; }").arg(d->customBgColor.name()));
-    }
 }

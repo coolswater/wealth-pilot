@@ -9,6 +9,7 @@
 #include "ForexPage.h"
 #include "ui/components/KLineChart.h"
 #include "core/config/Tokens.h"
+#include "ui/components/StyleHelper.h"
 #include "market/ForexDataSource.h"
 #include "utils/Logger.h"
 
@@ -20,7 +21,7 @@
 #include <QGroupBox>
 #include <QDoubleSpinBox>
 
-// ========== PIMPL实现 ==========
+using namespace Tokens;
 
 struct ForexPage::Impl {
     // 外汇列表
@@ -56,6 +57,7 @@ ForexPage::ForexPage(QWidget *parent)
     : BasePage(parent)
     , d(std::make_unique<Impl>())
 {
+    setObjectName("ForexPage");
     setupUI();
 }
 
@@ -88,11 +90,11 @@ void ForexPage::setupUI()
     
     // 主内容区域
     auto* splitter = new QSplitter(Qt::Horizontal, this);
-    splitter->setStyleSheet(QString("QSplitter::handle { background: %1; width: 1px; }").arg(Tokens::Colors::Border));
-    
+    splitter->setObjectName("forexSplitter");
+
     // 左侧：外汇列表
     auto* listWidget = new QWidget();
-    listWidget->setStyleSheet(QString("QWidget { background: %1; }").arg(Tokens::Colors::BgBase));
+    listWidget->setObjectName("forexListPanel");
     auto* listLayout = new QVBoxLayout(listWidget);
     listLayout->setContentsMargins(0, 0, 0, 0);
     
@@ -102,11 +104,11 @@ void ForexPage::setupUI()
     
     // 右侧：详情和换算
     auto* rightWidget = new QWidget();
-    rightWidget->setStyleSheet(QString("QWidget { background: %1; }").arg(Tokens::Colors::BgBase));
+    rightWidget->setObjectName("forexDetailPanel");
     auto* rightLayout = new QVBoxLayout(rightWidget);
-    rightLayout->setContentsMargins(Tokens::Spacing::MD, Tokens::Spacing::MD, Tokens::Spacing::MD, Tokens::Spacing::MD);
-    rightLayout->setSpacing(Tokens::Spacing::MD);
-    
+    rightLayout->setContentsMargins(Spacing::MD, Spacing::MD, Spacing::MD, Spacing::MD);
+    rightLayout->setSpacing(Spacing::MD);
+
     initRateChart();
     rightLayout->addWidget(d->rateChart, 1);
     
@@ -124,24 +126,15 @@ void ForexPage::setupUI()
 void ForexPage::initToolBar()
 {
     auto* toolbar = new QWidget(this);
+    toolbar->setObjectName("forexToolbar");
     toolbar->setFixedHeight(40);
-    toolbar->setStyleSheet(QString("QWidget { background: %1; }").arg(Tokens::Colors::BgBase));
     
     auto* layout = new QHBoxLayout(toolbar);
-    layout->setContentsMargins(Tokens::Spacing::MD, 6, Tokens::Spacing::MD, 6);
-    
+    layout->setContentsMargins(Spacing::MD, Spacing::XS, Spacing::MD, Spacing::XS);
+
     auto* refreshBtn = new QPushButton(QStringLiteral("刷新"));
     refreshBtn->setFixedSize(60, 26);
-    refreshBtn->setStyleSheet(QString(R"(
-        QPushButton {
-            background: %1;
-            color: %2;
-            border: none;
-            font-size: 12px;
-            border-radius: 4px;
-        }
-        QPushButton:hover { background: %3; }
-    )").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary, Tokens::Colors::BgHover));
+    StyleHelper::setSecondaryButton(refreshBtn);
     connect(refreshBtn, &QPushButton::clicked, this, &ForexPage::onRefreshData);
     layout->addWidget(refreshBtn);
     
@@ -154,6 +147,7 @@ void ForexPage::initToolBar()
 void ForexPage::initForexList()
 {
     d->forexListTable = new QTableWidget();
+    d->forexListTable->setObjectName("forexListTable");
     d->forexListTable->setColumnCount(6);
     d->forexListTable->setHorizontalHeaderLabels({
         QStringLiteral("货币对"),
@@ -163,24 +157,6 @@ void ForexPage::initForexList()
         QStringLiteral("涨跌幅"),
         QStringLiteral("更新时间")
     });
-    
-    d->forexListTable->setStyleSheet(QString(R"(
-        QTableWidget {
-            background: %1;
-            color: %2;
-            border: none;
-            gridline-color: %3;
-            font-size: 12px;
-        }
-        QTableWidget::item:selected { background: %4; }
-        QHeaderView::section {
-            background: %5;
-            color: %6;
-            border: none;
-            padding: 6px;
-            font-size: 11px;
-        }
-    )").arg(Tokens::Colors::BgSurface, Tokens::Colors::TextPrimary, Tokens::Colors::Border, Tokens::Colors::BgElevated, Tokens::Colors::BgBase, Tokens::Colors::TextTertiary));
     
     d->forexListTable->horizontalHeader()->setStretchLastSection(true);
     d->forexListTable->verticalHeader()->setVisible(false);
@@ -197,50 +173,47 @@ void ForexPage::initRateChart()
 void ForexPage::initConverter()
 {
     auto* converterGroup = new QGroupBox(QStringLiteral("汇率换算"));
-    converterGroup->setStyleSheet(QString(R"(
-        QGroupBox {
-            color: %1;
-            font-size: 13px;
-            font-weight: bold;
-            border: 1px solid %2;
-            border-radius: 4px;
-            margin-top: 8px;
-            padding-top: 8px;
-        }
-        QGroupBox::title {
-            subcontrol-origin: margin;
-            left: 10px;
-        }
-    )").arg(Tokens::Colors::TextPrimary, Tokens::Colors::Border));
     
     auto* layout = new QGridLayout(converterGroup);
     
     // 源货币
-    layout->addWidget(new QLabel(QStringLiteral("从:")), 0, 0);
+    QLabel* fromLabel = new QLabel(QStringLiteral("从:"));
+    fromLabel->setProperty("dataType", "label");
+    layout->addWidget(fromLabel, 0, 0);
+
     d->currencyFromCombo = new QComboBox();
     d->currencyFromCombo->addItems({"CNY", "USD", "EUR", "GBP", "JPY", "HKD"});
-    d->currencyFromCombo->setStyleSheet(QString("background: %1; color: %2; padding: 4px;").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary));
+    d->currencyFromCombo->setObjectName("currencyCombo");
     layout->addWidget(d->currencyFromCombo, 0, 1);
     
     // 目标货币
-    layout->addWidget(new QLabel(QStringLiteral("到:")), 1, 0);
+    QLabel* toLabel = new QLabel(QStringLiteral("到:"));
+    toLabel->setProperty("dataType", "label");
+    layout->addWidget(toLabel, 1, 0);
+
     d->currencyToCombo = new QComboBox();
     d->currencyToCombo->addItems({"USD", "CNY", "EUR", "GBP", "JPY", "HKD"});
-    d->currencyToCombo->setStyleSheet(QString("background: %1; color: %2; padding: 4px;").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary));
+    d->currencyToCombo->setObjectName("currencyCombo");
     layout->addWidget(d->currencyToCombo, 1, 1);
     
     // 金额
-    layout->addWidget(new QLabel(QStringLiteral("金额:")), 2, 0);
+    QLabel* amountLabel = new QLabel(QStringLiteral("金额:"));
+    amountLabel->setProperty("dataType", "label");
+    layout->addWidget(amountLabel, 2, 0);
+
     d->amountSpinBox = new QDoubleSpinBox();
     d->amountSpinBox->setRange(0, 100000000);
     d->amountSpinBox->setValue(100);
-    d->amountSpinBox->setStyleSheet(QString("background: %1; color: %2; padding: 4px;").arg(Tokens::Colors::BgElevated, Tokens::Colors::TextPrimary));
+    d->amountSpinBox->setObjectName("amountSpin");
     layout->addWidget(d->amountSpinBox, 2, 1);
     
     // 结果
-    layout->addWidget(new QLabel(QStringLiteral("结果:")), 3, 0);
+    QLabel* resultTitleLabel = new QLabel(QStringLiteral("结果:"));
+    resultTitleLabel->setProperty("dataType", "label");
+    layout->addWidget(resultTitleLabel, 3, 0);
+
     d->resultLabel = new QLabel(QStringLiteral("--"));
-    d->resultLabel->setStyleSheet(QString("color: %1; font-size: 16px; font-weight: bold;").arg(Tokens::Colors::Success));
+    d->resultLabel->setObjectName("conversionResult");
     layout->addWidget(d->resultLabel, 3, 1);
     
     auto* rightLayout = qobject_cast<QVBoxLayout*>(d->rateChart->parentWidget()->layout());
@@ -267,7 +240,6 @@ void ForexPage::loadForexList()
 {
     d->forexCache.clear();
     
-    // 使用本地数据作为默认值（新浪API可能被限制）
     QVector<ForexQuote> defaultQuotes;
     
     ForexQuote q1; q1.pair = "USD/CNY"; q1.baseCurrency = "USD"; q1.quoteCurrency = "CNY";
@@ -295,47 +267,25 @@ void ForexPage::loadForexList()
     q5.high24h = 7.9000; q5.low24h = 7.8800; q5.updateTime = QDateTime::currentDateTime();
     defaultQuotes.append(q5);
     
-    // 先使用默认数据
     d->forexCache = defaultQuotes;
     
-    // 尝试从API获取实时数据
     QStringList pairs = {"USD/CNY", "EUR/USD", "GBP/USD", "USD/JPY", "EUR/CNY"};
     ForexDataSource::instance()->requestQuotes(pairs, [this, defaultQuotes](const QVector<ForexQuote>& quotes) {
         if (quotes.isEmpty()) {
-            // API失败，使用默认数据
             d->forexCache = defaultQuotes;
             LOG_WARNING("Forex API failed, using default data");
         } else {
             d->forexCache = quotes;
         }
-        
-        d->forexListTable->setRowCount(d->forexCache.size());
-        
-        for (int i = 0; i < d->forexCache.size(); ++i) {
-            const auto& forex = d->forexCache[i];
-            
-            d->forexListTable->setItem(i, 0, new QTableWidgetItem(forex.pair));
-            d->forexListTable->setItem(i, 1, new QTableWidgetItem(QString::number(forex.rate, 'f', 4)));
-            d->forexListTable->setItem(i, 2, new QTableWidgetItem(QString::number(forex.bid, 'f', 4)));
-            d->forexListTable->setItem(i, 3, new QTableWidgetItem(QString::number(forex.ask, 'f', 4)));
-            
-            auto* changeItem = new QTableWidgetItem(QString::number(forex.changePercent, 'f', 2) + "%");
-            // 中国市场：红涨绿跌
-            changeItem->setForeground(forex.changePercent >= 0 ? QColor(Tokens::Colors::Danger) : QColor(Tokens::Colors::Success));
-            d->forexListTable->setItem(i, 4, changeItem);
-            
-            d->forexListTable->setItem(i, 5, new QTableWidgetItem(forex.updateTime.toString("hh:mm:ss")));
-        }
-        
-        // 默认选中第一个
-        if (!d->forexCache.isEmpty()) {
-            d->currentPair = d->forexCache[0].pair;
-            d->currentQuote = d->forexCache[0];
-            updateForexDetail(d->forexCache[0]);
-        }
+
+        updateForexTable();
     });
-    
-    // 立即显示默认数据
+
+    updateForexTable();
+}
+
+void ForexPage::updateForexTable()
+{
     d->forexListTable->setRowCount(d->forexCache.size());
     for (int i = 0; i < d->forexCache.size(); ++i) {
         const auto& forex = d->forexCache[i];
@@ -346,7 +296,8 @@ void ForexPage::loadForexList()
         d->forexListTable->setItem(i, 3, new QTableWidgetItem(QString::number(forex.ask, 'f', 4)));
         
         auto* changeItem = new QTableWidgetItem(QString::number(forex.changePercent, 'f', 2) + "%");
-        changeItem->setForeground(forex.changePercent >= 0 ? QColor(Tokens::Colors::Danger) : QColor(Tokens::Colors::Success));
+        changeItem->setProperty("trend", forex.changePercent >= 0 ? "up" : "down");
+        StyleHelper::refreshStyle(changeItem);
         d->forexListTable->setItem(i, 4, changeItem);
         
         d->forexListTable->setItem(i, 5, new QTableWidgetItem(forex.updateTime.toString("hh:mm:ss")));
@@ -384,7 +335,7 @@ void ForexPage::calculateConversion()
     else if (from == "EUR" && to == "USD") rate = 1.0892;
     else if (from == "USD" && to == "EUR") rate = 1.0 / 1.0892;
     // ... 其他货币对
-    
+
     double result = amount * rate;
     d->resultLabel->setText(QString::number(result, 'f', 2) + " " + to);
 }

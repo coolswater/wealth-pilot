@@ -5,6 +5,7 @@
 
 #include "PortfolioOptimizationDialog.h"
 #include "core/config/Tokens.h"
+#include "ui/components/StyleHelper.h"
 #include <QDateTimeEdit>
 #include <QMessageBox>
 #include <QHeaderView>
@@ -14,6 +15,7 @@ using namespace Tokens;
 PortfolioOptimizationDialog::PortfolioOptimizationDialog(QWidget* parent)
     : QDialog(parent)
 {
+    setObjectName("PortfolioOptimizationDialog");
     setupUI();
 
     // 连接优化器信号
@@ -96,8 +98,8 @@ void PortfolioOptimizationDialog::setupUI()
     setMinimumSize(800, 600);
 
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(15);
-    mainLayout->setContentsMargins(20, 20, 20, 20);
+    mainLayout->setSpacing(Spacing::LG);
+    mainLayout->setContentsMargins(Spacing::LG, Spacing::LG, Spacing::LG, Spacing::LG);
 
     // 优化设置组
     QGroupBox* optimizeGroup = new QGroupBox(QStringLiteral("优化设置"));
@@ -106,6 +108,7 @@ void PortfolioOptimizationDialog::setupUI()
     // 第一行：优化目标和最大资产数
     QHBoxLayout* row1 = new QHBoxLayout();
     QLabel* objectiveLabel = new QLabel(QStringLiteral("优化目标:"));
+    objectiveLabel->setProperty("dataType", "label");
     m_objectiveCombo = new QComboBox();
     m_objectiveCombo->addItem(QStringLiteral("最大收益"));
     m_objectiveCombo->addItem(QStringLiteral("最小风险"));
@@ -115,6 +118,7 @@ void PortfolioOptimizationDialog::setupUI()
     row1->addWidget(m_objectiveCombo);
 
     QLabel* maxAssetsLabel = new QLabel(QStringLiteral("最大资产数:"));
+    maxAssetsLabel->setProperty("dataType", "label");
     m_maxAssetsSpin = new QSpinBox();
     m_maxAssetsSpin->setRange(1, 20);
     m_maxAssetsSpin->setValue(10);
@@ -126,6 +130,7 @@ void PortfolioOptimizationDialog::setupUI()
     // 第二行：约束条件
     QHBoxLayout* row2 = new QHBoxLayout();
     QLabel* maxWeightLabel = new QLabel(QStringLiteral("最大权重(%):"));
+    maxWeightLabel->setProperty("dataType", "label");
     m_maxWeightSpin = new QDoubleSpinBox();
     m_maxWeightSpin->setRange(0, 100);
     m_maxWeightSpin->setValue(30);
@@ -133,6 +138,7 @@ void PortfolioOptimizationDialog::setupUI()
     row2->addWidget(m_maxWeightSpin);
 
     QLabel* targetReturnLabel = new QLabel(QStringLiteral("目标收益(%):"));
+    targetReturnLabel->setProperty("dataType", "label");
     m_targetReturnSpin = new QDoubleSpinBox();
     m_targetReturnSpin->setRange(-100, 100);
     m_targetReturnSpin->setValue(10);
@@ -140,6 +146,7 @@ void PortfolioOptimizationDialog::setupUI()
     row2->addWidget(m_targetReturnSpin);
 
     QLabel* maxRiskLabel = new QLabel(QStringLiteral("最大风险(%):"));
+    maxRiskLabel->setProperty("dataType", "label");
     m_maxRiskSpin = new QDoubleSpinBox();
     m_maxRiskSpin->setRange(0, 100);
     m_maxRiskSpin->setValue(50);
@@ -150,10 +157,7 @@ void PortfolioOptimizationDialog::setupUI()
     // 优化按钮
     m_optimizeBtn = new QPushButton(QStringLiteral("执行优化"));
     m_optimizeBtn->setFixedHeight(35);
-    m_optimizeBtn->setStyleSheet(QString(
-        "QPushButton { background-color: %1; color: white; border-radius: 4px; }"
-        "QPushButton:hover { background-color: %2; }"
-    ).arg(Colors::Primary, Colors::PrimaryHover));
+    StyleHelper::setPrimaryButton(m_optimizeBtn);
     connect(m_optimizeBtn, &QPushButton::clicked, this, &PortfolioOptimizationDialog::onOptimizeClicked);
     optimizeLayout->addWidget(m_optimizeBtn);
 
@@ -164,6 +168,7 @@ void PortfolioOptimizationDialog::setupUI()
     QHBoxLayout* backtestLayout = new QHBoxLayout(backtestGroup);
 
     QLabel* daysLabel = new QLabel(QStringLiteral("回测天数:"));
+    daysLabel->setProperty("dataType", "label");
     m_backtestDaysSpin = new QSpinBox();
     m_backtestDaysSpin->setRange(30, 730);
     m_backtestDaysSpin->setValue(365);
@@ -172,6 +177,7 @@ void PortfolioOptimizationDialog::setupUI()
 
     m_backtestBtn = new QPushButton(QStringLiteral("执行回测"));
     m_backtestBtn->setFixedHeight(35);
+    StyleHelper::setSecondaryButton(m_backtestBtn);
     connect(m_backtestBtn, &QPushButton::clicked, this, &PortfolioOptimizationDialog::onBacktestClicked);
     backtestLayout->addWidget(m_backtestBtn);
     backtestLayout->addStretch();
@@ -184,6 +190,7 @@ void PortfolioOptimizationDialog::setupUI()
 
     // 资产配置表
     m_allocationTable = new QTableWidget();
+    m_allocationTable->setObjectName("allocationTable");
     m_allocationTable->setColumnCount(4);
     m_allocationTable->setHorizontalHeaderLabels({
         QStringLiteral("资产代码"),
@@ -200,7 +207,9 @@ void PortfolioOptimizationDialog::setupUI()
     // 风险收益指标
     QHBoxLayout* metricsLayout = new QHBoxLayout();
     m_riskMetricsLabel = new QLabel(QStringLiteral("风险指标: --"));
+    m_riskMetricsLabel->setProperty("dataType", "value");
     m_returnMetricsLabel = new QLabel(QStringLiteral("收益指标: --"));
+    m_returnMetricsLabel->setProperty("dataType", "value");
     metricsLayout->addWidget(m_riskMetricsLabel);
     metricsLayout->addWidget(m_returnMetricsLabel);
     metricsLayout->addStretch();
@@ -216,10 +225,6 @@ void PortfolioOptimizationDialog::setupUI()
     m_backtestResultEdit->setMaximumHeight(150);
     backtestResultLayout->addWidget(m_backtestResultEdit);
     mainLayout->addWidget(backtestResultGroup);
-
-    // 设置样式
-    setStyleSheet(QString("QDialog { background-color: %1; }")
-        .arg(Colors::BgSurface));
 }
 
 void PortfolioOptimizationDialog::displayPortfolio(const Portfolio& portfolio)

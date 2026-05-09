@@ -353,9 +353,10 @@ void OrderDialog::updateCalculations()
     
     double total = margin + commission;
     m_totalLabel->setText(QString::number(total, 'f', 2));
-    
-    QString totalColor = total > m_available ? Tokens::Colors::Danger : Tokens::Colors::Success;
-    m_totalLabel->setStyleSheet(QString("QLabel { color: %1; }").arg(totalColor));
+
+    // 使用属性选择器
+    m_totalLabel->setProperty("status", total > m_available ? "danger" : "success");
+    StyleHelper::refreshStyle(m_totalLabel);
 }
 
 void OrderDialog::updateRiskDisplay()
@@ -373,10 +374,13 @@ void OrderDialog::updateRiskDisplay()
         
         m_riskAmountLabel->setText(QString::number(riskAmount, 'f', 2));
         m_riskRatioLabel->setText(QString::number(riskRatio, 'f', 2) + "%");
-        
-        QString riskColor = riskRatio > 10 ? Tokens::Colors::Danger : (riskRatio > 5 ? Tokens::Colors::Warning : Tokens::Colors::Success);
-        m_riskRatioLabel->setStyleSheet(QString("QLabel { color: %1; }").arg(riskColor));
-    } else {
+
+        // 使用属性选择器
+        QString riskStatus = riskRatio > 10 ? "danger" : (riskRatio > 5 ? "warning" : "success");
+        m_riskRatioLabel->setProperty("status", riskStatus);
+        StyleHelper::refreshStyle(m_riskRatioLabel);
+    }
+    else {
         m_riskAmountLabel->setText("--");
         m_riskRatioLabel->setText("--");
     }

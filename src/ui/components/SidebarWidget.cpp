@@ -1,6 +1,7 @@
 #include "SidebarWidget.h"
 #include "utils/Logger.h"
 #include "../ThemeManager.h"
+#include "ui/components/StyleHelper.h"
 
 #include <QPushButton>
 #include <QVBoxLayout>
@@ -55,11 +56,15 @@ void SidebarWidget::addItem(const QString& id, const QString& text, const QIcon&
 
     btn->setText(text);
     btn->setFixedHeight(48);
+    btn->setProperty("sidebarItem", true);
 
     connect(btn, &QPushButton::clicked, this, &SidebarWidget::onItemClicked);
 
     d->items[id] = btn;
     d->layout->insertWidget(d->layout->count(), btn);
+
+    // 刷新样式
+    StyleHelper::refreshStyle(btn);
 }
 
 void SidebarWidget::addItem(const QString& id, const QString& text)
@@ -71,11 +76,14 @@ void SidebarWidget::addItem(const QString& id, const QString& text)
 
     btn->setText(text);
     btn->setFixedHeight(48);
+    btn->setProperty("sidebarItem", true);
 
     connect(btn, &QPushButton::clicked, this, &SidebarWidget::onItemClicked);
 
     d->items[id] = btn;
     d->layout->insertWidget(d->layout->count(), btn);
+
+    StyleHelper::refreshStyle(btn);
 }
 
 void SidebarWidget::setCollapseIcons(const QIcon& left, const QIcon& right) const
@@ -179,22 +187,6 @@ void SidebarWidget::setupUI()
     d->layout->setContentsMargins(0, 0, 0, 0);
     d->layout->setSpacing(4);
     d->layout->setAlignment(Qt::AlignTop);
-
-    // 折叠按钮
-    // d->toggleBtn = new QPushButton(this);
-    // d->toggleBtn->setIcon(QIcon(":/icons/chevron_left.svg"));
-    // d->toggleBtn->setIconSize(QSize(20, 20));
-    // d->toggleBtn->setFixedSize(40, 40);
-    // d->toggleBtn->setCursor(Qt::PointingHandCursor);
-
-    // connect(d->toggleBtn, &QPushButton::clicked, this, &SidebarWidget::toggle);
-
-    // QHBoxLayout* toggleLayout = new QHBoxLayout();
-    // toggleLayout->addStretch();
-    // toggleLayout->addWidget(d->toggleBtn);
-    // toggleLayout->addStretch();
-
-    // d->layout->addLayout(toggleLayout);
 }
 
 void SidebarWidget::animateCollapse(bool collapse)
@@ -225,7 +217,7 @@ void SidebarWidget::animateCollapse(bool collapse)
         // 显示/隐藏文字
         auto it = d->items.begin();
         while (it != d->items.end()) {
-            auto btn = it.value(); // 对于QMap，迭代器的value()方法获取值（你的按钮指针）
+            auto btn = it.value();
             btn->setText(collapse ? "" : btn->objectName());
             ++it;
         }
@@ -237,49 +229,9 @@ void SidebarWidget::animateCollapse(bool collapse)
 
 void SidebarWidget::updateTheme()
 {
-    ThemeColors theme = ThemeManager::instance()->currentTheme();
-    
-    // 更新侧边栏背景
-    setStyleSheet(QString("SidebarWidget { background-color: %1; border-right: 1px solid %2; }")
-        .arg(theme.bgSecondary, theme.border));
-    
-    // 更新所有按钮样式
+    // 由于使用 QSS 属性选择器，样式由 QSS 管理
+    // 只需要刷新所有按钮样式
     for (auto it = d->items.begin(); it != d->items.end(); ++it) {
-        QPushButton* btn = it.value();
-        
-        QString primaryRgba = QString("rgba(%1, %2, %3, 0.15)")
-            .arg(QColor(theme.primary).red())
-            .arg(QColor(theme.primary).green())
-            .arg(QColor(theme.primary).blue());
-        
-        QString hoverRgba = QString("rgba(%1, %2, %3, 0.05)")
-            .arg(QColor(theme.textPrimary).red())
-            .arg(QColor(theme.textPrimary).green())
-            .arg(QColor(theme.textPrimary).blue());
-        
-        btn->setStyleSheet(QString(R"(
-            QPushButton {
-                background-color: transparent;
-                color: %1;
-                border: none;
-                border-left: 3px solid transparent;
-                padding: 14px 20px;
-                text-align: left;
-            }
-            QPushButton:hover {
-                background-color: %2;
-                color: %3;
-            }
-            QPushButton:checked {
-                background-color: %4;
-                color: %5;
-                border-left-color: %6;
-            }
-        )").arg(theme.textSecondary)
-          .arg(hoverRgba)
-          .arg(theme.textPrimary)
-          .arg(primaryRgba)
-          .arg(theme.primary)
-          .arg(theme.primary));
+        StyleHelper::refreshStyle(it.value());
     }
 }
