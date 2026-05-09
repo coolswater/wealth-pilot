@@ -10,6 +10,7 @@
 #include <QApplication>
 #include <QPalette>
 #include <QWidget>
+#include <QMutexLocker>
 
 ThemeManager* ThemeManager::instance()
 {
@@ -49,6 +50,13 @@ void ThemeManager::setTheme(ThemeType type)
 
     LOG_INFO(QString("Theme changed to: %1").arg(static_cast<int>(type)));
     emit themeChanged(type);
+}
+
+void ThemeManager::clearCache()
+{
+    QMutexLocker locker(&m_cacheMutex);
+    m_styleCache.clear();
+    LOG_DEBUG("Theme style cache cleared");
 }
 
 ThemeColors ThemeManager::getTheme(ThemeType type) const
@@ -106,15 +114,36 @@ bool ThemeManager::saveCustomTheme(const QString& filePath)
 
 void ThemeManager::applyTheme()
 {
-    // 加载基础样式
-    QString styleSheet = loadBaseQss();
-    
-    // 加载主题特定样式
-    styleSheet += "\n" + loadThemeQss(m_currentType);
-    
-    // 替换颜色变量
-    styleSheet = replaceColorVariables(styleSheet, m_currentTheme);
-    
+    // 检查缓存
+    QString styleSheet;
+    {
+        QMutexLocker locker(&m_cacheMutex);
+        if (m_styleCache.contains(m_currentType))
+        {
+            styleSheet = m_styleCache[m_currentType];
+            LOG_DEBUG("Using cached stylesheet for theme");
+        }
+    }
+
+    // 如果没有缓存，编译样式表
+    if (styleSheet.isEmpty())
+    {
+        // 加载基础样式
+        styleSheet = loadBaseQss();
+
+        // 加载主题特定样式
+        styleSheet += "\n" + loadThemeQss(m_currentType);
+
+        // 替换颜色变量
+        styleSheet = replaceColorVariables(styleSheet, m_currentTheme);
+
+        // 缓存编译后的样式表
+        {
+            QMutexLocker locker(&m_cacheMutex);
+            m_styleCache[m_currentType] = styleSheet;
+        }
+    }
+
     // 应用QPalette
     QPalette palette;
 

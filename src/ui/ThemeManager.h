@@ -21,6 +21,8 @@
 #include <QString>
 #include <QColor>
 #include <QJsonObject>
+#include <QHash>
+#include <QMutex>
 
 /**
  * @brief 主题类型
@@ -130,6 +132,11 @@ public:
     QString getThemeStyleSheet() const;
 
     /**
+     * @brief 清除样式缓存
+     */
+    void clearCache();
+
+    /**
      * @brief 注册主题变化监听器
      */
     void registerThemeChangeListener(QObject* object, const std::function<void()>& callback);
@@ -177,6 +184,10 @@ private:
     QVector<QPair<QObject*, std::function<void()>>> m_listeners;
 
     bool m_initialized = false;
+
+    // 性能优化：样式缓存
+    mutable QHash<ThemeType, QString> m_styleCache;
+    mutable QMutex m_cacheMutex;
 };
 
 #endif // THEMEMANAGER_H

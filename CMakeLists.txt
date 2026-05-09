@@ -372,6 +372,8 @@ set(UI_COMPONENT_SOURCES
         src/ui/components/NewsPanelWidget.cpp
         src/ui/components/AlertSettingDialog.h
         src/ui/components/AlertSettingDialog.cpp
+        src/ui/components/LoadingOverlay.h
+        src/ui/components/LoadingOverlay.cpp
         src/ui/ThemeManager.h
         src/ui/ThemeManager.cpp
 )

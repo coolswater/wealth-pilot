@@ -460,3 +460,67 @@ void NetworkManager::enqueueRequest(const NetworkRequest& request)
     QMutexLocker locker(&m_mutex);
     m_requestQueue.enqueue(request);
 }
+
+
+// ========== 批量请求 ==========
+
+void NetworkManager::getBatchAsync(const QStringList& urls,
+                                   std::function<void(const QString &, Result<QByteArray>)> callback,
+                                   std::function<void()> allCompleteCallback,
+                                   const QMap<QString, QString>& headers)
+{
+    if (urls.isEmpty())
+    {
+        if (allCompleteCallback) allCompleteCallback();
+        return;
+    }
+
+    int completedCount = 0;
+    int totalCount = urls.size();
+
+    for (const QString& url : urls)
+    {
+        getAsync(url, [this, url, callback, &completedCount, totalCount, allCompleteCallback](Result<QByteArray> result)
+        {
+            if (callback)
+            {
+                callback(url, result);
+            }
+
+            completedCount++;
+            if (completedCount == totalCount && allCompleteCallback)
+            {
+                allCompleteCallback();
+            }
+        }, headers);
+    }
+}
+
+void NetworkManager::getBatchMerged(const QStringList& urls,
+                                    std::function<void(QMap<QString, Result<QByteArray>>)> callback,
+                                    const QMap<QString, QString>& headers)
+{
+    if (urls.isEmpty())
+    {
+        callback({});
+        return;
+    }
+
+    auto results = std::make_shared<QMap<QString, Result<QByteArray>>>();
+    auto completedCount = std::make_shared<int>(0);
+    int totalCount = urls.size();
+
+    for (const QString& url : urls)
+    {
+        getAsync(url, [results, completedCount, totalCount, callback, url](Result<QByteArray> result)
+        {
+            results->insert(url, result);
+            (*completedCount)++;
+
+            if (*completedCount == totalCount)
+            {
+                callback(*results);
+            }
+        }, headers);
+    }
+}

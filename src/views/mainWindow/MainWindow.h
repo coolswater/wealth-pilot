@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file MainWindow.h
  * @brief 主窗口 - 重构版本，新架构
  *
@@ -134,6 +134,11 @@ private:
      * @brief 应用主题
      */
     void applyTheme();
+
+    /**
+     * @brief 设置快捷键
+     */
+    void setupShortcuts();
 
     /**
      * @brief 显示启动画面

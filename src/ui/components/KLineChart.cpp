@@ -221,7 +221,14 @@ struct KLineChart::Impl {
         }
         return minPrice + (chartRect.bottom() - y) / priceScale;
     }
-    
+
+    int timeToX(int index) const
+    {
+        if (data.isEmpty()) return 0;
+        int candleWidth = style.candleWidth + style.candleSpacing;
+        return chartRect.left() + (index - visibleStart) * candleWidth + candleWidth / 2;
+    }
+
     /**
      * @brief 副图指标值转Y坐标
      */
@@ -289,6 +296,10 @@ KLineChart::~KLineChart()
 void KLineChart::setData(const QVector<KLineData>& data)
 {
     d->data = data;
+
+    // 性能优化：数据压缩
+    compressData();
+
     d->calculateVisibleRange();
     
     // 自动计算默认指标
@@ -315,8 +326,21 @@ void KLineChart::setData(const QVector<KLineData>& data)
 void KLineChart::addData(const KLineData& data)
 {
     d->data.append(data);
-    d->calculateVisibleRange();
-    update();
+
+    // 性能优化：增量绘制
+    int lastIndex = d->data.size() - 1;
+    if (lastIndex >= d->visibleStart && lastIndex < d->visibleStart + d->visibleCount)
+    {
+        int candleWidth = d->style.candleWidth + d->style.candleSpacing;
+        int x = timeToX(lastIndex);
+        QRect updateRect(x - candleWidth, 0, candleWidth * 2, height());
+        update(updateRect);
+    }
+    else
+    {
+        d->calculateVisibleRange();
+        update();
+    }
 }
 
 /**
@@ -327,8 +351,16 @@ void KLineChart::updateLastData(const KLineData& data)
 {
     if (!d->data.isEmpty()) {
         d->data.last() = data;
-        d->calculateVisibleRange();
-        update();
+
+        // 性能优化：增量绘制
+        int lastIndex = d->data.size() - 1;
+        if (lastIndex >= d->visibleStart && lastIndex < d->visibleStart + d->visibleCount)
+        {
+            int candleWidth = d->style.candleWidth + d->style.candleSpacing;
+            int x = timeToX(lastIndex);
+            QRect updateRect(x - candleWidth, 0, candleWidth * 2, height());
+            update(updateRect);
+        }
     }
 }
 
@@ -1555,4 +1587,61 @@ void KLineChart::calculateEXPMA(int period)
     // 添加到副图指标
     d->subIndicatorLines["EXPMA"] = expmaValues;
     d->subIndicatorColors["EXPMA"] = QColor(Tokens::Colors::Success);
+}
+
+// ==================== 数据压缩 ====================
+
+void KLineChart::compressData()
+{
+    if (d->data.isEmpty())
+    {
+        d->compressedData.clear();
+        return;
+    }
+
+    int visibleCount = width() / (d->style.candleWidth + d->style.candleSpacing);
+    if (visibleCount <= 0) visibleCount = 100;
+
+    int total = d->data.size();
+    if (total <= visibleCount)
+    {
+        d->compressedData.clear();
+        return;
+    }
+
+    int ratio = (total + visibleCount - 1) / visibleCount;
+    ratio = qMax(2, ratio);
+
+    d->compressedData.clear();
+    d->compressedData.reserve(total / ratio + 1);
+
+    for (int i = 0; i < total; i += ratio)
+    {
+        KLineData compressed;
+        compressed.time = d->data[i].time;
+        compressed.open = d->data[i].open;
+        compressed.high = d->data[i].high;
+        compressed.low = d->data[i].low;
+        compressed.close = d->data[i].close;
+        compressed.volume = 0;
+
+        int end = qMin(i + ratio, total);
+        for (int j = i; j < end; ++j)
+        {
+            compressed.high = qMax(compressed.high, d->data[j].high);
+            compressed.low = qMin(compressed.low, d->data[j].low);
+            compressed.volume += d->data[j].volume;
+        }
+        compressed.close = d->data[end - 1].close;
+
+        d->compressedData.append(compressed);
+    }
+
+    LOG_DEBUG(QString("Data compressed: %1 -> %2 (ratio: %3)")
+              .arg(total).arg(d->compressedData.size()).arg(ratio));
+}
+
+int KLineChart::timeToX(int index) const
+{
+    return d->timeToX(index);
 }

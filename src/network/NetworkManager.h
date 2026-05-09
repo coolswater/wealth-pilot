@@ -99,6 +99,28 @@ public:
                    std::function<void(Result<QByteArray>)> callback,
                    const QMap<QString, QString>& headers = {});
 
+    // ========== 批量请求 ==========
+
+    /**
+     * @brief 批量GET请求
+     * @param urls 请求URL列表
+     * @param callback 单个请求完成回调
+     * @param allCompleteCallback 所有请求完成回调
+     */
+    void getBatchAsync(const QStringList& urls,
+                       std::function<void(const QString & url, Result<QByteArray>)> callback,
+                       std::function<void()> allCompleteCallback = nullptr,
+                       const QMap<QString, QString>& headers = {});
+
+    /**
+     * @brief 批量GET请求（合并结果）
+     * @param urls 请求URL列表
+     * @param callback 所有请求完成后的合并结果回调
+     */
+    void getBatchMerged(const QStringList& urls,
+                        std::function<void(QMap<QString, Result<QByteArray>>)> callback,
+                        const QMap<QString, QString>& headers = {});
+
     // ========== WebSocket ==========
 
     /**

@@ -60,6 +60,7 @@ using WealthPilot::CryptoPage;
 #include <QCloseEvent>
 #include <QElapsedTimer>
 #include <QApplication>
+#include <QShortcut>
 
 #include "plugins/IAIPlugin.h"
 #include "plugins/ICTPPlugin.h"
@@ -152,6 +153,9 @@ MainWindow::MainWindow(QWidget* parent)
 
     // 应用主题
     applyTheme();
+
+    // 设置快捷键
+    setupShortcuts();
 
     m_initialized = true;
 
@@ -791,6 +795,54 @@ void MainWindow::hideSplashScreen()
         m_splashLabel->deleteLater();
         m_splashLabel = nullptr;
     }
+}
+
+void MainWindow::setupShortcuts()
+{
+    // Ctrl+1-9 切换页面
+    QStringList pageIds = {
+        QStringLiteral("dashboard"),
+        QStringLiteral("stock"),
+        QStringLiteral("futures"),
+        QStringLiteral("fund"),
+        QStringLiteral("forex"),
+        QStringLiteral("crypto"),
+        QStringLiteral("portfolio"),
+        QStringLiteral("watchlist"),
+        QStringLiteral("settings")
+    };
+
+    for (int i = 0; i < qMin(pageIds.size(), 9); ++i)
+    {
+        auto* shortcut = new QShortcut(QKeySequence(Qt::CTRL | (Qt::Key_1 + i)), this);
+        connect(shortcut, &QShortcut::activated, this, [this, pageIds, i]()
+        {
+            onSidebarItemClicked(pageIds[i]);
+        });
+    }
+
+    // F5 刷新当前页面
+    auto* refreshShortcut = new QShortcut(QKeySequence::Refresh, this);
+    connect(refreshShortcut, &QShortcut::activated, this, [this]()
+    {
+        QWidget* currentPage = d->contentStack->currentWidget();
+        if (currentPage)
+        {
+            QMetaObject::invokeMethod(currentPage, "refresh", Qt::DirectConnection);
+        }
+    });
+
+    // Ctrl+Shift+A 显示/隐藏AI面板
+    auto* aiToggleShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_A), this);
+    connect(aiToggleShortcut, &QShortcut::activated, this, [this]()
+    {
+        if (d->aiPanel)
+        {
+            d->aiPanel->setVisible(!d->aiPanel->isVisible());
+        }
+    });
+
+    LOG_DEBUG("Shortcuts setup complete");
 }
 
 

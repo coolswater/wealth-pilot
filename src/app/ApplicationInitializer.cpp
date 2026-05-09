@@ -18,6 +18,7 @@
 #include <QElapsedTimer>
 #include <QCoreApplication>
 #include <QThread>
+#include <QtConcurrent>
 
 ApplicationInitializer& ApplicationInitializer::instance()
 {
@@ -154,31 +155,50 @@ bool ApplicationInitializer::initializeCore()
 
     QElapsedTimer timer;
     int current = 0;
-    int total = m_modules[InitPhase::Core].size();
+    int total = m_modules[InitPhase::Core].size() + 3; // +3 for Logger, Env, Cache
 
-    // Initialize Logger
+    // Initialize Logger (must be first, synchronous)
     timer.start();
     Logger::instance()->init();
     LOG_DEBUG("Logger initialized");
+    emit moduleInitialized("Logger", true, timer.elapsed());
+    emit progressUpdated(++current, total, "Logger");
 
-    // Initialize EnvironmentConfig
+    // 并行初始化 EnvironmentConfig 和 CacheManager
     timer.restart();
-    // EnvironmentConfig auto-initializes on first access
-    (void)EnvironmentConfig::instance();
-    emit moduleInitialized("EnvironmentConfig", true, timer.elapsed());
+
+    QFuture<bool> envFuture = QtConcurrent::run([this]()
+    {
+        QElapsedTimer t;
+        t.start();
+        (void)EnvironmentConfig::instance();
+        emit moduleInitialized("EnvironmentConfig", true, t.elapsed());
+        return true;
+    });
+
+    QFuture<bool> cacheFuture = QtConcurrent::run([this]()
+    {
+        QElapsedTimer t;
+        t.start();
+        bool result = CacheManager::instance()->initialize();
+        emit moduleInitialized("CacheManager", result, t.elapsed());
+        return result;
+    });
+
+    // 等待并行任务完成
+    envFuture.waitForFinished();
+    cacheFuture.waitForFinished();
+
     emit progressUpdated(++current, total, "EnvironmentConfig");
+    emit progressUpdated(++current, total, "CacheManager");
 
-    // Initialize CacheManager
-    timer.restart();
-    if (!CacheManager::instance()->initialize()) {
+    if (!cacheFuture.result())
+    {
         LOG_ERROR("Failed to initialize CacheManager");
         return false;
     }
-    emit moduleInitialized("CacheManager", true, timer.elapsed());
-    emit progressUpdated(++current, total, "CacheManager");
 
     // Note: DatabaseManager is initialized by DataStorageService
-    // to avoid duplicate initialization with different configurations
     LOG_DEBUG("DatabaseManager will be initialized by DataStorageService");
 
     // Initialize registered modules
