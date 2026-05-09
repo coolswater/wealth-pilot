@@ -31,8 +31,10 @@ bool ThemeManager::initialize()
 
     initBuiltInThemes();
 
-    // 设置默认主题
-    setTheme(ThemeType::Dark);
+    // 设置默认主题（不发射信号，因为此时没有监听器）
+    m_currentType = ThemeType::Dark;
+    m_currentTheme = getTheme(ThemeType::Dark);
+    applyTheme();
 
     m_initialized = true;
     LOG_INFO("Theme Manager initialized");

@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
     QApplication::setFont(defaultFont);
 
     // ========== 初始化主题管理器 ==========
-    ThemeManager::instance()->setTheme(ThemeType::Dark);
+    ThemeManager::instance()->initialize();
 
     // ========== 国际化 ==========
     QTranslator translator;
