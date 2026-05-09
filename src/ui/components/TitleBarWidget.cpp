@@ -135,12 +135,27 @@ void TitleBarWidget::initConnections()
     connect(d->m_closeBtn, &QPushButton::clicked,
             this, &TitleBarWidget::onCloseClicked);
 
-    // 连接主题管理器的信号到主窗口
+    // 连接主题切换按钮信号
     connect(d->m_themeButton, &ThemeToggleButton::themeSwitchRequested,
-            [](ThemeType type)
+            this, [this](ThemeType type)
             {
                 qDebug() << "User requested theme change to:" << static_cast<int>(type);
+                // 实际切换主题
+                if (auto* tm = ThemeManager::instance())
+                {
+                    tm->setTheme(type);
+                }
             });
+
+    // 连接 ThemeManager 的主题变化信号到按钮
+    if (auto* tm = ThemeManager::instance())
+    {
+        connect(tm, &ThemeManager::themeChanged,
+                d->m_themeButton, &ThemeToggleButton::onThemeChanged);
+
+        // 同步当前主题状态
+        d->m_themeButton->onThemeChanged(tm->currentThemeType());
+    }
 }
 
 void TitleBarWidget::applyThemeStyle()

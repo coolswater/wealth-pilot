@@ -336,31 +336,31 @@ void ThemeManager::registerThemeChangeListener(QObject* object, const std::funct
 
 void ThemeManager::initBuiltInThemes()
 {
-    // 深色主题 - WealthPilot设计规范
+    // 深色主题 - 专业金融风格
     ThemeColors darkTheme;
     darkTheme.name = QStringLiteral("深色主题");
-    darkTheme.bgPrimary = QStringLiteral("#0d1117");      // 主背景色
-    darkTheme.bgSecondary = QStringLiteral("#161b22");    // 卡片背景色
-    darkTheme.bgElevated = QStringLiteral("#161b22");     // 提升背景色（卡片）
-    darkTheme.bgSurface = QStringLiteral("#1c2128");      // 表面背景色
+    darkTheme.bgPrimary = QStringLiteral("#0A0E17"); // 主背景色（深蓝黑）
+    darkTheme.bgSecondary = QStringLiteral("#111827"); // 卡片背景色（深灰蓝）
+    darkTheme.bgElevated = QStringLiteral("#1A2332"); // 提升背景色（中灰蓝）
+    darkTheme.bgSurface = QStringLiteral("#1A2332"); // 表面背景色
     darkTheme.bgHover = QStringLiteral("rgba(255, 255, 255, 0.05)");
-    darkTheme.textPrimary = QStringLiteral("#e6edf3");    // 主文本色
-    darkTheme.textSecondary = QStringLiteral("#8b949e");  // 次文本色
-    darkTheme.textTertiary = QStringLiteral("#6e7681");   // 三级文本色
-    darkTheme.textDisabled = QStringLiteral("#484f58");   // 禁用文本色
-    darkTheme.primary = QStringLiteral("#58a6ff");        // 主品牌色
-    darkTheme.primaryHover = QStringLiteral("#79c0ff");   // 主色调悬停
-    darkTheme.primaryDark = QStringLiteral("#1f6feb");    // 主色调深色
-    darkTheme.accent = QStringLiteral("#a371f7");         // 强调色
-    darkTheme.success = QStringLiteral("#3fb950");        // 涨/成功色
-    darkTheme.danger = QStringLiteral("#f85149");         // 跌/危险色
-    darkTheme.warning = QStringLiteral("#f0883e");        // 警告色
-    darkTheme.info = QStringLiteral("#58a6ff");           // 信息色
-    darkTheme.border = QStringLiteral("#30363d");         // 边框色
-    darkTheme.divider = QStringLiteral("#21262d");        // 分割线色
-    darkTheme.chartUp = QStringLiteral("#3fb950");        // 图表上涨色
-    darkTheme.chartDown = QStringLiteral("#f85149");      // 图表下跌色
-    darkTheme.chartGrid = QStringLiteral("#30363d");      // 图表网格色
+    darkTheme.textPrimary = QStringLiteral("#F3F4F6"); // 主文本色（亮白）
+    darkTheme.textSecondary = QStringLiteral("#9CA3AF"); // 次文本色（中灰）
+    darkTheme.textTertiary = QStringLiteral("#6B7280"); // 三级文本色
+    darkTheme.textDisabled = QStringLiteral("#4B5563"); // 禁用文本色
+    darkTheme.primary = QStringLiteral("#3B82F6"); // 主品牌色（专业蓝）
+    darkTheme.primaryHover = QStringLiteral("#60A5FA"); // 主色调悬停
+    darkTheme.primaryDark = QStringLiteral("#2563EB"); // 主色调深色
+    darkTheme.accent = QStringLiteral("#F59E0B"); // 强调色（金色）
+    darkTheme.success = QStringLiteral("#10B981"); // 涨/成功色（翠绿）
+    darkTheme.danger = QStringLiteral("#EF4444"); // 跌/危险色（鲜红）
+    darkTheme.warning = QStringLiteral("#F59E0B"); // 警告色（金色）
+    darkTheme.info = QStringLiteral("#3B82F6"); // 信息色
+    darkTheme.border = QStringLiteral("#2D3748"); // 边框色
+    darkTheme.divider = QStringLiteral("#1F2937"); // 分割线色
+    darkTheme.chartUp = QStringLiteral("#EF4444"); // 图表上涨色（鲜红）
+    darkTheme.chartDown = QStringLiteral("#10B981"); // 图表下跌色（翠绿）
+    darkTheme.chartGrid = QStringLiteral("#2D3748"); // 图表网格色
 
     m_themes[ThemeType::Dark] = darkTheme;
 
@@ -395,22 +395,28 @@ void ThemeManager::initBuiltInThemes()
     // 护眼主题
     ThemeColors eyecareTheme;
     eyecareTheme.name = QStringLiteral("护眼主题");
-    eyecareTheme.bgPrimary = QStringLiteral("#1E1A14");
-    eyecareTheme.bgSecondary = QStringLiteral("#2A251E");
-    eyecareTheme.bgElevated = QStringLiteral("#352F26");
-    eyecareTheme.bgSurface = QStringLiteral("#3D372D");
-    eyecareTheme.bgHover = QStringLiteral("#453F35");
-    eyecareTheme.textPrimary = QStringLiteral("#E8DCC8");
-    eyecareTheme.textSecondary = QStringLiteral("#A89B85");
-    eyecareTheme.textTertiary = QStringLiteral("#8B7D66");
-    eyecareTheme.textDisabled = QStringLiteral("#6B5F4F");
-    eyecareTheme.primary = QStringLiteral("#D4A574");
-    eyecareTheme.primaryHover = QStringLiteral("#E5B785");
-    eyecareTheme.primaryDark = QStringLiteral("#C49564");
-    eyecareTheme.accent = QStringLiteral("#C49564");
-    eyecareTheme.success = QStringLiteral("#7CB342");
-    eyecareTheme.danger = QStringLiteral("#E57373");
-    eyecareTheme.warning = QStringLiteral("#FFB74D");
+    eyecareTheme.bgPrimary = QStringLiteral("#1A1A2E"); // 主背景（深紫灰）
+    eyecareTheme.bgSecondary = QStringLiteral("#16213E"); // 卡片背景（深蓝灰）
+    eyecareTheme.bgElevated = QStringLiteral("#0F3460"); // 提升背景（中蓝）
+    eyecareTheme.bgSurface = QStringLiteral("#0F3460"); // 表面背景
+    eyecareTheme.bgHover = QStringLiteral("#1F4068");
+    eyecareTheme.textPrimary = QStringLiteral("#EEEEEE"); // 主文本（暖白）
+    eyecareTheme.textSecondary = QStringLiteral("#B8B8B8"); // 次文本（暖灰）
+    eyecareTheme.textTertiary = QStringLiteral("#888888"); // 三级文本
+    eyecareTheme.textDisabled = QStringLiteral("#666666"); // 禁用文本
+    eyecareTheme.primary = QStringLiteral("#4ECCA3"); // 主色（青绿）
+    eyecareTheme.primaryHover = QStringLiteral("#5FDAB4"); // 主色悬停
+    eyecareTheme.primaryDark = QStringLiteral("#3DBB92"); // 主色深色
+    eyecareTheme.accent = QStringLiteral("#C4A35A"); // 强调色（暖金）
+    eyecareTheme.success = QStringLiteral("#4ECCA3"); // 涨/成功色（青绿）
+    eyecareTheme.danger = QStringLiteral("#E8505B"); // 跌/危险色（暖红）
+    eyecareTheme.warning = QStringLiteral("#FFC93C"); // 警告色（暖黄）
+    eyecareTheme.info = QStringLiteral("#4ECCA3"); // 信息色
+    eyecareTheme.border = QStringLiteral("#1F4068"); // 边框色
+    eyecareTheme.divider = QStringLiteral("#16213E"); // 分割线色
+    eyecareTheme.chartUp = QStringLiteral("#E8505B"); // 图表上涨色（暖红）
+    eyecareTheme.chartDown = QStringLiteral("#4ECCA3"); // 图表下跌色（青绿）
+    eyecareTheme.chartGrid = QStringLiteral("#1F4068"); // 图表网格色
     eyecareTheme.info = QStringLiteral("#D4A574");
     eyecareTheme.border = QStringLiteral("#3D372D");
     eyecareTheme.divider = QStringLiteral("#2A251E");

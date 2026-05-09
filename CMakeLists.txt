@@ -146,6 +146,7 @@ set(MARKET_SOURCES
         src/market/MarketDataHub.h
         src/market/MarketDataHub.cpp
         src/market/StockDataSource.h
+        src/market/MarketDataWebSocket.cpp
         src/market/StockDataSource.cpp
         src/market/ForexDataSource.h
         src/market/ForexDataSource.cpp
@@ -173,6 +174,7 @@ set(MODEL_SOURCES
 
 # Utils 工具
 set(UTIL_SOURCES
+        src/utils/DataExporter.cpp
         src/utils/Logger.cpp
         src/utils/Logger.h
         src/utils/FuturesMockDataGenerator.h
@@ -311,6 +313,9 @@ set(UI_COMPONENT_SOURCES
         src/ui/components/ChartConfig.h
         src/ui/components/ChartConfig.cpp
         src/ui/components/KLineChart.h
+        src/ui/components/EquityCurveWidget.cpp
+        src/ui/components/DrawingTool.cpp
+        src/ui/components/TimeShareChart.cpp
         src/ui/components/KLineChart.cpp
         src/ui/components/ChartToolBar.h
         src/ui/components/ChartToolBar.cpp

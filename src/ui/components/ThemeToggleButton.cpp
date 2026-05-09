@@ -225,10 +225,41 @@ void ThemeToggleButton::mousePressEvent(QMouseEvent* event)
 {
     Q_UNUSED(event);
 
-    ThemeType targetTheme = themeFromPosition(m_indicatorPosition + 1.0);
-    if (targetTheme == m_currentTheme)
+    // 根据点击位置确定目标主题
+    // 计算每个图标区域的中心位置
+    qreal iconWidth = width() / 3.0;
+    qreal clickX = event->position().x();
+
+    ThemeType targetTheme;
+    if (clickX < iconWidth)
     {
         targetTheme = ThemeType::Light;
+    }
+    else if (clickX < iconWidth * 2)
+    {
+        targetTheme = ThemeType::Dark;
+    }
+    else
+    {
+        targetTheme = ThemeType::HighContrast;
+    }
+
+    // 如果点击的是当前主题，则切换到下一个主题
+    if (targetTheme == m_currentTheme)
+    {
+        switch (m_currentTheme)
+        {
+        case ThemeType::Light:
+            targetTheme = ThemeType::Dark;
+            break;
+        case ThemeType::Dark:
+            targetTheme = ThemeType::HighContrast;
+            break;
+        case ThemeType::HighContrast:
+        default:
+            targetTheme = ThemeType::Light;
+            break;
+        }
     }
 
     m_currentTheme = targetTheme;
