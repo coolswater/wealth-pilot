@@ -74,7 +74,7 @@ QFrame#pageToolbar QComboBox {
 }
 
 QFrame#pageToolbar QComboBox:hover {
-    border-color: ${borderLight};
+    border-color: ${primary};
 }
 
 QFrame#pageToolbar QComboBox::drop-down {

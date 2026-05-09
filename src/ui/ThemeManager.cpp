@@ -191,11 +191,8 @@ QString ThemeManager::loadQssFile(const QString& fileName) const
 
 QString ThemeManager::loadBaseQss() const
 {
-    // 加载变量定义
-    QString variables = loadQssFile(QStringLiteral("variables.qss"));
-    // 加载基础样式
-    QString base = loadQssFile(QStringLiteral("base.qss"));
-    return variables + "\n" + base;
+    // 加载基础样式（已包含所有通用样式）
+    return loadQssFile(QStringLiteral("base.qss"));
 }
 
 QString ThemeManager::loadThemeQss(ThemeType type) const
