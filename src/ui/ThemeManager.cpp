@@ -191,7 +191,11 @@ QString ThemeManager::loadQssFile(const QString& fileName) const
 
 QString ThemeManager::loadBaseQss() const
 {
-    return loadQssFile(QStringLiteral("base.qss"));
+    // 加载变量定义
+    QString variables = loadQssFile(QStringLiteral("variables.qss"));
+    // 加载基础样式
+    QString base = loadQssFile(QStringLiteral("base.qss"));
+    return variables + "\n" + base;
 }
 
 QString ThemeManager::loadThemeQss(ThemeType type) const
@@ -222,7 +226,10 @@ QString ThemeManager::loadThemeQss(ThemeType type) const
     // 加载组件样式（所有主题共用）
     QString componentsQss = loadQssFile(QStringLiteral("components.qss"));
 
-    return themeQss + "\n" + componentsQss;
+    // 加载页面样式（所有主题共用）
+    QString pagesQss = loadQssFile(QStringLiteral("pages.qss"));
+
+    return themeQss + "\n" + componentsQss + "\n" + pagesQss;
 }
 
 QString ThemeManager::replaceColorVariables(const QString& qss, const ThemeColors& theme) const

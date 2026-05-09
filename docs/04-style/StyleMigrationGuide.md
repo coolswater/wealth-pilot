@@ -147,6 +147,34 @@ label->style()->polish(label);
 2. **主题切换：** 使用 ThemeManager::registerThemeChangeListener 监听主题变化
 3. **性能优化：** 避免频繁调用 style()->polish()，只在必要时刷新
 
+## 样式系统架构
+
+### 文件结构
+
+```
+resources/style/
+├── variables.qss    # 设计变量定义（颜色、间距、圆角等）
+├── base.qss         # 全局重置和基础样式
+├── theme_dark.qss   # 深色主题样式
+├── theme_light.qss  # 浅色主题样式
+├── theme_eyecare.qss # 护眼主题样式
+├── components.qss   # 组件样式集中管理
+└── pages.qss        # 页面通用样式
+```
+
+### 核心类
+
+- **Tokens.h** - 设计令牌常量定义（颜色、间距、圆角、字体等）
+- **ThemeManager** - 主题管理器，负责主题切换和样式加载
+- **StyleHelper** - 样式辅助工具类，简化属性选择器使用
+
+### 样式优先级
+
+1. QSS 文件中的样式（最高优先级）
+2. 属性选择器样式（通过 setProperty 设置）
+3. 对象名选择器样式（通过 setObjectName 设置）
+4. 代码中的 setStyleSheet（最低优先级，应尽量避免）
+
 ## 统计
 
 - 原始硬编码样式总数：约 1012 处

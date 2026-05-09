@@ -1,0 +1,506 @@
+/**
+ * WealthPilot 页面样式表 v1.0
+ * 集中管理各页面的通用样式
+ */
+
+/* ==================== 通用页面布局 ==================== */
+BasePage {
+    background-color: ${bgPrimary};
+}
+
+/* 页面标题 */
+QLabel#pageTitleLabel {
+    font-size: 24px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+/* 页面副标题 */
+QLabel#pageSubtitleLabel {
+    font-size: 14px;
+    color: ${textSecondary};
+}
+
+/* ==================== 工具栏样式 ==================== */
+QFrame#pageToolbar {
+    background-color: ${bgElevated};
+    border-bottom: 1px solid ${border};
+    padding: 8px 16px;
+}
+
+QFrame#pageToolbar QPushButton {
+    background-color: ${bgSurface};
+    color: ${textPrimary};
+    border: none;
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-size: 13px;
+}
+
+QFrame#pageToolbar QPushButton:hover {
+    background-color: ${bgHover};
+}
+
+QFrame#pageToolbar QPushButton[primary="true"] {
+    background-color: ${primary};
+    color: white;
+}
+
+QFrame#pageToolbar QPushButton[primary="true"]:hover {
+    background-color: ${primaryHover};
+}
+
+QFrame#pageToolbar QLineEdit {
+    background-color: ${bgSurface};
+    border: 1px solid ${border};
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: ${textPrimary};
+    font-size: 13px;
+}
+
+QFrame#pageToolbar QLineEdit:focus {
+    border-color: ${primary};
+}
+
+QFrame#pageToolbar QComboBox {
+    background-color: ${bgSurface};
+    border: 1px solid ${border};
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: ${textPrimary};
+    font-size: 13px;
+    min-width: 100px;
+}
+
+QFrame#pageToolbar QComboBox:hover {
+    border-color: ${borderLight};
+}
+
+QFrame#pageToolbar QComboBox::drop-down {
+    border: none;
+    width: 20px;
+}
+
+QFrame#pageToolbar QComboBox QAbstractItemView {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    selection-background-color: ${primary};
+}
+
+/* ==================== 卡片容器 ==================== */
+QFrame#cardContainer {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 12px;
+}
+
+QFrame#cardContainer:hover {
+    border-color: rgba(88, 166, 255, 0.3);
+}
+
+/* ==================== 统计卡片 ==================== */
+QFrame#statCard {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 12px;
+    padding: 16px;
+}
+
+QFrame#statCard QLabel#statTitle {
+    font-size: 14px;
+    color: ${textSecondary};
+}
+
+QFrame#statCard QLabel#statValue {
+    font-size: 28px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+QFrame#statCard QLabel#statChange {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+QFrame#statCard QLabel#statChange[change="up"] {
+    color: ${danger};
+}
+
+QFrame#statCard QLabel#statChange[change="down"] {
+    color: ${success};
+}
+
+/* ==================== 数据表格 ==================== */
+QTableView#dataTable {
+    background-color: ${bgElevated};
+    border: none;
+    border-radius: 8px;
+    gridline-color: transparent;
+    selection-background-color: ${primary};
+}
+
+QTableView#dataTable::item {
+    padding: 8px 12px;
+    border-bottom: 1px solid ${bgPrimary};
+}
+
+QTableView#dataTable::item:hover {
+    background-color: ${bgHover};
+}
+
+QTableView#dataTable::item:selected {
+    background-color: rgba(88, 166, 255, 0.15);
+}
+
+QTableView#dataTable QHeaderView::section {
+    background-color: ${bgPrimary};
+    color: ${textSecondary};
+    padding: 10px 12px;
+    border: none;
+    border-bottom: 1px solid ${border};
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ==================== 分组框 ==================== */
+QGroupBox {
+    background-color: transparent;
+    border: 1px solid ${border};
+    border-radius: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    font-size: 14px;
+    font-weight: bold;
+    color: ${textPrimary};
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    left: 12px;
+    padding: 0 8px;
+    background-color: ${bgPrimary};
+}
+
+/* ==================== 标签页 ==================== */
+QTabWidget#pageTabs::pane {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 8px;
+}
+
+QTabWidget#pageTabs QTabBar::tab {
+    background-color: transparent;
+    color: ${textSecondary};
+    padding: 8px 20px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-size: 14px;
+}
+
+QTabWidget#pageTabs QTabBar::tab:selected {
+    color: ${primary};
+    border-bottom: 2px solid ${primary};
+}
+
+QTabWidget#pageTabs QTabBar::tab:hover:!selected {
+    color: ${textPrimary};
+    background-color: ${bgHover};
+}
+
+/* ==================== 分割器 ==================== */
+QSplitter#pageSplitter::handle {
+    background-color: ${border};
+}
+
+QSplitter#pageSplitter::handle:hover {
+    background-color: ${primary};
+}
+
+QSplitter#pageSplitter::handle:horizontal {
+    width: 2px;
+}
+
+QSplitter#pageSplitter::handle:vertical {
+    height: 2px;
+}
+
+/* ==================== 滚动区域 ==================== */
+QScrollArea#pageScrollArea {
+    background-color: transparent;
+    border: none;
+}
+
+QScrollArea#pageScrollArea > QWidget > QWidget {
+    background-color: transparent;
+}
+
+/* ==================== 空状态提示 ==================== */
+QLabel#emptyStateTitle {
+    font-size: 18px;
+    font-weight: bold;
+    color: ${textSecondary};
+}
+
+QLabel#emptyStateDescription {
+    font-size: 14px;
+    color: ${textTertiary};
+}
+
+/* ==================== 加载状态 ==================== */
+QLabel#loadingLabel {
+    font-size: 14px;
+    color: ${textSecondary};
+}
+
+/* ==================== 错误提示 ==================== */
+QFrame#errorFrame {
+    background-color: rgba(248, 81, 73, 0.1);
+    border: 1px solid rgba(248, 81, 73, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+QFrame#errorFrame QLabel {
+    color: ${danger};
+}
+
+/* ==================== 成功提示 ==================== */
+QFrame#successFrame {
+    background-color: rgba(63, 185, 80, 0.1);
+    border: 1px solid rgba(63, 185, 80, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+QFrame#successFrame QLabel {
+    color: ${success};
+}
+
+/* ==================== 警告提示 ==================== */
+QFrame#warningFrame {
+    background-color: rgba(240, 136, 62, 0.1);
+    border: 1px solid rgba(240, 136, 62, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+QFrame#warningFrame QLabel {
+    color: ${warning};
+}
+
+/* ==================== 信息提示 ==================== */
+QFrame#infoFrame {
+    background-color: rgba(88, 166, 255, 0.1);
+    border: 1px solid rgba(88, 166, 255, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+QFrame#infoFrame QLabel {
+    color: ${primary};
+}
+
+/* ==================== 列表项 ==================== */
+QFrame#listItem {
+    background-color: ${bgElevated};
+    border: 1px solid ${border};
+    border-radius: 8px;
+    padding: 12px 16px;
+}
+
+QFrame#listItem:hover {
+    border-color: ${primary};
+    background-color: ${bgHover};
+}
+
+QFrame#listItem[selected="true"] {
+    border-color: ${primary};
+    background-color: rgba(88, 166, 255, 0.1);
+}
+
+/* ==================== 标签徽章 ==================== */
+QLabel#badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+QLabel#badge[badgeType="primary"] {
+    background-color: ${primary};
+    color: white;
+}
+
+QLabel#badge[badgeType="success"] {
+    background-color: ${success};
+    color: white;
+}
+
+QLabel#badge[badgeType="danger"] {
+    background-color: ${danger};
+    color: white;
+}
+
+QLabel#badge[badgeType="warning"] {
+    background-color: ${warning};
+    color: white;
+}
+
+QLabel#badge[badgeType="info"] {
+    background-color: ${info};
+    color: white;
+}
+
+/* ==================== 进度条 ==================== */
+QProgressBar#pageProgressBar {
+    background-color: ${bgSurface};
+    border: none;
+    border-radius: 4px;
+    height: 8px;
+    text-align: center;
+}
+
+QProgressBar#pageProgressBar::chunk {
+    background-color: ${primary};
+    border-radius: 4px;
+}
+
+/* ==================== 滑块 ==================== */
+QSlider#pageSlider::groove:horizontal {
+    background-color: ${bgSurface};
+    height: 4px;
+    border-radius: 2px;
+}
+
+QSlider#pageSlider::handle:horizontal {
+    background-color: ${primary};
+    width: 16px;
+    height: 16px;
+    margin: -6px 0;
+    border-radius: 8px;
+}
+
+QSlider#pageSlider::sub-page:horizontal {
+    background-color: ${primary};
+    border-radius: 2px;
+}
+
+/* ==================== 复选框 ==================== */
+QCheckBox {
+    color: ${textPrimary};
+    font-size: 14px;
+    spacing: 8px;
+}
+
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+    border: 2px solid ${border};
+    border-radius: 4px;
+    background-color: transparent;
+}
+
+QCheckBox::indicator:hover {
+    border-color: ${primary};
+}
+
+QCheckBox::indicator:checked {
+    background-color: ${primary};
+    border-color: ${primary};
+}
+
+QCheckBox::indicator:checked:hover {
+    background-color: ${primaryHover};
+}
+
+/* ==================== 单选按钮 ==================== */
+QRadioButton {
+    color: ${textPrimary};
+    font-size: 14px;
+    spacing: 8px;
+}
+
+QRadioButton::indicator {
+    width: 18px;
+    height: 18px;
+    border: 2px solid ${border};
+    border-radius: 9px;
+    background-color: transparent;
+}
+
+QRadioButton::indicator:hover {
+    border-color: ${primary};
+}
+
+QRadioButton::indicator:checked {
+    background-color: ${primary};
+    border-color: ${primary};
+}
+
+/* ==================== 数值显示 ==================== */
+QLabel#valueLarge {
+    font-size: 32px;
+    font-weight: bold;
+    color: ${textPrimary};
+    font-family: 'Roboto Mono', 'Consolas', monospace;
+}
+
+QLabel#valueMedium {
+    font-size: 24px;
+    font-weight: bold;
+    color: ${textPrimary};
+    font-family: 'Roboto Mono', 'Consolas', monospace;
+}
+
+QLabel#valueSmall {
+    font-size: 16px;
+    font-weight: 600;
+    color: ${textPrimary};
+    font-family: 'Roboto Mono', 'Consolas', monospace;
+}
+
+/* ==================== 涨跌颜色 ==================== */
+QLabel[trend="up"],
+QLabel[change="up"] {
+    color: ${danger};
+}
+
+QLabel[trend="down"],
+QLabel[change="down"] {
+    color: ${success};
+}
+
+QLabel[trend="flat"],
+QLabel[change="flat"] {
+    color: ${textSecondary};
+}
+
+/* ==================== 状态指示器 ==================== */
+QLabel#statusIndicator {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+QLabel#statusIndicator[status="online"],
+QLabel#statusIndicator[status="connected"],
+QLabel#statusIndicator[status="success"] {
+    color: ${success};
+}
+
+QLabel#statusIndicator[status="offline"],
+QLabel#statusIndicator[status="disconnected"],
+QLabel#statusIndicator[status="error"] {
+    color: ${danger};
+}
+
+QLabel#statusIndicator[status="warning"],
+QLabel#statusIndicator[status="pending"] {
+    color: ${warning};
+}
+
+QLabel#statusIndicator[status="info"],
+QLabel#statusIndicator[status="loading"] {
+    color: ${info};
+}
