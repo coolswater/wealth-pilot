@@ -296,8 +296,7 @@ void ForexPage::updateForexTable()
         d->forexListTable->setItem(i, 3, new QTableWidgetItem(QString::number(forex.ask, 'f', 4)));
         
         auto* changeItem = new QTableWidgetItem(QString::number(forex.changePercent, 'f', 2) + "%");
-        changeItem->setProperty("trend", forex.changePercent >= 0 ? "up" : "down");
-        StyleHelper::refreshStyle(changeItem);
+        changeItem->setForeground(QColor(forex.changePercent >= 0 ? Tokens::Colors::Danger : Tokens::Colors::Success));
         d->forexListTable->setItem(i, 4, changeItem);
         
         d->forexListTable->setItem(i, 5, new QTableWidgetItem(forex.updateTime.toString("hh:mm:ss")));

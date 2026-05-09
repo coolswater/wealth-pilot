@@ -15,6 +15,7 @@
 #include <QLabel>
 #include <QFrame>
 #include <QMouseEvent>
+#include <QStyle>
 
 using namespace Tokens;
 

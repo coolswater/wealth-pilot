@@ -387,21 +387,20 @@ void BacktestPage::updateResult(const BacktestResult& result)
         d->tradeTable->setItem(i, 0, new QTableWidgetItem(trade.time.toString("yyyy-MM-dd")));
         
         auto* actionItem = new QTableWidgetItem(trade.action);
-        actionItem->setProperty("action", trade.action == QStringLiteral("买入") ? "buy" : "sell");
-        StyleHelper::refreshStyle(actionItem);
+        actionItem->setForeground(QColor(trade.action == QStringLiteral("买入")
+                                             ? Tokens::Colors::Success
+                                             : Tokens::Colors::Danger));
         d->tradeTable->setItem(i, 1, actionItem);
         
         d->tradeTable->setItem(i, 2, new QTableWidgetItem(QString::number(trade.price, 'f', 2)));
         d->tradeTable->setItem(i, 3, new QTableWidgetItem(QString::number(trade.volume)));
         
         auto* profitItem = new QTableWidgetItem(QString::number(trade.profit, 'f', 2));
-        profitItem->setProperty("trend", trade.profit >= 0 ? "up" : "down");
-        StyleHelper::refreshStyle(profitItem);
+        profitItem->setForeground(QColor(trade.profit >= 0 ? Tokens::Colors::Danger : Tokens::Colors::Success));
         d->tradeTable->setItem(i, 4, profitItem);
         
         auto* cumItem = new QTableWidgetItem(QString::number(trade.cumProfit, 'f', 2));
-        cumItem->setProperty("trend", trade.cumProfit >= 0 ? "up" : "down");
-        StyleHelper::refreshStyle(cumItem);
+        cumItem->setForeground(QColor(trade.cumProfit >= 0 ? Tokens::Colors::Danger : Tokens::Colors::Success));
         d->tradeTable->setItem(i, 5, cumItem);
     }
     

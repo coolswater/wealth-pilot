@@ -322,8 +322,7 @@ void AlertSettingDialog::updateAlertTable()
         // 状态
         QString status = condition.enabled ? QStringLiteral("启用") : QStringLiteral("禁用");
         QTableWidgetItem* statusItem = new QTableWidgetItem(status);
-        statusItem->setProperty("status", condition.enabled ? "success" : "disabled");
-        statusItem->setForeground(QColor(condition.enabled ? Colors::Success : Colors::TextSecondary));
+        statusItem->setForeground(QColor(condition.enabled ? Tokens::Colors::Success : Tokens::Colors::TextSecondary));
         m_alertTable->setItem(row, 4, statusItem);
     }
 }

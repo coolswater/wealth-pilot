@@ -34,6 +34,9 @@ public:
     void setBackgroundColor(const QColor& color);
     void resetBackgroundColor();
 
+    // 设置主题
+    void setTheme(const QString& theme);
+
 protected:
     void onHoverEnter() override;
     void onHoverLeave() override;

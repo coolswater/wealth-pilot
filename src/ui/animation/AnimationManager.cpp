@@ -28,6 +28,7 @@
 #include <QPointer>
 #include <QCoreApplication>
 #include <QDebug>
+#include <QStyle>
 
 // 静态单例实例指针初始化
 AnimationManager* AnimationManager::s_instance = nullptr;

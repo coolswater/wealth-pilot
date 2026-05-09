@@ -118,6 +118,7 @@ private:
     // 布局创建方法
     QLayout* createHeaderLayout();
     QLayout* createPriceLayout();
+    QLayout* createDepthLayout();
     QLayout* createStatisticsLayout();
 
     // ========== PIMPL ==========

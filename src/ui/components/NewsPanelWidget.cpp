@@ -7,6 +7,7 @@
 #include "core/config/Tokens.h"
 #include <QHeaderView>
 #include <QDateTime>
+#include <QStyle>
 
 using namespace Tokens;
 

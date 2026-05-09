@@ -5,6 +5,8 @@
 
 #include "ChartStatusBar.h"
 #include "ui/components/StyleHelper.h"
+#include "core/config/Tokens.h"
+#include "ui/components/ChartStyles.h"
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QFrame>
@@ -26,7 +28,7 @@ ChartStatusBar::ChartStatusBar(QWidget *parent)
 {
     setupUI();
     setObjectName("ChartStatusBar");
-    setFixedHeight(ChartStyles::Sizes::StatusBarHeight);
+    setFixedHeight(32);
 }
 
 ChartStatusBar::~ChartStatusBar() = default;
@@ -49,11 +51,11 @@ void ChartStatusBar::setConnectionStatus(const QString& status, const QColor& co
     if (d->connectionLabel) {
         d->connectionLabel->setText(status);
         // 动态颜色 - 根据连接状态设置属性
-        if (color.name() == Colors::Success)
+        if (color.name() == Tokens::Colors::Success)
         {
             d->connectionLabel->setProperty("status", "connected");
         }
-        else if (color.name() == Colors::Danger)
+        else if (color.name() == Tokens::Colors::Danger)
         {
             d->connectionLabel->setProperty("status", "disconnected");
         }
@@ -100,8 +102,8 @@ void ChartStatusBar::clear()
 void ChartStatusBar::setupUI()
 {
     QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(Spacing::SM, Spacing::XS, Spacing::SM, Spacing::XS);
-    layout->setSpacing(Spacing::SM);
+    layout->setContentsMargins(Tokens::Spacing::SM, Tokens::Spacing::XS, Tokens::Spacing::SM, Tokens::Spacing::XS);
+    layout->setSpacing(Tokens::Spacing::SM);
 
     // 账户信息
     d->accountLabel = new QLabel(QStringLiteral("账户: --"), this);

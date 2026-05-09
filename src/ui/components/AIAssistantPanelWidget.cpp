@@ -18,6 +18,7 @@
 #include <QFrame>
 #include <QTimer>
 #include <QScrollBar>
+#include <QStyle>
 
 #include "ai/service/AIService.h"
 

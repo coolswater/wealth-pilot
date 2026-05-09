@@ -65,6 +65,7 @@ private:
     void initConverter();
     void initConnections();
     void loadForexList();
+    void updateForexTable();
     void updateForexDetail(const ForexQuote& quote);
     void loadRateHistory(const QString& pair);
     void calculateConversion();

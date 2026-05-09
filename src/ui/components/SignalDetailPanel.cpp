@@ -54,8 +54,8 @@ SignalDetailPanel::~SignalDetailPanel() = default;
 void SignalDetailPanel::setupUI()
 {
     auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(Spacing::MD, Spacing::MD, Spacing::MD, Spacing::MD);
-    mainLayout->setSpacing(Spacing::MD);
+    mainLayout->setContentsMargins(Tokens::Spacing::MD, Tokens::Spacing::MD, Tokens::Spacing::MD, Tokens::Spacing::MD);
+    mainLayout->setSpacing(Tokens::Spacing::MD);
 
     // 摘要区域
     auto* summaryWidget = createSummaryWidget();

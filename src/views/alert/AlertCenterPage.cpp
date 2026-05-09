@@ -238,8 +238,11 @@ void AlertCenterPage::loadAlertRules()
         
         QString statusText = rule.isActive ? QStringLiteral("激活中") : (rule.isTriggered ? QStringLiteral("已触发") : QStringLiteral("已禁用"));
         auto* statusItem = new QTableWidgetItem(statusText);
-        statusItem->setProperty("status", rule.isActive ? "active" : (rule.isTriggered ? "triggered" : "disabled"));
-        StyleHelper::refreshStyle(statusItem);
+        statusItem->setForeground(QColor(rule.isActive
+                                             ? Tokens::Colors::Success
+                                             : (rule.isTriggered
+                                                    ? Tokens::Colors::Warning
+                                                    : Tokens::Colors::TextSecondary)));
         d->alertTable->setItem(i, 4, statusItem);
         
         d->alertTable->setItem(i, 5, new QTableWidgetItem(rule.createTime.toString("yyyy-MM-dd hh:mm")));
