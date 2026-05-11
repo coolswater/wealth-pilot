@@ -83,12 +83,12 @@ public:
     /**
      * @brief 设置持仓数据
      */
-    void setPositions(const QVector<PositionInfo>& positions);
+    void setPositions(const QVector<RiskPositionInfo>& positions);
 
     /**
      * @brief 添加持仓
      */
-    void addPosition(const PositionInfo& position);
+    void addPosition(const RiskPositionInfo& position);
 
     /**
      * @brief 清除持仓
@@ -125,7 +125,7 @@ public:
     /**
      * @brief 检查风险预警
      */
-    QVector<RiskAlert> checkRiskAlerts();
+    QVector<RiskAnalyzerAlert> checkRiskAlerts();
 
     /**
      * @brief 生成风险报告
@@ -143,7 +143,7 @@ signals:
     /**
      * @brief 风险预警信号
      */
-    void riskAlert(const RiskAlert& alert);
+    void riskAlert(const RiskAnalyzerAlert& alert);
 
     /**
      * @brief 风险指标更新

@@ -138,7 +138,7 @@ ChartDrawingObject DrawingToolManager::getDrawing(const QString& id) const
             return drawing;
         }
     }
-    return DrawingObject();
+    return ChartDrawingObject();
 }
 
 void DrawingToolManager::selectDrawing(const QString& id)

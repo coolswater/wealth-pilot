@@ -49,20 +49,20 @@ RiskMetrics RiskAnalyzer::calculateRiskMetrics()
     }
 
     // 计算总市值和盈亏
-    for (const PositionInfo& pos : m_positions) {
+    for (const RiskPositionInfo& pos : m_positions) {
         m_metrics.totalValue += pos.marketValue;
         m_metrics.totalProfit += pos.profit;
     }
 
     // 计算总盈亏比例
     double totalCost = 0;
-    for (const PositionInfo& pos : m_positions) {
+    for (const RiskPositionInfo& pos : m_positions) {
         totalCost += pos.cost * pos.quantity;
     }
     m_metrics.totalProfitPercent = totalCost > 0 ? m_metrics.totalProfit / totalCost : 0;
 
     // 计算权重
-    for (PositionInfo& pos : m_positions) {
+    for (RiskPositionInfo& pos : m_positions) {
         pos.weight = m_metrics.totalValue > 0 ? pos.marketValue / m_metrics.totalValue : 0;
     }
 
@@ -95,7 +95,7 @@ double RiskAnalyzer::calculateVaR(double confidence, int days)
 
     // 收集所有持仓的历史收益率
     QVector<double> allReturns;
-    for (const PositionInfo& pos : m_positions) {
+    for (const RiskPositionInfo& pos : m_positions) {
         QVector<double> returns = getHistoricalReturns(pos.symbol);
         allReturns.append(returns);
     }
@@ -125,7 +125,7 @@ double RiskAnalyzer::calculateMaxDrawdown()
 
     // 简化计算：使用各持仓的最大回撤加权平均
     double totalDrawdown = 0;
-    for (const PositionInfo& pos : m_positions) {
+    for (const RiskPositionInfo& pos : m_positions) {
         // 假设最大回撤为从成本到当前最低点的回撤
         double drawdown = pos.cost > 0 ?
             qMax(0.0, (pos.cost - pos.currentPrice) / pos.cost) : 0;
@@ -142,7 +142,7 @@ double RiskAnalyzer::calculateVolatility()
     // 计算组合波动率
     double totalVariance = 0;
 
-    for (const PositionInfo& pos : m_positions) {
+    for (const RiskPositionInfo& pos : m_positions) {
         QVector<double> returns = getHistoricalReturns(pos.symbol);
         if (returns.isEmpty()) continue;
 
@@ -170,7 +170,7 @@ double RiskAnalyzer::calculateConcentrationRisk()
 
     // 使用赫芬达尔指数计算集中度
     double hhi = 0;
-    for (const PositionInfo& pos : m_positions) {
+    for (const RiskPositionInfo& pos : m_positions) {
         hhi += pow(pos.weight * 100, 2);
     }
 
@@ -286,7 +286,7 @@ QString RiskAnalyzer::generateRiskReport()
         .arg("代码").arg("数量").arg("市值").arg("盈亏").arg("权重");
     report += QStringLiteral("------------------------------------------------\n");
 
-    for (const PositionInfo& pos : m_positions) {
+    for (const RiskPositionInfo& pos : m_positions) {
         report += QString("%-10s %8d %10.2f %10.2f %7.1f%%\n")
             .arg(pos.symbol)
             .arg(pos.quantity)
