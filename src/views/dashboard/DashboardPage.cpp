@@ -61,16 +61,15 @@ public:
 
     void paint(QPainter* painter, const QStyleOptionViewItem& option,
                const QModelIndex& index) const override {
-        // 绘制背景
+        // 绘制背景（留出网格线空间）
         painter->save();
+        QRect bgRect = option.rect.adjusted(0, 0, -1, -1); // 避免覆盖右边和底边网格线
         if (option.state & QStyle::State_Selected) {
-            painter->fillRect(option.rect, Tokens::Color::primary());
+            painter->fillRect(bgRect, Tokens::Color::primary());
         } else if (option.state & QStyle::State_MouseOver) {
-            painter->fillRect(option.rect, QColor(255, 255, 255, 13));
+            painter->fillRect(bgRect, QColor(255, 255, 255, 13));
         }
         painter->restore();
-
-        // 不在这里绘制边框，让表格的 gridStyle 处理
 
         // 获取数值和文本
         double value = index.data(Qt::UserRole).toDouble();
@@ -108,16 +107,15 @@ public:
 
     void paint(QPainter* painter, const QStyleOptionViewItem& option,
                const QModelIndex& index) const override {
-        // 绘制背景
+        // 绘制背景（留出网格线空间）
         painter->save();
+        QRect bgRect = option.rect.adjusted(0, 0, -1, -1);
         if (option.state & QStyle::State_Selected) {
-            painter->fillRect(option.rect, Tokens::Color::primary());
+            painter->fillRect(bgRect, Tokens::Color::primary());
         } else if (option.state & QStyle::State_MouseOver) {
-            painter->fillRect(option.rect, QColor(255, 255, 255, 13));
+            painter->fillRect(bgRect, QColor(255, 255, 255, 13));
         }
         painter->restore();
-
-        // 不在这里绘制边框，让表格的 gridStyle 处理
 
         // 获取数值和文本
         double value = index.data(Qt::UserRole).toDouble();
@@ -150,16 +148,15 @@ public:
 
     void paint(QPainter* painter, const QStyleOptionViewItem& option,
                const QModelIndex& index) const override {
-        // 绘制背景
+        // 绘制背景（留出网格线空间）
         painter->save();
+        QRect bgRect = option.rect.adjusted(0, 0, -1, -1);
         if (option.state & QStyle::State_Selected) {
-            painter->fillRect(option.rect, Tokens::Color::primary());
+            painter->fillRect(bgRect, Tokens::Color::primary());
         } else if (option.state & QStyle::State_MouseOver) {
-            painter->fillRect(option.rect, QColor(255, 255, 255, 13));
+            painter->fillRect(bgRect, QColor(255, 255, 255, 13));
         }
         painter->restore();
-
-        // 不在这里绘制边框，让表格的 gridStyle 处理
 
         // 获取涨跌幅数据用于颜色判断
         double changePercent = index.data(Qt::UserRole).toDouble();
