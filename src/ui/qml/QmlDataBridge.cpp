@@ -7,6 +7,7 @@
 #include "../../core/types/MarketTypes.h"
 #include <QQmlEngine>
 #include <QJSEngine>
+#include <QVariantMap>
 
 // ========== KLineQmlModel ==========
 
@@ -100,6 +101,24 @@ void KLineQmlModel::clear()
     emit countChanged();
 }
 
+QVariantMap KLineQmlModel::get(int index) const
+{
+    QVariantMap result;
+    if (index < 0 || index >= m_data.size())
+        return result;
+    
+    const auto& kline = m_data[index];
+    result["timestamp"] = kline.time.toMSecsSinceEpoch();
+    result["open"] = kline.open;
+    result["high"] = kline.high;
+    result["low"] = kline.low;
+    result["close"] = kline.close;
+    result["volume"] = kline.volume;
+    result["time"] = kline.time;
+    
+    return result;
+}
+
 // ========== TimeShareQmlModel ==========
 
 TimeShareQmlModel::TimeShareQmlModel(QObject* parent)
@@ -174,6 +193,21 @@ void TimeShareQmlModel::clear()
     m_data.clear();
     endResetModel();
     emit countChanged();
+}
+
+QVariantMap TimeShareQmlModel::get(int index) const
+{
+    QVariantMap result;
+    if (index < 0 || index >= m_data.size())
+        return result;
+    
+    const auto& point = m_data[index];
+    result["time"] = point.time;
+    result["price"] = point.price;
+    result["avgPrice"] = point.avgPrice;
+    result["volume"] = point.volume;
+    
+    return result;
 }
 
 // ========== RealtimeQuoteQml ==========

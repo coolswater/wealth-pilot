@@ -56,6 +56,9 @@ public:
     Q_INVOKABLE void appendData(const KLineData& data);
     Q_INVOKABLE void updateLastData(const KLineData& data);
     Q_INVOKABLE void clear();
+    
+    // QML 便捷方法 - 返回单条数据的 QVariantMap
+    Q_INVOKABLE QVariantMap get(int index) const;
 
 signals:
     void countChanged();
@@ -96,6 +99,9 @@ public:
     Q_INVOKABLE void setData(const QVector<TimeShareData>& data);
     Q_INVOKABLE void appendData(const TimeShareData& data);
     Q_INVOKABLE void clear();
+    
+    // QML 便捷方法
+    Q_INVOKABLE QVariantMap get(int index) const;
 
 signals:
     void countChanged();
