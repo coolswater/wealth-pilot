@@ -165,10 +165,10 @@ void ForexPage::initForexList()
     d->forexListTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     // 设置颜色委托（红涨绿跌）
-    d->forexListTable->setItemDelegateForColumn(1, new PriceColorDelegate(this));  // 汇率
-    d->forexListTable->setItemDelegateForColumn(2, new PriceColorDelegate(this));  // 买入价
-    d->forexListTable->setItemDelegateForColumn(3, new PriceColorDelegate(this));  // 卖出价
-    d->forexListTable->setItemDelegateForColumn(4, new ChangeColorDelegate(this)); // 涨跌幅
+    d->forexListTable->setItemDelegateForColumn(1, new WealthPilot::PriceColorDelegate(this)); // 汇率
+    d->forexListTable->setItemDelegateForColumn(2, new WealthPilot::PriceColorDelegate(this)); // 买入价
+    d->forexListTable->setItemDelegateForColumn(3, new WealthPilot::PriceColorDelegate(this)); // 卖出价
+    d->forexListTable->setItemDelegateForColumn(4, new WealthPilot::ChangeColorDelegate(this)); // 涨跌幅
 }
 
 void ForexPage::initRateChart()

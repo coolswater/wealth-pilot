@@ -285,8 +285,8 @@ void FundPage::initFundList()
     d->fundListTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     // 设置颜色委托（红涨绿跌）
-    d->fundListTable->setItemDelegateForColumn(3, new PriceColorDelegate(this));  // 最新价
-    d->fundListTable->setItemDelegateForColumn(4, new ChangeColorDelegate(this)); // 涨跌幅
+    d->fundListTable->setItemDelegateForColumn(3, new WealthPilot::PriceColorDelegate(this)); // 最新价
+    d->fundListTable->setItemDelegateForColumn(4, new WealthPilot::ChangeColorDelegate(this)); // 涨跌幅
 }
 
 void FundPage::initDetailPanel()
