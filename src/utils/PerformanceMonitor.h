@@ -196,7 +196,7 @@ private:
 /**
  * @brief 结束性能计时
  */
-#define PERF_END(name) \
+#define PERF_MONITOR_END(name) \
     PerformanceMonitor::instance()->endTimer(name)
 
 /**
