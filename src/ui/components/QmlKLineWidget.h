@@ -18,7 +18,7 @@
 #include <QWidget>
 #include <QQuickWidget>
 #include <QVector>
-#include "core/types/MarketTypes.h"
+#include "core/types/MarketTypes.h"  // 包含完整类型定义
 
 class KLineQmlModel;
 class TimeShareQmlModel;

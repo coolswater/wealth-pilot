@@ -9,6 +9,8 @@
 #include <QQmlContext>
 #include <QQuickItem>
 #include <QVBoxLayout>
+#include <QResizeEvent>
+#include <QShowEvent>
 #include <QDebug>
 
 QmlKLineWidget::QmlKLineWidget(QWidget* parent)

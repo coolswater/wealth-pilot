@@ -19,9 +19,9 @@
 #include <QAbstractListModel>
 #include <QDateTime>
 #include <QColor>
+#include "core/types/MarketTypes.h"  // 包含完整类型定义
 
-class KLineData;
-class TimeShareData;
+// 前向声明不再需要，因为已包含 MarketTypes.h
 
 /**
  * @brief K线数据模型（QML）
