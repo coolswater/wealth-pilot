@@ -4,10 +4,11 @@
  */
 
 #include "PerformanceManager.h"
-#include "../utils/Logger.h"
 #include <QThread>
 #include <QCoreApplication>
 #include <algorithm>
+
+#include "utils/Logger.h"
 
 namespace WealthPilot {
 
