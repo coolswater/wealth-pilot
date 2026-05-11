@@ -71,9 +71,9 @@ struct StrategyRuntime {
 };
 
 /**
- * @brief 风控规则
+ * @brief 风控规则（量化交易）
  */
-struct RiskRule {
+struct QuantRiskRule {
     QString id;                 ///< 规则ID
     QString name;               ///< 规则名称
     QString type;               ///< 类型
@@ -168,7 +168,7 @@ public:
     /**
      * @brief 添加风控规则
      */
-    void addRiskRule(const RiskRule& rule);
+    void addRiskRule(const QuantRiskRule& rule);
 
     /**
      * @brief 移除风控规则
@@ -244,7 +244,7 @@ private:
     QVector<LiveTrade> m_tradeHistory;
     QHash<QString, QHash<QString, int>> m_positions; // strategyId -> symbol -> quantity
 
-    QVector<RiskRule> m_riskRules;
+    QVector<QuantRiskRule> m_riskRules;
     QTimer* m_riskCheckTimer = nullptr;
 };
 

@@ -21,13 +21,13 @@ RiskAnalyzer::RiskAnalyzer(QObject* parent)
     LOG_INFO("RiskAnalyzer initialized");
 }
 
-void RiskAnalyzer::setPositions(const QVector<PositionInfo>& positions)
+void RiskAnalyzer::setPositions(const QVector<RiskPositionInfo>& positions)
 {
     m_positions = positions;
     LOG_DEBUG(QString("Positions set: %1 items").arg(positions.size()));
 }
 
-void RiskAnalyzer::addPosition(const PositionInfo& position)
+void RiskAnalyzer::addPosition(const RiskPositionInfo& position)
 {
     m_positions.append(position);
     LOG_DEBUG(QString("Position added: %1").arg(position.symbol));
@@ -111,7 +111,7 @@ double RiskAnalyzer::calculateVaR(double confidence, int days)
     }
 
     // 历史模拟法
-    std::sort(allReturns);
+    std::sort(allReturns.begin(), allReturns.end());
     int index = static_cast<int>((1 - confidence) * allReturns.size());
     double varReturn = -allReturns[index];
 
@@ -179,13 +179,13 @@ double RiskAnalyzer::calculateConcentrationRisk()
     return hhi / maxHHI;
 }
 
-QVector<RiskAlert> RiskAnalyzer::checkRiskAlerts()
+QVector<RiskAnalyzerAlert> RiskAnalyzer::checkRiskAlerts()
 {
     QVector<RiskAlert> alerts;
 
     // 检查最大回撤
     if (m_metrics.maxDrawdown > m_maxDrawdownLimit) {
-        RiskAlert alert;
+        RiskAnalyzerAlert alert;
         alert.type = "max_drawdown";
         alert.level = m_metrics.maxDrawdown > m_maxDrawdownLimit * 1.5 ? "danger" : "warning";
         alert.message = QString("最大回撤超过阈值: %1% > %2%")
@@ -199,7 +199,7 @@ QVector<RiskAlert> RiskAnalyzer::checkRiskAlerts()
 
     // 检查集中度风险
     if (m_metrics.concentrationRisk > m_concentrationLimit) {
-        RiskAlert alert;
+        RiskAnalyzerAlert alert;
         alert.type = "concentration";
         alert.level = "warning";
         alert.message = QString("持仓集中度过高: %1%")
@@ -212,7 +212,7 @@ QVector<RiskAlert> RiskAnalyzer::checkRiskAlerts()
 
     // 检查 VaR
     if (m_metrics.var95 > m_varLimit) {
-        RiskAlert alert;
+        RiskAnalyzerAlert alert;
         alert.type = "var";
         alert.level = "warning";
         alert.message = QString("VaR(95%)超过阈值: %1% > %2%")
@@ -225,10 +225,10 @@ QVector<RiskAlert> RiskAnalyzer::checkRiskAlerts()
     }
 
     // 检查单个持仓风险
-    for (const PositionInfo& pos : m_positions) {
+    for (const RiskPositionInfo& pos : m_positions) {
         // 单只股票权重过高
         if (pos.weight > 0.3) {
-            RiskAlert alert;
+            RiskAnalyzerAlert alert;
             alert.type = "single_position";
             alert.level = "warning";
             alert.symbol = pos.symbol;
@@ -243,7 +243,7 @@ QVector<RiskAlert> RiskAnalyzer::checkRiskAlerts()
 
         // 单只股票亏损过大
         if (pos.profitPercent < -0.2) {
-            RiskAlert alert;
+            RiskAnalyzerAlert alert;
             alert.type = "large_loss";
             alert.level = "danger";
             alert.symbol = pos.symbol;
@@ -296,10 +296,10 @@ QString RiskAnalyzer::generateRiskReport()
     }
 
     // 风险预警
-    QVector<RiskAlert> alerts = checkRiskAlerts();
+    QVector<RiskAnalyzerAlert> alerts = checkRiskAlerts();
     if (!alerts.isEmpty()) {
         report += QStringLiteral("\n========== 风险预警 ==========\n");
-        for (const RiskAlert& alert : alerts) {
+        for (const RiskAnalyzerAlert& alert : alerts) {
             report += QString("[%1] %2\n").arg(alert.level.toUpper()).arg(alert.message);
         }
     }

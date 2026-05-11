@@ -22,9 +22,9 @@
 #include <QHash>
 
 /**
- * @brief 持仓信息
+ * @brief 持仓信息（风险分析）
  */
-struct PositionInfo {
+struct RiskPositionInfo {
     QString symbol;         ///< 股票代码
     QString name;           ///< 股票名称
     int quantity = 0;       ///< 持仓数量
@@ -54,9 +54,9 @@ struct RiskMetrics {
 };
 
 /**
- * @brief 风险预警
+ * @brief 风险预警（分析模块）
  */
-struct RiskAlert {
+struct RiskAnalyzerAlert {
     QString type;           ///< 预警类型
     QString level;          ///< 预警级别 (info/warning/danger)
     QString message;        ///< 预警消息
@@ -157,7 +157,7 @@ private:
     QVector<double> getHistoricalReturns(const QString& symbol);
     double calculateBeta(const QString& symbol);
 
-    QVector<PositionInfo> m_positions;
+    QVector<RiskPositionInfo> m_positions;
     RiskMetrics m_metrics;
 
     // 风险阈值

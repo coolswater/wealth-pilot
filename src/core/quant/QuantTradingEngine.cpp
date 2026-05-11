@@ -166,7 +166,7 @@ void QuantTradingEngine::subscribeSymbols(const QString& strategyId, const QStri
     LOG_INFO(QString("Symbols subscribed for %1: %2").arg(strategyId).arg(symbols.join(",")));
 }
 
-void QuantTradingEngine::addRiskRule(const RiskRule& rule)
+void QuantTradingEngine::addRiskRule(const QuantRiskRule& rule)
 {
     m_riskRules.append(rule);
     LOG_INFO(QString("Risk rule added: %1 (%2)").arg(rule.name).arg(rule.id));
@@ -185,7 +185,7 @@ void QuantTradingEngine::removeRiskRule(const QString& ruleId)
 
 bool QuantTradingEngine::checkRiskControl(const QString& strategyId, const StrategySignal& signal)
 {
-    for (const RiskRule& rule : m_riskRules) {
+    for (const QuantRiskRule& rule : m_riskRules) {
         if (!rule.enabled) continue;
 
         // 检查单笔交易限额
@@ -344,7 +344,7 @@ void QuantTradingEngine::checkAllRiskRules()
         if (status.state != TradingState::Running) continue;
 
         // 检查亏损限额
-        for (const RiskRule& rule : m_riskRules) {
+        for (const QuantRiskRule& rule : m_riskRules) {
             if (rule.type == "loss_limit" && rule.enabled) {
                 if (status.totalProfit < -rule.threshold) {
                     emit riskTriggered(rule.id, QString("策略 %1 亏损超过限额")

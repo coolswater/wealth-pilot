@@ -19,6 +19,8 @@
 #include <QVector>
 #include <QHash>
 #include <QString>
+#include <QDateTime>
+#include <QVariant>
 
 /**
  * @brief 账户类型
@@ -32,9 +34,9 @@ enum class AccountType {
 };
 
 /**
- * @brief 账户信息
+ * @brief 多账户信息（账户管理）
  */
-struct AccountInfo {
+struct MultiAccountInfo {
     QString id;                 ///< 账户ID
     QString name;               ///< 账户名称
     AccountType type;           ///< 账户类型
@@ -83,12 +85,12 @@ public:
     /**
      * @brief 添加账户
      */
-    bool addAccount(const AccountInfo& account);
+    bool addAccount(const MultiAccountInfo& account);
 
     /**
      * @brief 更新账户
      */
-    bool updateAccount(const AccountInfo& account);
+    bool updateAccount(const MultiAccountInfo& account);
 
     /**
      * @brief 删除账户
@@ -98,17 +100,17 @@ public:
     /**
      * @brief 获取账户
      */
-    AccountInfo getAccount(const QString& accountId) const;
+    MultiAccountInfo getAccount(const QString& accountId) const;
 
     /**
      * @brief 获取所有账户
      */
-    QVector<AccountInfo> getAllAccounts() const;
+    QVector<MultiAccountInfo> getAllAccounts() const;
 
     /**
      * @brief 获取账户列表（按类型）
      */
-    QVector<AccountInfo> getAccountsByType(AccountType type) const;
+    QVector<MultiAccountInfo> getAccountsByType(AccountType type) const;
 
     /**
      * @brief 获取账户数量
@@ -130,7 +132,7 @@ public:
     /**
      * @brief 获取当前账户信息
      */
-    AccountInfo currentAccount() const;
+    MultiAccountInfo currentAccount() const;
 
     // ========== 账户分组 ==========
 
@@ -210,12 +212,12 @@ signals:
     /**
      * @brief 账户添加信号
      */
-    void accountAdded(const AccountInfo& account);
+    void accountAdded(const MultiAccountInfo& account);
 
     /**
      * @brief 账户更新信号
      */
-    void accountUpdated(const AccountInfo& account);
+    void accountUpdated(const MultiAccountInfo& account);
 
     /**
      * @brief 账户删除信号
@@ -243,7 +245,7 @@ private:
 
     void updateGroupStats(const QString& groupId);
 
-    QHash<QString, AccountInfo> m_accounts;
+    QHash<QString, MultiAccountInfo> m_accounts;
     QHash<QString, AccountGroup> m_groups;
     QString m_currentAccountId;
 

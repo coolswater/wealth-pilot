@@ -22,9 +22,9 @@
 #include <QDateTime>
 
 /**
- * @brief 插件信息
+ * @brief 插件信息（市场）
  */
-struct PluginInfo {
+struct MarketPluginInfo {
     QString id;                 ///< 插件ID
     QString name;               ///< 插件名称
     QString version;            ///< 版本
@@ -75,23 +75,23 @@ public:
     /**
      * @brief 获取热门插件
      */
-    QVector<PluginInfo> getHotPlugins(int limit = 20) const;
+    QVector<MarketPluginInfo> getHotPlugins(int limit = 20) const;
 
     /**
      * @brief 获取最新插件
      */
-    QVector<PluginInfo> getLatestPlugins(int limit = 20) const;
+    QVector<MarketPluginInfo> getLatestPlugins(int limit = 20) const;
 
     /**
      * @brief 搜索插件
      */
-    QVector<PluginInfo> searchPlugins(const QString& keyword,
+    QVector<MarketPluginInfo> searchPlugins(const QString& keyword,
                                       const QString& category = QString()) const;
 
     /**
      * @brief 获取插件详情
      */
-    PluginInfo getPlugin(const QString& pluginId) const;
+    MarketPluginInfo getPlugin(const QString& pluginId) const;
 
     /**
      * @brief 获取分类列表
@@ -101,7 +101,7 @@ public:
     /**
      * @brief 获取分类插件
      */
-    QVector<PluginInfo> getPluginsByCategory(const QString& category) const;
+    QVector<MarketPluginInfo> getPluginsByCategory(const QString& category) const;
 
     // ========== 插件安装 ==========
 
@@ -128,7 +128,7 @@ public:
     /**
      * @brief 检查插件更新
      */
-    QVector<PluginInfo> checkUpdates() const;
+    QVector<MarketPluginInfo> checkUpdates() const;
 
     // ========== 插件管理 ==========
 
@@ -145,12 +145,12 @@ public:
     /**
      * @brief 获取已安装插件
      */
-    QVector<PluginInfo> getInstalledPlugins() const;
+    QVector<MarketPluginInfo> getInstalledPlugins() const;
 
     /**
      * @brief 获取已启用插件
      */
-    QVector<PluginInfo> getEnabledPlugins() const;
+    QVector<MarketPluginInfo> getEnabledPlugins() const;
 
     /**
      * @brief 加载插件
@@ -179,12 +179,12 @@ public:
     /**
      * @brief 发布插件
      */
-    bool publishPlugin(const PluginInfo& plugin);
+    bool publishPlugin(const MarketPluginInfo& plugin);
 
     /**
      * @brief 更新插件信息
      */
-    bool updatePluginInfo(const PluginInfo& plugin);
+    bool updatePluginInfo(const MarketPluginInfo& plugin);
 
 signals:
     /**
@@ -224,7 +224,7 @@ private:
     void updatePluginRating(const QString& pluginId);
     bool checkDependencies(const QStringList& dependencies);
 
-    QHash<QString, PluginInfo> m_plugins;
+    QHash<QString, MarketPluginInfo> m_plugins;
     QHash<QString, QVector<PluginRating>> m_ratings;
     QString m_pluginDirectory;
 };

@@ -9,6 +9,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QCryptographicHash>
+#include <QElapsedTimer>
 
 DataAPIManager* DataAPIManager::instance()
 {

@@ -37,9 +37,9 @@ enum class DrawingToolType {
 };
 
 /**
- * @brief 绘图对象
+ * @brief 绘图对象（图表工具）
  */
-struct DrawingObject {
+struct ChartDrawingObject {
     QString id;                 ///< 对象ID
     DrawingToolType type;       ///< 类型
     QVector<QPointF> points;    ///< 点集合
@@ -107,7 +107,7 @@ public:
      * @param point 终点
      * @return 创建的绘图对象
      */
-    DrawingObject finishDrawing(const QPointF& point);
+    ChartDrawingObject finishDrawing(const QPointF& point);
 
     /**
      * @brief 取消绘制
@@ -119,12 +119,12 @@ public:
     /**
      * @brief 添加绘图对象
      */
-    void addDrawing(const DrawingObject& drawing);
+    void addDrawing(const ChartDrawingObject& drawing);
 
     /**
      * @brief 更新绘图对象
      */
-    void updateDrawing(const QString& id, const DrawingObject& drawing);
+    void updateDrawing(const QString& id, const ChartDrawingObject& drawing);
 
     /**
      * @brief 删除绘图对象
@@ -139,12 +139,12 @@ public:
     /**
      * @brief 获取所有绘图
      */
-    QVector<DrawingObject> getAllDrawings() const { return m_drawings; }
+    QVector<ChartDrawingObject> getAllDrawings() const { return m_drawings; }
 
     /**
      * @brief 获取绘图对象
      */
-    DrawingObject getDrawing(const QString& id) const;
+    ChartDrawingObject getDrawing(const QString& id) const;
 
     /**
      * @brief 选中绘图对象
@@ -206,12 +206,12 @@ signals:
     /**
      * @brief 绘图更新信号
      */
-    void drawingUpdated(const DrawingObject& drawing);
+    void drawingUpdated(const ChartDrawingObject& drawing);
 
     /**
      * @brief 绘图完成信号
      */
-    void drawingFinished(const DrawingObject& drawing);
+    void drawingFinished(const ChartDrawingObject& drawing);
 
     /**
      * @brief 绘图删除信号
@@ -228,16 +228,16 @@ private:
     ~DrawingToolManager() override = default;
 
     QString generateId() const;
-    DrawingObject createDrawing(DrawingToolType type, const QVector<QPointF>& points);
+    ChartDrawingObject createDrawing(DrawingToolType type, const QVector<QPointF>& points);
 
     DrawingToolType m_currentTool = DrawingToolType::None;
-    QVector<DrawingObject> m_drawings;
+    QVector<ChartDrawingObject> m_drawings;
     QString m_selectedId;
 
     // 当前绘制状态
     bool m_isDrawing = false;
     QVector<QPointF> m_currentPoints;
-    DrawingObject m_currentDrawing;
+    ChartDrawingObject m_currentDrawing;
 
     // 默认样式
     QColor m_defaultColor = Qt::red;

@@ -57,10 +57,10 @@ void DrawingToolManager::updateDrawing(const QPointF& point)
     emit drawingUpdated(m_currentDrawing);
 }
 
-DrawingObject DrawingToolManager::finishDrawing(const QPointF& point)
+ChartDrawingObject DrawingToolManager::finishDrawing(const QPointF& point)
 {
     if (!m_isDrawing) {
-        return DrawingObject();
+        return ChartDrawingObject();
     }
 
     // 更新终点
@@ -70,7 +70,7 @@ DrawingObject DrawingToolManager::finishDrawing(const QPointF& point)
     m_currentPoints.append(point);
 
     // 创建最终绘图对象
-    DrawingObject drawing = createDrawing(m_currentTool, m_currentPoints);
+    ChartDrawingObject drawing = createDrawing(m_currentTool, m_currentPoints);
     drawing.id = generateId();
     drawing.createTime = QDateTime::currentDateTime();
     drawing.updateTime = drawing.createTime;
@@ -91,17 +91,17 @@ void DrawingToolManager::cancelDrawing()
 {
     m_isDrawing = false;
     m_currentPoints.clear();
-    m_currentDrawing = DrawingObject();
+    m_currentDrawing = ChartDrawingObject();
     LOG_DEBUG("Drawing cancelled");
 }
 
-void DrawingToolManager::addDrawing(const DrawingObject& drawing)
+void DrawingToolManager::addDrawing(const ChartDrawingObject& drawing)
 {
     m_drawings.append(drawing);
     LOG_INFO(QString("Drawing added: %1").arg(drawing.id));
 }
 
-void DrawingToolManager::updateDrawing(const QString& id, const DrawingObject& drawing)
+void DrawingToolManager::updateDrawing(const QString& id, const ChartDrawingObject& drawing)
 {
     for (int i = 0; i < m_drawings.size(); ++i) {
         if (m_drawings[i].id == id) {
@@ -131,9 +131,9 @@ void DrawingToolManager::clearAllDrawings()
     LOG_INFO("All drawings cleared");
 }
 
-DrawingObject DrawingToolManager::getDrawing(const QString& id) const
+ChartDrawingObject DrawingToolManager::getDrawing(const QString& id) const
 {
-    for (const DrawingObject& drawing : m_drawings) {
+    for (const ChartDrawingObject& drawing : m_drawings) {
         if (drawing.id == id) {
             return drawing;
         }
@@ -192,7 +192,7 @@ QVector<FibonacciLevel> DrawingToolManager::calculateFibonacciLevels(double high
 QString DrawingToolManager::exportToJson() const
 {
     QJsonArray array;
-    for (const DrawingObject& drawing : m_drawings) {
+    for (const ChartDrawingObject& drawing : m_drawings) {
         QJsonObject obj;
         obj["id"] = drawing.id;
         obj["type"] = static_cast<int>(drawing.type);
@@ -233,7 +233,7 @@ bool DrawingToolManager::importFromJson(const QString& json)
 
     for (const QJsonValue& val : array) {
         QJsonObject obj = val.toObject();
-        DrawingObject drawing;
+        ChartDrawingObject drawing;
         drawing.id = obj["id"].toString();
         drawing.type = static_cast<DrawingToolType>(obj["type"].toInt());
         drawing.color = QColor(obj["color"].toString());
@@ -261,10 +261,10 @@ QString DrawingToolManager::generateId() const
     return QUuid::createUuid().toString(QUuid::WithoutBraces);
 }
 
-DrawingObject DrawingToolManager::createDrawing(DrawingToolType type,
+ChartDrawingObject DrawingToolManager::createDrawing(DrawingToolType type,
                                                 const QVector<QPointF>& points)
 {
-    DrawingObject drawing;
+    ChartDrawingObject drawing;
     drawing.type = type;
     drawing.points = points;
     drawing.color = m_defaultColor;

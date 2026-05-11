@@ -20,6 +20,7 @@
 #include <QVector>
 #include <QHash>
 #include <QVariant>
+#include <QDateTime>
 
 /**
  * @brief 用户意图类型

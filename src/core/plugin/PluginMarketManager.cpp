@@ -36,16 +36,16 @@ PluginMarketManager::PluginMarketManager(QObject* parent)
     LOG_INFO("PluginMarketManager initialized");
 }
 
-QVector<PluginInfo> PluginMarketManager::getHotPlugins(int limit) const
+QVector<MarketPluginInfo> PluginMarketManager::getHotPlugins(int limit) const
 {
-    QVector<PluginInfo> result;
+    QVector<MarketPluginInfo> result;
     for (const auto& plugin : m_plugins) {
         result.append(plugin);
     }
 
     // 按下载次数排序
     std::sort(result.begin(), result.end(),
-              [](const PluginInfo& a, const PluginInfo& b) {
+              [](const MarketPluginInfo& a, const MarketPluginInfo& b) {
                   return a.downloads > b.downloads;
               });
 
@@ -56,16 +56,16 @@ QVector<PluginInfo> PluginMarketManager::getHotPlugins(int limit) const
     return result;
 }
 
-QVector<PluginInfo> PluginMarketManager::getLatestPlugins(int limit) const
+QVector<MarketPluginInfo> PluginMarketManager::getLatestPlugins(int limit) const
 {
-    QVector<PluginInfo> result;
+    QVector<MarketPluginInfo> result;
     for (const auto& plugin : m_plugins) {
         result.append(plugin);
     }
 
     // 按发布时间排序
     std::sort(result.begin(), result.end(),
-              [](const PluginInfo& a, const PluginInfo& b) {
+              [](const MarketPluginInfo& a, const MarketPluginInfo& b) {
                   return a.publishTime > b.publishTime;
               });
 
@@ -76,10 +76,10 @@ QVector<PluginInfo> PluginMarketManager::getLatestPlugins(int limit) const
     return result;
 }
 
-QVector<PluginInfo> PluginMarketManager::searchPlugins(const QString& keyword,
+QVector<MarketPluginInfo> PluginMarketManager::searchPlugins(const QString& keyword,
                                                        const QString& category) const
 {
-    QVector<PluginInfo> result;
+    QVector<MarketPluginInfo> result;
 
     for (const auto& plugin : m_plugins) {
         bool match = keyword.isEmpty() ||
@@ -98,7 +98,7 @@ QVector<PluginInfo> PluginMarketManager::searchPlugins(const QString& keyword,
     return result;
 }
 
-PluginInfo PluginMarketManager::getPlugin(const QString& pluginId) const
+MarketPluginInfo PluginMarketManager::getPlugin(const QString& pluginId) const
 {
     return m_plugins.value(pluginId);
 }
@@ -114,9 +114,9 @@ QStringList PluginMarketManager::getCategories() const
     return categories;
 }
 
-QVector<PluginInfo> PluginMarketManager::getPluginsByCategory(const QString& category) const
+QVector<MarketPluginInfo> PluginMarketManager::getPluginsByCategory(const QString& category) const
 {
-    QVector<PluginInfo> result;
+    QVector<MarketPluginInfo> result;
     for (const auto& plugin : m_plugins) {
         if (plugin.category == category) {
             result.append(plugin);
@@ -152,7 +152,7 @@ bool PluginMarketManager::installPlugin(const QString& pluginId)
         return false;
     }
 
-    PluginInfo& plugin = m_plugins[pluginId];
+    MarketPluginInfo& plugin = m_plugins[pluginId];
 
     // 检查依赖
     if (!checkDependencies(plugin.dependencies)) {
@@ -191,7 +191,7 @@ bool PluginMarketManager::uninstallPlugin(const QString& pluginId)
         return false;
     }
 
-    PluginInfo& plugin = m_plugins[pluginId];
+    MarketPluginInfo& plugin = m_plugins[pluginId];
     if (!plugin.installed) {
         return false;
     }
@@ -237,9 +237,9 @@ bool PluginMarketManager::updatePlugin(const QString& pluginId)
     return true;
 }
 
-QVector<PluginInfo> PluginMarketManager::checkUpdates() const
+QVector<MarketPluginInfo> PluginMarketManager::checkUpdates() const
 {
-    QVector<PluginInfo> updates;
+    QVector<MarketPluginInfo> updates;
 
     for (const auto& plugin : m_plugins) {
         if (plugin.installed) {
@@ -257,7 +257,7 @@ bool PluginMarketManager::enablePlugin(const QString& pluginId)
         return false;
     }
 
-    PluginInfo& plugin = m_plugins[pluginId];
+    MarketPluginInfo& plugin = m_plugins[pluginId];
     if (!plugin.installed) {
         return false;
     }
@@ -284,7 +284,7 @@ bool PluginMarketManager::disablePlugin(const QString& pluginId)
         return false;
     }
 
-    PluginInfo& plugin = m_plugins[pluginId];
+    MarketPluginInfo& plugin = m_plugins[pluginId];
     if (!plugin.enabled) {
         return false;
     }
@@ -303,9 +303,9 @@ bool PluginMarketManager::disablePlugin(const QString& pluginId)
     return true;
 }
 
-QVector<PluginInfo> PluginMarketManager::getInstalledPlugins() const
+QVector<MarketPluginInfo> PluginMarketManager::getInstalledPlugins() const
 {
-    QVector<PluginInfo> result;
+    QVector<MarketPluginInfo> result;
     for (const auto& plugin : m_plugins) {
         if (plugin.installed) {
             result.append(plugin);
@@ -314,9 +314,9 @@ QVector<PluginInfo> PluginMarketManager::getInstalledPlugins() const
     return result;
 }
 
-QVector<PluginInfo> PluginMarketManager::getEnabledPlugins() const
+QVector<MarketPluginInfo> PluginMarketManager::getEnabledPlugins() const
 {
-    QVector<PluginInfo> result;
+    QVector<MarketPluginInfo> result;
     for (const auto& plugin : m_plugins) {
         if (plugin.enabled) {
             result.append(plugin);
@@ -331,7 +331,7 @@ bool PluginMarketManager::loadPlugin(const QString& pluginId)
         return false;
     }
 
-    const PluginInfo& plugin = m_plugins[pluginId];
+    const MarketPluginInfo& plugin = m_plugins[pluginId];
 
     // TODO: 实际加载插件
     LOG_INFO(QString("Loading plugin: %1").arg(plugin.name));
@@ -376,14 +376,14 @@ QVector<PluginRating> PluginMarketManager::getPluginRatings(const QString& plugi
     return m_ratings.value(pluginId);
 }
 
-bool PluginMarketManager::publishPlugin(const PluginInfo& plugin)
+bool PluginMarketManager::publishPlugin(const MarketPluginInfo& plugin)
 {
     if (m_plugins.contains(plugin.id)) {
         LOG_WARNING(QString("Plugin already exists: %1").arg(plugin.id));
         return false;
     }
 
-    PluginInfo newPlugin = plugin;
+    MarketPluginInfo newPlugin = plugin;
     newPlugin.publishTime = QDateTime::currentDateTime();
     newPlugin.updateTime = newPlugin.publishTime;
 
@@ -394,13 +394,13 @@ bool PluginMarketManager::publishPlugin(const PluginInfo& plugin)
     return true;
 }
 
-bool PluginMarketManager::updatePluginInfo(const PluginInfo& plugin)
+bool PluginMarketManager::updatePluginInfo(const MarketPluginInfo& plugin)
 {
     if (!m_plugins.contains(plugin.id)) {
         return false;
     }
 
-    PluginInfo updated = plugin;
+    MarketPluginInfo updated = plugin;
     updated.updateTime = QDateTime::currentDateTime();
 
     m_plugins[plugin.id] = updated;

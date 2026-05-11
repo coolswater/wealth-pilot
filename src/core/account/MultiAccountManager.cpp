@@ -29,14 +29,14 @@ MultiAccountManager::MultiAccountManager(QObject* parent)
     LOG_INFO("MultiAccountManager initialized");
 }
 
-bool MultiAccountManager::addAccount(const AccountInfo& account)
+bool MultiAccountManager::addAccount(const MultiAccountInfo& account)
 {
     if (m_accounts.contains(account.id)) {
         LOG_WARNING(QString("Account already exists: %1").arg(account.id));
         return false;
     }
 
-    AccountInfo newAccount = account;
+    MultiAccountInfo newAccount = account;
     if (newAccount.id.isEmpty()) {
         newAccount.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     }
@@ -50,14 +50,14 @@ bool MultiAccountManager::addAccount(const AccountInfo& account)
     return true;
 }
 
-bool MultiAccountManager::updateAccount(const AccountInfo& account)
+bool MultiAccountManager::updateAccount(const MultiAccountInfo& account)
 {
     if (!m_accounts.contains(account.id)) {
         LOG_WARNING(QString("Account not found: %1").arg(account.id));
         return false;
     }
 
-    AccountInfo updated = account;
+    MultiAccountInfo updated = account;
     updated.updateTime = QDateTime::currentDateTime();
     m_accounts[account.id] = updated;
 
@@ -96,19 +96,19 @@ bool MultiAccountManager::removeAccount(const QString& accountId)
     return true;
 }
 
-AccountInfo MultiAccountManager::getAccount(const QString& accountId) const
+MultiAccountInfo MultiAccountManager::getAccount(const QString& accountId) const
 {
     return m_accounts.value(accountId);
 }
 
-QVector<AccountInfo> MultiAccountManager::getAllAccounts() const
+QVector<MultiAccountInfo> MultiAccountManager::getAllAccounts() const
 {
     return m_accounts.values();
 }
 
-QVector<AccountInfo> MultiAccountManager::getAccountsByType(AccountType type) const
+QVector<MultiAccountInfo> MultiAccountManager::getAccountsByType(AccountType type) const
 {
-    QVector<AccountInfo> result;
+    QVector<MultiAccountInfo> result;
     for (const auto& account : m_accounts) {
         if (account.type == type) {
             result.append(account);
@@ -134,7 +134,7 @@ void MultiAccountManager::setCurrentAccount(const QString& accountId)
     LOG_INFO(QString("Current account changed: %1").arg(accountId));
 }
 
-AccountInfo MultiAccountManager::currentAccount() const
+MultiAccountInfo MultiAccountManager::currentAccount() const
 {
     return m_accounts.value(m_currentAccountId);
 }
@@ -273,7 +273,8 @@ MultiAccountManager::AccountStats MultiAccountManager::getStats() const
         stats.profitPercent = stats.totalProfit / (stats.totalAsset - stats.totalProfit);
     }
 
-    emit statsUpdated(stats);
+    // 不在 const 函数中 emit
+    // emit statsUpdated(stats);
     return stats;
 }
 
@@ -284,7 +285,7 @@ void MultiAccountManager::refreshAccount(const QString& accountId)
     }
 
     // TODO: 从数据源刷新账户数据
-    AccountInfo& account = m_accounts[accountId];
+    MultiAccountInfo& account = m_accounts[accountId];
     account.updateTime = QDateTime::currentDateTime();
 
     emit accountUpdated(account);
