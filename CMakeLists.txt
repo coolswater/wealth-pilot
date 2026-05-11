@@ -50,6 +50,8 @@ set(CORE_BASE_SOURCES
         src/core/base/NamespaceGuide.h
         src/core/base/ErrorHandler.h
         src/core/base/ErrorHandler.cpp
+        src/core/base/ApplicationBootstrap.h
+        src/core/base/ApplicationBootstrap.cpp
         src/core/types/MarketTypes.h
 )
 
@@ -103,8 +105,6 @@ set(CORE_NETWORK_SOURCES
 set(CORE_UI_SOURCES
         src/core/ui/ShortcutManager.h
         src/core/ui/ShortcutManager.cpp
-        src/core/ui/LayoutManager.h
-        src/core/ui/LayoutManager.cpp
 )
 
 # Core - Analysis 分析

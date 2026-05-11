@@ -58,7 +58,7 @@ void FeatureIntegration::initializeShortTermFeatures()
     ShortcutManager::instance()->initialize(m_mainWindow);
 
     // 初始化布局管理器
-    WindowLayoutManager::instance()->initialize(m_mainWindow);
+    LayoutManager::instance()->initialize(m_mainWindow);
 
     // 初始化股票筛选器
     StockScreener::instance();
@@ -122,7 +122,7 @@ void FeatureIntegration::registerDefaultShortcuts()
         tr("保存布局"),
         QKeySequence("Ctrl+Shift+S"),
         [this]() {
-            WindowLayoutManager::instance()->saveLayout();
+            LayoutManager::instance()->saveLayout("current");
         },
         "文件",
         tr("保存当前窗口布局")
@@ -133,7 +133,7 @@ void FeatureIntegration::registerDefaultShortcuts()
         tr("恢复布局"),
         QKeySequence("Ctrl+Shift+R"),
         [this]() {
-            WindowLayoutManager::instance()->restoreLayout();
+            LayoutManager::instance()->restoreLayout("current");
         },
         "文件",
         tr("恢复默认窗口布局")

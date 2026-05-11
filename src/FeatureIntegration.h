@@ -22,8 +22,8 @@
 // UI管理 - 快捷键系统
 #include "core/ui/ShortcutManager.h"
 
-// UI管理 - 窗口布局保存
-#include "core/ui/LayoutManager.h"
+// 布局管理 - 使用原有模块
+#include "core/layout/LayoutManager.h"
 
 // 分析模块 - 股票筛选器
 #include "core/analysis/StockScreener.h"
