@@ -114,7 +114,7 @@ void SignalMiniCard::setupUI()
     m_nameLabel->setStyleSheet(QString(
         "QLabel { color: %1; font-size: 13px; font-weight: bold; }"
     ).arg(COLOR_TEXT_TITLE));
-    m_nameLabel->setElideMode(Qt::ElideRight);
+    m_nameLabel->setWordWrap(false);
     titleRow->addWidget(m_nameLabel, 1);
 
     if (!m_data.strategy.isEmpty()) {
