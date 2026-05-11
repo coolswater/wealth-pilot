@@ -282,6 +282,38 @@ struct TickData {
 };
 
 /**
+ * @brief 分时数据结构
+ *
+ * @details 存储分时图的每个时间点数据，包括：
+ * - 时间、价格、均价
+ * - 成交量
+ */
+struct TimeShareData {
+    QDateTime time;             ///< 时间
+    double price = 0.0;         ///< 当前价格
+    double avgPrice = 0.0;      ///< 均价
+    qint64 volume = 0;          ///< 成交量
+
+    /**
+     * @brief 默认构造函数
+     */
+    TimeShareData() = default;
+
+    /**
+     * @brief 构造函数
+     */
+    TimeShareData(const QDateTime& t, double p, double avg = 0.0, qint64 v = 0)
+        : time(t), price(p), avgPrice(avg), volume(v) {}
+
+    /**
+     * @brief 判断是否有效
+     */
+    bool isValid() const {
+        return time.isValid() && price > 0;
+    }
+};
+
+/**
  * @brief 订单数据（CTP专用）
  * @note 此结构体在 ICTPPlugin.h 中定义，此处仅做前向声明
  */
