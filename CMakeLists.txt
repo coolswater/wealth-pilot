@@ -138,6 +138,36 @@ set(CORE_QUANT_SOURCES
         src/core/quant/QuantTradingEngine.cpp
 )
 
+# Core - AI 智能助手
+set(CORE_AI_SOURCES
+        src/core/ai/AIAssistant.h
+        src/core/ai/AIAssistant.cpp
+)
+
+# Core - Account 多账户
+set(CORE_ACCOUNT_SOURCES
+        src/core/account/MultiAccountManager.h
+        src/core/account/MultiAccountManager.cpp
+)
+
+# Core - Security 权限管理
+set(CORE_SECURITY_SOURCES
+        src/core/security/PermissionManager.h
+        src/core/security/PermissionManager.cpp
+)
+
+# Core - API 数据API
+set(CORE_API_SOURCES
+        src/core/api/DataAPIManager.h
+        src/core/api/DataAPIManager.cpp
+)
+
+# Core - Plugin 插件市场
+set(CORE_PLUGIN_SOURCES
+        src/core/plugin/PluginMarketManager.h
+        src/core/plugin/PluginMarketManager.cpp
+)
+
 # Core - DI 依赖注入
 set(CORE_DI_SOURCES
         src/core/di/ServiceLocator.h
@@ -562,6 +592,11 @@ set(SOURCES
         ${CORE_SOCIAL_SOURCES}
         ${CORE_CHART_SOURCES}
         ${CORE_QUANT_SOURCES}
+        ${CORE_AI_SOURCES}
+        ${CORE_ACCOUNT_SOURCES}
+        ${CORE_SECURITY_SOURCES}
+        ${CORE_API_SOURCES}
+        ${CORE_PLUGIN_SOURCES}
         ${CORE_DI_SOURCES}
         ${CORE_DATA_SOURCES}
         ${CORE_NAVIGATION_SOURCES}
