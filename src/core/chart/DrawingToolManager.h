@@ -12,8 +12,8 @@
  * @version 1.0.0
  */
 
-#ifndef DRAWINGTOOLMANAGER_H
-#define DRAWINGTOOLMANAGER_H
+#ifndef CHARTDRAWINGTOOLMANAGER_H
+#define CHARTDRAWINGTOOLMANAGER_H
 
 #include <QObject>
 #include <QVector>
@@ -70,11 +70,11 @@ struct FibonacciLevel {
  * - 对象管理
  * - 导入/导出
  */
-class DrawingToolManager : public QObject {
+class ChartDrawingToolManager : public QObject {
     Q_OBJECT
 
 public:
-    static DrawingToolManager* instance();
+    static ChartDrawingToolManager* instance();
 
     // ========== 工具选择 ==========
 
@@ -245,4 +245,4 @@ private:
     Qt::PenStyle m_defaultLineStyle = Qt::SolidLine;
 };
 
-#endif // DRAWINGTOOLMANAGER_H
+#endif // CHARTDRAWINGTOOLMANAGER_H

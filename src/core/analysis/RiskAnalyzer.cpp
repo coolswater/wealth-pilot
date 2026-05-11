@@ -181,7 +181,7 @@ double RiskAnalyzer::calculateConcentrationRisk()
 
 QVector<RiskAnalyzerAlert> RiskAnalyzer::checkRiskAlerts()
 {
-    QVector<RiskAlert> alerts;
+    QVector<RiskAnalyzerAlert> alerts;
 
     // 检查最大回撤
     if (m_metrics.maxDrawdown > m_maxDrawdownLimit) {

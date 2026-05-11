@@ -1,5 +1,4 @@
 /**
- * @file LayoutManager.h
  * @brief 窗口布局管理器 - 保存和恢复窗口布局
  *
  * @details 功能：
@@ -12,8 +11,8 @@
  * @version 1.0.0
  */
 
-#ifndef LAYOUTMANAGER_H
-#define LAYOUTMANAGER_H
+#ifndef WINDOWLAYOUTMANAGER_H
+#define WINDOWLAYOUTMANAGER_H
 
 #include <QObject>
 #include <QByteArray>
@@ -43,11 +42,11 @@ struct LayoutInfo {
  * - 多布局支持
  * - 布局导入/导出
  */
-class LayoutManager : public QObject {
+class WindowLayoutManager : public QObject {
     Q_OBJECT
 
 public:
-    static LayoutManager* instance();
+    static WindowLayoutManager* instance();
 
     /**
      * @brief 初始化
@@ -160,4 +159,4 @@ private:
     bool m_autoSave = true;
 };
 
-#endif // LAYOUTMANAGER_H
+#endif // WINDOWLAYOUTMANAGER_H
