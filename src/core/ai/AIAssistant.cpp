@@ -4,7 +4,7 @@
  */
 
 #include "AIAssistant.h"
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include <QRegularExpression>
 #include <QUuid>
 #include <QDateTime>

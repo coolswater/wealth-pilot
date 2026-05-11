@@ -4,7 +4,7 @@
  */
 
 #include "PermissionManager.h"
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include <QUuid>
 #include <QSettings>
 

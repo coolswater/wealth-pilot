@@ -4,7 +4,7 @@
  */
 
 #include "MultiAccountManager.h"
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include <QUuid>
 #include <QTimer>
 #include <QSettings>

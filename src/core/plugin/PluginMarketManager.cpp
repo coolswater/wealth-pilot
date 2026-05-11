@@ -4,7 +4,7 @@
  */
 
 #include "PluginMarketManager.h"
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include <QSettings>
 #include <QDir>
 #include <QFile>

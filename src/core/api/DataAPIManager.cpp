@@ -4,7 +4,7 @@
  */
 
 #include "DataAPIManager.h"
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include <QUuid>
 #include <QFile>
 #include <QTextStream>
