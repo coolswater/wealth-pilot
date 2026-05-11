@@ -100,9 +100,13 @@ int main(int argc, char* argv[])
         LOG_WARNING("Failed to load some custom fonts, using system defaults");
     }
 
-    // 设置应用默认字体
-    QFont defaultFont("Roboto", 10);
+    // 设置应用默认字体 - Segoe UI 为主，Roboto 为备用
+    QFont defaultFont("Segoe UI", 10);
     defaultFont.setStyleStrategy(QFont::PreferAntialias); // 优先使用抗锯齿
+    // 设置备用字体族
+    QStringList fallbackFonts;
+    fallbackFonts << "Roboto" << "Microsoft YaHei UI";
+    defaultFont.setFamilies(fallbackFonts);
     QApplication::setFont(defaultFont);
 
     // ========== 初始化主题管理器 ==========
