@@ -1,6 +1,7 @@
 /**
  * @file LayoutManager.cpp
- * @brief 窗口布局管理器实�? */
+ * @brief 窗口布局管理器实现
+ */
 
 #include "LayoutManager.h"
 #include "utils/Logger.h"
@@ -14,34 +15,34 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
-WindowLayoutManager* WindowWindowLayoutManager::instance()
+WindowLayoutManager* WindowLayoutManager::instance()
 {
     static WindowLayoutManager* inst = new WindowLayoutManager();
     return inst;
 }
 
-WindowWindowLayoutManager::WindowLayoutManager(QObject* parent)
+WindowLayoutManager::WindowLayoutManager(QObject* parent)
     : QObject(parent)
 {
     connect(qApp, &QApplication::aboutToQuit, this, &WindowLayoutManager::onAboutToQuit);
-    LOG_INFO("LayoutManager initialized");
+    LOG_INFO("WindowLayoutManager initialized");
 }
 
-WindowWindowLayoutManager::~WindowLayoutManager()
+WindowLayoutManager::~WindowLayoutManager()
 {
     if (m_autoSave && !m_currentLayout.isEmpty()) {
         saveLayout(m_currentLayout);
     }
 }
 
-void WindowWindowLayoutManager::initialize(QMainWindow* mainWindow)
+void WindowLayoutManager::initialize(QMainWindow* mainWindow)
 {
     m_mainWindow = mainWindow;
 
     // 加载默认布局
     restoreLayout();
 
-    LOG_INFO("LayoutManager initialized with main window");
+    LOG_INFO("WindowLayoutManager initialized with main window");
 }
 
 void WindowLayoutManager::saveLayout(const QString& name)
@@ -52,14 +53,17 @@ void WindowLayoutManager::saveLayout(const QString& name)
     LayoutInfo info;
     info.name = layoutName;
 
-    // 保存窗口几何和状�?    info.geometry = m_mainWindow->saveGeometry();
+    // 保存窗口几何和状态
+    info.geometry = m_mainWindow->saveGeometry();
     info.state = m_mainWindow->saveState();
 
-    // 保存分割器状�?    for (auto it = m_splitters.begin(); it != m_splitters.end(); ++it) {
+    // 保存分割器状态
+    for (auto it = m_splitters.begin(); it != m_splitters.end(); ++it) {
         info.splitterStates[it.key()] = it.value()->saveState();
     }
 
-    // 保存选项卡顺�?    for (auto it = m_tabWidgets.begin(); it != m_tabWidgets.end(); ++it) {
+    // 保存选项卡顺序
+    for (auto it = m_tabWidgets.begin(); it != m_tabWidgets.end(); ++it) {
         QStringList tabOrder;
         QTabWidget* tab = it.value();
         for (int i = 0; i < tab->count(); ++i) {
@@ -71,7 +75,8 @@ void WindowLayoutManager::saveLayout(const QString& name)
     m_layouts[layoutName] = info;
     m_currentLayout = layoutName;
 
-    // 保存到设�?    QSettings settings("WealthPilot", "Layout");
+    // 保存到设置
+    QSettings settings("WealthPilot", "Layout");
     settings.beginGroup(layoutName);
     settings.setValue("geometry", info.geometry.toBase64());
     settings.setValue("state", info.state.toBase64());
@@ -109,7 +114,8 @@ bool WindowLayoutManager::restoreLayout(const QString& name)
 
     settings.beginGroup(layoutName);
 
-    // 恢复窗口几何和状�?    QByteArray geometry = QByteArray::fromBase64(settings.value("geometry").toByteArray());
+    // 恢复窗口几何和状态
+    QByteArray geometry = QByteArray::fromBase64(settings.value("geometry").toByteArray());
     QByteArray state = QByteArray::fromBase64(settings.value("state").toByteArray());
 
     if (!geometry.isEmpty()) {
@@ -119,7 +125,8 @@ bool WindowLayoutManager::restoreLayout(const QString& name)
         m_mainWindow->restoreState(state);
     }
 
-    // 恢复分割器状�?    settings.beginGroup("Splitters");
+    // 恢复分割器状态
+    settings.beginGroup("Splitters");
     for (const QString& id : settings.childKeys()) {
         QByteArray splitterState = QByteArray::fromBase64(settings.value(id).toByteArray());
         if (m_splitters.contains(id) && !splitterState.isEmpty()) {
@@ -128,7 +135,8 @@ bool WindowLayoutManager::restoreLayout(const QString& name)
     }
     settings.endGroup();
 
-    // 恢复选项卡顺�?    settings.beginGroup("Tabs");
+    // 恢复选项卡顺序
+    settings.beginGroup("Tabs");
     for (const QString& id : settings.childKeys()) {
         QStringList tabOrder = settings.value(id).toStringList();
         if (m_tabWidgets.contains(id) && !tabOrder.isEmpty()) {

@@ -224,8 +224,8 @@ signals:
     void selectionChanged(const QString& id);
 
 private:
-    explicit DrawingToolManager(QObject* parent = nullptr);
-    ~DrawingToolManager() override = default;
+    explicit ChartDrawingToolManager(QObject* parent = nullptr);
+    ~ChartDrawingToolManager() override = default;
 
     QString generateId() const;
     ChartDrawingObject createDrawing(DrawingToolType type, const QVector<QPointF>& points);

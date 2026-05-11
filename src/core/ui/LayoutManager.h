@@ -146,8 +146,8 @@ private slots:
     void onAboutToQuit();
 
 private:
-    explicit LayoutManager(QObject* parent = nullptr);
-    ~LayoutManager() override;
+    explicit WindowLayoutManager(QObject* parent = nullptr);
+    ~WindowLayoutManager() override;
 
     QString layoutKey(const QString& name) const;
 

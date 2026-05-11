@@ -1,6 +1,7 @@
 /**
  * @file DrawingToolManager.cpp
- * @brief 画线工具管理器实�? */
+ * @brief 画线工具管理器实现
+ */
 
 #include "DrawingToolManager.h"
 #include "utils/Logger.h"
@@ -9,16 +10,16 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
-DrawingToolManager* ChartDrawingToolManager::instance()
+ChartDrawingToolManager* ChartDrawingToolManager::instance()
 {
-    static DrawingToolManager* inst = new DrawingToolManager();
+    static ChartDrawingToolManager* inst = new ChartDrawingToolManager();
     return inst;
 }
 
-ChartDrawingToolManager::DrawingToolManager(QObject* parent)
+ChartDrawingToolManager::ChartDrawingToolManager(QObject* parent)
     : QObject(parent)
 {
-    LOG_INFO("DrawingToolManager initialized");
+    LOG_INFO("ChartDrawingToolManager initialized");
 }
 
 void ChartDrawingToolManager::setCurrentTool(DrawingToolType type)
@@ -45,7 +46,8 @@ void ChartDrawingToolManager::updateDrawing(const QPointF& point)
 {
     if (!m_isDrawing) return;
 
-    // 更新当前�?    if (m_currentPoints.size() >= 2) {
+    // 更新当前点
+    if (m_currentPoints.size() >= 2) {
         m_currentPoints.removeLast();
     }
     m_currentPoints.append(point);
@@ -67,12 +69,14 @@ ChartDrawingObject ChartDrawingToolManager::finishDrawing(const QPointF& point)
     }
     m_currentPoints.append(point);
 
-    // 创建最终绘图对�?    ChartDrawingObject drawing = createDrawing(m_currentTool, m_currentPoints);
+    // 创建最终绘图对象
+    ChartDrawingObject drawing = createDrawing(m_currentTool, m_currentPoints);
     drawing.id = generateId();
     drawing.createTime = QDateTime::currentDateTime();
     drawing.updateTime = drawing.createTime;
 
-    // 添加到列�?    m_drawings.append(drawing);
+    // 添加到列表
+    m_drawings.append(drawing);
 
     m_isDrawing = false;
     m_currentPoints.clear();
