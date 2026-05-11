@@ -61,13 +61,22 @@ public:
 
     void paint(QPainter* painter, const QStyleOptionViewItem& option,
                const QModelIndex& index) const override {
-        // 先绘制背景
+        // 绘制背景
         painter->save();
         if (option.state & QStyle::State_Selected) {
             painter->fillRect(option.rect, Tokens::Color::primary());
         } else if (option.state & QStyle::State_MouseOver) {
             painter->fillRect(option.rect, QColor(255, 255, 255, 13));
+        } else {
+            // 绘制默认背景
+            painter->fillRect(option.rect, option.backgroundColor);
         }
+        painter->restore();
+
+        // 绘制边框
+        painter->save();
+        painter->setPen(QPen(QColor(60, 60, 60, 80), 1));
+        painter->drawRect(option.rect);
         painter->restore();
 
         // 获取数值和文本
@@ -106,13 +115,21 @@ public:
 
     void paint(QPainter* painter, const QStyleOptionViewItem& option,
                const QModelIndex& index) const override {
-        // 先绘制背景
+        // 绘制背景
         painter->save();
         if (option.state & QStyle::State_Selected) {
             painter->fillRect(option.rect, Tokens::Color::primary());
         } else if (option.state & QStyle::State_MouseOver) {
             painter->fillRect(option.rect, QColor(255, 255, 255, 13));
+        } else {
+            painter->fillRect(option.rect, option.backgroundColor);
         }
+        painter->restore();
+
+        // 绘制边框
+        painter->save();
+        painter->setPen(QPen(QColor(60, 60, 60, 80), 1));
+        painter->drawRect(option.rect);
         painter->restore();
 
         // 获取数值和文本
@@ -146,13 +163,21 @@ public:
 
     void paint(QPainter* painter, const QStyleOptionViewItem& option,
                const QModelIndex& index) const override {
-        // 先绘制背景
+        // 绘制背景
         painter->save();
         if (option.state & QStyle::State_Selected) {
             painter->fillRect(option.rect, Tokens::Color::primary());
         } else if (option.state & QStyle::State_MouseOver) {
             painter->fillRect(option.rect, QColor(255, 255, 255, 13));
+        } else {
+            painter->fillRect(option.rect, option.backgroundColor);
         }
+        painter->restore();
+
+        // 绘制边框
+        painter->save();
+        painter->setPen(QPen(QColor(60, 60, 60, 80), 1));
+        painter->drawRect(option.rect);
         painter->restore();
 
         // 获取涨跌幅数据用于颜色判断
