@@ -91,6 +91,35 @@ set(CORE_PERFORMANCE_SOURCES
         src/core/performance/PerformanceManager.cpp
 )
 
+# Core - Network 网络
+set(CORE_NETWORK_SOURCES
+        src/core/network/WebSocketManager.h
+        src/core/network/WebSocketManager.cpp
+)
+
+# Core - UI UI管理
+set(CORE_UI_SOURCES
+        src/core/ui/ShortcutManager.h
+        src/core/ui/ShortcutManager.cpp
+        src/core/ui/LayoutManager.h
+        src/core/ui/LayoutManager.cpp
+)
+
+# Core - Analysis 分析
+set(CORE_ANALYSIS_SOURCES
+        src/core/analysis/StockScreener.h
+        src/core/analysis/StockScreener.cpp
+        src/core/analysis/ExampleStrategies.h
+        src/core/analysis/RiskAnalyzer.h
+        src/core/analysis/RiskAnalyzer.cpp
+)
+
+# Core - Backtest 回测
+set(CORE_BACKTEST_SOURCES
+        src/core/backtest/BacktestEngine.h
+        src/core/backtest/BacktestEngine.cpp
+)
+
 # Core - DI 依赖注入
 set(CORE_DI_SOURCES
         src/core/di/ServiceLocator.h
@@ -508,6 +537,10 @@ set(SOURCES
         ${CORE_DATABASE_SOURCES}
         ${CORE_TASK_SOURCES}
         ${CORE_PERFORMANCE_SOURCES}
+        ${CORE_NETWORK_SOURCES}
+        ${CORE_UI_SOURCES}
+        ${CORE_ANALYSIS_SOURCES}
+        ${CORE_BACKTEST_SOURCES}
         ${CORE_DI_SOURCES}
         ${CORE_DATA_SOURCES}
         ${CORE_NAVIGATION_SOURCES}
