@@ -67,9 +67,6 @@ public:
             painter->fillRect(option.rect, Tokens::Color::primary());
         } else if (option.state & QStyle::State_MouseOver) {
             painter->fillRect(option.rect, QColor(255, 255, 255, 13));
-        } else {
-            // 绘制默认背景
-            painter->fillRect(option.rect, option.backgroundColor);
         }
         painter->restore();
 
@@ -121,8 +118,6 @@ public:
             painter->fillRect(option.rect, Tokens::Color::primary());
         } else if (option.state & QStyle::State_MouseOver) {
             painter->fillRect(option.rect, QColor(255, 255, 255, 13));
-        } else {
-            painter->fillRect(option.rect, option.backgroundColor);
         }
         painter->restore();
 
@@ -169,8 +164,6 @@ public:
             painter->fillRect(option.rect, Tokens::Color::primary());
         } else if (option.state & QStyle::State_MouseOver) {
             painter->fillRect(option.rect, QColor(255, 255, 255, 13));
-        } else {
-            painter->fillRect(option.rect, option.backgroundColor);
         }
         painter->restore();
 
