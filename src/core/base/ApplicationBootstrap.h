@@ -16,6 +16,7 @@
 #define APPLICATIONBOOTSTRAP_H
 
 #include <QObject>
+#include <QHash>
 #include <functional>
 
 class QMainWindow;
