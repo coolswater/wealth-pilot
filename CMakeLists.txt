@@ -86,6 +86,11 @@ set(CORE_TASK_SOURCES
         src/core/task/AsyncTaskManager.cpp
 )
 
+set(CORE_PERFORMANCE_SOURCES
+        src/core/performance/PerformanceManager.h
+        src/core/performance/PerformanceManager.cpp
+)
+
 # Core - DI 依赖注入
 set(CORE_DI_SOURCES
         src/core/di/ServiceLocator.h
@@ -502,6 +507,7 @@ set(SOURCES
         ${CORE_CACHE_SOURCES}
         ${CORE_DATABASE_SOURCES}
         ${CORE_TASK_SOURCES}
+        ${CORE_PERFORMANCE_SOURCES}
         ${CORE_DI_SOURCES}
         ${CORE_DATA_SOURCES}
         ${CORE_NAVIGATION_SOURCES}
