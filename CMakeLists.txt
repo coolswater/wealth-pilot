@@ -46,6 +46,8 @@ set(CORE_BASE_SOURCES
         src/core/base/Singleton.h
         src/core/base/ErrorCode.h
         src/core/base/NamespaceGuide.h
+        src/core/base/ErrorHandler.h
+        src/core/base/ErrorHandler.cpp
         src/core/types/MarketTypes.h
 )
 
@@ -663,3 +665,49 @@ message(STATUS "WealthPilot Version: ${PROJECT_VERSION}")
 message(STATUS "Qt6 Version: ${Qt6Core_VERSION}")
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
+
+# ==================== 测试配置 ====================
+
+option(BUILD_TESTS "Build unit tests" ON)
+
+if(BUILD_TESTS)
+    enable_testing()
+    
+    # 查找 Qt Test 模块
+    find_package(Qt6 REQUIRED COMPONENTS Test)
+    
+    # 测试源文件
+    set(TEST_SOURCES
+        tests/TestServiceLocator.cpp
+        tests/TestCacheManager.cpp
+        tests/TestPluginLoader.cpp
+        tests/TestApplicationInitializer.cpp
+        tests/PerformanceTest.cpp
+        tests/AnalysisTest.cpp
+    )
+    
+    # 创建测试可执行文件
+    add_executable(WealthPilotTests ${TEST_SOURCES})
+    
+    target_link_libraries(WealthPilotTests PRIVATE
+        Qt6::Core
+        Qt6::Test
+        Qt6::Sql
+        Qt6::Network
+    )
+    
+    target_include_directories(WealthPilotTests PRIVATE
+        ${CMAKE_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/src
+    )
+    
+    # 添加测试
+    add_test(NAME ServiceLocatorTest COMMAND WealthPilotTests -functions "TestServiceLocator*")
+    add_test(NAME CacheManagerTest COMMAND WealthPilotTests -functions "TestCacheManager*")
+    add_test(NAME PluginLoaderTest COMMAND WealthPilotTests -functions "TestPluginLoader*")
+    add_test(NAME ApplicationInitializerTest COMMAND WealthPilotTests -functions "TestApplicationInitializer*")
+    add_test(NAME PerformanceTest COMMAND WealthPilotTests -functions "PerformanceTest*")
+    add_test(NAME AnalysisTest COMMAND WealthPilotTests -functions "AnalysisTest*")
+    
+    message(STATUS "Tests enabled")
+endif()
