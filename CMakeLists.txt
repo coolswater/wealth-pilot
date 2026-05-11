@@ -28,6 +28,9 @@ find_package(Qt6 REQUIRED COMPONENTS
         Svg
         StateMachine
         Core5Compat
+        Quick
+        QuickWidgets
+        Qml
 )
 
 # ==================== 源文件分组 ====================
@@ -379,8 +382,17 @@ set(UI_COMPONENT_SOURCES
         src/ui/components/AlertSettingDialog.cpp
         src/ui/components/LoadingOverlay.h
         src/ui/components/LoadingOverlay.cpp
+        src/ui/components/QmlKLineWidget.h
+        src/ui/components/QmlKLineWidget.cpp
+        src/ui/qml/QmlDataBridge.h
+        src/ui/qml/QmlDataBridge.cpp
         src/ui/ThemeManager.h
         src/ui/ThemeManager.cpp
+)
+
+# QML Resources
+set(QML_RESOURCES
+        qml/qml.qrc
 )
 
 # UI Animation 动画系统
@@ -454,6 +466,8 @@ set(VIEW_SOURCES
         src/views/backtest/BacktestPage.cpp
         src/views/alert/AlertCenterPage.h
         src/views/alert/AlertCenterPage.cpp
+        src/views/demo/QmlChartDemoPage.h
+        src/views/demo/QmlChartDemoPage.cpp
         src/utils/DataExporter.h
         src/utils/DataExporter.cpp
 )
@@ -541,6 +555,9 @@ target_link_libraries(WealthPilot PRIVATE
         Qt6::Concurrent
         Qt6::Svg
         Qt6::StateMachine
+        Qt6::Quick
+        Qt6::QuickWidgets
+        Qt6::Qml
 )
 
 

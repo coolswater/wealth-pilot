@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/qml">
+        <file>main.qml</file>
+        <file>charts/KLineChart.qml</file>
+        <file>charts/TimeShareChart.qml</file>
+        <file>components/StockCard.qml</file>
+        <file>components/PriceLabel.qml</file>
+        <file>models/KLineModel.qml</file>
+    </qresource>
+</RCC>
