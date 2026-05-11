@@ -1,6 +1,11 @@
 /**
  * @file SignalCenterPage.cpp
  * @brief 信号中心页面实现 - 小卡片网格布局
+ *
+ * @details 功能：
+ * - 我的订阅、推荐信号、排行榜、最新上线四个分类
+ * - 列表排序功能（胜率、订阅数、收益率）
+ * - 订阅/取消订阅功能
  */
 
 #include "SignalCenterPage.h"
@@ -16,6 +21,11 @@
 #include <QGraphicsDropShadowEffect>
 #include <QMouseEvent>
 #include <QGridLayout>
+#include <QComboBox>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QMessageBox>
 
 using namespace Tokens;
 
@@ -52,13 +62,17 @@ public:
         double price = 0.0;
         QString strategy;
         QString description;
+        bool isSubscribed = false;  // 是否已订阅
     };
 
-    explicit SignalMiniCard(const Data& data, QWidget* parent = nullptr);
+    explicit SignalMiniCard(const Data& data, bool showSubscribed = false, QWidget* parent = nullptr);
+
+    void updateSubscribeButton();
 
 signals:
     void clicked();
     void subscribeClicked(const Data& data);
+    void unsubscribeClicked(const Data& data);
 
 protected:
     void mousePressEvent(QMouseEvent* event) override;
@@ -69,6 +83,7 @@ private:
     void setupUI();
 
     Data m_data;
+    bool m_showSubscribed = false;  // 是否显示"已订阅"状态
     QLabel* m_nameLabel = nullptr;
     QLabel* m_returnLabel = nullptr;
     QLabel* m_winRateLabel = nullptr;
@@ -76,11 +91,49 @@ private:
     QPushButton* m_subscribeBtn = nullptr;
 };
 
-SignalMiniCard::SignalMiniCard(const Data& data, QWidget* parent)
+SignalMiniCard::SignalMiniCard(const Data& data, bool showSubscribed, QWidget* parent)
     : QFrame(parent)
     , m_data(data)
+    , m_showSubscribed(showSubscribed)
 {
     setupUI();
+}
+
+void SignalMiniCard::updateSubscribeButton()
+{
+    if (m_showSubscribed || m_data.isSubscribed) {
+        m_subscribeBtn->setText(QStringLiteral("已订阅"));
+        m_subscribeBtn->setStyleSheet(QString(R"(
+            QPushButton {
+                background-color: %1;
+                color: white;
+                border: none;
+                border-radius: 3px;
+                padding: 3px 10px;
+                font-size: 11px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background-color: %2;
+            }
+        )").arg(Colors::TextSecondary, Colors::Danger));
+    } else {
+        m_subscribeBtn->setText(QStringLiteral("订阅"));
+        m_subscribeBtn->setStyleSheet(QString(R"(
+            QPushButton {
+                background-color: %1;
+                color: white;
+                border: none;
+                border-radius: 3px;
+                padding: 3px 10px;
+                font-size: 11px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background-color: %2;
+            }
+        )").arg(COLOR_PRIMARY, Colors::PrimaryHover));
+    }
 }
 
 void SignalMiniCard::setupUI()
@@ -168,25 +221,17 @@ void SignalMiniCard::setupUI()
     statsRow->addStretch();
 
     // 订阅按钮
-    m_subscribeBtn = new QPushButton(QStringLiteral("订阅"));
-    m_subscribeBtn->setStyleSheet(QString(R"(
-        QPushButton {
-            background-color: %1;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            padding: 3px 10px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        QPushButton:hover {
-            background-color: %2;
-        }
-    )").arg(COLOR_PRIMARY, Colors::PrimaryHover));
+    m_subscribeBtn = new QPushButton();
     m_subscribeBtn->setCursor(Qt::PointingHandCursor);
     m_subscribeBtn->setFixedSize(50, 24);
+    updateSubscribeButton();
+
     connect(m_subscribeBtn, &QPushButton::clicked, this, [this]() {
-        emit subscribeClicked(m_data);
+        if (m_showSubscribed || m_data.isSubscribed) {
+            emit unsubscribeClicked(m_data);
+        } else {
+            emit subscribeClicked(m_data);
+        }
     });
     statsRow->addWidget(m_subscribeBtn);
 
@@ -234,18 +279,130 @@ struct SignalCenterPage::Impl {
     QScrollArea* scrollArea = nullptr;
     QWidget* scrollContent = nullptr;
     QGridLayout* cardsGrid = nullptr;
+    QComboBox* sortCombo = nullptr;
+    QLabel* countLabel = nullptr;
 
     QVector<SignalMiniCard::Data> allSignals;
+    QVector<SignalMiniCard::Data> subscribedSignals;  // 已订阅的信号
     QVector<SignalMiniCard*> cards;
 
     QString currentCategory = QStringLiteral("我的订阅");
-    int cardsPerRow = 4;  // 每行卡片数量
+    int cardsPerRow = 4;
+    QString currentSort = QStringLiteral("return_desc");
+
+    // 数据库操作
+    bool initDatabase();
+    void loadSubscriptions();
+    void saveSubscription(const SignalMiniCard::Data& data);
+    void removeSubscription(const QString& signalId);
+    bool isSubscribed(const QString& signalId);
 };
+
+bool SignalCenterPage::Impl::initDatabase()
+{
+    if (!QSqlDatabase::hasDatabase(QStringLiteral("wealthpilot"))) {
+        QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("wealthpilot"));
+        db.setDatabaseName(QStringLiteral("wealthpilot.db"));
+        if (!db.open()) {
+            LOG_ERROR("Failed to open database");
+            return false;
+        }
+    }
+
+    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("wealthpilot"));
+    QSqlQuery query(db);
+    query.exec(QStringLiteral(R"(
+        CREATE TABLE IF NOT EXISTS signal_subscriptions (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            return_rate REAL,
+            win_rate INTEGER,
+            followers INTEGER,
+            price REAL,
+            strategy TEXT,
+            description TEXT,
+            subscribe_time DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    )"));
+
+    return true;
+}
+
+void SignalCenterPage::Impl::loadSubscriptions()
+{
+    subscribedSignals.clear();
+
+    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("wealthpilot"));
+    if (!db.isOpen()) return;
+
+    QSqlQuery query(db);
+    query.exec(QStringLiteral("SELECT id, name, return_rate, win_rate, followers, price, strategy, description FROM signal_subscriptions ORDER BY subscribe_time DESC"));
+
+    while (query.next()) {
+        SignalMiniCard::Data data;
+        data.id = query.value(0).toString();
+        data.name = query.value(1).toString();
+        data.returnRate = query.value(2).toDouble();
+        data.winRate = query.value(3).toInt();
+        data.followers = query.value(4).toInt();
+        data.price = query.value(5).toDouble();
+        data.strategy = query.value(6).toString();
+        data.description = query.value(7).toString();
+        data.isSubscribed = true;
+        subscribedSignals.append(data);
+    }
+}
+
+void SignalCenterPage::Impl::saveSubscription(const SignalMiniCard::Data& data)
+{
+    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("wealthpilot"));
+    if (!db.isOpen()) return;
+
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral(R"(
+        INSERT OR REPLACE INTO signal_subscriptions (id, name, return_rate, win_rate, followers, price, strategy, description)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    )"));
+    query.addBindValue(data.id);
+    query.addBindValue(data.name);
+    query.addBindValue(data.returnRate);
+    query.addBindValue(data.winRate);
+    query.addBindValue(data.followers);
+    query.addBindValue(data.price);
+    query.addBindValue(data.strategy);
+    query.addBindValue(data.description);
+    query.exec();
+
+    LOG_INFO(QString("Subscription saved: %1").arg(data.name));
+}
+
+void SignalCenterPage::Impl::removeSubscription(const QString& signalId)
+{
+    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("wealthpilot"));
+    if (!db.isOpen()) return;
+
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral("DELETE FROM signal_subscriptions WHERE id = ?"));
+    query.addBindValue(signalId);
+    query.exec();
+
+    LOG_INFO(QString("Subscription removed: %1").arg(signalId));
+}
+
+bool SignalCenterPage::Impl::isSubscribed(const QString& signalId)
+{
+    for (const auto& sig : subscribedSignals) {
+        if (sig.id == signalId) return true;
+    }
+    return false;
+}
 
 SignalCenterPage::SignalCenterPage(QWidget *parent)
     : BasePage(parent)
     , d(std::make_unique<Impl>())
 {
+    d->initDatabase();
+    d->loadSubscriptions();
     setupUI();
     loadDemoData();
 }
@@ -259,6 +416,8 @@ QString SignalCenterPage::pageId() const
 
 void SignalCenterPage::initializePage()
 {
+    d->loadSubscriptions();
+    updateCards();
     LOG_INFO("SignalCenterPage initialized");
 }
 
@@ -271,6 +430,7 @@ void SignalCenterPage::setupUI()
     mainLayout->setSpacing(0);
 
     setupCategoryBar();
+    setupToolBar();
     setupScrollArea();
 }
 
@@ -299,6 +459,7 @@ void SignalCenterPage::setupCategoryBar()
         btn->setChecked(cat == d->currentCategory);
         btn->setFixedHeight(32);
         btn->setCursor(Qt::PointingHandCursor);
+        btn->setProperty("category", cat);
 
         QString activeStyle = QString(R"(
             QPushButton {
@@ -328,7 +489,7 @@ void SignalCenterPage::setupCategoryBar()
 
         btn->setStyleSheet(btn->isChecked() ? activeStyle : normalStyle);
 
-        connect(btn, &QPushButton::clicked, this, [this, btn, cat, activeStyle, normalStyle]() {
+        connect(btn, &QPushButton::clicked, this, [this, btn, activeStyle, normalStyle]() {
             auto* bar = qobject_cast<QFrame*>(btn->parent());
             if (bar) {
                 for (auto* child : bar->findChildren<QPushButton*>()) {
@@ -337,7 +498,7 @@ void SignalCenterPage::setupCategoryBar()
                     child->setStyleSheet(isActive ? activeStyle : normalStyle);
                 }
             }
-            onCategoryClicked(cat);
+            onCategoryClicked(btn->property("category").toString());
         });
 
         barLayout->addWidget(btn);
@@ -345,8 +506,77 @@ void SignalCenterPage::setupCategoryBar()
 
     barLayout->addStretch();
 
+    auto* mainLayout = qobject_cast<QVBoxLayout*>(QWidget::layout());
+    if (mainLayout) {
+        mainLayout->insertWidget(0, categoryBar);
+    }
+}
+
+void SignalCenterPage::setupToolBar()
+{
+    auto* toolBar = new QFrame();
+    toolBar->setStyleSheet(QString(
+        "QFrame { background-color: %1; border-bottom: 1px solid %2; }"
+    ).arg(COLOR_BG_GLOBAL, COLOR_SEPARATOR));
+    toolBar->setFixedHeight(40);
+
+    auto* barLayout = new QHBoxLayout(toolBar);
+    barLayout->setContentsMargins(16, 6, 16, 6);
+    barLayout->setSpacing(12);
+
+    // 数量标签
+    d->countLabel = new QLabel(QStringLiteral("共 0 个信号"));
+    d->countLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 12px; }").arg(COLOR_TEXT_META));
+    barLayout->addWidget(d->countLabel);
+
+    barLayout->addStretch();
+
+    // 排序标签
+    QLabel* sortLabel = new QLabel(QStringLiteral("排序:"));
+    sortLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 12px; }").arg(COLOR_TEXT_META));
+    barLayout->addWidget(sortLabel);
+
+    // 排序下拉框
+    d->sortCombo = new QComboBox();
+    d->sortCombo->addItem(QStringLiteral("收益率 ↓"), QStringLiteral("return_desc"));
+    d->sortCombo->addItem(QStringLiteral("收益率 ↑"), QStringLiteral("return_asc"));
+    d->sortCombo->addItem(QStringLiteral("胜率 ↓"), QStringLiteral("winrate_desc"));
+    d->sortCombo->addItem(QStringLiteral("胜率 ↑"), QStringLiteral("winrate_asc"));
+    d->sortCombo->addItem(QStringLiteral("订阅数 ↓"), QStringLiteral("followers_desc"));
+    d->sortCombo->addItem(QStringLiteral("订阅数 ↑"), QStringLiteral("followers_asc"));
+    d->sortCombo->setStyleSheet(QString(R"(
+        QComboBox {
+            background-color: %1;
+            color: %2;
+            border: 1px solid %3;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            min-width: 100px;
+        }
+        QComboBox:hover {
+            border-color: %4;
+        }
+        QComboBox::drop-down {
+            border: none;
+            width: 20px;
+        }
+        QComboBox QAbstractItemView {
+            background-color: %1;
+            color: %2;
+            border: 1px solid %3;
+            selection-background-color: %5;
+        }
+    )").arg(COLOR_BG_CARD, COLOR_TEXT_TITLE, COLOR_SEPARATOR, COLOR_PRIMARY, COLOR_HOVER_BG));
+    connect(d->sortCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
+        d->currentSort = d->sortCombo->itemData(index).toString();
+        updateCards();
+    });
+    barLayout->addWidget(d->sortCombo);
+
+    // 刷新按钮
     QPushButton* refreshBtn = new QPushButton(QStringLiteral("刷新"));
-    refreshBtn->setFixedHeight(32);
+    refreshBtn->setFixedHeight(28);
     refreshBtn->setFixedWidth(60);
     refreshBtn->setCursor(Qt::PointingHandCursor);
     refreshBtn->setStyleSheet(QString(R"(
@@ -363,6 +593,7 @@ void SignalCenterPage::setupCategoryBar()
         }
     )").arg(COLOR_TEXT_META, COLOR_SEPARATOR, COLOR_HOVER_BG, COLOR_PRIMARY));
     connect(refreshBtn, &QPushButton::clicked, this, [this]() {
+        d->loadSubscriptions();
         loadDemoData();
         LOG_INFO("Signal data refreshed");
     });
@@ -370,7 +601,7 @@ void SignalCenterPage::setupCategoryBar()
 
     auto* mainLayout = qobject_cast<QVBoxLayout*>(QWidget::layout());
     if (mainLayout) {
-        mainLayout->insertWidget(0, categoryBar);
+        mainLayout->insertWidget(1, toolBar);
     }
 }
 
@@ -414,6 +645,7 @@ void SignalCenterPage::setupScrollArea()
 
 void SignalCenterPage::loadDemoData()
 {
+    // 所有可用信号
     d->allSignals = {
         {QStringLiteral("s1"), QStringLiteral("量化策略A"), 156.8, 78, 2340, 99.0, QStringLiteral("量化"), QStringLiteral("多因子选股策略")},
         {QStringLiteral("s2"), QStringLiteral("趋势跟踪B"), 89.3, 65, 1890, 79.0, QStringLiteral("趋势"), QStringLiteral("动量突破策略")},
@@ -429,10 +661,61 @@ void SignalCenterPage::loadDemoData()
         {QStringLiteral("s12"), QStringLiteral("技术分析L"), 78.9, 62, 1780, 69.0, QStringLiteral("技术"), QStringLiteral("K线形态策略")}
     };
 
+    // 更新订阅状态
+    for (auto& sig : d->allSignals) {
+        sig.isSubscribed = d->isSubscribed(sig.id);
+    }
+
     updateCards();
 }
 
-void SignalCenterPage::updateCards(const QString& filter)
+QVector<SignalMiniCard::Data> SignalCenterPage::getFilteredSignals()
+{
+    QVector<SignalMiniCard::Data> result;
+
+    if (d->currentCategory == QStringLiteral("我的订阅")) {
+        result = d->subscribedSignals;
+    } else if (d->currentCategory == QStringLiteral("推荐信号")) {
+        // 推荐未订阅的高收益信号
+        for (const auto& sig : d->allSignals) {
+            if (!d->isSubscribed(sig.id)) {
+                result.append(sig);
+            }
+        }
+    } else if (d->currentCategory == QStringLiteral("排行榜")) {
+        // 按收益率排序的所有信号
+        result = d->allSignals;
+    } else if (d->currentCategory == QStringLiteral("最新上线")) {
+        // 模拟最新上线（取后6个）
+        for (int i = d->allSignals.size() - 1; i >= std::max(0, (int)d->allSignals.size() - 6); --i) {
+            result.append(d->allSignals[i]);
+        }
+    }
+
+    return result;
+}
+
+void SignalCenterPage::sortSignals(QVector<SignalMiniCard::Data>& signals)
+{
+    std::sort(signals.begin(), signals.end(), [this](const SignalMiniCard::Data& a, const SignalMiniCard::Data& b) {
+        if (d->currentSort == QStringLiteral("return_desc")) {
+            return a.returnRate > b.returnRate;
+        } else if (d->currentSort == QStringLiteral("return_asc")) {
+            return a.returnRate < b.returnRate;
+        } else if (d->currentSort == QStringLiteral("winrate_desc")) {
+            return a.winRate > b.winRate;
+        } else if (d->currentSort == QStringLiteral("winrate_asc")) {
+            return a.winRate < b.winRate;
+        } else if (d->currentSort == QStringLiteral("followers_desc")) {
+            return a.followers > b.followers;
+        } else if (d->currentSort == QStringLiteral("followers_asc")) {
+            return a.followers < b.followers;
+        }
+        return a.returnRate > b.returnRate;
+    });
+}
+
+void SignalCenterPage::updateCards()
 {
     // 清除现有卡片
     for (auto* card : d->cards) {
@@ -441,26 +724,28 @@ void SignalCenterPage::updateCards(const QString& filter)
     }
     d->cards.clear();
 
+    // 获取过滤后的信号
+    auto signals = getFilteredSignals();
+
+    // 排序
+    sortSignals(signals);
+
+    // 更新数量标签
+    d->countLabel->setText(QStringLiteral("共 %1 个信号").arg(signals.size()));
+
     // 添加新卡片到网格
     int row = 0;
     int col = 0;
+    bool showSubscribed = (d->currentCategory == QStringLiteral("我的订阅"));
 
-    for (const auto& signal : d->allSignals) {
-        Q_UNUSED(filter);
-
-        auto* card = new SignalMiniCard(signal);
+    for (const auto& signal : signals) {
+        auto* card = new SignalMiniCard(signal, showSubscribed);
         connect(card, &SignalMiniCard::clicked, this, &SignalCenterPage::onCardClicked);
         connect(card, &SignalMiniCard::subscribeClicked, this, [this](const SignalMiniCard::Data& data) {
-            SignalCardData cardData;
-            cardData.id = data.id;
-            cardData.name = data.name;
-            cardData.returnRate = data.returnRate;
-            cardData.winRate = data.winRate;
-            cardData.followers = data.followers;
-            cardData.price = data.price;
-            cardData.strategy = data.strategy;
-            cardData.description = data.description;
-            onSubscribeClicked(cardData);
+            onSubscribeClicked(data);
+        });
+        connect(card, &SignalMiniCard::unsubscribeClicked, this, [this](const SignalMiniCard::Data& data) {
+            onUnsubscribeClicked(data);
         });
 
         d->cardsGrid->addWidget(card, row, col, Qt::AlignTop | Qt::AlignLeft);
@@ -477,7 +762,7 @@ void SignalCenterPage::updateCards(const QString& filter)
 void SignalCenterPage::onCategoryClicked(const QString& category)
 {
     d->currentCategory = category;
-    updateCards(category);
+    updateCards();
     LOG_INFO(QString("Category changed to: %1").arg(category));
 }
 
@@ -489,9 +774,58 @@ void SignalCenterPage::onCardClicked()
     }
 }
 
-void SignalCenterPage::onSubscribeClicked(const SignalCardData& data)
+void SignalCenterPage::onSubscribeClicked(const SignalMiniCard::Data& data)
 {
-    LOG_INFO(QString("Subscribe clicked: %1").arg(data.name));
+    // 保存到数据库
+    d->saveSubscription(data);
+
+    // 更新订阅列表
+    SignalMiniCard::Data subscribedData = data;
+    subscribedData.isSubscribed = true;
+    d->subscribedSignals.append(subscribedData);
+
+    // 更新所有信号中的订阅状态
+    for (auto& sig : d->allSignals) {
+        if (sig.id == data.id) {
+            sig.isSubscribed = true;
+            break;
+        }
+    }
+
+    // 刷新显示
+    updateCards();
+
+    QMessageBox::information(this, QStringLiteral("订阅成功"),
+        QStringLiteral("已成功订阅信号：%1").arg(data.name));
+
+    LOG_INFO(QString("Subscribed: %1").arg(data.name));
+}
+
+void SignalCenterPage::onUnsubscribeClicked(const SignalMiniCard::Data& data)
+{
+    // 从数据库删除
+    d->removeSubscription(data.id);
+
+    // 更新订阅列表
+    for (int i = 0; i < d->subscribedSignals.size(); ++i) {
+        if (d->subscribedSignals[i].id == data.id) {
+            d->subscribedSignals.removeAt(i);
+            break;
+        }
+    }
+
+    // 更新所有信号中的订阅状态
+    for (auto& sig : d->allSignals) {
+        if (sig.id == data.id) {
+            sig.isSubscribed = false;
+            break;
+        }
+    }
+
+    // 刷新显示
+    updateCards();
+
+    LOG_INFO(QString("Unsubscribed: %1").arg(data.name));
 }
 
 } // namespace WealthPilot

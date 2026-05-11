@@ -1,6 +1,11 @@
 /**
  * @file SignalCenterPage.h
- * @brief 信号中心页面 - 参考资讯页面样式优化
+ * @brief 信号中心页面
+ *
+ * @details 功能：
+ * - 我的订阅、推荐信号、排行榜、最新上线四个分类
+ * - 列表排序功能（胜率、订阅数、收益率）
+ * - 订阅/取消订阅功能
  */
 
 #ifndef SIGNALCENTERPAGE_H
@@ -8,9 +13,6 @@
 
 #include <memory>
 #include <ui/components/BasePage.h>
-
-// 前向声明
-class SignalCardWidget;
 
 // 信号卡片数据结构
 struct SignalCardData {
@@ -22,6 +24,7 @@ struct SignalCardData {
     double price = 0.0;
     QString strategy;
     QString description;
+    bool isSubscribed = false;
 };
 
 namespace WealthPilot {
@@ -41,13 +44,18 @@ private slots:
     void onCategoryClicked(const QString& category);
     void onCardClicked();
     void onSubscribeClicked(const SignalCardData& data);
+    void onUnsubscribeClicked(const SignalCardData& data);
 
 private:
     void setupUI();
     void setupCategoryBar();
+    void setupToolBar();
     void setupScrollArea();
     void loadDemoData();
-    void updateCards(const QString& filter = QString());
+    void updateCards();
+
+    QVector<SignalCardData> getFilteredSignals();
+    void sortSignals(QVector<SignalCardData>& signals);
 
     struct Impl;
     std::unique_ptr<Impl> d;
