@@ -15,6 +15,7 @@
 #include "FundPage.h"
 #include "ui/components/KLineChart.h"
 #include "core/config/Tokens.h"
+#include "ui/delegates/ColorDelegates.h"
 #include "market/FundDataSource.h"
 #include "utils/Logger.h"
 #include "market/FavoritesManager.h"
@@ -282,6 +283,10 @@ void FundPage::initFundList()
     d->fundListTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     d->fundListTable->setSelectionMode(QAbstractItemView::SingleSelection);
     d->fundListTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    // 设置颜色委托（红涨绿跌）
+    d->fundListTable->setItemDelegateForColumn(3, new PriceColorDelegate(this));  // 最新价
+    d->fundListTable->setItemDelegateForColumn(4, new ChangeColorDelegate(this)); // 涨跌幅
 }
 
 void FundPage::initDetailPanel()

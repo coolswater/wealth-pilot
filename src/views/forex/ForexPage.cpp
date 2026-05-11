@@ -10,6 +10,7 @@
 #include "ui/components/KLineChart.h"
 #include "core/config/Tokens.h"
 #include "ui/components/StyleHelper.h"
+#include "ui/delegates/ColorDelegates.h"
 #include "market/ForexDataSource.h"
 #include "utils/Logger.h"
 
@@ -162,6 +163,12 @@ void ForexPage::initForexList()
     d->forexListTable->verticalHeader()->setVisible(false);
     d->forexListTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     d->forexListTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    // 设置颜色委托（红涨绿跌）
+    d->forexListTable->setItemDelegateForColumn(1, new PriceColorDelegate(this));  // 汇率
+    d->forexListTable->setItemDelegateForColumn(2, new PriceColorDelegate(this));  // 买入价
+    d->forexListTable->setItemDelegateForColumn(3, new PriceColorDelegate(this));  // 卖出价
+    d->forexListTable->setItemDelegateForColumn(4, new ChangeColorDelegate(this)); // 涨跌幅
 }
 
 void ForexPage::initRateChart()

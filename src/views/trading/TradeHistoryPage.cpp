@@ -6,6 +6,7 @@
 #include "TradeHistoryPage.h"
 #include "core/config/Tokens.h"
 #include "ui/components/StyleHelper.h"
+#include "ui/delegates/ColorDelegates.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -98,6 +99,9 @@ void TradeHistoryPage::setupUI()
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_table->setAlternatingRowColors(true);
     m_table->verticalHeader()->setVisible(false);
+
+    // 设置颜色委托（红涨绿跌）- 价格列
+    m_table->setItemDelegateForColumn(3, new PriceColorDelegate(this));
 
     mainLayout->addWidget(m_table);
 

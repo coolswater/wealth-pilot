@@ -8,6 +8,7 @@
 
 #include "StockQuotesPage.h"
 #include "ui/components/StyleHelper.h"
+#include "ui/delegates/ColorDelegates.h"
 #include "core/config/Tokens.h"
 #include "utils/Logger.h"
 
@@ -299,6 +300,13 @@ void StockQuotesPage::setupUI()
     m_tableView->setColumnWidth(StockQuoteModel::ColTurnover, 100);
     m_tableView->setColumnWidth(StockQuoteModel::ColHigh, 80);
     m_tableView->setColumnWidth(StockQuoteModel::ColLow, 80);
+
+    // 设置颜色委托（红涨绿跌）
+    auto* changeDelegate = new WealthPilot::ChangeColorDelegate(this);
+    auto* priceDelegate = new WealthPilot::PriceColorDelegate(this);
+    m_tableView->setItemDelegateForColumn(StockQuoteModel::ColPrice, priceDelegate);
+    m_tableView->setItemDelegateForColumn(StockQuoteModel::ColChange, changeDelegate);
+    m_tableView->setItemDelegateForColumn(StockQuoteModel::ColChangePercent, changeDelegate);
 
     mainLayout->addWidget(m_tableView);
 }

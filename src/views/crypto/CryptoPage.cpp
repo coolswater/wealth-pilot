@@ -6,6 +6,7 @@
 #include "CryptoPage.h"
 #include "core/config/Tokens.h"
 #include "ui/components/StyleHelper.h"
+#include "ui/delegates/ColorDelegates.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -88,6 +89,11 @@ void CryptoPage::setupUI()
     d->cryptoListTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     d->cryptoListTable->setAlternatingRowColors(true);
     d->cryptoListTable->verticalHeader()->setVisible(false);
+
+    // 设置颜色委托（红涨绿跌）
+    d->cryptoListTable->setItemDelegateForColumn(2, new PriceColorDelegate(this));
+    d->cryptoListTable->setItemDelegateForColumn(3, new ChangeColorDelegate(this));
+
     splitter->addWidget(d->cryptoListTable);
 
     // 右侧：详情面板

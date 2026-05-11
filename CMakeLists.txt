@@ -474,6 +474,8 @@ set(UI_COMPONENT_SOURCES
         src/ui/qml/QmlDataBridge.cpp
         src/ui/ThemeManager.h
         src/ui/ThemeManager.cpp
+        src/ui/delegates/ColorDelegates.h
+        src/ui/delegates/DelegateHelper.h
 )
 
 # QML Resources
