@@ -950,8 +950,8 @@ void DashboardPage::setupRankGrid()
     // 设置股票排行表格列宽的辅助函数
     auto setupRankTableColumns = [](QTableView* table) {
         // 固定列宽设置（适配约600px宽度）
-        table->setColumnWidth(StockRankModel::ColRank, 45);      // 排名
-        table->setColumnWidth(StockRankModel::ColCode, 75);     // 代码
+        table->setColumnWidth(StockRankModel::ColRank, 40);      // 排名
+        table->setColumnWidth(StockRankModel::ColCode, 80);     // 代码
         table->setColumnWidth(StockRankModel::ColName, 90);      // 名称
         table->setColumnWidth(StockRankModel::ColPrice, 80);     // 现价
         table->setColumnWidth(StockRankModel::ColChange, 85);    // 涨跌幅
@@ -1217,7 +1217,7 @@ void DashboardPage::setupWatchlistPanel()
     
     // 设置自选股表格列宽（适配约600px宽度）
     d->watchlistTable->setColumnWidth(WatchlistModel::ColRank, 40);      // 序号
-    d->watchlistTable->setColumnWidth(WatchlistModel::ColCode, 70);     // 代码
+    d->watchlistTable->setColumnWidth(WatchlistModel::ColCode, 80);     // 代码
     d->watchlistTable->setColumnWidth(WatchlistModel::ColName, 75);     // 名称
     d->watchlistTable->setColumnWidth(WatchlistModel::ColPrice, 70);    // 最新价
     d->watchlistTable->setColumnWidth(WatchlistModel::ColChange, 70);   // 涨跌幅
@@ -1370,7 +1370,7 @@ void DashboardPage::setupMoneyFlowPanel()
     
     // 设置资金流向表格列宽（适配约600px宽度）
     d->moneyFlowTable->setColumnWidth(MoneyFlowModel::ColRank, 45);          // 排名
-    d->moneyFlowTable->setColumnWidth(MoneyFlowModel::ColCode, 75);         // 代码
+    d->moneyFlowTable->setColumnWidth(MoneyFlowModel::ColCode, 80);         // 代码
     d->moneyFlowTable->setColumnWidth(MoneyFlowModel::ColName, 80);         // 名称
     d->moneyFlowTable->setColumnWidth(MoneyFlowModel::ColNetInflow, 90);     // 净流入
     d->moneyFlowTable->setColumnWidth(MoneyFlowModel::ColNetInflowPercent, 80); // 当日增仓

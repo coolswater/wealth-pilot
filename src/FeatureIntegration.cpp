@@ -5,6 +5,30 @@
 
 #include "FeatureIntegration.h"
 #include "utils/Logger.h"
+
+// 短期规划功能
+#include "core/network/WebSocketManager.h"
+#include "core/ui/ShortcutManager.h"
+#include "core/layout/LayoutManager.h"
+#include "core/analysis/StockScreener.h"
+#include "core/backtest/BacktestEngine.h"
+#include "core/analysis/RiskAnalyzer.h"
+
+// 中期规划功能
+#include "core/social/StrategyShareManager.h"
+#include "core/chart/DrawingToolManager.h"
+#include "core/quant/QuantTradingEngine.h"
+
+// 长期规划功能
+#include "core/ai/AIAssistant.h"
+#include "core/account/MultiAccountManager.h"
+#include "core/security/PermissionManager.h"
+#include "core/api/DataAPIManager.h"
+#include "core/plugin/PluginMarketManager.h"
+
+// 性能管理
+#include "core/performance/PerformanceManager.h"
+
 #include <QMainWindow>
 
 namespace WealthPilot {

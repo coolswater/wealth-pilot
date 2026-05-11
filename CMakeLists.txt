@@ -636,6 +636,14 @@ set(SOURCES
 # 创建可执行文件
 add_executable(WealthPilot WIN32 MACOSX_BUNDLE ${SOURCES})
 
+# 预编译头 (CMake 3.16+)
+if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.16")
+    target_precompile_headers(WealthPilot PRIVATE
+        src/pch.h
+    )
+    message(STATUS "Precompiled headers enabled")
+endif()
+
 # 包含目录
 target_include_directories(WealthPilot PRIVATE
         ${CMAKE_SOURCE_DIR}
