@@ -82,12 +82,28 @@ void QmlKLineWidget::loadQmlSource()
         qmlFile = "qrc:/qml/charts/TimeShareChart.qml";
     }
     m_quickWidget->setSource(QUrl(qmlFile));
+    
+    // 加载后绑定模型到 QML 的 model 属性
+    if (m_chartType == ChartType::KLine && m_klineModel) {
+        updateQmlProperty("model", QVariant::fromValue(m_klineModel));
+    } else if (m_chartType == ChartType::TimeShare && m_timeShareModel) {
+        updateQmlProperty("model", QVariant::fromValue(m_timeShareModel));
+    }
 }
 
 void QmlKLineWidget::setKLineData(const QVector<KLineData>& data)
 {
     if (m_klineModel) {
         m_klineModel->setData(data);
+        
+        // 确保 QML 组件已加载并绑定模型
+        if (m_qmlLoaded) {
+            updateQmlProperty("model", QVariant::fromValue(m_klineModel));
+            // 触发数据更新
+            if (auto* root = m_quickWidget->rootObject()) {
+                QMetaObject::invokeMethod(root, "updateData");
+            }
+        }
     }
 }
 
