@@ -43,11 +43,17 @@ QVariant KLineQmlModel::data(const QModelIndex& index, int role) const
         case VolumeRole:
             return kline.volume;
         case Ma5Role:
-            return QVariant(); // TODO: 计算MA5
+            if (index.row() >= 4 && index.row() - 4 < m_ma5.size())
+                return m_ma5[index.row() - 4];
+            return QVariant();
         case Ma10Role:
-            return QVariant(); // TODO: 计算MA10
+            if (index.row() >= 9 && index.row() - 9 < m_ma10.size())
+                return m_ma10[index.row() - 9];
+            return QVariant();
         case Ma20Role:
-            return QVariant(); // TODO: 计算MA20
+            if (index.row() >= 19 && index.row() - 19 < m_ma20.size())
+                return m_ma20[index.row() - 19];
+            return QVariant();
         default:
             return QVariant();
     }
@@ -72,8 +78,44 @@ void KLineQmlModel::setData(const QVector<KLineData>& data)
 {
     beginResetModel();
     m_data = data;
+    
+    // 计算 MA 均线
+    calculateMA();
+    
     endResetModel();
     emit countChanged();
+}
+
+void KLineQmlModel::calculateMA()
+{
+    if (m_data.isEmpty()) return;
+    
+    // 计算 MA5
+    for (int i = 4; i < m_data.size(); ++i) {
+        double sum = 0;
+        for (int j = i - 4; j <= i; ++j) {
+            sum += m_data[j].close;
+        }
+        m_ma5.append(sum / 5.0);
+    }
+    
+    // 计算 MA10
+    for (int i = 9; i < m_data.size(); ++i) {
+        double sum = 0;
+        for (int j = i - 9; j <= i; ++j) {
+            sum += m_data[j].close;
+        }
+        m_ma10.append(sum / 10.0);
+    }
+    
+    // 计算 MA20
+    for (int i = 19; i < m_data.size(); ++i) {
+        double sum = 0;
+        for (int j = i - 19; j <= i; ++j) {
+            sum += m_data[j].close;
+        }
+        m_ma20.append(sum / 20.0);
+    }
 }
 
 void KLineQmlModel::appendData(const KLineData& data)
@@ -97,6 +139,9 @@ void KLineQmlModel::clear()
 {
     beginResetModel();
     m_data.clear();
+    m_ma5.clear();
+    m_ma10.clear();
+    m_ma20.clear();
     endResetModel();
     emit countChanged();
 }
@@ -115,6 +160,14 @@ QVariantMap KLineQmlModel::get(int index) const
     result["close"] = kline.close;
     result["volume"] = kline.volume;
     result["time"] = kline.time;
+    
+    // 添加 MA 值
+    if (index >= 4 && index - 4 < m_ma5.size())
+        result["ma5"] = m_ma5[index - 4];
+    if (index >= 9 && index - 9 < m_ma10.size())
+        result["ma10"] = m_ma10[index - 9];
+    if (index >= 19 && index - 19 < m_ma20.size())
+        result["ma20"] = m_ma20[index - 19];
     
     return result;
 }

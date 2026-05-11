@@ -64,7 +64,12 @@ signals:
     void countChanged();
 
 private:
+    void calculateMA();
+
     QVector<KLineData> m_data;
+    QVector<double> m_ma5;
+    QVector<double> m_ma10;
+    QVector<double> m_ma20;
 };
 
 /**
