@@ -41,6 +41,7 @@
 #include "../crypto/CryptoPage.h"
 #include "../backtest/BacktestPage.h"
 #include "../alert/AlertCenterPage.h"
+#include "../demo/QmlChartDemoPage.h"
 #include "../../ui/components/BasePage.h"
 
 // 使用 WealthPilot 命名空间中的类
@@ -394,6 +395,7 @@ void MainWindow::setupUI()
     d->sidebar->addItem("riskSettings", QStringLiteral("风控"));
     d->sidebar->addItem("settings", QStringLiteral("设置"));
     d->sidebar->addItem("about", QStringLiteral("关于"));
+    d->sidebar->addItem("qmlChartDemo", QStringLiteral("QML演示"));
 
     d->mainLayout->addWidget(d->sidebar);
 
@@ -618,6 +620,11 @@ QWidget* MainWindow::getPage(const QString& pageId)
     else if (pageId == "alertCenter")
     {
         page = new AlertCenterPage(this);
+    }
+    // ========== QML 演示 ==========
+    else if (pageId == "qmlChartDemo")
+    {
+        page = new QmlChartDemoPage(this);
     }
 
     if (page)

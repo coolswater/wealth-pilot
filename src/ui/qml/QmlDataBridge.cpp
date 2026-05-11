@@ -4,7 +4,7 @@
  */
 
 #include "QmlDataBridge.h"
-#include "../../market/StockDataSource.h"
+#include "../../core/types/MarketTypes.h"
 #include <QQmlEngine>
 #include <QJSEngine>
 
