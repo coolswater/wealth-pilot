@@ -1,6 +1,6 @@
 /**
  * @file StockKLinePage.h
- * @brief 股票K线图页面
+ * @brief 股票K线图页面 - 支持 Widgets/QML 混合渲染
  */
 
 #ifndef STOCKKLINEPAGE_H
@@ -23,6 +23,7 @@ class QLabel;
 class QLineEdit;
 class QTabWidget;
 class QSplitter;
+class QmlKLineWidget;
 
 /**
  * @brief K线周期枚举
@@ -47,6 +48,25 @@ enum class ChartType {
 };
 
 /**
+ * @brief 渲染引擎类型
+ */
+enum class RenderEngine {
+    Widgets,    // 传统 Widgets 渲染
+    QML         // QML GPU 加速渲染
+};
+
+/**
+ * @brief 性能统计
+ */
+struct PerformanceStats {
+    qint64 renderTimeMs = 0;        // 渲染耗时
+    qint64 dataLoadTimeMs = 0;      // 数据加载耗时
+    int frameRate = 0;              // 帧率
+    double memoryMB = 0;            // 内存占用
+    QString engineName;             // 引擎名称
+};
+
+/**
  * @brief 股票K线图页面
  */
 class StockKLinePage : public WealthPilot::BasePage
@@ -66,16 +86,24 @@ public:
     
     void setPeriod(StockKLinePeriod period);
     void setChartType(ChartType type);
+    void setRenderEngine(RenderEngine engine);
+    
+    // 性能统计
+    PerformanceStats lastPerformanceStats() const { return m_lastStats; }
+    void runPerformanceBenchmark(int iterations = 10);
 
 signals:
     void stockChanged(const QString& stockCode);
     void periodChanged(int period);
+    void renderEngineChanged(int engine);
+    void performanceStatsChanged(const PerformanceStats& stats);
 
 private slots:
     void onChartTypeChanged(int index);
     void onPeriodChanged(int index);
     void onMainIndicatorChanged(int index);
     void onSubIndicatorChanged(int index);
+    void onRenderEngineChanged(int index);
     void onRefresh();
     void onCrosshairMoved(const QDateTime& time, double price);
     void onKLineInfoChanged(const KLineData& kline, int index);
@@ -116,11 +144,16 @@ private:
     QString timeShareCacheKey() const;
     void updateInfoLabel(const KLineData& kline);
     KLinePeriod toKLinePeriod(StockKLinePeriod period) const;
+    
+    // 性能测量
+    void measureRenderPerformance();
+    void updatePerformanceDisplay();
 
     QString m_stockCode;
     QString m_stockName;
     StockKLinePeriod m_period = StockKLinePeriod::Day;
     ChartType m_chartType = ChartType::KLine;
+    RenderEngine m_renderEngine = RenderEngine::Widgets;
     
     // UI组件
     QLabel* m_stockNameLabel = nullptr;
@@ -128,19 +161,30 @@ private:
     QComboBox* m_periodCombo = nullptr;
     QComboBox* m_mainIndicatorCombo = nullptr;
     QComboBox* m_subIndicatorCombo = nullptr;
+    QComboBox* m_renderEngineCombo = nullptr;
     QPushButton* m_refreshBtn = nullptr;
+    QPushButton* m_benchmarkBtn = nullptr;
     QLabel* m_infoLabel = nullptr;
+    QLabel* m_performanceLabel = nullptr;
     
-    // 图表组件
+    // 图表组件 - Widgets
     KLineChart* m_klineChart = nullptr;
     QWidget* m_timeShareWidget = nullptr;
-    StockInfoPanel* m_infoPanel = nullptr;  // 右侧信息面板
+    
+    // 图表组件 - QML
+    QmlKLineWidget* m_qmlKLineChart = nullptr;
+    
+    // 信息面板
+    StockInfoPanel* m_infoPanel = nullptr;
     
     // 数据源
     StockDataSource* m_dataSource = nullptr;
     
     // 缠论分析
     WealthPilot::ChanLun::ChanLunIntegration* m_chanLun = nullptr;
+    
+    // 性能统计
+    PerformanceStats m_lastStats;
     
     struct Impl;
     std::unique_ptr<Impl> d;

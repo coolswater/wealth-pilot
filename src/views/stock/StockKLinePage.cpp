@@ -10,6 +10,7 @@
 #include "utils/Logger.h"
 #include "ui/components/StockInfoPanel.h"
 #include "ui/components/TimeShareChart.h"
+#include "ui/components/QmlKLineWidget.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -24,6 +25,8 @@
 #include <QRandomGenerator>
 #include <QDateTime>
 #include <QVariant>
+#include <QElapsedTimer>
+#include <QCoreApplication>
 
 // 使用 ui/components/TimeShareChart.h 中定义的 TimeShareChart 组件
 
@@ -180,7 +183,28 @@ void StockKLinePage::setupUI()
     m_refreshBtn->setFixedWidth(60);
     toolbarLayout->addWidget(m_refreshBtn);
 
+    toolbarLayout->addSpacing(10);
+
+    // 渲染引擎选择
+    toolbarLayout->addWidget(new QLabel(QStringLiteral("引擎:"), toolbar));
+    m_renderEngineCombo = new QComboBox(toolbar);
+    m_renderEngineCombo->addItem(QStringLiteral("Widgets"), static_cast<int>(RenderEngine::Widgets));
+    m_renderEngineCombo->addItem(QStringLiteral("QML"), static_cast<int>(RenderEngine::QML));
+    toolbarLayout->addWidget(m_renderEngineCombo);
+
+    toolbarLayout->addSpacing(10);
+
+    // 性能测试按钮
+    m_benchmarkBtn = new QPushButton(QStringLiteral("性能测试"), toolbar);
+    m_benchmarkBtn->setFixedWidth(80);
+    toolbarLayout->addWidget(m_benchmarkBtn);
+
     toolbarLayout->addStretch();
+
+    // 性能显示标签
+    m_performanceLabel = new QLabel(QStringLiteral(""), toolbar);
+    m_performanceLabel->setStyleSheet(QString("color: %1; font-size: 11px;").arg(Tokens::Colors::TextSecondary));
+    toolbarLayout->addWidget(m_performanceLabel);
 
     mainLayout->addWidget(toolbar);
 
@@ -194,12 +218,17 @@ void StockKLinePage::setupUI()
     chartLayout->setContentsMargins(0, 0, 0, 0);
     chartLayout->setSpacing(0);
 
-    // K线图
+    // K线图 (Widgets)
     m_klineChart = new KLineChart(chartContainer);
     chartLayout->addWidget(m_klineChart);
     
     // 初始化缠论分析集成
     m_chanLun = new WealthPilot::ChanLun::ChanLunIntegration(m_klineChart, this);
+
+    // K线图 (QML) - 初始隐藏
+    m_qmlKLineChart = new QmlKLineWidget(chartContainer);
+    m_qmlKLineChart->hide();
+    chartLayout->addWidget(m_qmlKLineChart);
 
     // 分时图（初始隐藏）
     m_timeShareWidget = new TimeShareChart(chartContainer);
@@ -281,7 +310,12 @@ void StockKLinePage::setupConnections()
             this, &StockKLinePage::onMainIndicatorChanged);
     connect(m_subIndicatorCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), 
             this, &StockKLinePage::onSubIndicatorChanged);
+    connect(m_renderEngineCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &StockKLinePage::onRenderEngineChanged);
     connect(m_refreshBtn, &QPushButton::clicked, this, &StockKLinePage::onRefresh);
+    connect(m_benchmarkBtn, &QPushButton::clicked, this, [this]() {
+        runPerformanceBenchmark(10);
+    });
     
     // K线图信号
     connect(m_klineChart, &KLineChart::crosshairMoved, this, &StockKLinePage::onCrosshairMoved);
@@ -294,17 +328,29 @@ void StockKLinePage::onChartTypeChanged(int index)
     
     if (m_chartType == ChartType::KLine) {
         m_timeShareWidget->hide();
-        m_klineChart->show();
+        
+        // 根据渲染引擎显示对应图表
+        if (m_renderEngine == RenderEngine::QML) {
+            m_qmlKLineChart->show();
+            m_klineChart->hide();
+        } else {
+            m_klineChart->show();
+            m_qmlKLineChart->hide();
+        }
+        
         m_periodCombo->setEnabled(true);
         m_mainIndicatorCombo->setEnabled(true);
         m_subIndicatorCombo->setEnabled(true);
+        m_renderEngineCombo->setEnabled(true);
         loadDataWithFallback();
     } else {
         m_klineChart->hide();
+        m_qmlKLineChart->hide();
         m_timeShareWidget->show();
         m_periodCombo->setEnabled(false);
         m_mainIndicatorCombo->setEnabled(false);
         m_subIndicatorCombo->setEnabled(false);
+        m_renderEngineCombo->setEnabled(false);
         loadTimeShareWithFallback();
     }
     
@@ -403,16 +449,22 @@ void StockKLinePage::onKLineReceived(const QString& symbol, const QVector<KLineD
     }
     
     d->klineData = data;
-    m_klineChart->setData(data);
-    m_klineChart->showLatest(60);
     
-    // 设置默认指标
-    m_klineChart->setMainIndicator(MainIndicator::MA);
-    m_klineChart->setSubIndicator(SubIndicator::MACD);
-    
-    // 更新缠论分析数据
-    if (m_chanLun) {
-        m_chanLun->setKLineData(data);
+    // 根据渲染引擎设置数据
+    if (m_renderEngine == RenderEngine::QML) {
+        m_qmlKLineChart->setKLineData(data);
+    } else {
+        m_klineChart->setData(data);
+        m_klineChart->showLatest(60);
+        
+        // 设置默认指标
+        m_klineChart->setMainIndicator(MainIndicator::MA);
+        m_klineChart->setSubIndicator(SubIndicator::MACD);
+        
+        // 更新缠论分析数据
+        if (m_chanLun) {
+            m_chanLun->setKLineData(data);
+        }
     }
     
     // 保存到缓存和数据库
@@ -1008,4 +1060,145 @@ void StockKLinePage::stopRealtimeUpdate()
     
     m_infoLabel->setText(QStringLiteral("实时更新已停止"));
     LOG_INFO("Stopped realtime update");
+}
+
+void StockKLinePage::onRenderEngineChanged(int index)
+{
+    m_renderEngine = static_cast<RenderEngine>(m_renderEngineCombo->currentData().toInt());
+    
+    // 切换图表显示
+    if (m_renderEngine == RenderEngine::Widgets) {
+        m_qmlKLineChart->hide();
+        m_klineChart->show();
+        m_renderEngineCombo->setToolTip(QStringLiteral("传统 Widgets 渲染"));
+    } else {
+        m_klineChart->hide();
+        m_qmlKLineChart->show();
+        m_renderEngineCombo->setToolTip(QStringLiteral("QML GPU 加速渲染"));
+    }
+    
+    // 重新加载数据
+    if (!d->klineData.isEmpty()) {
+        if (m_renderEngine == RenderEngine::QML) {
+            m_qmlKLineChart->setKLineData(d->klineData);
+        }
+    }
+    
+    emit renderEngineChanged(index);
+    LOG_INFO(QString("Render engine changed: %1").arg(index == 0 ? "Widgets" : "QML"));
+}
+
+void StockKLinePage::setRenderEngine(RenderEngine engine)
+{
+    m_renderEngine = engine;
+    if (m_renderEngineCombo) {
+        m_renderEngineCombo->setCurrentIndex(static_cast<int>(engine));
+    }
+}
+
+void StockKLinePage::runPerformanceBenchmark(int iterations)
+{
+    m_performanceLabel->setText(QStringLiteral("性能测试中..."));
+    m_benchmarkBtn->setEnabled(false);
+    
+    // 生成测试数据
+    QVector<KLineData> testData;
+    testData.reserve(1000);
+    
+    QDateTime time = QDateTime::currentDateTime().addDays(-1000);
+    double basePrice = 100.0;
+    double price = basePrice;
+    
+    for (int i = 0; i < 1000; ++i) {
+        KLineData kline;
+        kline.time = time;
+        
+        double change = (QRandomGenerator::global()->bounded(100) - 50) / 100.0 * 3.0;
+        kline.open = price;
+        kline.close = price * (1 + change / 100.0);
+        kline.high = qMax(kline.open, kline.close) * 1.005;
+        kline.low = qMin(kline.open, kline.close) * 0.995;
+        kline.volume = 100000 + QRandomGenerator::global()->bounded(900000);
+        
+        testData.append(kline);
+        price = kline.close;
+        time = time.addDays(1);
+    }
+    
+    // 测试 Widgets 渲染性能
+    PerformanceStats widgetsStats;
+    widgetsStats.engineName = QStringLiteral("Widgets");
+    
+    QElapsedTimer timer;
+    qint64 totalWidgetsTime = 0;
+    
+    for (int i = 0; i < iterations; ++i) {
+        timer.start();
+        m_klineChart->setData(testData);
+        m_klineChart->repaint();
+        QCoreApplication::processEvents();
+        totalWidgetsTime += timer.elapsed();
+    }
+    widgetsStats.renderTimeMs = totalWidgetsTime / iterations;
+    
+    // 测试 QML 渲染性能
+    PerformanceStats qmlStats;
+    qmlStats.engineName = QStringLiteral("QML");
+    
+    qint64 totalQmlTime = 0;
+    
+    for (int i = 0; i < iterations; ++i) {
+        timer.start();
+        m_qmlKLineChart->setKLineData(testData);
+        QCoreApplication::processEvents();
+        totalQmlTime += timer.elapsed();
+    }
+    qmlStats.renderTimeMs = totalQmlTime / iterations;
+    
+    // 计算性能提升
+    double improvement = 0.0;
+    if (widgetsStats.renderTimeMs > 0 && qmlStats.renderTimeMs > 0) {
+        improvement = (static_cast<double>(widgetsStats.renderTimeMs) - qmlStats.renderTimeMs) 
+                    / widgetsStats.renderTimeMs * 100.0;
+    }
+    
+    // 更新显示
+    QString result = QStringLiteral("Widgets: %1ms | QML: %2ms | 提升: %3%")
+        .arg(widgetsStats.renderTimeMs)
+        .arg(qmlStats.renderTimeMs)
+        .arg(QString::number(improvement, 'f', 1));
+    
+    m_performanceLabel->setText(result);
+    m_lastStats = m_renderEngine == RenderEngine::Widgets ? widgetsStats : qmlStats;
+    
+    emit performanceStatsChanged(m_lastStats);
+    
+    m_benchmarkBtn->setEnabled(true);
+    
+    LOG_INFO(QString("Performance benchmark: Widgets=%1ms, QML=%2ms, improvement=%3%")
+        .arg(widgetsStats.renderTimeMs)
+        .arg(qmlStats.renderTimeMs)
+        .arg(improvement));
+}
+
+void StockKLinePage::measureRenderPerformance()
+{
+    QElapsedTimer timer;
+    timer.start();
+    
+    if (m_renderEngine == RenderEngine::Widgets) {
+        m_klineChart->repaint();
+    }
+    // QML 自动渲染
+    
+    m_lastStats.renderTimeMs = timer.elapsed();
+    updatePerformanceDisplay();
+}
+
+void StockKLinePage::updatePerformanceDisplay()
+{
+    if (m_performanceLabel) {
+        m_performanceLabel->setText(QStringLiteral("渲染: %1ms")
+            .arg(m_lastStats.renderTimeMs));
+    }
 }
