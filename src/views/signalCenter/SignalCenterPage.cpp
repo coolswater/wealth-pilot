@@ -21,11 +21,11 @@
 #include <QGraphicsDropShadowEffect>
 #include <QMouseEvent>
 #include <QGridLayout>
-#include <QComboBox>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QMessageBox>
+#include <QFontMetrics>
 
 using namespace Tokens;
 
@@ -46,6 +46,85 @@ namespace {
 }
 
 // ============================================================================
+// SortButton - 可点击排序按钮
+// ============================================================================
+class SortButton : public QPushButton
+{
+    Q_OBJECT
+
+public:
+    explicit SortButton(const QString& text, const QString& sortKey, QWidget* parent = nullptr)
+        : QPushButton(parent)
+        , m_sortKey(sortKey)
+        , m_ascending(false)
+    {
+        setText(text);
+        setCursor(Qt::PointingHandCursor);
+        setFixedHeight(28);
+        updateStyle();
+    }
+
+    QString sortKey() const { return m_sortKey; }
+    bool isAscending() const { return m_ascending; }
+
+    void toggleOrder() {
+        m_ascending = !m_ascending;
+        updateStyle();
+    }
+
+    void setActive(bool active) {
+        m_active = active;
+        updateStyle();
+    }
+
+signals:
+    void sortClicked(const QString& sortKey, bool ascending);
+
+private:
+    void updateStyle() {
+        QString icon = m_ascending ? QStringLiteral(" ↑") : QStringLiteral(" ↓");
+        QString baseText = text().split(QStringLiteral(" ")).first();
+        setText(baseText + icon);
+
+        if (m_active) {
+            setStyleSheet(QString(R"(
+                QPushButton {
+                    background-color: %1;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    padding: 4px 12px;
+                    font-size: 12px;
+                    font-weight: 600;
+                }
+                QPushButton:hover {
+                    background-color: %2;
+                }
+            )").arg(COLOR_PRIMARY, Colors::PrimaryHover));
+        } else {
+            setStyleSheet(QString(R"(
+                QPushButton {
+                    background-color: transparent;
+                    color: %1;
+                    border: 1px solid %2;
+                    border-radius: 4px;
+                    padding: 4px 12px;
+                    font-size: 12px;
+                }
+                QPushButton:hover {
+                    background-color: %3;
+                    border-color: %4;
+                }
+            )").arg(COLOR_TEXT_META, COLOR_SEPARATOR, COLOR_HOVER_BG, COLOR_PRIMARY));
+        }
+    }
+
+    QString m_sortKey;
+    bool m_ascending = false;
+    bool m_active = false;
+};
+
+// ============================================================================
 // SignalMiniCard - 小型信号卡片组件
 // ============================================================================
 class SignalMiniCard : public QFrame
@@ -54,8 +133,6 @@ class SignalMiniCard : public QFrame
 
 public:
     explicit SignalMiniCard(const SignalCardData& data, bool showSubscribed = false, QWidget* parent = nullptr);
-
-    void updateSubscribeButton();
 
 signals:
     void clicked();
@@ -87,8 +164,95 @@ SignalMiniCard::SignalMiniCard(const SignalCardData& data, bool showSubscribed, 
     setupUI();
 }
 
-void SignalMiniCard::updateSubscribeButton()
+void SignalMiniCard::setupUI()
 {
+    setStyleSheet(QString(R"(
+        SignalMiniCard {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 10px;
+        }
+    )").arg(COLOR_BG_CARD, COLOR_SEPARATOR));
+
+    auto* shadow = new QGraphicsDropShadowEffect(this);
+    shadow->setBlurRadius(12);
+    shadow->setColor(QColor(0, 0, 0, 40));
+    shadow->setOffset(0, 4);
+    setGraphicsEffect(shadow);
+
+    setFixedSize(240, 160);
+    setCursor(Qt::PointingHandCursor);
+
+    auto* mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(16, 14, 16, 12);
+    mainLayout->setSpacing(8);
+
+    // 标题行：名称 + 策略标签
+    auto* titleRow = new QHBoxLayout();
+    titleRow->setSpacing(8);
+
+    m_nameLabel = new QLabel(m_data.name);
+    m_nameLabel->setStyleSheet(QString(
+        "QLabel { color: %1; font-size: 14px; font-weight: bold; }"
+    ).arg(COLOR_TEXT_TITLE));
+    m_nameLabel->setWordWrap(false);
+    titleRow->addWidget(m_nameLabel, 1);
+
+    if (!m_data.strategy.isEmpty()) {
+        QLabel* strategyLabel = new QLabel(m_data.strategy);
+        strategyLabel->setStyleSheet(QString(
+            "QLabel { color: %1; font-size: 10px; background: %2; padding: 2px 8px; border-radius: 4px; font-weight: 500; }"
+        ).arg(COLOR_PRIMARY, Colors::PrimaryLight));
+        titleRow->addWidget(strategyLabel);
+    }
+
+    mainLayout->addLayout(titleRow);
+
+    // 收益率（突出显示）
+    QString returnText = m_data.returnRate >= 0
+        ? QString("+%1%").arg(m_data.returnRate, 0, 'f', 1)
+        : QString("%1%").arg(m_data.returnRate, 0, 'f', 1);
+    m_returnLabel = new QLabel(returnText);
+    m_returnLabel->setStyleSheet(QString(
+        "QLabel { color: %1; font-size: 26px; font-weight: bold; font-family: 'DIN Alternate', 'Consolas', monospace; }"
+    ).arg(m_data.returnRate >= 0 ? COLOR_SUCCESS : COLOR_DANGER));
+    mainLayout->addWidget(m_returnLabel);
+
+    mainLayout->addStretch();
+
+    // 底部统计行
+    auto* statsRow = new QHBoxLayout();
+    statsRow->setSpacing(16);
+
+    // 胜率
+    auto* winRateBox = new QVBoxLayout();
+    winRateBox->setSpacing(2);
+    QLabel* winRateTitle = new QLabel(QStringLiteral("胜率"));
+    winRateTitle->setStyleSheet(QString("QLabel { color: %1; font-size: 11px; }").arg(COLOR_TEXT_META));
+    winRateBox->addWidget(winRateTitle);
+    m_winRateLabel = new QLabel(QString("%1%").arg(m_data.winRate));
+    m_winRateLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 14px; font-weight: 600; }").arg(COLOR_TEXT_VALUE));
+    winRateBox->addWidget(m_winRateLabel);
+    statsRow->addLayout(winRateBox);
+
+    // 订阅人数
+    auto* followersBox = new QVBoxLayout();
+    followersBox->setSpacing(2);
+    QLabel* followersTitle = new QLabel(QStringLiteral("订阅"));
+    followersTitle->setStyleSheet(QString("QLabel { color: %1; font-size: 11px; }").arg(COLOR_TEXT_META));
+    followersBox->addWidget(followersTitle);
+    m_followersLabel = new QLabel(QString::number(m_data.followers));
+    m_followersLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 14px; font-weight: 600; }").arg(COLOR_TEXT_VALUE));
+    followersBox->addWidget(m_followersLabel);
+    statsRow->addLayout(followersBox);
+
+    statsRow->addStretch();
+
+    // 订阅按钮
+    m_subscribeBtn = new QPushButton();
+    m_subscribeBtn->setCursor(Qt::PointingHandCursor);
+    m_subscribeBtn->setFixedSize(56, 28);
+
     if (m_showSubscribed || m_data.subscribed) {
         m_subscribeBtn->setText(QStringLiteral("已订阅"));
         m_subscribeBtn->setStyleSheet(QString(R"(
@@ -96,9 +260,8 @@ void SignalMiniCard::updateSubscribeButton()
                 background-color: %1;
                 color: white;
                 border: none;
-                border-radius: 3px;
-                padding: 3px 10px;
-                font-size: 11px;
+                border-radius: 6px;
+                font-size: 12px;
                 font-weight: 600;
             }
             QPushButton:hover {
@@ -112,9 +275,8 @@ void SignalMiniCard::updateSubscribeButton()
                 background-color: %1;
                 color: white;
                 border: none;
-                border-radius: 3px;
-                padding: 3px 10px;
-                font-size: 11px;
+                border-radius: 6px;
+                font-size: 12px;
                 font-weight: 600;
             }
             QPushButton:hover {
@@ -122,97 +284,6 @@ void SignalMiniCard::updateSubscribeButton()
             }
         )").arg(COLOR_PRIMARY, Colors::PrimaryHover));
     }
-}
-
-void SignalMiniCard::setupUI()
-{
-    setStyleSheet(QString(R"(
-        SignalMiniCard {
-            background-color: %1;
-            border: 1px solid %2;
-            border-radius: 8px;
-        }
-    )").arg(COLOR_BG_CARD, COLOR_SEPARATOR));
-
-    auto* shadow = new QGraphicsDropShadowEffect(this);
-    shadow->setBlurRadius(6);
-    shadow->setColor(QColor(0, 0, 0, 25));
-    shadow->setOffset(0, 2);
-    setGraphicsEffect(shadow);
-
-    setFixedSize(220, 140);
-    setCursor(Qt::PointingHandCursor);
-
-    auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(12, 12, 12, 10);
-    mainLayout->setSpacing(6);
-
-    // 标题行：名称 + 策略标签
-    auto* titleRow = new QHBoxLayout();
-    titleRow->setSpacing(6);
-
-    m_nameLabel = new QLabel(m_data.name);
-    m_nameLabel->setStyleSheet(QString(
-        "QLabel { color: %1; font-size: 13px; font-weight: bold; }"
-    ).arg(COLOR_TEXT_TITLE));
-    m_nameLabel->setWordWrap(false);
-    titleRow->addWidget(m_nameLabel, 1);
-
-    if (!m_data.strategy.isEmpty()) {
-        QLabel* strategyLabel = new QLabel(m_data.strategy);
-        strategyLabel->setStyleSheet(QString(
-            "QLabel { color: %1; font-size: 10px; background: %2; padding: 1px 6px; border-radius: 2px; }"
-        ).arg(COLOR_PRIMARY, Colors::PrimaryLight));
-        titleRow->addWidget(strategyLabel);
-    }
-
-    mainLayout->addLayout(titleRow);
-
-    // 收益率（突出显示）
-    QString returnText = m_data.returnRate >= 0
-        ? QString("+%1%").arg(m_data.returnRate, 0, 'f', 1)
-        : QString("%1%").arg(m_data.returnRate, 0, 'f', 1);
-    m_returnLabel = new QLabel(returnText);
-    m_returnLabel->setStyleSheet(QString(
-        "QLabel { color: %1; font-size: 20px; font-weight: bold; font-family: 'Consolas', monospace; }"
-    ).arg(m_data.returnRate >= 0 ? COLOR_SUCCESS : COLOR_DANGER));
-    mainLayout->addWidget(m_returnLabel);
-
-    mainLayout->addStretch();
-
-    // 底部统计行
-    auto* statsRow = new QHBoxLayout();
-    statsRow->setSpacing(12);
-
-    // 胜率
-    auto* winRateLayout = new QVBoxLayout();
-    winRateLayout->setSpacing(2);
-    QLabel* winRateTitle = new QLabel(QStringLiteral("胜率"));
-    winRateTitle->setStyleSheet(QString("QLabel { color: %1; font-size: 10px; }").arg(COLOR_TEXT_META));
-    winRateLayout->addWidget(winRateTitle);
-    m_winRateLabel = new QLabel(QString("%1%").arg(m_data.winRate));
-    m_winRateLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 12px; font-weight: 600; }").arg(COLOR_TEXT_VALUE));
-    winRateLayout->addWidget(m_winRateLabel);
-    statsRow->addLayout(winRateLayout);
-
-    // 订阅人数
-    auto* followersLayout = new QVBoxLayout();
-    followersLayout->setSpacing(2);
-    QLabel* followersTitle = new QLabel(QStringLiteral("订阅"));
-    followersTitle->setStyleSheet(QString("QLabel { color: %1; font-size: 10px; }").arg(COLOR_TEXT_META));
-    followersLayout->addWidget(followersTitle);
-    m_followersLabel = new QLabel(QString::number(m_data.followers));
-    m_followersLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 12px; }").arg(COLOR_TEXT_VALUE));
-    followersLayout->addWidget(m_followersLabel);
-    statsRow->addLayout(followersLayout);
-
-    statsRow->addStretch();
-
-    // 订阅按钮
-    m_subscribeBtn = new QPushButton();
-    m_subscribeBtn->setCursor(Qt::PointingHandCursor);
-    m_subscribeBtn->setFixedSize(50, 24);
-    updateSubscribeButton();
 
     connect(m_subscribeBtn, &QPushButton::clicked, this, [this]() {
         if (m_showSubscribed || m_data.subscribed) {
@@ -240,8 +311,8 @@ void SignalMiniCard::enterEvent(QEnterEvent* event)
     setStyleSheet(QString(R"(
         SignalMiniCard {
             background-color: %1;
-            border: 1px solid %2;
-            border-radius: 8px;
+            border: 2px solid %2;
+            border-radius: 10px;
         }
     )").arg(COLOR_BG_CARD, COLOR_PRIMARY));
 }
@@ -253,7 +324,7 @@ void SignalMiniCard::leaveEvent(QEvent* event)
         SignalMiniCard {
             background-color: %1;
             border: 1px solid %2;
-            border-radius: 8px;
+            border-radius: 10px;
         }
     )").arg(COLOR_BG_CARD, COLOR_SEPARATOR));
 }
@@ -267,8 +338,12 @@ struct SignalCenterPage::Impl {
     QScrollArea* scrollArea = nullptr;
     QWidget* scrollContent = nullptr;
     QGridLayout* cardsGrid = nullptr;
-    QComboBox* sortCombo = nullptr;
     QLabel* countLabel = nullptr;
+
+    // 排序按钮
+    SortButton* returnSortBtn = nullptr;
+    SortButton* winRateSortBtn = nullptr;
+    SortButton* followersSortBtn = nullptr;
 
     QVector<SignalCardData> allSignals;
     QVector<SignalCardData> subscribedSignals;
@@ -276,7 +351,8 @@ struct SignalCenterPage::Impl {
 
     QString currentCategory = QStringLiteral("我的订阅");
     int cardsPerRow = 4;
-    QString currentSort = QStringLiteral("return_desc");
+    QString currentSort = QStringLiteral("return");
+    bool sortAscending = false;
 
     bool initDatabase();
     void loadSubscriptions();
@@ -431,11 +507,11 @@ void SignalCenterPage::setupCategoryBar()
     categoryBar->setStyleSheet(QString(
         "QFrame { background-color: %1; border-bottom: 1px solid %2; }"
     ).arg(COLOR_BG_CARD, COLOR_SEPARATOR));
-    categoryBar->setFixedHeight(48);
+    categoryBar->setFixedHeight(52);
 
     auto* barLayout = new QHBoxLayout(categoryBar);
-    barLayout->setContentsMargins(16, 8, 16, 8);
-    barLayout->setSpacing(8);
+    barLayout->setContentsMargins(20, 10, 20, 10);
+    barLayout->setSpacing(4);
 
     QStringList categories = {
         QStringLiteral("我的订阅"),
@@ -457,9 +533,10 @@ void SignalCenterPage::setupCategoryBar()
                 background-color: %1;
                 color: white;
                 border: none;
-                border-radius: 4px;
-                padding: 4px 16px;
+                border-radius: 6px;
+                padding: 6px 20px;
                 font-size: 13px;
+                font-weight: 600;
             }
         )").arg(COLOR_PRIMARY);
 
@@ -467,16 +544,15 @@ void SignalCenterPage::setupCategoryBar()
             QPushButton {
                 background-color: transparent;
                 color: %1;
-                border: 1px solid %2;
-                border-radius: 4px;
-                padding: 4px 16px;
+                border: none;
+                border-radius: 6px;
+                padding: 6px 20px;
                 font-size: 13px;
             }
             QPushButton:hover {
-                background-color: %3;
-                border-color: %4;
+                background-color: %2;
             }
-        )").arg(COLOR_TEXT_META, COLOR_SEPARATOR, COLOR_HOVER_BG, COLOR_PRIMARY);
+        )").arg(COLOR_TEXT_META, COLOR_HOVER_BG);
 
         btn->setStyleSheet(btn->isChecked() ? activeStyle : normalStyle);
 
@@ -509,15 +585,15 @@ void SignalCenterPage::setupToolBar()
     toolBar->setStyleSheet(QString(
         "QFrame { background-color: %1; border-bottom: 1px solid %2; }"
     ).arg(COLOR_BG_GLOBAL, COLOR_SEPARATOR));
-    toolBar->setFixedHeight(40);
+    toolBar->setFixedHeight(48);
 
     auto* barLayout = new QHBoxLayout(toolBar);
-    barLayout->setContentsMargins(16, 6, 16, 6);
+    barLayout->setContentsMargins(20, 8, 20, 8);
     barLayout->setSpacing(12);
 
     // 数量标签
     d->countLabel = new QLabel(QStringLiteral("共 0 个信号"));
-    d->countLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 12px; }").arg(COLOR_TEXT_META));
+    d->countLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 13px; }").arg(COLOR_TEXT_META));
     barLayout->addWidget(d->countLabel);
 
     barLayout->addStretch();
@@ -527,43 +603,29 @@ void SignalCenterPage::setupToolBar()
     sortLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 12px; }").arg(COLOR_TEXT_META));
     barLayout->addWidget(sortLabel);
 
-    // 排序下拉框
-    d->sortCombo = new QComboBox();
-    d->sortCombo->addItem(QStringLiteral("收益率 ↓"), QStringLiteral("return_desc"));
-    d->sortCombo->addItem(QStringLiteral("收益率 ↑"), QStringLiteral("return_asc"));
-    d->sortCombo->addItem(QStringLiteral("胜率 ↓"), QStringLiteral("winrate_desc"));
-    d->sortCombo->addItem(QStringLiteral("胜率 ↑"), QStringLiteral("winrate_asc"));
-    d->sortCombo->addItem(QStringLiteral("订阅数 ↓"), QStringLiteral("followers_desc"));
-    d->sortCombo->addItem(QStringLiteral("订阅数 ↑"), QStringLiteral("followers_asc"));
-    d->sortCombo->setStyleSheet(QString(R"(
-        QComboBox {
-            background-color: %1;
-            color: %2;
-            border: 1px solid %3;
-            border-radius: 4px;
-            padding: 4px 8px;
-            font-size: 12px;
-            min-width: 100px;
-        }
-        QComboBox:hover {
-            border-color: %4;
-        }
-        QComboBox::drop-down {
-            border: none;
-            width: 20px;
-        }
-        QComboBox QAbstractItemView {
-            background-color: %1;
-            color: %2;
-            border: 1px solid %3;
-            selection-background-color: %5;
-        }
-    )").arg(COLOR_BG_CARD, COLOR_TEXT_TITLE, COLOR_SEPARATOR, COLOR_PRIMARY, COLOR_HOVER_BG));
-    connect(d->sortCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
-        d->currentSort = d->sortCombo->itemData(index).toString();
-        updateCards();
+    // 收益率排序按钮
+    d->returnSortBtn = new SortButton(QStringLiteral("收益率"), QStringLiteral("return"));
+    d->returnSortBtn->setActive(true);
+    connect(d->returnSortBtn, &SortButton::sortClicked, this, [this](const QString& sortKey, bool ascending) {
+        onSortChanged(sortKey, ascending);
     });
-    barLayout->addWidget(d->sortCombo);
+    barLayout->addWidget(d->returnSortBtn);
+
+    // 胜率排序按钮
+    d->winRateSortBtn = new SortButton(QStringLiteral("胜率"), QStringLiteral("winrate"));
+    connect(d->winRateSortBtn, &SortButton::sortClicked, this, [this](const QString& sortKey, bool ascending) {
+        onSortChanged(sortKey, ascending);
+    });
+    barLayout->addWidget(d->winRateSortBtn);
+
+    // 订阅数排序按钮
+    d->followersSortBtn = new SortButton(QStringLiteral("订阅数"), QStringLiteral("followers"));
+    connect(d->followersSortBtn, &SortButton::sortClicked, this, [this](const QString& sortKey, bool ascending) {
+        onSortChanged(sortKey, ascending);
+    });
+    barLayout->addWidget(d->followersSortBtn);
+
+    barLayout->addSpacing(8);
 
     // 刷新按钮
     QPushButton* refreshBtn = new QPushButton(QStringLiteral("刷新"));
@@ -575,7 +637,7 @@ void SignalCenterPage::setupToolBar()
             background-color: transparent;
             color: %1;
             border: 1px solid %2;
-            border-radius: 4px;
+            border-radius: 6px;
             font-size: 12px;
         }
         QPushButton:hover {
@@ -613,14 +675,14 @@ void SignalCenterPage::setupScrollArea()
     d->scrollContent->setStyleSheet(QString("QWidget { background-color: %1; }").arg(COLOR_BG_GLOBAL));
 
     auto* contentLayout = new QVBoxLayout(d->scrollContent);
-    contentLayout->setContentsMargins(16, 16, 16, 16);
+    contentLayout->setContentsMargins(20, 20, 20, 20);
     contentLayout->setSpacing(0);
 
     // 网格容器
     auto* gridContainer = new QWidget();
     d->cardsGrid = new QGridLayout(gridContainer);
     d->cardsGrid->setContentsMargins(0, 0, 0, 0);
-    d->cardsGrid->setSpacing(12);
+    d->cardsGrid->setSpacing(16);
     d->cardsGrid->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 
     contentLayout->addWidget(gridContainer);
@@ -667,17 +729,14 @@ QVector<SignalCardData> SignalCenterPage::getFilteredSignals()
     if (d->currentCategory == QStringLiteral("我的订阅")) {
         result = d->subscribedSignals;
     } else if (d->currentCategory == QStringLiteral("推荐信号")) {
-        // 推荐未订阅的高收益信号
         for (const auto& sig : d->allSignals) {
             if (!d->isSubscribed(sig.id)) {
                 result.append(sig);
             }
         }
     } else if (d->currentCategory == QStringLiteral("排行榜")) {
-        // 按收益率排序的所有信号
         result = d->allSignals;
     } else if (d->currentCategory == QStringLiteral("最新上线")) {
-        // 模拟最新上线（取后6个）
         for (int i = d->allSignals.size() - 1; i >= std::max(0, (int)d->allSignals.size() - 6); --i) {
             result.append(d->allSignals[i]);
         }
@@ -689,21 +748,29 @@ QVector<SignalCardData> SignalCenterPage::getFilteredSignals()
 void SignalCenterPage::sortSignals(QVector<SignalCardData>& signalList)
 {
     std::sort(signalList.begin(), signalList.end(), [this](const SignalCardData& a, const SignalCardData& b) {
-        if (d->currentSort == QStringLiteral("return_desc")) {
-            return a.returnRate > b.returnRate;
-        } else if (d->currentSort == QStringLiteral("return_asc")) {
-            return a.returnRate < b.returnRate;
-        } else if (d->currentSort == QStringLiteral("winrate_desc")) {
-            return a.winRate > b.winRate;
-        } else if (d->currentSort == QStringLiteral("winrate_asc")) {
-            return a.winRate < b.winRate;
-        } else if (d->currentSort == QStringLiteral("followers_desc")) {
-            return a.followers > b.followers;
-        } else if (d->currentSort == QStringLiteral("followers_asc")) {
-            return a.followers < b.followers;
+        bool result = false;
+        if (d->currentSort == QStringLiteral("return")) {
+            result = a.returnRate > b.returnRate;
+        } else if (d->currentSort == QStringLiteral("winrate")) {
+            result = a.winRate > b.winRate;
+        } else if (d->currentSort == QStringLiteral("followers")) {
+            result = a.followers > b.followers;
         }
-        return a.returnRate > b.returnRate;
+        return d->sortAscending ? !result : result;
     });
+}
+
+void SignalCenterPage::onSortChanged(const QString& sortKey, bool ascending)
+{
+    d->currentSort = sortKey;
+    d->sortAscending = ascending;
+
+    // 更新按钮状态
+    d->returnSortBtn->setActive(sortKey == QStringLiteral("return"));
+    d->winRateSortBtn->setActive(sortKey == QStringLiteral("winrate"));
+    d->followersSortBtn->setActive(sortKey == QStringLiteral("followers"));
+
+    updateCards();
 }
 
 void SignalCenterPage::updateCards()
@@ -767,15 +834,12 @@ void SignalCenterPage::onCardClicked()
 
 void SignalCenterPage::onSubscribeClicked(const SignalCardData& data)
 {
-    // 保存到数据库
     d->saveSubscription(data);
 
-    // 更新订阅列表
     SignalCardData subscribedData = data;
     subscribedData.subscribed = true;
     d->subscribedSignals.append(subscribedData);
 
-    // 更新所有信号中的订阅状态
     for (auto& sig : d->allSignals) {
         if (sig.id == data.id) {
             sig.subscribed = true;
@@ -783,7 +847,6 @@ void SignalCenterPage::onSubscribeClicked(const SignalCardData& data)
         }
     }
 
-    // 刷新显示
     updateCards();
 
     QMessageBox::information(this, QStringLiteral("订阅成功"),
@@ -794,10 +857,8 @@ void SignalCenterPage::onSubscribeClicked(const SignalCardData& data)
 
 void SignalCenterPage::onUnsubscribeClicked(const SignalCardData& data)
 {
-    // 从数据库删除
     d->removeSubscription(data.id);
 
-    // 更新订阅列表
     for (int i = 0; i < d->subscribedSignals.size(); ++i) {
         if (d->subscribedSignals[i].id == data.id) {
             d->subscribedSignals.removeAt(i);
@@ -805,7 +866,6 @@ void SignalCenterPage::onUnsubscribeClicked(const SignalCardData& data)
         }
     }
 
-    // 更新所有信号中的订阅状态
     for (auto& sig : d->allSignals) {
         if (sig.id == data.id) {
             sig.subscribed = false;
@@ -813,7 +873,6 @@ void SignalCenterPage::onUnsubscribeClicked(const SignalCardData& data)
         }
     }
 
-    // 刷新显示
     updateCards();
 
     LOG_INFO(QString("Unsubscribed: %1").arg(data.name));

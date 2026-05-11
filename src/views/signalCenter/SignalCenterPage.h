@@ -25,7 +25,7 @@ struct SignalCardData {
     double price = 0.0;
     QString strategy;
     QString description;
-    bool subscribed = false;  // 改名为 subscribed 避免与 public 冲突
+    bool subscribed = false;
 };
 
 namespace WealthPilot {
@@ -46,6 +46,7 @@ private slots:
     void onCardClicked();
     void onSubscribeClicked(const SignalCardData& data);
     void onUnsubscribeClicked(const SignalCardData& data);
+    void onSortChanged(const QString& sortKey, bool ascending);
 
 private:
     void setupUI();
