@@ -531,6 +531,7 @@ set(SOURCES
         ${WIDGET_SOURCES}
         ${VIEW_SOURCES}
         ${TRADING_SOURCES}
+        ${QML_RESOURCES}
 )
 
 # 创建可执行文件
