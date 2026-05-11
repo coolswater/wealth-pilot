@@ -35,6 +35,10 @@ void QmlKLineWidget::setupUI()
     m_quickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
     m_quickWidget->setAttribute(Qt::WA_AlwaysStackOnTop);  // 确保QML在最上层
     m_quickWidget->setClearColor(Qt::transparent);         // 透明背景
+    
+    // 添加 Qt Charts QML 插件导入路径
+    m_quickWidget->engine()->addImportPath("qrc:/qt-project.org/imports");
+    m_quickWidget->engine()->addPluginPath("C:/Qt/6.10.2/mingw_64/qml");
 
     // 获取数据模型
     auto* bridge = QmlDataBridge::instance();

@@ -561,6 +561,14 @@ target_link_libraries(WealthPilot PRIVATE
         Qt6::Qml
 )
 
+# QML 模块导入路径
+if(WIN32)
+    set(QT_QML_IMPORT_PATH "C:/Qt/6.10.2/mingw_64/qml")
+    set_target_properties(WealthPilot PROPERTIES
+        QT_QML_MODULE_IMPORT_PATH "${QT_QML_IMPORT_PATH}"
+    )
+endif()
+
 
 # Windows 平台特定库
 if (WIN32)

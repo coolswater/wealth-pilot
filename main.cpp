@@ -35,6 +35,13 @@
 #include <QLocale>
 #include <QTranslator>
 #include <src/ui/ThemeManager.h>
+#include <QQmlEngine>
+#include <QtCharts/QChart>
+
+// 导入 Qt Charts QML 插件
+#ifdef QT_CHARTS_LIB
+#include <QtCharts/QtCharts>
+#endif
 
 /**
  * @brief 清理所有服务
