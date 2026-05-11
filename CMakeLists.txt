@@ -120,6 +120,24 @@ set(CORE_BACKTEST_SOURCES
         src/core/backtest/BacktestEngine.cpp
 )
 
+# Core - Social 社交交易
+set(CORE_SOCIAL_SOURCES
+        src/core/social/StrategyShareManager.h
+        src/core/social/StrategyShareManager.cpp
+)
+
+# Core - Chart 图表工具
+set(CORE_CHART_SOURCES
+        src/core/chart/DrawingToolManager.h
+        src/core/chart/DrawingToolManager.cpp
+)
+
+# Core - Quant 量化交易
+set(CORE_QUANT_SOURCES
+        src/core/quant/QuantTradingEngine.h
+        src/core/quant/QuantTradingEngine.cpp
+)
+
 # Core - DI 依赖注入
 set(CORE_DI_SOURCES
         src/core/di/ServiceLocator.h
@@ -541,6 +559,9 @@ set(SOURCES
         ${CORE_UI_SOURCES}
         ${CORE_ANALYSIS_SOURCES}
         ${CORE_BACKTEST_SOURCES}
+        ${CORE_SOCIAL_SOURCES}
+        ${CORE_CHART_SOURCES}
+        ${CORE_QUANT_SOURCES}
         ${CORE_DI_SOURCES}
         ${CORE_DATA_SOURCES}
         ${CORE_NAVIGATION_SOURCES}
