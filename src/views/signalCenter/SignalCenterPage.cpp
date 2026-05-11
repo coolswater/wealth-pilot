@@ -55,13 +55,18 @@ class SortButton : public QPushButton
 public:
     explicit SortButton(const QString& text, const QString& sortKey, QWidget* parent = nullptr)
         : QPushButton(parent)
+        , m_baseText(text)
         , m_sortKey(sortKey)
         , m_ascending(false)
+        , m_active(false)
     {
-        setText(text);
         setCursor(Qt::PointingHandCursor);
         setFixedHeight(28);
         updateStyle();
+        connect(this, &QPushButton::clicked, this, [this]() {
+            toggleOrder();
+            emit sortClicked(m_sortKey, m_ascending);
+        });
     }
 
     QString sortKey() const { return m_sortKey; }
@@ -83,8 +88,7 @@ signals:
 private:
     void updateStyle() {
         QString icon = m_ascending ? QStringLiteral(" ↑") : QStringLiteral(" ↓");
-        QString baseText = text().split(QStringLiteral(" ")).first();
-        setText(baseText + icon);
+        setText(m_baseText + icon);
 
         if (m_active) {
             setStyleSheet(QString(R"(
@@ -119,6 +123,7 @@ private:
         }
     }
 
+    QString m_baseText;
     QString m_sortKey;
     bool m_ascending = false;
     bool m_active = false;
@@ -765,10 +770,20 @@ void SignalCenterPage::onSortChanged(const QString& sortKey, bool ascending)
     d->currentSort = sortKey;
     d->sortAscending = ascending;
 
-    // 更新按钮状态
-    d->returnSortBtn->setActive(sortKey == QStringLiteral("return"));
-    d->winRateSortBtn->setActive(sortKey == QStringLiteral("winrate"));
-    d->followersSortBtn->setActive(sortKey == QStringLiteral("followers"));
+    // 更新所有按钮状态
+    if (sortKey == QStringLiteral("return")) {
+        d->returnSortBtn->setActive(true);
+        d->winRateSortBtn->setActive(false);
+        d->followersSortBtn->setActive(false);
+    } else if (sortKey == QStringLiteral("winrate")) {
+        d->returnSortBtn->setActive(false);
+        d->winRateSortBtn->setActive(true);
+        d->followersSortBtn->setActive(false);
+    } else if (sortKey == QStringLiteral("followers")) {
+        d->returnSortBtn->setActive(false);
+        d->winRateSortBtn->setActive(false);
+        d->followersSortBtn->setActive(true);
+    }
 
     updateCards();
 }
