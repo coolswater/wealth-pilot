@@ -1,6 +1,6 @@
 /**
  * @file SignalCenterPage.cpp
- * @brief 信号中心页面实现 - 参考资讯页面样式优化
+ * @brief 信号中心页面实现 - 小卡片网格布局
  */
 
 #include "SignalCenterPage.h"
@@ -15,6 +15,7 @@
 #include <QFrame>
 #include <QGraphicsDropShadowEffect>
 #include <QMouseEvent>
+#include <QGridLayout>
 
 using namespace Tokens;
 
@@ -35,9 +36,9 @@ namespace {
 }
 
 // ============================================================================
-// SignalCardWidget - 信号卡片组件
+// SignalMiniCard - 小型信号卡片组件
 // ============================================================================
-class SignalCardWidget : public QFrame
+class SignalMiniCard : public QFrame
 {
     Q_OBJECT
 
@@ -53,9 +54,7 @@ public:
         QString description;
     };
 
-    explicit SignalCardWidget(const Data& data, QWidget* parent = nullptr);
-    
-    void setLastCard(bool isLast);
+    explicit SignalMiniCard(const Data& data, QWidget* parent = nullptr);
 
 signals:
     void clicked();
@@ -75,122 +74,109 @@ private:
     QLabel* m_winRateLabel = nullptr;
     QLabel* m_followersLabel = nullptr;
     QPushButton* m_subscribeBtn = nullptr;
-    QFrame* m_separator = nullptr;
 };
 
-SignalCardWidget::SignalCardWidget(const Data& data, QWidget* parent)
+SignalMiniCard::SignalMiniCard(const Data& data, QWidget* parent)
     : QFrame(parent)
     , m_data(data)
 {
     setupUI();
 }
 
-void SignalCardWidget::setLastCard(bool isLast)
-{
-    if (m_separator) {
-        m_separator->setVisible(!isLast);
-    }
-}
-
-void SignalCardWidget::setupUI()
+void SignalMiniCard::setupUI()
 {
     setStyleSheet(QString(R"(
-        SignalCardWidget {
+        SignalMiniCard {
             background-color: %1;
             border: 1px solid %2;
             border-radius: 8px;
         }
     )").arg(COLOR_BG_CARD, COLOR_SEPARATOR));
-    
+
     auto* shadow = new QGraphicsDropShadowEffect(this);
-    shadow->setBlurRadius(8);
-    shadow->setColor(QColor(0, 0, 0, 30));
+    shadow->setBlurRadius(6);
+    shadow->setColor(QColor(0, 0, 0, 25));
     shadow->setOffset(0, 2);
     setGraphicsEffect(shadow);
-    
-    setMinimumHeight(160);
+
+    setFixedSize(220, 140);
     setCursor(Qt::PointingHandCursor);
-    
+
     auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(16, 16, 16, 12);
-    mainLayout->setSpacing(10);
-    
-    // 标题行
+    mainLayout->setContentsMargins(12, 12, 12, 10);
+    mainLayout->setSpacing(6);
+
+    // 标题行：名称 + 策略标签
     auto* titleRow = new QHBoxLayout();
-    titleRow->setSpacing(8);
-    
+    titleRow->setSpacing(6);
+
     m_nameLabel = new QLabel(m_data.name);
     m_nameLabel->setStyleSheet(QString(
-        "QLabel { color: %1; font-size: 15px; font-weight: bold; }"
+        "QLabel { color: %1; font-size: 13px; font-weight: bold; }"
     ).arg(COLOR_TEXT_TITLE));
+    m_nameLabel->setElideMode(Qt::ElideRight);
     titleRow->addWidget(m_nameLabel, 1);
-    
+
     if (!m_data.strategy.isEmpty()) {
         QLabel* strategyLabel = new QLabel(m_data.strategy);
         strategyLabel->setStyleSheet(QString(
-            "QLabel { color: %1; font-size: 11px; background: %2; padding: 2px 8px; border-radius: 3px; }"
+            "QLabel { color: %1; font-size: 10px; background: %2; padding: 1px 6px; border-radius: 2px; }"
         ).arg(COLOR_PRIMARY, Colors::PrimaryLight));
         titleRow->addWidget(strategyLabel);
     }
-    
+
     mainLayout->addLayout(titleRow);
-    
-    // 收益率行
-    auto* returnRow = new QHBoxLayout();
-    returnRow->setSpacing(8);
-    
-    QLabel* returnTitle = new QLabel(QStringLiteral("累计收益"));
-    returnTitle->setStyleSheet(QString("QLabel { color: %1; font-size: 12px; }").arg(COLOR_TEXT_META));
-    returnRow->addWidget(returnTitle);
-    returnRow->addStretch();
-    
-    QString returnText = m_data.returnRate >= 0 
+
+    // 收益率（突出显示）
+    QString returnText = m_data.returnRate >= 0
         ? QString("+%1%").arg(m_data.returnRate, 0, 'f', 1)
         : QString("%1%").arg(m_data.returnRate, 0, 'f', 1);
     m_returnLabel = new QLabel(returnText);
     m_returnLabel->setStyleSheet(QString(
-        "QLabel { color: %1; font-size: 22px; font-weight: bold; font-family: 'Consolas', monospace; }"
+        "QLabel { color: %1; font-size: 20px; font-weight: bold; font-family: 'Consolas', monospace; }"
     ).arg(m_data.returnRate >= 0 ? COLOR_SUCCESS : COLOR_DANGER));
-    returnRow->addWidget(m_returnLabel);
-    mainLayout->addLayout(returnRow);
-    
-    // 胜率和订阅人数行
+    mainLayout->addWidget(m_returnLabel);
+
+    mainLayout->addStretch();
+
+    // 底部统计行
     auto* statsRow = new QHBoxLayout();
-    statsRow->setSpacing(16);
-    
+    statsRow->setSpacing(12);
+
+    // 胜率
+    auto* winRateLayout = new QVBoxLayout();
+    winRateLayout->setSpacing(2);
     QLabel* winRateTitle = new QLabel(QStringLiteral("胜率"));
-    winRateTitle->setStyleSheet(QString("QLabel { color: %1; font-size: 12px; }").arg(COLOR_TEXT_META));
-    statsRow->addWidget(winRateTitle);
-    
+    winRateTitle->setStyleSheet(QString("QLabel { color: %1; font-size: 10px; }").arg(COLOR_TEXT_META));
+    winRateLayout->addWidget(winRateTitle);
     m_winRateLabel = new QLabel(QString("%1%").arg(m_data.winRate));
-    m_winRateLabel->setStyleSheet(QString(
-        "QLabel { color: %1; font-size: 13px; font-weight: 600; }"
-    ).arg(COLOR_TEXT_VALUE));
-    statsRow->addWidget(m_winRateLabel);
-    
-    statsRow->addSpacing(16);
-    
+    m_winRateLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 12px; font-weight: 600; }").arg(COLOR_TEXT_VALUE));
+    winRateLayout->addWidget(m_winRateLabel);
+    statsRow->addLayout(winRateLayout);
+
+    // 订阅人数
+    auto* followersLayout = new QVBoxLayout();
+    followersLayout->setSpacing(2);
     QLabel* followersTitle = new QLabel(QStringLiteral("订阅"));
-    followersTitle->setStyleSheet(QString("QLabel { color: %1; font-size: 12px; }").arg(COLOR_TEXT_META));
-    statsRow->addWidget(followersTitle);
-    
+    followersTitle->setStyleSheet(QString("QLabel { color: %1; font-size: 10px; }").arg(COLOR_TEXT_META));
+    followersLayout->addWidget(followersTitle);
     m_followersLabel = new QLabel(QString::number(m_data.followers));
-    m_followersLabel->setStyleSheet(QString(
-        "QLabel { color: %1; font-size: 13px; }"
-    ).arg(COLOR_TEXT_VALUE));
-    statsRow->addWidget(m_followersLabel);
-    
+    m_followersLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 12px; }").arg(COLOR_TEXT_VALUE));
+    followersLayout->addWidget(m_followersLabel);
+    statsRow->addLayout(followersLayout);
+
     statsRow->addStretch();
-    
+
+    // 订阅按钮
     m_subscribeBtn = new QPushButton(QStringLiteral("订阅"));
     m_subscribeBtn->setStyleSheet(QString(R"(
         QPushButton {
             background-color: %1;
             color: white;
             border: none;
-            border-radius: 4px;
-            padding: 4px 12px;
-            font-size: 12px;
+            border-radius: 3px;
+            padding: 3px 10px;
+            font-size: 11px;
             font-weight: 600;
         }
         QPushButton:hover {
@@ -198,34 +184,28 @@ void SignalCardWidget::setupUI()
         }
     )").arg(COLOR_PRIMARY, Colors::PrimaryHover));
     m_subscribeBtn->setCursor(Qt::PointingHandCursor);
+    m_subscribeBtn->setFixedSize(50, 24);
     connect(m_subscribeBtn, &QPushButton::clicked, this, [this]() {
         emit subscribeClicked(m_data);
     });
     statsRow->addWidget(m_subscribeBtn);
-    
+
     mainLayout->addLayout(statsRow);
-    
-    m_separator = new QFrame();
-    m_separator->setFrameShape(QFrame::HLine);
-    m_separator->setStyleSheet(QString(
-        "QFrame { background-color: %1; border: none; max-height: 1px; }"
-    ).arg(COLOR_SEPARATOR));
-    mainLayout->addWidget(m_separator);
 }
 
-void SignalCardWidget::mousePressEvent(QMouseEvent* event)
+void SignalMiniCard::mousePressEvent(QMouseEvent* event)
 {
     QFrame::mousePressEvent(event);
-    if (event->button() == Qt::LeftButton) {
+    if (event->button() == Qt::LeftButton && !m_subscribeBtn->geometry().contains(event->pos())) {
         emit clicked();
     }
 }
 
-void SignalCardWidget::enterEvent(QEnterEvent* event)
+void SignalMiniCard::enterEvent(QEnterEvent* event)
 {
     QFrame::enterEvent(event);
     setStyleSheet(QString(R"(
-        SignalCardWidget {
+        SignalMiniCard {
             background-color: %1;
             border: 1px solid %2;
             border-radius: 8px;
@@ -233,11 +213,11 @@ void SignalCardWidget::enterEvent(QEnterEvent* event)
     )").arg(COLOR_BG_CARD, COLOR_PRIMARY));
 }
 
-void SignalCardWidget::leaveEvent(QEvent* event)
+void SignalMiniCard::leaveEvent(QEvent* event)
 {
     QFrame::leaveEvent(event);
     setStyleSheet(QString(R"(
-        SignalCardWidget {
+        SignalMiniCard {
             background-color: %1;
             border: 1px solid %2;
             border-radius: 8px;
@@ -253,12 +233,13 @@ namespace WealthPilot {
 struct SignalCenterPage::Impl {
     QScrollArea* scrollArea = nullptr;
     QWidget* scrollContent = nullptr;
-    QVBoxLayout* cardsLayout = nullptr;
-    
-    QVector<SignalCardWidget::Data> allSignals;
-    QVector<SignalCardWidget*> cards;
-    
+    QGridLayout* cardsGrid = nullptr;
+
+    QVector<SignalMiniCard::Data> allSignals;
+    QVector<SignalMiniCard*> cards;
+
     QString currentCategory = QStringLiteral("我的订阅");
+    int cardsPerRow = 4;  // 每行卡片数量
 };
 
 SignalCenterPage::SignalCenterPage(QWidget *parent)
@@ -284,11 +265,11 @@ void SignalCenterPage::initializePage()
 void SignalCenterPage::setupUI()
 {
     setStyleSheet(QString("QWidget { background-color: %1; }").arg(COLOR_BG_GLOBAL));
-    
+
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
-    
+
     setupCategoryBar();
     setupScrollArea();
 }
@@ -300,25 +281,25 @@ void SignalCenterPage::setupCategoryBar()
         "QFrame { background-color: %1; border-bottom: 1px solid %2; }"
     ).arg(COLOR_BG_CARD, COLOR_SEPARATOR));
     categoryBar->setFixedHeight(48);
-    
+
     auto* barLayout = new QHBoxLayout(categoryBar);
     barLayout->setContentsMargins(16, 8, 16, 8);
     barLayout->setSpacing(8);
-    
+
     QStringList categories = {
         QStringLiteral("我的订阅"),
         QStringLiteral("推荐信号"),
         QStringLiteral("排行榜"),
         QStringLiteral("最新上线")
     };
-    
+
     for (const auto& cat : categories) {
         auto* btn = new QPushButton(cat);
         btn->setCheckable(true);
         btn->setChecked(cat == d->currentCategory);
         btn->setFixedHeight(32);
         btn->setCursor(Qt::PointingHandCursor);
-        
+
         QString activeStyle = QString(R"(
             QPushButton {
                 background-color: %1;
@@ -329,7 +310,7 @@ void SignalCenterPage::setupCategoryBar()
                 font-size: 13px;
             }
         )").arg(COLOR_PRIMARY);
-        
+
         QString normalStyle = QString(R"(
             QPushButton {
                 background-color: transparent;
@@ -344,9 +325,9 @@ void SignalCenterPage::setupCategoryBar()
                 border-color: %4;
             }
         )").arg(COLOR_TEXT_META, COLOR_SEPARATOR, COLOR_HOVER_BG, COLOR_PRIMARY);
-        
+
         btn->setStyleSheet(btn->isChecked() ? activeStyle : normalStyle);
-        
+
         connect(btn, &QPushButton::clicked, this, [this, btn, cat, activeStyle, normalStyle]() {
             auto* bar = qobject_cast<QFrame*>(btn->parent());
             if (bar) {
@@ -358,12 +339,12 @@ void SignalCenterPage::setupCategoryBar()
             }
             onCategoryClicked(cat);
         });
-        
+
         barLayout->addWidget(btn);
     }
-    
+
     barLayout->addStretch();
-    
+
     QPushButton* refreshBtn = new QPushButton(QStringLiteral("刷新"));
     refreshBtn->setFixedHeight(32);
     refreshBtn->setFixedWidth(60);
@@ -386,7 +367,7 @@ void SignalCenterPage::setupCategoryBar()
         LOG_INFO("Signal data refreshed");
     });
     barLayout->addWidget(refreshBtn);
-    
+
     auto* mainLayout = qobject_cast<QVBoxLayout*>(QWidget::layout());
     if (mainLayout) {
         mainLayout->insertWidget(0, categoryBar);
@@ -405,17 +386,26 @@ void SignalCenterPage::setupScrollArea()
         "QScrollBar::handle:vertical { background-color: %2; border-radius: 4px; min-height: 40px; }"
         "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }"
     ).arg(COLOR_BG_GLOBAL, Tokens::Colors::Border));
-    
+
     d->scrollContent = new QWidget();
     d->scrollContent->setStyleSheet(QString("QWidget { background-color: %1; }").arg(COLOR_BG_GLOBAL));
-    
-    d->cardsLayout = new QVBoxLayout(d->scrollContent);
-    d->cardsLayout->setContentsMargins(16, 16, 16, 16);
-    d->cardsLayout->setSpacing(12);
-    d->cardsLayout->addStretch();
-    
+
+    auto* contentLayout = new QVBoxLayout(d->scrollContent);
+    contentLayout->setContentsMargins(16, 16, 16, 16);
+    contentLayout->setSpacing(0);
+
+    // 网格容器
+    auto* gridContainer = new QWidget();
+    d->cardsGrid = new QGridLayout(gridContainer);
+    d->cardsGrid->setContentsMargins(0, 0, 0, 0);
+    d->cardsGrid->setSpacing(12);
+    d->cardsGrid->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+
+    contentLayout->addWidget(gridContainer);
+    contentLayout->addStretch();
+
     d->scrollArea->setWidget(d->scrollContent);
-    
+
     auto* mainLayout = qobject_cast<QVBoxLayout*>(QWidget::layout());
     if (mainLayout) {
         mainLayout->addWidget(d->scrollArea);
@@ -432,26 +422,35 @@ void SignalCenterPage::loadDemoData()
         {QStringLiteral("s5"), QStringLiteral("均值回归E"), 67.5, 69, 2100, 89.0, QStringLiteral("量化"), QStringLiteral("统计套利策略")},
         {QStringLiteral("s6"), QStringLiteral("动量策略F"), 123.4, 75, 1800, 109.0, QStringLiteral("趋势"), QStringLiteral("行业轮动策略")},
         {QStringLiteral("s7"), QStringLiteral("套利策略G"), 89.0, 80, 2900, 69.0, QStringLiteral("套利"), QStringLiteral("期现套利策略")},
-        {QStringLiteral("s8"), QStringLiteral("成长精选H"), 178.6, 76, 2450, 119.0, QStringLiteral("成长"), QStringLiteral("高成长选股策略")}
+        {QStringLiteral("s8"), QStringLiteral("成长精选H"), 178.6, 76, 2450, 119.0, QStringLiteral("成长"), QStringLiteral("高成长选股策略")},
+        {QStringLiteral("s9"), QStringLiteral("指数增强I"), 56.3, 73, 1980, 89.0, QStringLiteral("量化"), QStringLiteral("沪深300增强")},
+        {QStringLiteral("s10"), QStringLiteral("对冲套利J"), 34.8, 85, 2650, 149.0, QStringLiteral("套利"), QStringLiteral("Alpha对冲策略")},
+        {QStringLiteral("s11"), QStringLiteral("事件驱动K"), 112.5, 68, 1420, 99.0, QStringLiteral("事件"), QStringLiteral("并购重组套利")},
+        {QStringLiteral("s12"), QStringLiteral("技术分析L"), 78.9, 62, 1780, 69.0, QStringLiteral("技术"), QStringLiteral("K线形态策略")}
     };
-    
+
     updateCards();
 }
 
 void SignalCenterPage::updateCards(const QString& filter)
 {
+    // 清除现有卡片
     for (auto* card : d->cards) {
-        d->cardsLayout->removeWidget(card);
+        d->cardsGrid->removeWidget(card);
         card->deleteLater();
     }
     d->cards.clear();
-    
+
+    // 添加新卡片到网格
+    int row = 0;
+    int col = 0;
+
     for (const auto& signal : d->allSignals) {
         Q_UNUSED(filter);
-        
-        auto* card = new SignalCardWidget(signal);
-        connect(card, &SignalCardWidget::clicked, this, &SignalCenterPage::onCardClicked);
-        connect(card, &SignalCardWidget::subscribeClicked, this, [this](const SignalCardWidget::Data& data) {
+
+        auto* card = new SignalMiniCard(signal);
+        connect(card, &SignalMiniCard::clicked, this, &SignalCenterPage::onCardClicked);
+        connect(card, &SignalMiniCard::subscribeClicked, this, [this](const SignalMiniCard::Data& data) {
             SignalCardData cardData;
             cardData.id = data.id;
             cardData.name = data.name;
@@ -463,13 +462,15 @@ void SignalCenterPage::updateCards(const QString& filter)
             cardData.description = data.description;
             onSubscribeClicked(cardData);
         });
-        
-        d->cardsLayout->insertWidget(d->cardsLayout->count() - 1, card);
+
+        d->cardsGrid->addWidget(card, row, col, Qt::AlignTop | Qt::AlignLeft);
         d->cards.append(card);
-    }
-    
-    if (!d->cards.isEmpty()) {
-        d->cards.last()->setLastCard(true);
+
+        col++;
+        if (col >= d->cardsPerRow) {
+            col = 0;
+            row++;
+        }
     }
 }
 
@@ -482,7 +483,7 @@ void SignalCenterPage::onCategoryClicked(const QString& category)
 
 void SignalCenterPage::onCardClicked()
 {
-    auto* card = qobject_cast<SignalCardWidget*>(sender());
+    auto* card = qobject_cast<SignalMiniCard*>(sender());
     if (card) {
         LOG_INFO("Signal card clicked");
     }
