@@ -38,6 +38,8 @@
 #include <QQmlEngine>
 #include <QtCharts/QChart>
 
+#include "FeatureIntegration.h"
+
 // 导入 Qt Charts QML 插件
 #ifdef QT_CHARTS_LIB
 #include <QtCharts/QtCharts>
@@ -127,6 +129,12 @@ int main(int argc, char* argv[])
 
     // ========== 创建主窗口 ==========
     MainWindow w;
+
+    // 初始化所有功能
+    WealthPilot::FeatureIntegration::instance()->initialize(&w);
+
+    // 获取状态报告
+    qDebug() << WealthPilot::FeatureIntegration::instance()->getStatusReport();
 
     // 确保退出时清理服务
     QObject::connect(&app, &QApplication::aboutToQuit, []()
