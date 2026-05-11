@@ -13,6 +13,7 @@
 
 #include <memory>
 #include <ui/components/BasePage.h>
+#include <QVector>
 
 // 信号卡片数据结构
 struct SignalCardData {
@@ -24,7 +25,7 @@ struct SignalCardData {
     double price = 0.0;
     QString strategy;
     QString description;
-    bool isSubscribed = false;
+    bool subscribed = false;  // 改名为 subscribed 避免与 public 冲突
 };
 
 namespace WealthPilot {
@@ -55,7 +56,7 @@ private:
     void updateCards();
 
     QVector<SignalCardData> getFilteredSignals();
-    void sortSignals(QVector<SignalCardData>& signals);
+    void sortSignals(QVector<SignalCardData>& signalList);
 
     struct Impl;
     std::unique_ptr<Impl> d;

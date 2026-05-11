@@ -53,26 +53,14 @@ class SignalMiniCard : public QFrame
     Q_OBJECT
 
 public:
-    struct Data {
-        QString id;
-        QString name;
-        double returnRate = 0.0;
-        int winRate = 0;
-        int followers = 0;
-        double price = 0.0;
-        QString strategy;
-        QString description;
-        bool isSubscribed = false;  // 是否已订阅
-    };
-
-    explicit SignalMiniCard(const Data& data, bool showSubscribed = false, QWidget* parent = nullptr);
+    explicit SignalMiniCard(const SignalCardData& data, bool showSubscribed = false, QWidget* parent = nullptr);
 
     void updateSubscribeButton();
 
 signals:
     void clicked();
-    void subscribeClicked(const Data& data);
-    void unsubscribeClicked(const Data& data);
+    void subscribeClicked(const SignalCardData& data);
+    void unsubscribeClicked(const SignalCardData& data);
 
 protected:
     void mousePressEvent(QMouseEvent* event) override;
@@ -82,8 +70,8 @@ protected:
 private:
     void setupUI();
 
-    Data m_data;
-    bool m_showSubscribed = false;  // 是否显示"已订阅"状态
+    SignalCardData m_data;
+    bool m_showSubscribed = false;
     QLabel* m_nameLabel = nullptr;
     QLabel* m_returnLabel = nullptr;
     QLabel* m_winRateLabel = nullptr;
@@ -91,7 +79,7 @@ private:
     QPushButton* m_subscribeBtn = nullptr;
 };
 
-SignalMiniCard::SignalMiniCard(const Data& data, bool showSubscribed, QWidget* parent)
+SignalMiniCard::SignalMiniCard(const SignalCardData& data, bool showSubscribed, QWidget* parent)
     : QFrame(parent)
     , m_data(data)
     , m_showSubscribed(showSubscribed)
@@ -101,7 +89,7 @@ SignalMiniCard::SignalMiniCard(const Data& data, bool showSubscribed, QWidget* p
 
 void SignalMiniCard::updateSubscribeButton()
 {
-    if (m_showSubscribed || m_data.isSubscribed) {
+    if (m_showSubscribed || m_data.subscribed) {
         m_subscribeBtn->setText(QStringLiteral("已订阅"));
         m_subscribeBtn->setStyleSheet(QString(R"(
             QPushButton {
@@ -227,7 +215,7 @@ void SignalMiniCard::setupUI()
     updateSubscribeButton();
 
     connect(m_subscribeBtn, &QPushButton::clicked, this, [this]() {
-        if (m_showSubscribed || m_data.isSubscribed) {
+        if (m_showSubscribed || m_data.subscribed) {
             emit unsubscribeClicked(m_data);
         } else {
             emit subscribeClicked(m_data);
@@ -282,26 +270,26 @@ struct SignalCenterPage::Impl {
     QComboBox* sortCombo = nullptr;
     QLabel* countLabel = nullptr;
 
-    QVector<SignalMiniCard::Data> allSignals;
-    QVector<SignalMiniCard::Data> subscribedSignals;  // 已订阅的信号
+    QVector<SignalCardData> allSignals;
+    QVector<SignalCardData> subscribedSignals;
     QVector<SignalMiniCard*> cards;
 
     QString currentCategory = QStringLiteral("我的订阅");
     int cardsPerRow = 4;
     QString currentSort = QStringLiteral("return_desc");
 
-    // 数据库操作
     bool initDatabase();
     void loadSubscriptions();
-    void saveSubscription(const SignalMiniCard::Data& data);
+    void saveSubscription(const SignalCardData& data);
     void removeSubscription(const QString& signalId);
     bool isSubscribed(const QString& signalId);
 };
 
 bool SignalCenterPage::Impl::initDatabase()
 {
-    if (!QSqlDatabase::hasDatabase(QStringLiteral("wealthpilot"))) {
-        QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("wealthpilot"));
+    QString connectionName = QStringLiteral("wealthpilot_signals");
+    if (!QSqlDatabase::contains(connectionName)) {
+        QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
         db.setDatabaseName(QStringLiteral("wealthpilot.db"));
         if (!db.open()) {
             LOG_ERROR("Failed to open database");
@@ -309,7 +297,7 @@ bool SignalCenterPage::Impl::initDatabase()
         }
     }
 
-    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("wealthpilot"));
+    QSqlDatabase db = QSqlDatabase::database(connectionName);
     QSqlQuery query(db);
     query.exec(QStringLiteral(R"(
         CREATE TABLE IF NOT EXISTS signal_subscriptions (
@@ -332,14 +320,15 @@ void SignalCenterPage::Impl::loadSubscriptions()
 {
     subscribedSignals.clear();
 
-    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("wealthpilot"));
+    QString connectionName = QStringLiteral("wealthpilot_signals");
+    QSqlDatabase db = QSqlDatabase::database(connectionName);
     if (!db.isOpen()) return;
 
     QSqlQuery query(db);
     query.exec(QStringLiteral("SELECT id, name, return_rate, win_rate, followers, price, strategy, description FROM signal_subscriptions ORDER BY subscribe_time DESC"));
 
     while (query.next()) {
-        SignalMiniCard::Data data;
+        SignalCardData data;
         data.id = query.value(0).toString();
         data.name = query.value(1).toString();
         data.returnRate = query.value(2).toDouble();
@@ -348,14 +337,15 @@ void SignalCenterPage::Impl::loadSubscriptions()
         data.price = query.value(5).toDouble();
         data.strategy = query.value(6).toString();
         data.description = query.value(7).toString();
-        data.isSubscribed = true;
+        data.subscribed = true;
         subscribedSignals.append(data);
     }
 }
 
-void SignalCenterPage::Impl::saveSubscription(const SignalMiniCard::Data& data)
+void SignalCenterPage::Impl::saveSubscription(const SignalCardData& data)
 {
-    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("wealthpilot"));
+    QString connectionName = QStringLiteral("wealthpilot_signals");
+    QSqlDatabase db = QSqlDatabase::database(connectionName);
     if (!db.isOpen()) return;
 
     QSqlQuery query(db);
@@ -378,7 +368,8 @@ void SignalCenterPage::Impl::saveSubscription(const SignalMiniCard::Data& data)
 
 void SignalCenterPage::Impl::removeSubscription(const QString& signalId)
 {
-    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("wealthpilot"));
+    QString connectionName = QStringLiteral("wealthpilot_signals");
+    QSqlDatabase db = QSqlDatabase::database(connectionName);
     if (!db.isOpen()) return;
 
     QSqlQuery query(db);
@@ -663,15 +654,15 @@ void SignalCenterPage::loadDemoData()
 
     // 更新订阅状态
     for (auto& sig : d->allSignals) {
-        sig.isSubscribed = d->isSubscribed(sig.id);
+        sig.subscribed = d->isSubscribed(sig.id);
     }
 
     updateCards();
 }
 
-QVector<SignalMiniCard::Data> SignalCenterPage::getFilteredSignals()
+QVector<SignalCardData> SignalCenterPage::getFilteredSignals()
 {
-    QVector<SignalMiniCard::Data> result;
+    QVector<SignalCardData> result;
 
     if (d->currentCategory == QStringLiteral("我的订阅")) {
         result = d->subscribedSignals;
@@ -695,9 +686,9 @@ QVector<SignalMiniCard::Data> SignalCenterPage::getFilteredSignals()
     return result;
 }
 
-void SignalCenterPage::sortSignals(QVector<SignalMiniCard::Data>& signals)
+void SignalCenterPage::sortSignals(QVector<SignalCardData>& signalList)
 {
-    std::sort(signals.begin(), signals.end(), [this](const SignalMiniCard::Data& a, const SignalMiniCard::Data& b) {
+    std::sort(signalList.begin(), signalList.end(), [this](const SignalCardData& a, const SignalCardData& b) {
         if (d->currentSort == QStringLiteral("return_desc")) {
             return a.returnRate > b.returnRate;
         } else if (d->currentSort == QStringLiteral("return_asc")) {
@@ -725,26 +716,26 @@ void SignalCenterPage::updateCards()
     d->cards.clear();
 
     // 获取过滤后的信号
-    auto signals = getFilteredSignals();
+    auto signalList = getFilteredSignals();
 
     // 排序
-    sortSignals(signals);
+    sortSignals(signalList);
 
     // 更新数量标签
-    d->countLabel->setText(QStringLiteral("共 %1 个信号").arg(signals.size()));
+    d->countLabel->setText(QStringLiteral("共 %1 个信号").arg(signalList.size()));
 
     // 添加新卡片到网格
     int row = 0;
     int col = 0;
     bool showSubscribed = (d->currentCategory == QStringLiteral("我的订阅"));
 
-    for (const auto& signal : signals) {
+    for (const auto& signal : signalList) {
         auto* card = new SignalMiniCard(signal, showSubscribed);
         connect(card, &SignalMiniCard::clicked, this, &SignalCenterPage::onCardClicked);
-        connect(card, &SignalMiniCard::subscribeClicked, this, [this](const SignalMiniCard::Data& data) {
+        connect(card, &SignalMiniCard::subscribeClicked, this, [this](const SignalCardData& data) {
             onSubscribeClicked(data);
         });
-        connect(card, &SignalMiniCard::unsubscribeClicked, this, [this](const SignalMiniCard::Data& data) {
+        connect(card, &SignalMiniCard::unsubscribeClicked, this, [this](const SignalCardData& data) {
             onUnsubscribeClicked(data);
         });
 
@@ -774,20 +765,20 @@ void SignalCenterPage::onCardClicked()
     }
 }
 
-void SignalCenterPage::onSubscribeClicked(const SignalMiniCard::Data& data)
+void SignalCenterPage::onSubscribeClicked(const SignalCardData& data)
 {
     // 保存到数据库
     d->saveSubscription(data);
 
     // 更新订阅列表
-    SignalMiniCard::Data subscribedData = data;
-    subscribedData.isSubscribed = true;
+    SignalCardData subscribedData = data;
+    subscribedData.subscribed = true;
     d->subscribedSignals.append(subscribedData);
 
     // 更新所有信号中的订阅状态
     for (auto& sig : d->allSignals) {
         if (sig.id == data.id) {
-            sig.isSubscribed = true;
+            sig.subscribed = true;
             break;
         }
     }
@@ -801,7 +792,7 @@ void SignalCenterPage::onSubscribeClicked(const SignalMiniCard::Data& data)
     LOG_INFO(QString("Subscribed: %1").arg(data.name));
 }
 
-void SignalCenterPage::onUnsubscribeClicked(const SignalMiniCard::Data& data)
+void SignalCenterPage::onUnsubscribeClicked(const SignalCardData& data)
 {
     // 从数据库删除
     d->removeSubscription(data.id);
@@ -817,7 +808,7 @@ void SignalCenterPage::onUnsubscribeClicked(const SignalMiniCard::Data& data)
     // 更新所有信号中的订阅状态
     for (auto& sig : d->allSignals) {
         if (sig.id == data.id) {
-            sig.isSubscribed = false;
+            sig.subscribed = false;
             break;
         }
     }
