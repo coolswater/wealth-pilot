@@ -39,6 +39,8 @@ find_package(Qt6 REQUIRED COMPONENTS
 set(APP_SOURCES
         src/app/ApplicationInitializer.h
         src/app/ApplicationInitializer.cpp
+        src/FeatureIntegration.h
+        src/FeatureIntegration.cpp
 )
 
 # Core - Base 基础类
