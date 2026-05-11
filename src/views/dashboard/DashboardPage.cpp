@@ -70,11 +70,7 @@ public:
         }
         painter->restore();
 
-        // 绘制边框
-        painter->save();
-        painter->setPen(QPen(QColor(60, 60, 60, 80), 1));
-        painter->drawRect(option.rect);
-        painter->restore();
+        // 不在这里绘制边框，让表格的 gridStyle 处理
 
         // 获取数值和文本
         double value = index.data(Qt::UserRole).toDouble();
@@ -121,11 +117,7 @@ public:
         }
         painter->restore();
 
-        // 绘制边框
-        painter->save();
-        painter->setPen(QPen(QColor(60, 60, 60, 80), 1));
-        painter->drawRect(option.rect);
-        painter->restore();
+        // 不在这里绘制边框，让表格的 gridStyle 处理
 
         // 获取数值和文本
         double value = index.data(Qt::UserRole).toDouble();
@@ -167,11 +159,7 @@ public:
         }
         painter->restore();
 
-        // 绘制边框
-        painter->save();
-        painter->setPen(QPen(QColor(60, 60, 60, 80), 1));
-        painter->drawRect(option.rect);
-        painter->restore();
+        // 不在这里绘制边框，让表格的 gridStyle 处理
 
         // 获取涨跌幅数据用于颜色判断
         double changePercent = index.data(Qt::UserRole).toDouble();
@@ -1017,7 +1005,7 @@ void DashboardPage::setupRankGrid()
         table->setAlternatingRowColors(true);
         table->setSelectionBehavior(QAbstractItemView::SelectRows);
         table->verticalHeader()->setVisible(false);
-        table->setShowGrid(false);
+        table->setShowGrid(true);
         table->setStyleSheet(tableStyle);
         table->verticalHeader()->setDefaultSectionSize(22);
         layout->addWidget(table);
@@ -1089,7 +1077,7 @@ void DashboardPage::setupRankGrid()
     d->sectorTable->setAlternatingRowColors(true);
     d->sectorTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     d->sectorTable->verticalHeader()->setVisible(false);
-    d->sectorTable->setShowGrid(false);
+    d->sectorTable->setShowGrid(true);
     d->sectorTable->setStyleSheet(tableStyle);
     d->sectorTable->verticalHeader()->setDefaultSectionSize(22);
     sectorLayout->addWidget(d->sectorTable);
@@ -1229,7 +1217,7 @@ void DashboardPage::setupWatchlistPanel()
     d->watchlistTable->setAlternatingRowColors(true);
     d->watchlistTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     d->watchlistTable->verticalHeader()->setVisible(false);
-    d->watchlistTable->setShowGrid(false);
+    d->watchlistTable->setShowGrid(true);
     d->watchlistTable->setStyleSheet(tableStyle);
     d->watchlistTable->verticalHeader()->setDefaultSectionSize(22);
     
@@ -1382,7 +1370,7 @@ void DashboardPage::setupMoneyFlowPanel()
     d->moneyFlowTable->setAlternatingRowColors(true);
     d->moneyFlowTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     d->moneyFlowTable->verticalHeader()->setVisible(false);
-    d->moneyFlowTable->setShowGrid(false);
+    d->moneyFlowTable->setShowGrid(true);
     d->moneyFlowTable->setStyleSheet(tableStyle);
     d->moneyFlowTable->verticalHeader()->setDefaultSectionSize(22);
     
