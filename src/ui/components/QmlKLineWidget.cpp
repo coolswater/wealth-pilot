@@ -7,6 +7,7 @@
 #include "ui/qml/QmlDataBridge.h"
 #include "ui/ThemeManager.h"
 #include <QQmlContext>
+#include <QQmlEngine>
 #include <QQuickItem>
 #include <QVBoxLayout>
 #include <QResizeEvent>
