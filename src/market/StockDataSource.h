@@ -62,19 +62,7 @@ struct StockQuote {
     bool isValid() const { return !symbol.isEmpty() && lastPrice > 0; }
 };
 
-/**
- * @brief 分时数据点
- */
-struct TimeShareData {
-    QDateTime time;             ///< 时间点
-    double price = 0.0;         ///< 当前价格
-    double avgPrice = 0.0;      ///< 均价
-    qint64 volume = 0;          ///< 成交量
-    double turnover = 0.0;      ///< 成交额
-    double changePercent = 0.0; ///< 涨跌幅
-
-    bool isValid() const { return time.isValid() && price > 0; }
-};
+// TimeShareData 已在 core/types/MarketTypes.h 中定义
 
 /**
  * @brief 实时K线更新数据

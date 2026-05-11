@@ -293,6 +293,8 @@ struct TimeShareData {
     double price = 0.0;         ///< 当前价格
     double avgPrice = 0.0;      ///< 均价
     qint64 volume = 0;          ///< 成交量
+    double turnover = 0.0;      ///< 成交额
+    double changePercent = 0.0; ///< 涨跌幅
 
     /**
      * @brief 默认构造函数
