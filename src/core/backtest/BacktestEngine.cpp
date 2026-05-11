@@ -4,7 +4,7 @@
  */
 
 #include "BacktestEngine.h"
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include <QtConcurrent>
 #include <QFile>
 #include <QTextStream>

@@ -4,7 +4,7 @@
  */
 
 #include "WebSocketManager.h"
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include <QMutexLocker>
 
 WebSocketManager* WebSocketManager::instance()

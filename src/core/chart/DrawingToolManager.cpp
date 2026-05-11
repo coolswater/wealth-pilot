@@ -4,7 +4,7 @@
  */
 
 #include "DrawingToolManager.h"
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include <QUuid>
 #include <QJsonDocument>
 #include <QJsonObject>

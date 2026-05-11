@@ -4,7 +4,7 @@
  */
 
 #include "StockScreener.h"
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include <QSettings>
 #include <QtConcurrent>
 #include <algorithm>

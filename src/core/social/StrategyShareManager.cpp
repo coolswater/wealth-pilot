@@ -4,7 +4,7 @@
  */
 
 #include "StrategyShareManager.h"
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include <QUuid>
 #include <QSettings>
 #include <algorithm>

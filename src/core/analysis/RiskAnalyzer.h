@@ -15,6 +15,7 @@
 #ifndef RISKANALYZER_H
 #define RISKANALYZER_H
 
+#include <QDateTime>
 #include <QObject>
 #include <QVector>
 #include <QString>

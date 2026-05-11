@@ -4,7 +4,7 @@
  */
 
 #include "LayoutManager.h"
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include <QMainWindow>
 #include <QSplitter>
 #include <QTabWidget>

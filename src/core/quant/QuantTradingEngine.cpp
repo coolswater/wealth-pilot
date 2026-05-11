@@ -4,7 +4,7 @@
  */
 
 #include "QuantTradingEngine.h"
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include <QUuid>
 #include <QDateTime>
 

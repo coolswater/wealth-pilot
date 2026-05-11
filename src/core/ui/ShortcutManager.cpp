@@ -4,7 +4,7 @@
  */
 
 #include "ShortcutManager.h"
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include <QWidget>
 #include <QApplication>
 

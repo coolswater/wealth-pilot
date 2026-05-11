@@ -4,7 +4,7 @@
  */
 
 #include "RiskAnalyzer.h"
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include <QDateTime>
 #include <cmath>
 #include <algorithm>
