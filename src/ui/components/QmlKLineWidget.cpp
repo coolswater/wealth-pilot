@@ -56,8 +56,8 @@ void QmlKLineWidget::setupConnections()
 {
     // 连接主题变化
     connect(ThemeManager::instance(), &ThemeManager::themeChanged,
-            this, [this](bool isDark) {
-                applyTheme(isDark);
+            this, [this](ThemeType type) {
+                applyTheme(type == ThemeType::Dark);
             });
 
     // QML 加载状态
