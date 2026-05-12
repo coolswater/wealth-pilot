@@ -224,6 +224,8 @@ set(AI_SERVICE_SOURCES
         src/ai/service/RoboAdvisor.cpp
         src/ai/service/AIStockPicker.h
         src/ai/service/AIStockPicker.cpp
+        src/ai/service/SmartAlertService.h
+        src/ai/service/SmartAlertService.cpp
 )
 
 # AI - Plugin
