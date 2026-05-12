@@ -228,6 +228,8 @@ set(AI_SERVICE_SOURCES
         src/ai/service/SmartAlertService.cpp
         src/ai/service/SentimentAnalysisService.h
         src/ai/service/SentimentAnalysisService.cpp
+        src/ai/service/SmartReportService.h
+        src/ai/service/SmartReportService.cpp
 )
 
 # AI - Plugin
