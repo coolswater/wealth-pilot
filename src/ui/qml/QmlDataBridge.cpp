@@ -1,6 +1,15 @@
 /**
  * @file QmlDataBridge.cpp
  * @brief QML 数据桥接实现
+ *
+ * @details 性能优化建议：
+ * - K线数据量大时（>1000条），建议使用虚拟滚动（QML ListView + cacheBuffer）
+ * - 分时数据建议限制显示范围（如只显示当日数据）
+ * - MA计算可考虑使用滑动窗口优化，避免重复计算
+ * - 大数据量更新时使用 beginInsertRows/endInsertRows 替代 beginResetModel
+ *
+ * @author WealthPilot Team
+ * @version 1.0.0
  */
 
 #include "QmlDataBridge.h"
@@ -76,10 +85,16 @@ QHash<int, QByteArray> KLineQmlModel::roleNames() const
 
 void KLineQmlModel::setData(const QVector<KLineData>& data)
 {
+    // 性能优化建议：
+    // - 数据量 > 1000 条时，考虑分批加载或虚拟滚动
+    // - 使用 QML ListView 的 cacheBuffer 属性预加载可见区域外的数据
+    // - 对于历史数据，可按时间范围分页加载
+
     beginResetModel();
     m_data = data;
     
     // 计算 MA 均线
+    // 性能优化：可使用滑动窗口算法，O(n) 复杂度
     calculateMA();
     
     endResetModel();
@@ -88,6 +103,18 @@ void KLineQmlModel::setData(const QVector<KLineData>& data)
 
 void KLineQmlModel::calculateMA()
 {
+    // 性能优化建议：使用滑动窗口算法
+    // 当前实现：O(n * period)，每个MA独立计算
+    // 优化方案：维护滑动窗口，每次只更新窗口内数据，O(n)
+    // 
+    // 示例优化代码（MA5）：
+    // double sum = 0;
+    // for (int i = 0; i < m_data.size(); ++i) {
+    //     sum += m_data[i].close;
+    //     if (i >= 5) sum -= m_data[i-5].close;
+    //     if (i >= 4) m_ma5.append(sum / 5.0);
+    // }
+
     if (m_data.isEmpty()) return;
     
     // 计算 MA5

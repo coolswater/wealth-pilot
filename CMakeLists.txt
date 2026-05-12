@@ -218,6 +218,12 @@ set(CTP_SERVICE_SOURCES
 set(AI_SERVICE_SOURCES
         src/ai/service/AIService.h
         src/ai/service/AIService.cpp
+        src/ai/service/AIConversationManager.h
+        src/ai/service/AIConversationManager.cpp
+        src/ai/service/RoboAdvisor.h
+        src/ai/service/RoboAdvisor.cpp
+        src/ai/service/AIStockPicker.h
+        src/ai/service/AIStockPicker.cpp
 )
 
 # AI - Plugin

@@ -209,4 +209,12 @@ void RiskSettingsPage::onResetClicked()
     LOG_INFO("Risk settings reset to defaults");
 }
 
-void RiskSettingsPage::onRuleChanged() { }
+void RiskSettingsPage::onRuleChanged()
+{
+    // TODO: 实现规则变更响应逻辑
+    // 当风控规则参数变更时触发，用于：
+    // 1. 实时预览风控效果
+    // 2. 验证参数合法性
+    // 3. 更新界面提示信息
+    // 当前版本：仅保存时生效，暂不实现实时响应
+}

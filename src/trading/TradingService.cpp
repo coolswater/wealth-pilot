@@ -165,6 +165,19 @@ void TradingService::setCtpService(CTP::CTPService* ctpService)
 // 交易操作
 // ============================================================================
 
+/**
+ * @brief 提交订单
+ * @param request 订单请求（合约、方向、开平、价格、数量）
+ * @return 订单ID，失败返回空字符串
+ *
+ * @details 订单提交流程：
+ * 1. 风控检查 - RiskController 检查订单是否符合风控规则
+ * 2. 创建订单 - OrderManager 创建订单记录
+ * 3. 提交CTP - 转换为CTP格式并提交到交易接口
+ * 4. 更新引用 - 将CTP订单引用关联到内部订单ID
+ *
+ * 风控检查失败会直接拒绝订单，不会提交到CTP
+ */
 QString TradingService::submitOrder(const OrderRequest& request)
 {
     // 1. 风控检查
@@ -219,6 +232,19 @@ QString TradingService::submitOrder(const OrderRequest& request)
     return orderId;
 }
 
+/**
+ * @brief 撤销订单
+ * @param orderId 内部订单ID
+ * @return true撤销成功，false撤销失败
+ *
+ * @details 撤单流程：
+ * 1. 获取订单信息 - 从 OrderManager 获取订单详情
+ * 2. 检查订单状态 - 只有活动状态的订单可以撤销
+ * 3. 提交CTP撤单 - 调用 CTPService 的撤单接口
+ * 4. 更新订单状态 - OrderManager 更新订单为已撤销
+ *
+ * 已成交或部分成交的订单不能撤销
+ */
 bool TradingService::cancelOrder(const QString& orderId)
 {
     // 1. 获取订单信息
@@ -248,6 +274,14 @@ bool TradingService::cancelOrder(const QString& orderId)
     return true;
 }
 
+/**
+ * @brief 批量撤销订单
+ * @param orderIds 订单ID列表
+ * @return 成功撤销的订单数量
+ *
+ * 遍历订单列表，逐个调用 cancelOrder
+ * 用于快速清理多个挂单
+ */
 int TradingService::cancelOrders(const QVector<QString>& orderIds)
 {
     int successCount = 0;
@@ -259,6 +293,18 @@ int TradingService::cancelOrders(const QVector<QString>& orderIds)
     return successCount;
 }
 
+/**
+ * @brief 设置止损止盈
+ * @param instrumentId 合约代码
+ * @param stopLoss 止损价格
+ * @param takeProfit 止盈价格
+ * @return true设置成功
+ *
+ * @details 止损止盈机制：
+ * - 创建止损止盈规则并添加到 OrderManager
+ * - 当市场价格触及止损/止盈价格时自动触发平仓
+ * - 用于风险管理和自动化交易
+ */
 bool TradingService::setStopLossTakeProfit(const QString& instrumentId, 
                                            double stopLoss, 
                                            double takeProfit)
@@ -279,6 +325,18 @@ bool TradingService::setStopLossTakeProfit(const QString& instrumentId,
     return true;
 }
 
+/**
+ * @brief 设置条件单
+ * @param condition 条件单配置（触发条件、订单内容）
+ * @return 条件单ID
+ *
+ * @details 条件单类型：
+ * - 价格触发单：价格达到指定值时触发
+ * - 时间触发单：指定时间触发
+ * - 指标触发单：技术指标满足条件时触发
+ *
+ * 条件单由 OrderManager 管理，满足条件时自动提交订单
+ */
 QString TradingService::setConditionOrder(const ConditionOrder& condition)
 {
     return OrderManager::instance().addConditionOrder(condition);
@@ -288,38 +346,83 @@ QString TradingService::setConditionOrder(const ConditionOrder& condition)
 // 查询接口
 // ============================================================================
 
+/**
+ * @brief 获取订单信息
+ * @param orderId 订单ID
+ * @return 订单信息，不存在返回空
+ *
+ * 从 OrderManager 查询订单详情
+ */
 std::optional<OrderInfo> TradingService::getOrder(const QString& orderId) const
 {
     return OrderManager::instance().getOrder(orderId);
 }
 
+/**
+ * @brief 获取所有活动订单
+ * @return 活动订单列表（未成交、部分成交）
+ *
+ * 用于监控当前挂单状态
+ */
 QVector<OrderInfo> TradingService::getActiveOrders() const
 {
     return OrderManager::instance().getActiveOrders();
 }
 
+/**
+ * @brief 获取持仓信息
+ * @param instrumentId 合约代码
+ * @param direction 持仓方向（多头/空头）
+ * @return 持仓信息，不存在返回空
+ *
+ * 从 PositionManager 查询指定合约的持仓
+ */
 std::optional<PositionInfo> TradingService::getPosition(const QString& instrumentId, 
                                                         PositionDirection direction) const
 {
     return PositionManager::instance().getPosition(instrumentId, direction);
 }
 
+/**
+ * @brief 获取所有持仓
+ * @return 持仓列表
+ *
+ * 用于账户持仓概览和风险管理
+ */
 QVector<PositionInfo> TradingService::getPositions() const
 {
     return PositionManager::instance().getPositions();
 }
 
+/**
+ * @brief 获取账户信息
+ * @return 账户信息（可用资金、总资产等）
+ *
+ * 账户信息由 CTP 推送更新，本地缓存
+ */
 AccountInfo TradingService::getAccountInfo() const
 {
     QMutexLocker locker(&d->mutex);
     return d->accountInfo;
 }
 
+/**
+ * @brief 获取总盈亏
+ * @return 总浮动盈亏
+ *
+ * 计算所有持仓的浮动盈亏总和
+ */
 double TradingService::getTotalProfit() const
 {
     return PositionManager::instance().getTotalProfit();
 }
 
+/**
+ * @brief 获取风险等级
+ * @return 风险等级（0-100）
+ *
+ * 由 RiskController 根据持仓、盈亏、杠杆等计算
+ */
 int TradingService::getRiskLevel() const
 {
     return RiskController::instance().getRiskLevel();
@@ -329,11 +432,36 @@ int TradingService::getRiskLevel() const
 // 风控接口
 // ============================================================================
 
+/**
+ * @brief 检查订单风控
+ * @param request 订单请求
+ * @return 风控检查结果（是否通过、规则名称、消息）
+ *
+ * @details 风控检查内容：
+ * - 持仓限制检查（最大持仓金额、数量）
+ * - 亏损限制检查（日最大亏损、单笔最大亏损）
+ * - 杠杆限制检查（最大杠杆、保证金比例）
+ * - 交易限制检查（夜盘、反向交易）
+ *
+ * 检查失败会返回具体的规则名称和拒绝原因
+ */
 RiskCheckResult TradingService::checkOrder(const OrderRequest& request)
 {
     return RiskController::instance().checkOrder(request);
 }
 
+/**
+ * @brief 获取风险报告
+ * @return 风险报告（风险等级、总风险值、警告列表、建议列表）
+ *
+ * @details 风险报告内容：
+ * - 当前风险等级评估
+ * - 各项风险指标分析
+ * - 风险警告提示
+ * - 风险控制建议
+ *
+ * 用于向用户展示当前账户的风险状况
+ */
 TradingService::RiskReport TradingService::getRiskReport() const
 {
     auto report = RiskController::instance().generateReport();

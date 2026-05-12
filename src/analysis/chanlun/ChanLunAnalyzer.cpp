@@ -2,6 +2,24 @@
  * @file ChanLunAnalyzer.cpp
  * @brief 缠论分析器实现 - 核心算法
  *
+ * @details 缠论核心算法流程：
+ * 1. K线包含处理 - 合理处理相邻K线的包含关系，生成标准K线
+ * 2. 分型识别 - 识别顶分型和底分型，作为笔的起点和终点
+ * 3. 笔划分 - 连接相邻的顶底分型，形成笔
+ * 4. 线段划分 - 由至少3笔构成，被破坏时形成新线段
+ * 5. 中枢识别 - 至少3段连续且有重叠的区间形成中枢
+ * 6. 背驰判断 - 比较相邻同向笔的力度，判断趋势背驰
+ * 7. 买卖点识别 - 一买/一卖（背驰点）、二买/二卖（回拉不破中枢）、三买/三卖（突破回拉确认）
+ *
+ * 算法复杂度分析：
+ * - K线包含处理：O(n)
+ * - 分型识别：O(n)
+ * - 笔划分：O(m)，m为分型数量
+ * - 线段划分：O(p)，p为笔数量
+ * - 中枢识别：O(s)，s为线段数量
+ * - 背驰判断：O(p)
+ * - 买卖点识别：O(p + s)
+ *
  * @author WealthPilot Team
  * @version 1.0.0
  */
@@ -132,6 +150,23 @@ void ChanLunAnalyzer::clear()
 // K线包含处理
 // ============================================================================
 
+/**
+ * @brief 处理K线包含关系，生成标准K线
+ * @param klines 原始K线数据
+ * @return 处理后的标准K线序列
+ *
+ * @details 包含处理算法：
+ * - 向上处理：取高高、取高低（保留向上的特征）
+ * - 向下处理：取低高、取低低（保留向下的特征）
+ * - 方向由前一根非包含K线决定
+ *
+ * 算法步骤：
+ * 1. 检查相邻K线是否存在包含关系
+ * 2. 如果存在，按照方向进行合并
+ * 3. 合并后的K线替换原来的K线
+ *
+ * 时间复杂度：O(n)，n为K线数量
+ */
 QVector<StandardKLine> ChanLunAnalyzer::processContainment(const QVector<RawKLine>& klines)
 {
     if (klines.isEmpty()) {
@@ -202,6 +237,14 @@ QVector<StandardKLine> ChanLunAnalyzer::processContainment(const QVector<RawKLin
     return result;
 }
 
+/**
+ * @brief 检查两根K线的包含关系
+ * @param k1 第一根K线
+ * @param k2 第二根K线
+ * @return 1表示k1包含k2，-1表示k2包含k1，0表示无包含关系
+ *
+ * 包含定义：一根K线的高低点完全包含在另一根K线的高低点范围内
+ */
 int ChanLunAnalyzer::checkContainment(const StandardKLine& k1, const StandardKLine& k2)
 {
     // k1包含k2：k1.high >= k2.high && k1.low <= k2.low
@@ -215,6 +258,17 @@ int ChanLunAnalyzer::checkContainment(const StandardKLine& k1, const StandardKLi
     return 0;
 }
 
+/**
+ * @brief 合理两根包含关系的K线
+ * @param k1 第一根K线
+ * @param k2 第二根K线
+ * @param direction 合并方向（1向上，-1向下）
+ * @return 合并后的标准K线
+ *
+ * 合并规则：
+ * - 向上处理（direction=1）：取高高、取高低
+ * - 向下处理（direction=-1）：取低高、取低低
+ */
 StandardKLine ChanLunAnalyzer::mergeKLines(const StandardKLine& k1, const StandardKLine& k2, int direction)
 {
     StandardKLine merged;
@@ -242,6 +296,19 @@ StandardKLine ChanLunAnalyzer::mergeKLines(const StandardKLine& k1, const Standa
 // 分型识别
 // ============================================================================
 
+/**
+ * @brief 识别K线序列中的分型
+ * @param klines 标准K线序列
+ * @return 分型列表（顶分型和底分型）
+ *
+ * @details 分型定义：
+ * - 顶分型：中间K线的高点和低点都是最高的（三根K线形成“凸”形）
+ * - 底分型：中间K线的高点和低点都是最低的（三根K线形成“凹”形）
+ *
+ * 分型是笔的起点和终点，必须满足严格的高低点关系
+ *
+ * 时间复杂度：O(n)
+ */
 QVector<Fractal> ChanLunAnalyzer::identifyFractals(const QVector<StandardKLine>& klines)
 {
     QVector<Fractal> fractals;
@@ -273,6 +340,15 @@ QVector<Fractal> ChanLunAnalyzer::identifyFractals(const QVector<StandardKLine>&
     return fractals;
 }
 
+/**
+ * @brief 判断是否为顶分型
+ * @param k1 前一根K线
+ * @param k2 中间K线
+ * @param k3 后一根K线
+ * @return true为顶分型，false不是
+ *
+ * 顶分型条件：k2.high > k1.high && k2.high > k3.high && k2.low > k1.low && k2.low > k3.low
+ */
 bool ChanLunAnalyzer::isTopFractal(const StandardKLine& k1, const StandardKLine& k2, const StandardKLine& k3)
 {
     // 顶分型：中间K线的高点和低点都是最高的
@@ -280,6 +356,15 @@ bool ChanLunAnalyzer::isTopFractal(const StandardKLine& k1, const StandardKLine&
            k2.low > k1.low && k2.low > k3.low;
 }
 
+/**
+ * @brief 判断是否为底分型
+ * @param k1 前一根K线
+ * @param k2 中间K线
+ * @param k3 后一根K线
+ * @return true为底分型，false不是
+ *
+ * 底分型条件：k2.high < k1.high && k2.high < k3.high && k2.low < k1.low && k2.low < k3.low
+ */
 bool ChanLunAnalyzer::isBottomFractal(const StandardKLine& k1, const StandardKLine& k2, const StandardKLine& k3)
 {
     // 底分型：中间K线的高点和低点都是最低的
@@ -291,6 +376,22 @@ bool ChanLunAnalyzer::isBottomFractal(const StandardKLine& k1, const StandardKLi
 // 笔划分
 // ============================================================================
 
+/**
+ * @brief 划分笔
+ * @param klines 标准K线序列
+ * @param fractals 分型列表
+ * @return 笔列表
+ *
+ * @details 笔的划分规则：
+ * 1. 相邻的顶底分型之间形成一笔
+ * 2. 顶底分型之间至少有1根独立K线（处理后至少3根）
+ * 3. 笔的终点分型要比起点分型更极端
+ * 4. 同类型分型取更极端的作为笔的端点
+ *
+ * 笔是缠论分析的基本单位，代表一段完整的上涨或下跌
+ *
+ * 时间复杂度：O(m)，m为分型数量
+ */
 QVector<Pen> ChanLunAnalyzer::identifyPens(const QVector<StandardKLine>& klines, 
                                             const QVector<Fractal>& fractals)
 {
@@ -396,6 +497,20 @@ QVector<Pen> ChanLunAnalyzer::identifyPens(const QVector<StandardKLine>& klines,
 // 线段划分
 // ============================================================================
 
+/**
+ * @brief 划分线段
+ * @param pens 笔列表
+ * @return 线段列表
+ *
+ * @details 线段划分规则：
+ * 1. 至少由3笔构成
+ * 2. 线段被破坏的条件：出现新的笔破坏了线段的趋势
+ * 3. 线段的起点和终点由笔的端点决定
+ *
+ * 线段是比笔更高一级的结构，代表一段更完整的趋势
+ *
+ * 时间复杂度：O(p)，p为笔数量
+ */
 QVector<Segment> ChanLunAnalyzer::identifySegments(const QVector<Pen>& pens)
 {
     QVector<Segment> segments;
@@ -456,6 +571,18 @@ QVector<Segment> ChanLunAnalyzer::identifySegments(const QVector<Pen>& pens)
     return segments;
 }
 
+/**
+ * @brief 判断线段是否被破坏
+ * @param pens 笔列表
+ * @param segStart 线段起始笔索引
+ * @param segEnd 线段结束笔索引
+ * @param newPenIndex 新笔索引
+ * @return true线段被破坏，false未破坏
+ *
+ * 线段破坏判断：
+ * - 向上线段被向下笔破坏，且跌破线段起始点
+ * - 向下线段被向上笔破坏，且突破线段起始点
+ */
 bool ChanLunAnalyzer::isSegmentBroken(const QVector<Pen>& pens, int segStart, int segEnd, int newPenIndex)
 {
     // 简化的线段破坏判断
@@ -493,6 +620,21 @@ bool ChanLunAnalyzer::isSegmentBroken(const QVector<Pen>& pens, int segStart, in
 // 中枢识别
 // ============================================================================
 
+/**
+ * @brief 识别中枢
+ * @param segments 线段列表
+ * @param pens 笔列表（用于辅助判断）
+ * @return 中枢列表
+ *
+ * @details 中枢定义：
+ * - 至少3段连续且有重叠的区间
+ * - 中枢区间（zg, zd）：重叠部分的高低点
+ * - 波动区间（gg, dd）：中枢延伸的边界
+ *
+ * 中枢是缠论的核心概念，代表价格震荡的区域
+ *
+ * 时间复杂度：O(s)，s为线段数量
+ */
 QVector<Pivot> ChanLunAnalyzer::identifyPivots(const QVector<Segment>& segments,
                                                 const QVector<Pen>& pens)
 {
@@ -538,6 +680,21 @@ QVector<Pivot> ChanLunAnalyzer::identifyPivots(const QVector<Segment>& segments,
 // 背驰判断
 // ============================================================================
 
+/**
+ * @brief 检测背驰
+ * @param klines 标准K线序列
+ * @param pens 笔列表
+ * @param pivots 中枢列表
+ * @return 背驰列表
+ *
+ * @details 背驰定义：
+ * - 趋势背驰：相邻同向笔的力度减弱，价格创新高/新低
+ * - 力度衡量：价格幅度或MACD面积
+ *
+ * 背驰是趋势反转的重要信号，是第一类买卖点的判断依据
+ *
+ * 时间复杂度：O(p)，p为笔数量
+ */
 QVector<Divergence> ChanLunAnalyzer::detectDivergence(const QVector<StandardKLine>& klines,
                                                        const QVector<Pen>& pens,
                                                        const QVector<Pivot>& pivots)
@@ -603,6 +760,21 @@ QVector<Divergence> ChanLunAnalyzer::detectDivergence(const QVector<StandardKLin
 // 买卖点识别
 // ============================================================================
 
+/**
+ * @brief 识别买卖点信号
+ * @param klines 标准K线序列
+ * @param pens 笔列表
+ * @param pivots 中枢列表
+ * @param divergences 背驰列表
+ * @return 买卖点信号列表
+ *
+ * @details 缠论三类买卖点：
+ * - 第一类买卖点（Buy1/Sell1）：趋势背驰点，趋势反转信号
+ * - 第二类买卖点（Buy2/Sell2）：第一次次级别回拉不破中枢，趋势确认信号
+ * - 第三类买卖点（Buy3/Sell3）：突破中枢后的回拉确认，趋势延续信号
+ *
+ * 时间复杂度：O(p + s)，p为笔数量，s为中枢数量
+ */
 QVector<TradeSignal> ChanLunAnalyzer::identifySignals(const QVector<StandardKLine>& klines,
                                                        const QVector<Pen>& pens,
                                                        const QVector<Pivot>& pivots,

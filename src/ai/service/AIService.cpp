@@ -1,6 +1,19 @@
 ﻿/**
  * @file AIService.cpp
  * @brief AI 分析服务实现
+ *
+ * @details 本服务提供以下核心功能：
+ * - AI对话交互（chat/chatSync/chatStream）
+ * - 投资组合分析（analyzePortfolio）
+ * - 股票分析（analyzeStock）
+ * - 市场情绪分析（analyzeMarketSentiment）
+ * - 快速问答（quickAsk）
+ * - 投资建议（getInvestmentAdvice）
+ *
+ * 支持多种AI提供商：OpenAI、Claude、本地模型
+ *
+ * @author WealthPilot Team
+ * @version 1.0.0
  */
 
 #include "AIService.h"
@@ -47,6 +60,10 @@ AIAnalysis AIAnalysis::fromJson(const QJsonObject& json)
     return a;
 }
 
+/**
+ * @brief 默认构造函数
+ * 初始化AI服务配置
+ */
 AIService::AIService()
     : m_maxHistorySize(10)
     , m_cacheEnabled(true)
@@ -59,6 +76,12 @@ AIService::~AIService()
     shutdown();
 }
 
+/**
+ * @brief 初始化AI服务
+ * @return true 初始化成功，false 初始化失败
+ *
+ * 从配置管理器加载API密钥、提供商设置、模型配置等
+ */
 bool AIService::initialize()
 {
     if (m_initialized) return m_initialized;
@@ -86,12 +109,24 @@ bool AIService::initialize()
     return m_initialized;
 }
 
+/**
+ * @brief 设置历史消息最大数量
+ * @param size 最大历史消息数
+ *
+ * 超过此数量的历史消息将被清理，用于控制上下文长度
+ */
 void AIService::setMaxHistorySize(int size)
 {
     m_maxHistorySize = size;
     clearHistory();
 }
 
+/**
+ * @brief 设置是否启用响应缓存
+ * @param enabled true启用，false禁用
+ *
+ * 启用后相同请求会返回缓存结果，减少API调用
+ */
 void AIService::setCacheEnabled(bool enabled)
 {
     m_cacheEnabled = enabled;
@@ -100,12 +135,22 @@ void AIService::setCacheEnabled(bool enabled)
     }
 }
 
+/**
+ * @brief 设置缓存超时时间
+ * @param timeoutMs 超时时间（毫秒）
+ *
+ * 缓存条目超过此时间后失效
+ */
 void AIService::setCacheTimeout(int timeoutMs)
 {
     m_requestCacheTimeout = timeoutMs;
     clearRequestCache();
 }
 
+/**
+ * @brief 关闭AI服务
+ * 清理历史消息和缓存，释放资源
+ */
 void AIService::shutdown()
 {
     clearHistory();
@@ -114,6 +159,12 @@ void AIService::shutdown()
     LOG_INFO("AIService shutdown");
 }
 
+/**
+ * @brief 设置AI服务配置
+ * @param config 配置对象，包含API密钥、模型、基础URL等
+ *
+ * 同时将敏感信息保存到安全配置存储
+ */
 void AIService::setConfig(const AIConfig& config)
 {
     m_config = config;
@@ -136,6 +187,14 @@ void AIService::setSystemPrompt(const QString& prompt)
     m_systemPrompt = prompt;
 }
 
+/**
+ * @brief 发送聊天消息（异步）
+ * @param message 用户消息
+ * @param callback 结果回调函数
+ *
+ * 支持缓存，相同消息会返回缓存结果
+ * 自动管理对话历史
+ */
 void AIService::chat(const QString& message, std::function<void(Result<QString>)> callback)
 {
     if (m_config.provider == AIProvider::None || m_config.apiKey.isEmpty()) {
@@ -176,6 +235,14 @@ void AIService::chat(const QString& message, std::function<void(Result<QString>)
     });
 }
 
+/**
+ * @brief 发送聊天消息（同步）
+ * @param message 用户消息
+ * @param timeoutMs 超时时间（毫秒）
+ * @return AI响应结果
+ *
+ * 阻塞等待响应，适用于需要同步处理的场景
+ */
 Result<QString> AIService::chatSync(const QString& message, int timeoutMs)
 {
     QString resultValue;
@@ -214,6 +281,14 @@ Result<QString> AIService::chatSync(const QString& message, int timeoutMs)
     }
 }
 
+/**
+ * @brief 发送聊天消息（流式）
+ * @param message 用户消息
+ * @param onChunk 收到数据块时的回调
+ * @param onComplete 完成时的回调
+ *
+ * 适用于需要实时显示响应的场景
+ */
 void AIService::chatStream(const QString& message,
                            std::function<void(const QString&)> onChunk,
                            std::function<void()> onComplete)
@@ -298,6 +373,13 @@ void AIService::clearHistory()
     clearRequestCache();
 }
 
+/**
+ * @brief 分析投资组合
+ * @param positions 持仓数据（JSON格式）
+ * @param callback 分析结果回调
+ *
+ * 调用AI分析持仓结构、风险评估、优化建议等
+ */
 void AIService::analyzePortfolio(const QJsonObject& positions,
                                   std::function<void(Result<AIAnalysis>)> callback)
 {
@@ -317,6 +399,14 @@ void AIService::analyzePortfolio(const QJsonObject& positions,
     });
 }
 
+/**
+ * @brief 分析单只股票
+ * @param code 股票代码
+ * @param data 股票数据（JSON格式）
+ * @param callback 分析结果回调
+ *
+ * 提供技术分析、基本面分析、投资建议
+ */
 void AIService::analyzeStock(const QString& code, const QJsonObject& data,
                               std::function<void(Result<AIAnalysis>)> callback)
 {
@@ -337,6 +427,13 @@ void AIService::analyzeStock(const QString& code, const QJsonObject& data,
     });
 }
 
+/**
+ * @brief 分析市场情绪
+ * @param marketData 市场数据（JSON格式）
+ * @param callback 分析结果回调
+ *
+ * 基于市场数据判断当前市场情绪状态
+ */
 void AIService::analyzeMarketSentiment(const QJsonObject& marketData,
                                         std::function<void(Result<AIAnalysis>)> callback)
 {
@@ -356,12 +453,26 @@ void AIService::analyzeMarketSentiment(const QJsonObject& marketData,
     });
 }
 
+/**
+ * @brief 快速问答
+ * @param question 问题内容
+ * @param callback 回答回调
+ *
+ * 简单的问答接口，不携带上下文
+ */
 void AIService::quickAsk(const QString& question,
                           std::function<void(Result<QString>)> callback)
 {
     chat(question, callback);
 }
 
+/**
+ * @brief 获取投资建议
+ * @param context 上下文信息
+ * @param callback 建议回调
+ *
+ * 基于用户提供的上下文给出投资建议
+ */
 void AIService::getInvestmentAdvice(const QString& context,
                                      std::function<void(Result<QString>)> callback)
 {
