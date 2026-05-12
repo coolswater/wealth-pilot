@@ -1,17 +1,17 @@
 /**
  * @file StockQuotesPage.h
- * @brief 股票行情页面
+ * @brief 股票行情页面 - 使用 Controller 模式
  * @details 显示股票实时行情列表，支持搜索、筛选和排序
  * @author WealthPilot Team
- * @version 1.0.0
+ * @version 2.0.0 - MVVM 重构
  */
 
 #ifndef STOCKQUOTESPAGE_H
 #define STOCKQUOTESPAGE_H
 
 #include "ui/components/BasePage.h"
+#include "controllers/StockQuotesController.h"
 #include <QTableView>
-#include <QAbstractTableModel>
 #include <memory>
 
 // 前向声明
@@ -19,100 +19,17 @@ class QLabel;
 class QLineEdit;
 class QComboBox;
 class QPushButton;
-class QSortFilterProxyModel;
 
 namespace WealthPilot {
 
 /**
- * @brief 股票行情数据结构
- */
-struct StockQuoteData {
-    QString symbol;             ///< 股票代码（如 sh600000）
-    QString name;               ///< 股票名称
-    double price = 0.0;         ///< 最新价
-    double change = 0.0;        ///< 涨跌额
-    double changePercent = 0.0; ///< 涨跌幅
-    qint64 volume = 0;          ///< 成交量
-    double turnover = 0.0;      ///< 成交额
-    double high = 0.0;          ///< 最高价
-    double low = 0.0;           ///< 最低价
-    double open = 0.0;          ///< 开盘价
-    double prevClose = 0.0;     ///< 昨收价
-};
-
-/**
- * @brief 股票行情表格模型
- * @details 提供股票数据的表格展示，支持排序和涨跌颜色显示
- */
-class StockQuoteModel : public QAbstractTableModel {
-    Q_OBJECT
-
-public:
-    /**
-     * @brief 列枚举
-     */
-    enum Column {
-        ColCode = 0,         ///< 代码
-        ColName,             ///< 名称
-        ColPrice,            ///< 最新价
-        ColChange,           ///< 涨跌额
-        ColChangePercent,    ///< 涨跌幅
-        ColVolume,           ///< 成交量
-        ColTurnover,         ///< 成交额
-        ColHigh,             ///< 最高价
-        ColLow,              ///< 最低价
-        ColCount             ///< 列数
-    };
-
-    /**
-     * @brief 构造函数
-     * @param parent 父对象
-     */
-    explicit StockQuoteModel(QObject* parent = nullptr);
-    
-    /**
-     * @brief 获取行数
-     */
-    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
-    
-    /**
-     * @brief 获取列数
-     */
-    int columnCount(const QModelIndex& parent = QModelIndex()) const override;
-    
-    /**
-     * @brief 获取数据
-     */
-    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
-    
-    /**
-     * @brief 获取表头数据
-     */
-    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-    
-    /**
-     * @brief 设置数据
-     * @param quotes 股票行情数据列表
-     */
-    void setData(const QVector<StockQuoteData>& quotes);
-    
-    /**
-     * @brief 清空数据
-     */
-    void clear();
-    
-    /**
-     * @brief 获取指定行的股票数据
-     */
-    StockQuoteData getQuote(int row) const;
-
-private:
-    QVector<StockQuoteData> m_data; ///< 数据存储
-};
-
-/**
  * @brief 股票行情页面
  * @details 显示股票实时行情列表，支持搜索、筛选和排序功能
+ * 
+ * @details 架构说明：
+ * - View (本类): 只负责 UI 渲染和用户交互
+ * - Controller: 处理业务逻辑（数据获取、筛选、导出）
+ * - Model: 数据存储和展示
  */
 class StockQuotesPage : public BasePage {
     Q_OBJECT
@@ -144,7 +61,12 @@ public:
      */
     void initializePage() override;
 
-signals:
+    /**
+     * @brief 获取 Controller
+     */
+    StockQuotesController* controller() const { return m_controller; }
+
+    signals:
     /**
      * @brief 导航到K线页面信号
      * @param symbol 股票代码
@@ -173,38 +95,70 @@ private slots:
      */
     void onRowDoubleClicked(const QModelIndex& index);
 
+    // ========== Controller 信号处理 ==========
+
+    /**
+     * @brief 数据刷新完成
+     */
+    void onDataRefreshed(int count);
+
+    /**
+     * @brief 数据筛选完成
+     */
+    void onDataFiltered(int visibleCount, int totalCount);
+
+    /**
+     * @brief 搜索完成
+     */
+    void onSearchCompleted(int resultCount, const QString& keyword);
+
+    /**
+     * @brief 数据加载状态变化
+     */
+    void onDataLoading(bool loading);
+
+    /**
+     * @brief 导出完成
+     */
+    void onExportCompleted(const QString& filePath);
+
+    /**
+     * @brief 错误发生
+     */
+    void onErrorOccurred(const QString& error);
+
 private:
     /**
      * @brief 初始化UI
      */
     void setupUI();
-    
+
+    /**
+     * @brief 初始化 Controller
+     */
+    void setupController();
+
     /**
      * @brief 初始化连接
      */
     void setupConnections();
     
     /**
-     * @brief 加载演示数据
+     * @brief 更新状态显示
      */
-    void loadDemoData();
-    
-    /**
-     * @brief 应用筛选
-     */
-    void applyFilter();
+    void updateStatus();
 
-    // UI 组件
+    // ========== UI 组件 ==========
     QLineEdit* m_searchEdit = nullptr;       ///< 搜索框
     QComboBox* m_filterCombo = nullptr;      ///< 筛选下拉框
     QPushButton* m_refreshBtn = nullptr;     ///< 刷新按钮
+    QPushButton* m_exportBtn = nullptr; ///< 导出按钮
     QTableView* m_tableView = nullptr;       ///< 表格视图
-    StockQuoteModel* m_model = nullptr;      ///< 数据模型
-    QSortFilterProxyModel* m_proxyModel = nullptr; ///< 代理模型（用于排序和筛选）
     QLabel* m_statusLabel = nullptr;         ///< 状态标签
-    
-    // 数据
-    QVector<StockQuoteData> m_allData;       ///< 所有数据
+    QLabel* m_countLabel = nullptr; ///< 数量标签
+
+    // ========== Controller ==========
+    StockQuotesController* m_controller = nullptr; ///< 业务逻辑控制器
 };
 
 } // namespace WealthPilot

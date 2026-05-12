@@ -256,6 +256,8 @@ set(MODEL_SOURCES
         src/models/FuturesQuoteDelegate.cpp
         src/models/StockQuoteItem.h
         src/models/StockQuoteItem.cpp
+        src/models/StockQuoteModel.h
+        src/models/StockQuoteModel.cpp
         src/models/QuoteModelBase.h
         src/models/QuoteModelBase.cpp
         src/domain/types/MarketTypes.h
@@ -495,6 +497,29 @@ set(UI_UTILS_SOURCES
         src/ui/utils/StyleHelper.cpp
         src/ui/utils/PageStyleHelper.h
         src/ui/utils/PageStyleHelper.cpp
+        src/ui/styles/ButtonStyles.h
+        src/ui/styles/ButtonStyles.cpp
+)
+
+# ViewModels MVVM 架构
+set(VIEWMODEL_SOURCES
+        src/viewmodels/ViewModelBase.h
+        src/viewmodels/ViewModelBase.cpp
+        src/viewmodels/TradingViewModel.h
+        src/viewmodels/TradingViewModel.cpp
+        src/viewmodels/OrderViewModel.h
+        src/viewmodels/OrderViewModel.cpp
+        src/viewmodels/BacktestViewModel.h
+        src/viewmodels/BacktestViewModel.cpp
+        src/viewmodels/ViewModelRegistration.h
+)
+
+# Controllers MVP 架构
+set(CONTROLLER_SOURCES
+        src/controllers/ControllerBase.h
+        src/controllers/ControllerBase.cpp
+        src/controllers/StockQuotesController.h
+        src/controllers/StockQuotesController.cpp
 )
 
 # Views 视图
@@ -598,6 +623,8 @@ set(SOURCES
         ${CORE_QUANT_SOURCES}
         ${CORE_AI_SOURCES}
         ${CORE_ACCOUNT_SOURCES}
+        ${VIEWMODEL_SOURCES}
+        ${CONTROLLER_SOURCES}
         ${CORE_SECURITY_SOURCES}
         ${CORE_API_SOURCES}
         ${CORE_PLUGIN_SOURCES}
