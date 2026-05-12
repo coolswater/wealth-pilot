@@ -6,6 +6,7 @@
 #include "NewsPage.h"
 #include "core/config/Tokens.h"
 #include "market/NewsDataSource.h"
+#include "ui/styles/ButtonStyles.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -134,20 +135,7 @@ void NewsCardWidget::setupUI()
     metaRow->addWidget(m_sourceLabel, 1);
     
     m_detailBtn = new QPushButton(QStringLiteral("详情"));
-    m_detailBtn->setStyleSheet(QString(R"(
-        QPushButton {
-            background-color: transparent;
-            color: %1;
-            border: 1px solid %1;
-            font-size: 12px;
-            padding: 4px 12px;
-            border-radius: 4px;
-        }
-        QPushButton:hover {
-            background-color: %1;
-            color: white;
-        }
-    )").arg(COLOR_CATEGORY_ACTIVE));
+    ButtonStyles::setInfo(m_detailBtn);
     m_detailBtn->setCursor(Qt::PointingHandCursor);
     connect(m_detailBtn, &QPushButton::clicked, this, [this]() {
         emit detailRequested(m_data);

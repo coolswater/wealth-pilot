@@ -5,6 +5,7 @@
 
 #include "SettingsPage.h"
 #include "ui/components/StyleHelper.h"
+#include "ui/styles/ButtonStyles.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -98,12 +99,12 @@ void SettingsPage::setupUI()
     
     // 保存和重置按钮
     d->resetBtn = new QPushButton(QStringLiteral("重置"), this);
-    StyleHelper::setSecondaryButton(d->resetBtn);
+    ButtonStyles::setSecondary(d->resetBtn);
     d->resetBtn->setFixedWidth(80);
     headerLayout->addWidget(d->resetBtn);
     
     d->saveBtn = new QPushButton(QStringLiteral("保存"), this);
-    StyleHelper::setPrimaryButton(d->saveBtn);
+    ButtonStyles::setPrimary(d->saveBtn);
     d->saveBtn->setFixedWidth(80);
     headerLayout->addWidget(d->saveBtn);
     
@@ -230,13 +231,13 @@ void SettingsPage::setupUI()
     dataBtnLayout->setSpacing(12);
     
     QPushButton* clearCacheBtn = new QPushButton(QStringLiteral("清除缓存"), this);
-    StyleHelper::setSecondaryButton(clearCacheBtn);
+    ButtonStyles::setSecondary(clearCacheBtn);
     clearCacheBtn->setFixedWidth(100);
     connect(clearCacheBtn, &QPushButton::clicked, this, &SettingsPage::onClearCacheClicked);
     dataBtnLayout->addWidget(clearCacheBtn);
     
     QPushButton* exportDataBtn = new QPushButton(QStringLiteral("导出数据"), this);
-    StyleHelper::setSecondaryButton(exportDataBtn);
+    ButtonStyles::setExport(exportDataBtn);
     exportDataBtn->setFixedWidth(100);
     connect(exportDataBtn, &QPushButton::clicked, this, &SettingsPage::onExportDataClicked);
     dataBtnLayout->addWidget(exportDataBtn);
@@ -291,7 +292,7 @@ void SettingsPage::setupUI()
     keyLayout->addWidget(d->aiApiKeyEdit);
     
     QPushButton* toggleKeyBtn = new QPushButton(QStringLiteral("显示"), this);
-    StyleHelper::setSecondaryButton(toggleKeyBtn);
+    ButtonStyles::setSecondary(toggleKeyBtn);
     toggleKeyBtn->setFixedWidth(50);
     connect(toggleKeyBtn, &QPushButton::clicked, this, [this, toggleKeyBtn]() {
         if (d->aiApiKeyEdit->echoMode() == QLineEdit::Password) {

@@ -14,6 +14,7 @@
 
 #include "RiskSettingsPage.h"
 #include "ui/components/StyleHelper.h"
+#include "ui/styles/ButtonStyles.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>
@@ -56,9 +57,9 @@ void RiskSettingsPage::initUI()
     
     m_saveBtn = new QPushButton("保存", this);
     m_resetBtn = new QPushButton("重置", this);
-    StyleHelper::setPrimaryButton(m_saveBtn);
-    StyleHelper::setSecondaryButton(m_resetBtn);
-    
+    ButtonStyles::setPrimary(m_saveBtn);
+    ButtonStyles::setSecondary(m_resetBtn);
+
     headerLayout->addWidget(titleLabel);
     headerLayout->addStretch();
     headerLayout->addWidget(m_resetBtn);

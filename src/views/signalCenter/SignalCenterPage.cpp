@@ -10,6 +10,7 @@
 
 #include "SignalCenterPage.h"
 #include "core/config/Tokens.h"
+#include "ui/styles/ButtonStyles.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -636,20 +637,7 @@ void SignalCenterPage::setupToolBar()
     QPushButton* refreshBtn = new QPushButton(QStringLiteral("刷新"));
     refreshBtn->setFixedHeight(28);
     refreshBtn->setFixedWidth(60);
-    refreshBtn->setCursor(Qt::PointingHandCursor);
-    refreshBtn->setStyleSheet(QString(R"(
-        QPushButton {
-            background-color: transparent;
-            color: %1;
-            border: 1px solid %2;
-            border-radius: 6px;
-            font-size: 12px;
-        }
-        QPushButton:hover {
-            background-color: %3;
-            border-color: %4;
-        }
-    )").arg(COLOR_TEXT_META, COLOR_SEPARATOR, COLOR_HOVER_BG, COLOR_PRIMARY));
+    ButtonStyles::setRefresh(refreshBtn);
     connect(refreshBtn, &QPushButton::clicked, this, [this]() {
         d->loadSubscriptions();
         loadDemoData();

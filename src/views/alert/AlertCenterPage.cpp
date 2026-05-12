@@ -9,6 +9,7 @@
 #include "AlertCenterPage.h"
 #include "core/config/Tokens.h"
 #include "ui/components/StyleHelper.h"
+#include "ui/styles/ButtonStyles.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -131,29 +132,29 @@ void AlertCenterPage::initToolBar()
 
     d->addBtn = new QPushButton(QStringLiteral("添加预警"));
     d->addBtn->setFixedSize(80, 26);
-    d->addBtn->setObjectName("successBtn");
+    ButtonStyles::setAdd(d->addBtn);
     layout->addWidget(d->addBtn);
     
     d->deleteBtn = new QPushButton(QStringLiteral("删除"));
     d->deleteBtn->setFixedSize(60, 26);
-    d->deleteBtn->setObjectName("dangerBtn");
+    ButtonStyles::setDelete(d->deleteBtn);
     layout->addWidget(d->deleteBtn);
     
     d->toggleBtn = new QPushButton(QStringLiteral("启用/禁用"));
     d->toggleBtn->setFixedSize(80, 26);
-    StyleHelper::setSecondaryButton(d->toggleBtn);
+    ButtonStyles::setSecondary(d->toggleBtn);
     layout->addWidget(d->toggleBtn);
     
     layout->addStretch();
     
     d->refreshBtn = new QPushButton(QStringLiteral("刷新"));
     d->refreshBtn->setFixedSize(60, 26);
-    StyleHelper::setSecondaryButton(d->refreshBtn);
+    ButtonStyles::setRefresh(d->refreshBtn);
     layout->addWidget(d->refreshBtn);
     
     d->clearHistoryBtn = new QPushButton(QStringLiteral("清空历史"));
     d->clearHistoryBtn->setFixedSize(70, 26);
-    StyleHelper::setSecondaryButton(d->clearHistoryBtn);
+    ButtonStyles::setDanger(d->clearHistoryBtn);
     layout->addWidget(d->clearHistoryBtn);
     
     auto* mainLayout = qobject_cast<QVBoxLayout*>(this->layout());

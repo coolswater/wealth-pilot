@@ -15,6 +15,7 @@
 #include "AccountPage.h"
 #include "ui/components/StyleHelper.h"
 #include "core/config/Tokens.h"
+#include "ui/styles/ButtonStyles.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>
@@ -67,9 +68,9 @@ void AccountPage::initUI()
 
     m_refreshBtn = new QPushButton("刷新", this);
     m_exportBtn = new QPushButton("导出", this);
-    StyleHelper::setSecondaryButton(m_refreshBtn);
-    StyleHelper::setSecondaryButton(m_exportBtn);
-    
+    ButtonStyles::setRefresh(m_refreshBtn);
+    ButtonStyles::setExport(m_exportBtn);
+
     headerLayout->addWidget(titleLabel);
     headerLayout->addStretch();
     headerLayout->addWidget(m_refreshBtn);

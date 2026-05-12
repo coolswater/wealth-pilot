@@ -30,6 +30,7 @@
 #include "src/views/mainWindow/MainWindow.h"
 #include "src/utils/Logger.h"
 #include "src/core/database/DatabaseManager.h"
+#include "src/viewmodels/ViewModelRegistration.h"
 #include <QApplication>
 #include <QFontDatabase>
 #include <QLocale>
@@ -129,6 +130,10 @@ int main(int argc, char* argv[])
 
     // ========== 创建主窗口 ==========
     MainWindow w;
+
+    // 注册 ViewModel 到 QML（如果使用 QML）
+    // QQmlEngine qmlEngine;
+    // WealthPilot::registerViewModels(qmlEngine);
 
     // 初始化所有功能
     WealthPilot::FeatureIntegration::instance()->initialize(&w);

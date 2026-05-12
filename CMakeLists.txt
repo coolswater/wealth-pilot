@@ -256,8 +256,8 @@ set(MODEL_SOURCES
         src/models/FuturesQuoteDelegate.cpp
         src/models/StockQuoteItem.h
         src/models/StockQuoteItem.cpp
-        src/models/StockQuoteModel.h
-        src/models/StockQuoteModel.cpp
+        # src/models/StockQuoteModel.h  # 已在 StockQuotesPage 中定义
+        # src/models/StockQuoteModel.cpp
         src/models/QuoteModelBase.h
         src/models/QuoteModelBase.cpp
         src/domain/types/MarketTypes.h
@@ -518,8 +518,8 @@ set(VIEWMODEL_SOURCES
 set(CONTROLLER_SOURCES
         src/controllers/ControllerBase.h
         src/controllers/ControllerBase.cpp
-        src/controllers/StockQuotesController.h
-        src/controllers/StockQuotesController.cpp
+        # src/controllers/StockQuotesController.h  # 暂时禁用，StockQuoteModel 冲突
+        # src/controllers/StockQuotesController.cpp
 )
 
 # Views 视图
@@ -567,6 +567,8 @@ set(VIEW_SOURCES
         src/views/trading/TradingIntegration.cpp
         src/views/trading/TradingPanel.h
         src/views/trading/TradingPanel.cpp
+        src/views/trading/TradingQmlPage.h
+        src/views/trading/TradingQmlPage.cpp
         src/views/TradingPagesRegistration.cpp
         # 新增模块
         src/views/fund/FundPage.h

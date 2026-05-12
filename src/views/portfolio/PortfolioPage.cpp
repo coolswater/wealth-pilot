@@ -20,6 +20,7 @@
 #include "ui/components/StyleHelper.h"
 #include "ui/ThemeManager.h"
 #include "core/config/Tokens.h"
+#include "ui/styles/ButtonStyles.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -385,18 +386,7 @@ void PortfolioPage::setupHeader()
     // 刷新按钮
     QPushButton* refreshBtn = new QPushButton(QStringLiteral("刷新"), this);
     refreshBtn->setFixedSize(80, 36);
-    refreshBtn->setStyleSheet(QString(R"(
-        QPushButton {
-            background-color: %1;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 14px;
-        }
-        QPushButton:hover {
-            background-color: %2;
-        }
-    )").arg(Tokens::Colors::Primary, Tokens::Colors::PrimaryHover));
+    ButtonStyles::setRefresh(refreshBtn);
     connect(refreshBtn, &QPushButton::clicked, this, &PortfolioPage::refreshData);
     layout->addWidget(refreshBtn);
 

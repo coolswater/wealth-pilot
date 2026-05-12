@@ -5,6 +5,7 @@
 
 #include "WatchListPage.h"
 #include "core/config/Tokens.h"
+#include "ui/styles/ButtonStyles.h"
 #include "utils/Logger.h"
 
 // 使用 WealthPilot 命名空间中的类
@@ -347,7 +348,7 @@ void WatchListPage::setupUI()
     auto* toolbarLayout = new QHBoxLayout;
 
     auto* refreshBtn = new QPushButton(QStringLiteral("刷新"));
-    refreshBtn->setProperty("ghost", true);
+    ButtonStyles::setRefresh(refreshBtn);
 
     d->addInput = new QLineEdit();
     d->addInput->setPlaceholderText(QStringLiteral("添加股票代码"));
@@ -355,10 +356,10 @@ void WatchListPage::setupUI()
 
     d->addBtn = new QPushButton(QStringLiteral("添加"));
     d->addBtn->setObjectName("addBtn");
-    d->addBtn->setProperty("primary", true);
+    ButtonStyles::setAdd(d->addBtn);
 
     d->removeBtn = new QPushButton(QStringLiteral("删除"));
-    d->removeBtn->setProperty("danger", true);
+    ButtonStyles::setDelete(d->removeBtn);
 
     auto* filterLabel = new QLabel(QStringLiteral("搜索:"));
     filterLabel->setProperty("secondary", true);

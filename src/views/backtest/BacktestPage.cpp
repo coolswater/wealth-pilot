@@ -16,6 +16,7 @@
 #include "ui/components/KLineChart.h"
 #include "core/config/Tokens.h"
 #include "ui/components/StyleHelper.h"
+#include "ui/styles/ButtonStyles.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -223,20 +224,20 @@ void BacktestPage::initToolBar()
     // 运行按钮
     d->runBtn = new QPushButton(QStringLiteral("运行回测"));
     d->runBtn->setFixedSize(80, 28);
-    d->runBtn->setObjectName("successBtn");
+    ButtonStyles::setSuccess(d->runBtn);
     layout->addWidget(d->runBtn);
     
     // 停止按钮
     d->stopBtn = new QPushButton(QStringLiteral("停止"));
     d->stopBtn->setFixedSize(60, 28);
     d->stopBtn->setEnabled(false);
-    d->stopBtn->setObjectName("dangerBtn");
+    ButtonStyles::setDanger(d->stopBtn);
     layout->addWidget(d->stopBtn);
     
     // 导出按钮
     d->exportBtn = new QPushButton(QStringLiteral("导出报告"));
     d->exportBtn->setFixedSize(80, 28);
-    StyleHelper::setSecondaryButton(d->exportBtn);
+    ButtonStyles::setExport(d->exportBtn);
     layout->addWidget(d->exportBtn);
     
     auto* mainLayout = qobject_cast<QVBoxLayout*>(this->layout());
