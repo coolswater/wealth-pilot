@@ -1,0 +1,696 @@
+/**
+ * WealthPilot 按钮样式表 v1.0
+ * 统一管理所有按钮样式，确保一致性
+ * 
+ * 分类：
+ * 1. 主要操作按钮 (Primary) - 保存、提交、确认
+ * 2. 次要操作按钮 (Secondary) - 取消、关闭
+ * 3. 状态按钮 (Success/Danger/Warning/Info) - 买入/卖出/重置/详情
+ * 4. 功能按钮 (Refresh/Add/Edit/Delete/Export) - 工具栏操作
+ * 5. 工具按钮 (Icon/Text/Link) - 轻量级交互
+ * 6. 对话框按钮 (Dialog*) - 弹窗操作
+ */
+
+/* ============================================================================
+   基础按钮样式 - 所有按钮共用
+   ============================================================================ */
+
+QPushButton {
+    background-color: ${bgElevated};
+    color: ${textPrimary};
+    border: 1px solid ${border};
+    border-radius: 6px;
+    padding: 0 16px;
+    font-size: 13px;
+    font-weight: 500;
+    min-height: 32px;
+    min-width: 60px;
+}
+
+QPushButton:hover {
+    background-color: ${bgHover};
+    border-color: ${primary};
+}
+
+QPushButton:pressed {
+    background-color: ${bgSurface};
+}
+
+QPushButton:disabled {
+    background-color: ${bgSurface};
+    color: ${textDisabled};
+    border-color: ${borderLight};
+}
+
+/* ============================================================================
+   主要按钮 (Primary) - 用于主要操作
+   场景：保存、提交、确认、运行
+   ============================================================================ */
+
+QPushButton[buttonType="primary"] {
+    background-color: ${primary};
+    color: white;
+    border: none;
+    font-weight: 600;
+}
+
+QPushButton[buttonType="primary"]:hover {
+    background-color: ${primaryHover};
+}
+
+QPushButton[buttonType="primary"]:pressed {
+    background-color: ${primaryDark};
+}
+
+QPushButton[buttonType="primary"]:disabled {
+    background-color: ${border};
+    color: ${textDisabled};
+}
+
+/* ============================================================================
+   次要按钮 (Secondary) - 用于次要操作
+   场景：取消、关闭、返回
+   ============================================================================ */
+
+QPushButton[buttonType="secondary"] {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: 1px solid ${border};
+}
+
+QPushButton[buttonType="secondary"]:hover {
+    background-color: ${bgHover};
+    color: ${textPrimary};
+    border-color: ${primary};
+}
+
+QPushButton[buttonType="secondary"]:pressed {
+    background-color: ${bgSurface};
+}
+
+/* ============================================================================
+   成功按钮 (Success) - 用于正向/确认操作
+   场景：买入、启用、激活、订阅
+   ============================================================================ */
+
+QPushButton[buttonType="success"] {
+    background-color: ${success};
+    color: white;
+    border: none;
+    font-weight: 600;
+}
+
+QPushButton[buttonType="success"]:hover {
+    background-color: #2d9e42;
+}
+
+QPushButton[buttonType="success"]:pressed {
+    background-color: #248535;
+}
+
+QPushButton[buttonType="success"]:disabled {
+    background-color: rgba(63, 185, 80, 0.5);
+}
+
+/* ============================================================================
+   危险按钮 (Danger) - 用于危险/删除操作
+   场景：卖出、删除、清空、停止
+   ============================================================================ */
+
+QPushButton[buttonType="danger"] {
+    background-color: ${danger};
+    color: white;
+    border: none;
+    font-weight: 600;
+}
+
+QPushButton[buttonType="danger"]:hover {
+    background-color: #d9363d;
+}
+
+QPushButton[buttonType="danger"]:pressed {
+    background-color: #c42b32;
+}
+
+QPushButton[buttonType="danger"]:disabled {
+    background-color: rgba(248, 81, 73, 0.5);
+}
+
+/* ============================================================================
+   警告按钮 (Warning) - 用于警告操作
+   场景：重置、清空缓存、风险操作
+   ============================================================================ */
+
+QPushButton[buttonType="warning"] {
+    background-color: ${warning};
+    color: white;
+    border: none;
+    font-weight: 600;
+}
+
+QPushButton[buttonType="warning"]:hover {
+    background-color: #e67e22;
+}
+
+QPushButton[buttonType="warning"]:pressed {
+    background-color: #d35400;
+}
+
+/* ============================================================================
+   信息按钮 (Info) - 用于信息查看操作
+   场景：详情、查看、帮助
+   ============================================================================ */
+
+QPushButton[buttonType="info"] {
+    background-color: ${info};
+    color: white;
+    border: none;
+}
+
+QPushButton[buttonType="info"]:hover {
+    background-color: #3498db;
+}
+
+QPushButton[buttonType="info"]:pressed {
+    background-color: #2980b9;
+}
+
+/* ============================================================================
+   功能按钮 - 工具栏常用操作
+   ============================================================================ */
+
+/* 刷新按钮 */
+QPushButton[buttonType="refresh"] {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: 1px solid ${border};
+    padding: 0 12px;
+}
+
+QPushButton[buttonType="refresh"]:hover {
+    background-color: ${bgHover};
+    color: ${primary};
+    border-color: ${primary};
+}
+
+/* 添加按钮 */
+QPushButton[buttonType="add"] {
+    background-color: rgba(63, 185, 80, 0.15);
+    color: ${success};
+    border: 1px solid rgba(63, 185, 80, 0.3);
+}
+
+QPushButton[buttonType="add"]:hover {
+    background-color: rgba(63, 185, 80, 0.25);
+    border-color: ${success};
+}
+
+/* 编辑按钮 */
+QPushButton[buttonType="edit"] {
+    background-color: rgba(88, 166, 255, 0.15);
+    color: ${primary};
+    border: 1px solid rgba(88, 166, 255, 0.3);
+}
+
+QPushButton[buttonType="edit"]:hover {
+    background-color: rgba(88, 166, 255, 0.25);
+    border-color: ${primary};
+}
+
+/* 删除按钮 */
+QPushButton[buttonType="delete"] {
+    background-color: rgba(248, 81, 73, 0.15);
+    color: ${danger};
+    border: 1px solid rgba(248, 81, 73, 0.3);
+}
+
+QPushButton[buttonType="delete"]:hover {
+    background-color: rgba(248, 81, 73, 0.25);
+    border-color: ${danger};
+}
+
+/* 导出按钮 */
+QPushButton[buttonType="export"] {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: 1px solid ${border};
+}
+
+QPushButton[buttonType="export"]:hover {
+    background-color: ${bgHover};
+    color: ${primary};
+    border-color: ${primary};
+}
+
+/* 导入按钮 */
+QPushButton[buttonType="import"] {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: 1px solid ${border};
+}
+
+QPushButton[buttonType="import"]:hover {
+    background-color: ${bgHover};
+    color: ${success};
+    border-color: ${success};
+}
+
+/* 搜索按钮 */
+QPushButton[buttonType="search"] {
+    background-color: ${primary};
+    color: white;
+    border: none;
+    border-radius: 0 6px 6px 0;
+}
+
+QPushButton[buttonType="search"]:hover {
+    background-color: ${primaryHover};
+}
+
+/* ============================================================================
+   工具按钮 - 轻量级交互
+   ============================================================================ */
+
+/* 图标按钮 */
+QPushButton[buttonType="icon"] {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: none;
+    border-radius: 4px;
+    padding: 4px;
+    min-width: 24px;
+    min-height: 24px;
+}
+
+QPushButton[buttonType="icon"]:hover {
+    background-color: ${bgHover};
+    color: ${textPrimary};
+}
+
+QPushButton[buttonType="icon"]:pressed {
+    background-color: ${bgSurface};
+}
+
+/* 纯文本按钮 */
+QPushButton[buttonType="text"] {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: none;
+    padding: 0 8px;
+}
+
+QPushButton[buttonType="text"]:hover {
+    color: ${primary};
+}
+
+/* 链接按钮 */
+QPushButton[buttonType="link"] {
+    background-color: transparent;
+    color: ${primary};
+    border: none;
+    padding: 0;
+    text-decoration: underline;
+    min-width: 0;
+}
+
+QPushButton[buttonType="link"]:hover {
+    color: ${primaryHover};
+}
+
+/* ============================================================================
+   对话框按钮
+   ============================================================================ */
+
+/* 确认按钮 */
+QPushButton[buttonType="accept"] {
+    background-color: ${primary};
+    color: white;
+    border: none;
+    min-width: 80px;
+}
+
+QPushButton[buttonType="accept"]:hover {
+    background-color: ${primaryHover};
+}
+
+/* 取消按钮 */
+QPushButton[buttonType="reject"] {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: 1px solid ${border};
+    min-width: 80px;
+}
+
+QPushButton[buttonType="reject"]:hover {
+    background-color: ${bgHover};
+    border-color: ${primary};
+}
+
+/* 应用按钮 */
+QPushButton[buttonType="apply"] {
+    background-color: ${success};
+    color: white;
+    border: none;
+}
+
+QPushButton[buttonType="apply"]:hover {
+    background-color: #2d9e42;
+}
+
+/* 帮助按钮 */
+QPushButton[buttonType="help"] {
+    background-color: transparent;
+    color: ${info};
+    border: 1px solid ${info};
+}
+
+QPushButton[buttonType="help"]:hover {
+    background-color: rgba(52, 152, 219, 0.15);
+}
+
+/* ============================================================================
+   导航按钮
+   ============================================================================ */
+
+QPushButton[buttonType="navigation"] {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: 1px solid ${border};
+    border-radius: 20px;
+    padding: 0 20px;
+}
+
+QPushButton[buttonType="navigation"]:hover {
+    background-color: ${bgHover};
+    color: ${primary};
+    border-color: ${primary};
+}
+
+/* 返回按钮 */
+QPushButton[buttonType="back"] {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: none;
+    padding-left: 0;
+}
+
+QPushButton[buttonType="back"]:hover {
+    color: ${primary};
+}
+
+/* 下一步按钮 */
+QPushButton[buttonType="next"] {
+    background-color: ${primary};
+    color: white;
+    border: none;
+    border-radius: 20px;
+}
+
+QPushButton[buttonType="next"]:hover {
+    background-color: ${primaryHover};
+}
+
+/* ============================================================================
+   特殊按钮
+   ============================================================================ */
+
+/* 切换按钮 */
+QPushButton[buttonType="toggle"] {
+    background-color: ${bgElevated};
+    color: ${textSecondary};
+    border: 1px solid ${border};
+    border-radius: 16px;
+    padding: 0 16px;
+}
+
+QPushButton[buttonType="toggle"]:checked {
+    background-color: ${primary};
+    color: white;
+    border-color: ${primary};
+}
+
+/* 下拉按钮 */
+QPushButton[buttonType="dropdown"] {
+    background-color: ${bgElevated};
+    color: ${textPrimary};
+    border: 1px solid ${border};
+    padding-right: 28px;
+}
+
+QPushButton[buttonType="dropdown"]:hover {
+    border-color: ${primary};
+}
+
+/* ============================================================================
+   按钮尺寸
+   ============================================================================ */
+
+/* 小型按钮 */
+QPushButton[buttonSize="small"] {
+    font-size: 11px;
+    min-height: 24px;
+    padding: 0 10px;
+    border-radius: 4px;
+}
+
+/* 中型按钮（默认）*/
+QPushButton[buttonSize="medium"] {
+    font-size: 13px;
+    min-height: 32px;
+    padding: 0 16px;
+}
+
+/* 大型按钮 */
+QPushButton[buttonSize="large"] {
+    font-size: 14px;
+    min-height: 40px;
+    padding: 0 20px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+/* 超大按钮 */
+QPushButton[buttonSize="xlarge"] {
+    font-size: 16px;
+    min-height: 48px;
+    padding: 0 24px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* ============================================================================
+   工具按钮样式 (QToolButton)
+   ============================================================================ */
+
+QToolButton {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: none;
+    border-radius: 4px;
+    padding: 4px;
+}
+
+QToolButton:hover {
+    background-color: ${bgHover};
+    color: ${textPrimary};
+}
+
+QToolButton:pressed,
+QToolButton:checked {
+    background-color: ${primary};
+    color: white;
+}
+
+QToolButton::menu-button {
+    border: none;
+    width: 16px;
+}
+
+QToolButton::menu-arrow {
+    image: none;
+}
+
+/* 图标工具按钮 */
+QToolButton[buttonType="icon"] {
+    background-color: transparent;
+    border-radius: 4px;
+}
+
+QToolButton[buttonType="icon"]:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================================================
+   按钮组样式
+   ============================================================================ */
+
+/* 按钮组中的按钮 */
+QDialogButtonBox QPushButton {
+    min-width: 80px;
+}
+
+/* 水平按钮组 - 第一个按钮 */
+QPushButton[firstInGroup="true"] {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* 水平按钮组 - 中间按钮 */
+QPushButton[middleInGroup="true"] {
+    border-radius: 0;
+    border-left: none;
+}
+
+/* 水平按钮组 - 最后一个按钮 */
+QPushButton[lastInGroup="true"] {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: none;
+}
+
+/* ============================================================================
+   页面工具栏按钮
+   ============================================================================ */
+
+QFrame#pageToolbar QPushButton {
+    background-color: ${bgSurface};
+    color: ${textPrimary};
+    border: none;
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-size: 13px;
+}
+
+QFrame#pageToolbar QPushButton:hover {
+    background-color: ${bgHover};
+}
+
+QFrame#pageToolbar QPushButton:pressed {
+    background-color: ${primary};
+    color: white;
+}
+
+/* ============================================================================
+   侧边栏按钮
+   ============================================================================ */
+
+SidebarWidget QPushButton {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: none;
+    border-radius: 8px;
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 14px;
+}
+
+SidebarWidget QPushButton:hover {
+    background-color: ${bgHover};
+    color: ${textPrimary};
+}
+
+SidebarWidget QPushButton:checked {
+    background-color: rgba(88, 166, 255, 0.15);
+    color: ${primary};
+    border-left: 3px solid ${primary};
+}
+
+/* ============================================================================
+   标题栏按钮
+   ============================================================================ */
+
+TitleBarWidget QPushButton {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: none;
+    border-radius: 0;
+    min-width: 46px;
+    min-height: 32px;
+}
+
+TitleBarWidget QPushButton:hover {
+    background-color: ${bgHover};
+}
+
+/* 关闭按钮特殊样式 */
+TitleBarWidget QPushButton[closeButton="true"]:hover {
+    background-color: ${danger};
+    color: white;
+}
+
+/* ============================================================================
+   卡片内按钮
+   ============================================================================ */
+
+QFrame[cardType="elevated"] QPushButton,
+QFrame#statCard QPushButton {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: 1px solid ${border};
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-size: 12px;
+}
+
+QFrame[cardType="elevated"] QPushButton:hover,
+QFrame#statCard QPushButton:hover {
+    background-color: ${bgHover};
+    color: ${primary};
+    border-color: ${primary};
+}
+
+/* ============================================================================
+   表格内按钮
+   ============================================================================ */
+
+QTableView QPushButton,
+QTableWidget QPushButton {
+    background-color: transparent;
+    color: ${primary};
+    border: none;
+    padding: 2px 8px;
+    font-size: 12px;
+    min-width: 0;
+    min-height: 0;
+}
+
+QTableView QPushButton:hover,
+QTableWidget QPushButton:hover {
+    background-color: rgba(88, 166, 255, 0.15);
+    border-radius: 4px;
+}
+
+/* ============================================================================
+   对话框按钮布局
+   ============================================================================ */
+
+QDialog QPushButton#okBtn,
+QDialog QPushButton#saveBtn,
+QDialog QPushButton#submitBtn,
+QDialog QPushButton#applyBtn {
+    background-color: ${primary};
+    color: white;
+    border: none;
+    min-width: 90px;
+}
+
+QDialog QPushButton#cancelBtn,
+QDialog QPushButton#closeBtn,
+QDialog QPushButton#rejectBtn {
+    background-color: transparent;
+    color: ${textSecondary};
+    border: 1px solid ${border};
+    min-width: 90px;
+}
+
+QDialog QPushButton#resetBtn {
+    background-color: transparent;
+    color: ${warning};
+    border: 1px solid ${warning};
+}
+
+QDialog QPushButton#testBtn {
+    background-color: transparent;
+    color: ${info};
+    border: 1px solid ${info};
+}

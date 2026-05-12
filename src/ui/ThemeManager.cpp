@@ -254,10 +254,13 @@ QString ThemeManager::loadThemeQss(ThemeType type) const
     // 加载组件样式（所有主题共用）
     QString componentsQss = loadQssFile(QStringLiteral("components.qss"));
 
+    // 加载按钮样式（所有主题共用）
+    QString buttonsQss = loadQssFile(QStringLiteral("buttons.qss"));
+
     // 加载页面样式（所有主题共用）
     QString pagesQss = loadQssFile(QStringLiteral("pages.qss"));
 
-    return themeQss + "\n" + componentsQss + "\n" + pagesQss;
+    return themeQss + "\n" + componentsQss + "\n" + buttonsQss + "\n" + pagesQss;
 }
 
 QString ThemeManager::replaceColorVariables(const QString& qss, const ThemeColors& theme) const
