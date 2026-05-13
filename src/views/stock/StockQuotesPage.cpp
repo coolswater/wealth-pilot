@@ -7,9 +7,8 @@
  */
 
 #include "StockQuotesPage.h"
-#include "ui/components/StyleHelper.h"
-#include "ui/delegates/ColorDelegates.h"
 #include "core/config/Tokens.h"
+#include "ui/styles/ButtonStyles.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -18,15 +17,59 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QHeaderView>
-#include <QMessageBox>
 #include <QSortFilterProxyModel>
 #include <QComboBox>
 #include <QStyledItemDelegate>
+#include <QPainter>
 #include <QTimer>
 
-using namespace Tokens;
+using namespace Tokens::Colors;
 
 namespace WealthPilot {
+
+// ============================================================================
+// 涨跌颜色委托
+// ============================================================================
+
+class StockQuoteDelegate : public QStyledItemDelegate
+{
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+
+    void paint(QPainter* painter, const QStyleOptionViewItem& option,
+               const QModelIndex& index) const override
+    {
+        bool ok = false;
+        double changePercent = index.data(Qt::UserRole).toDouble(&ok);
+
+        QStyleOptionViewItem opt = option;
+        initStyleOption(&opt, index);
+
+        // 涨跌额和涨跌幅列显示红涨绿跌
+        if (index.column() == StockQuoteModel::ColChange ||
+            index.column() == StockQuoteModel::ColChangePercent ||
+            index.column() == StockQuoteModel::ColPrice)
+        {
+            if (ok)
+            {
+                if (changePercent > 0)
+                {
+                    opt.palette.setColor(QPalette::Text, QColor(Danger));
+                }
+                else if (changePercent < 0)
+                {
+                    opt.palette.setColor(QPalette::Text, QColor(Success));
+                }
+                else
+                {
+                    opt.palette.setColor(QPalette::Text, QColor(TextSecondary));
+                }
+            }
+        }
+
+        QStyledItemDelegate::paint(painter, opt, index);
+    }
+};
 
 // ============================================================================
 // StockQuoteModel 实现
@@ -39,40 +82,28 @@ StockQuoteModel::StockQuoteModel(QObject* parent)
 
 int StockQuoteModel::rowCount(const QModelIndex& parent) const
 {
-    // 根节点才有子节点
-    if (parent.isValid())
-    {
-        return 0;
-    }
+    if (parent.isValid()) return 0;
     return m_data.size();
 }
 
 int StockQuoteModel::columnCount(const QModelIndex& parent) const
 {
-    if (parent.isValid())
-    {
-        return 0;
-    }
+    if (parent.isValid()) return 0;
     return ColCount;
 }
 
 QVariant StockQuoteModel::data(const QModelIndex& index, int role) const
 {
-    // 检查索引有效性
     if (!index.isValid() || index.row() >= m_data.size())
-    {
         return QVariant();
-    }
 
     const StockQuoteData& quote = m_data[index.row()];
 
-    // 显示角色
     if (role == Qt::DisplayRole)
     {
         switch (index.column())
         {
         case ColCode:
-            // 跳过 sh/sz 前缀，只显示数字代码
             return quote.symbol.mid(2);
         case ColName:
             return quote.name;
@@ -81,7 +112,10 @@ QVariant StockQuoteModel::data(const QModelIndex& index, int role) const
         case ColChange:
             return QString::number(quote.change, 'f', 2);
         case ColChangePercent:
-            return QString::number(quote.changePercent, 'f', 2) + "%";
+            {
+                QString sign = quote.changePercent >= 0 ? "+" : "";
+                return QString("%1%2%").arg(sign).arg(quote.changePercent, 0, 'f', 2);
+            }
         case ColVolume:
             return formatVolume(quote.volume);
         case ColTurnover:
@@ -90,41 +124,9 @@ QVariant StockQuoteModel::data(const QModelIndex& index, int role) const
             return QString::number(quote.high, 'f', 2);
         case ColLow:
             return QString::number(quote.low, 'f', 2);
-        default:
-            return QVariant();
         }
     }
 
-    // 前景色角色 - 涨跌颜色
-    if (role == Qt::ForegroundRole)
-    {
-        // 涨跌额和涨跌幅列显示红涨绿跌
-        if (index.column() == ColChange || index.column() == ColChangePercent)
-        {
-            if (quote.change > 0)
-            {
-                return QColor(Colors::Danger); // 红涨
-            }
-            else if (quote.change < 0)
-            {
-                return QColor(Colors::Success); // 绿跌
-            }
-        }
-        // 最新价列也显示涨跌颜色
-        if (index.column() == ColPrice)
-        {
-            if (quote.change > 0)
-            {
-                return QColor(Colors::Danger);
-            }
-            else if (quote.change < 0)
-            {
-                return QColor(Colors::Success);
-            }
-        }
-    }
-
-    // 用户角色 - 用于排序
     if (role == Qt::UserRole)
     {
         switch (index.column())
@@ -143,9 +145,14 @@ QVariant StockQuoteModel::data(const QModelIndex& index, int role) const
             return quote.high;
         case ColLow:
             return quote.low;
-        default:
-            return data(index, Qt::DisplayRole);
         }
+    }
+
+    if (role == Qt::TextAlignmentRole)
+    {
+        if (index.column() == ColCode || index.column() == ColName)
+            return QVariant(Qt::AlignLeft | Qt::AlignVCenter);
+        return QVariant(Qt::AlignRight | Qt::AlignVCenter);
     }
 
     return QVariant();
@@ -153,35 +160,22 @@ QVariant StockQuoteModel::data(const QModelIndex& index, int role) const
 
 QVariant StockQuoteModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    // 只处理水平表头
     if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
-    {
         return QVariant();
-    }
 
     switch (section)
     {
-    case ColCode:
-        return QStringLiteral("代码");
-    case ColName:
-        return QStringLiteral("名称");
-    case ColPrice:
-        return QStringLiteral("最新价");
-    case ColChange:
-        return QStringLiteral("涨跌额");
-    case ColChangePercent:
-        return QStringLiteral("涨跌幅");
-    case ColVolume:
-        return QStringLiteral("成交量");
-    case ColTurnover:
-        return QStringLiteral("成交额");
-    case ColHigh:
-        return QStringLiteral("最高价");
-    case ColLow:
-        return QStringLiteral("最低价");
-    default:
-        return QVariant();
+    case ColCode: return QStringLiteral("代码");
+    case ColName: return QStringLiteral("名称");
+    case ColPrice: return QStringLiteral("最新价");
+    case ColChange: return QStringLiteral("涨跌额");
+    case ColChangePercent: return QStringLiteral("涨跌幅");
+    case ColVolume: return QStringLiteral("成交量");
+    case ColTurnover: return QStringLiteral("成交额");
+    case ColHigh: return QStringLiteral("最高");
+    case ColLow: return QStringLiteral("最低");
     }
+    return QVariant();
 }
 
 void StockQuoteModel::setData(const QVector<StockQuoteData>& quotes)
@@ -201,10 +195,22 @@ void StockQuoteModel::clear()
 StockQuoteData StockQuoteModel::getQuote(int row) const
 {
     if (row >= 0 && row < m_data.size())
-    {
         return m_data[row];
-    }
     return StockQuoteData();
+}
+
+QString StockQuoteModel::formatVolume(qint64 volume)
+{
+    if (volume <= 0) return "--";
+    if (volume >= 100000000)
+    {
+        return QString("%1亿").arg(volume / 100000000.0, 0, 'f', 2);
+    }
+    if (volume >= 10000)
+    {
+        return QString("%1万").arg(volume / 10000.0, 0, 'f', 2);
+    }
+    return QString::number(volume);
 }
 
 // ============================================================================
@@ -215,7 +221,7 @@ StockQuotesPage::StockQuotesPage(QWidget* parent)
     : BasePage(parent)
       , m_searchEdit(new QLineEdit(this))
       , m_filterCombo(new QComboBox(this))
-      , m_refreshBtn(new QPushButton(this))
+      , m_refreshBtn(new QPushButton(QStringLiteral("刷新"), this))
       , m_tableView(new QTableView(this))
       , m_model(new StockQuoteModel(this))
       , m_proxyModel(new QSortFilterProxyModel(this))
@@ -225,15 +231,11 @@ StockQuotesPage::StockQuotesPage(QWidget* parent)
     setupConnections();
 }
 
-StockQuotesPage::~StockQuotesPage()
-{
-}
+StockQuotesPage::~StockQuotesPage() = default;
 
 void StockQuotesPage::initializePage()
 {
-    if (isInitialized()) {
-        return;
-    }
+    if (isInitialized()) return;
 
     loadDemoData();
     setInitialized(true);
@@ -242,37 +244,17 @@ void StockQuotesPage::initializePage()
 
 void StockQuotesPage::setupUI()
 {
-    // 主布局
-    QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(16);
-    mainLayout->setContentsMargins(24, 16, 24, 16);
-
-    // ========== 标题栏 ==========
-    QHBoxLayout* headerLayout = new QHBoxLayout();
-    headerLayout->setSpacing(12);
-    
-    QLabel* titleLabel = new QLabel(QStringLiteral("股票行情"), this);
-    StyleHelper::setTitleLabel(titleLabel);
-    headerLayout->addWidget(titleLabel);
-    
-    headerLayout->addStretch();
-
-    // 状态标签
-    m_statusLabel->setText(QStringLiteral("未加载数据"));
-    StyleHelper::setLabelText(m_statusLabel);
-    headerLayout->addWidget(m_statusLabel);
-
-    mainLayout->addLayout(headerLayout);
+    auto* mainLayout = new QVBoxLayout(this);
+    mainLayout->setSpacing(0);
+    mainLayout->setContentsMargins(10, 10, 10, 10);
 
     // ========== 工具栏 ==========
-    QHBoxLayout* toolbarLayout = new QHBoxLayout();
+    auto* toolbarLayout = new QHBoxLayout;
     toolbarLayout->setSpacing(8);
 
-    // 搜索框
-    m_searchEdit->setPlaceholderText(QStringLiteral("搜索股票代码或名称"));
-    m_searchEdit->setObjectName(QStringLiteral("searchEdit"));
-    m_searchEdit->setFixedWidth(220);
-    toolbarLayout->addWidget(m_searchEdit);
+    // 刷新按钮
+    ButtonStyles::setRefresh(m_refreshBtn);
+    toolbarLayout->addWidget(m_refreshBtn);
 
     // 筛选下拉框
     m_filterCombo->addItem(QStringLiteral("全部"), QStringLiteral("all"));
@@ -280,78 +262,73 @@ void StockQuotesPage::setupUI()
     m_filterCombo->addItem(QStringLiteral("深A"), QStringLiteral("sz"));
     m_filterCombo->addItem(QStringLiteral("创业板"), QStringLiteral("sz300"));
     m_filterCombo->addItem(QStringLiteral("科创板"), QStringLiteral("sh688"));
-    m_filterCombo->setObjectName(QStringLiteral("filterCombo"));
-    m_filterCombo->setFixedWidth(100);
     toolbarLayout->addWidget(m_filterCombo);
 
     toolbarLayout->addStretch();
 
-    // 刷新按钮
-    m_refreshBtn->setText(QStringLiteral("刷新"));
-    StyleHelper::setPrimaryButton(m_refreshBtn);
-    m_refreshBtn->setFixedWidth(80);
-    toolbarLayout->addWidget(m_refreshBtn);
+    // 搜索标签
+    auto* searchLabel = new QLabel(QStringLiteral("搜索:"), this);
+    searchLabel->setProperty("secondary", true);
+    toolbarLayout->addWidget(searchLabel);
+
+    // 搜索框
+    m_searchEdit->setPlaceholderText(QStringLiteral("搜索..."));
+    m_searchEdit->setMaximumWidth(120);
+    toolbarLayout->addWidget(m_searchEdit);
 
     mainLayout->addLayout(toolbarLayout);
 
-    // ========== 表格视图 ==========
-    // 设置代理模型
+    // ========== 表格模型 ==========
     m_proxyModel->setSourceModel(m_model);
-    m_proxyModel->setFilterKeyColumn(-1); // 搜索所有列
+    m_proxyModel->setFilterKeyColumn(-1);
+    m_proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
     m_proxyModel->setSortRole(Qt::UserRole);
 
+    // ========== 表格视图 ==========
     m_tableView->setModel(m_proxyModel);
+    m_tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    m_tableView->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    m_tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tableView->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_tableView->setAlternatingRowColors(true);
     m_tableView->setSortingEnabled(true);
-    m_tableView->horizontalHeader()->setStretchLastSection(true);
+    m_tableView->setAlternatingRowColors(true);
+    m_tableView->setShowGrid(false);
     m_tableView->verticalHeader()->setVisible(false);
-    m_tableView->setObjectName(QStringLiteral("stockTableView"));
+    m_tableView->horizontalHeader()->setStretchLastSection(true);
+    m_tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    m_tableView->horizontalHeader()->setDefaultAlignment(Qt::AlignCenter);
+    m_tableView->setItemDelegate(new StockQuoteDelegate(this));
 
-    // 设置列宽
+    // 列宽
     m_tableView->setColumnWidth(StockQuoteModel::ColCode, 80);
-    m_tableView->setColumnWidth(StockQuoteModel::ColName, 120);
-    m_tableView->setColumnWidth(StockQuoteModel::ColPrice, 90);
-    m_tableView->setColumnWidth(StockQuoteModel::ColChange, 90);
-    m_tableView->setColumnWidth(StockQuoteModel::ColChangePercent, 90);
-    m_tableView->setColumnWidth(StockQuoteModel::ColVolume, 100);
-    m_tableView->setColumnWidth(StockQuoteModel::ColTurnover, 100);
+    m_tableView->setColumnWidth(StockQuoteModel::ColName, 100);
+    m_tableView->setColumnWidth(StockQuoteModel::ColPrice, 80);
+    m_tableView->setColumnWidth(StockQuoteModel::ColChange, 80);
+    m_tableView->setColumnWidth(StockQuoteModel::ColChangePercent, 80);
+    m_tableView->setColumnWidth(StockQuoteModel::ColVolume, 90);
+    m_tableView->setColumnWidth(StockQuoteModel::ColTurnover, 90);
     m_tableView->setColumnWidth(StockQuoteModel::ColHigh, 80);
     m_tableView->setColumnWidth(StockQuoteModel::ColLow, 80);
 
-    // 设置颜色委托（红涨绿跌）
-    auto* changeDelegate = new WealthPilot::ChangeColorDelegate(this);
-    auto* priceDelegate = new WealthPilot::PriceColorDelegate(this);
-    m_tableView->setItemDelegateForColumn(StockQuoteModel::ColPrice, priceDelegate);
-    m_tableView->setItemDelegateForColumn(StockQuoteModel::ColChange, changeDelegate);
-    m_tableView->setItemDelegateForColumn(StockQuoteModel::ColChangePercent, changeDelegate);
-
     mainLayout->addWidget(m_tableView);
+
+    // ========== 状态栏 ==========
+    m_statusLabel->setText(QStringLiteral("正在加载股票行情..."));
+    mainLayout->addWidget(m_statusLabel);
 }
 
 void StockQuotesPage::setupConnections()
 {
-    // 搜索框文本改变
-    connect(m_searchEdit, &QLineEdit::textChanged,
-            this, &StockQuotesPage::onSearchChanged);
-    
-    // 筛选条件改变
+    connect(m_searchEdit, &QLineEdit::textChanged, this, &StockQuotesPage::onSearchChanged);
     connect(m_filterCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &StockQuotesPage::onFilterChanged);
-    
-    // 刷新按钮点击
-    connect(m_refreshBtn, &QPushButton::clicked,
-            this, &StockQuotesPage::onRefreshData);
-
-    // 表格行双击
-    connect(m_tableView, &QTableView::doubleClicked,
-            this, &StockQuotesPage::onRowDoubleClicked);
+    connect(m_refreshBtn, &QPushButton::clicked, this, &StockQuotesPage::onRefreshData);
+    connect(m_tableView, &QTableView::doubleClicked, this, &StockQuotesPage::onRowDoubleClicked);
 }
 
 void StockQuotesPage::loadDemoData()
 {
-    // 演示数据
     m_allData = {
         {"sh600000", QStringLiteral("浦发银行"), 10.50, 0.15, 1.45, 125000000, 1300000000, 10.65, 10.35, 10.35, 10.35},
         {"sh600036", QStringLiteral("招商银行"), 35.80, 0.42, 1.18, 98000000, 3500000000, 36.20, 35.40, 35.38, 35.38},
@@ -371,7 +348,9 @@ void StockQuotesPage::loadDemoData()
     };
 
     m_model->setData(m_allData);
-    m_statusLabel->setText(QStringLiteral("已加载 %1 只股票").arg(m_allData.size()));
+    m_statusLabel->setText(QString(QStringLiteral("股票 %1 只 · %2"))
+                           .arg(m_allData.size())
+                           .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
 
     LOG_INFO(QString("Loaded %1 stock quotes").arg(m_allData.size()));
 }
@@ -381,35 +360,10 @@ void StockQuotesPage::applyFilter()
     QString searchText = m_searchEdit->text().trimmed();
     QString filterType = m_filterCombo->currentData().toString();
 
-    // 构建过滤正则表达式
-    QString pattern;
-
-    // 市场筛选
-    if (filterType != QStringLiteral("all"))
-    {
-        if (filterType == QStringLiteral("sh"))
-        {
-            pattern = QStringLiteral("^6[0-9]{5}$");
-        }
-        else if (filterType == QStringLiteral("sz"))
-        {
-            pattern = QStringLiteral("^(000|002|300)[0-9]{3}$");
-        }
-        else if (filterType == QStringLiteral("sz300"))
-        {
-            pattern = QStringLiteral("^300[0-9]{3}$");
-        }
-        else if (filterType == QStringLiteral("sh688"))
-        {
-            pattern = QStringLiteral("^688[0-9]{3}$");
-        }
-    }
-
     // 搜索文本过滤
     if (!searchText.isEmpty())
     {
         m_proxyModel->setFilterFixedString(searchText);
-        m_proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
     }
     else
     {
@@ -418,54 +372,43 @@ void StockQuotesPage::applyFilter()
 
     // 更新状态
     int visibleCount = m_proxyModel->rowCount();
-    m_statusLabel->setText(QStringLiteral("显示 %1 / %2 只股票")
-                           .arg(visibleCount).arg(m_allData.size()));
+    m_statusLabel->setText(QString(QStringLiteral("股票 %1/%2 只 · %3"))
+                           .arg(visibleCount).arg(m_allData.size())
+                           .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
 }
 
 void StockQuotesPage::onSearchChanged(const QString& text)
 {
     Q_UNUSED(text);
     applyFilter();
-    LOG_DEBUG(QString("Search changed: %1").arg(text));
 }
 
 void StockQuotesPage::onFilterChanged(int index)
 {
     Q_UNUSED(index);
     applyFilter();
-    LOG_DEBUG(QString("Filter changed: %1").arg(m_filterCombo->currentText()));
 }
 
 void StockQuotesPage::onRefreshData()
 {
-    // 模拟刷新数据
-    m_statusLabel->setText(QStringLiteral("刷新中..."));
+    m_statusLabel->setText(QStringLiteral("正在刷新..."));
 
-    // 使用定时器模拟网络延迟
     QTimer::singleShot(500, this, [this]()
     {
         loadDemoData();
-        LOG_INFO("Stock quotes data refreshed");
+        LOG_INFO("Stock quotes refreshed");
     });
 }
 
 void StockQuotesPage::onRowDoubleClicked(const QModelIndex& index)
 {
-    if (!index.isValid())
-    {
-        return;
-    }
-    
-    // 获取源模型索引
-    QModelIndex sourceIndex = m_proxyModel->mapToSource(index);
-    int row = sourceIndex.row();
+    if (!index.isValid()) return;
 
-    // 获取股票数据
-    StockQuoteData quote = m_model->getQuote(row);
+    QModelIndex sourceIndex = m_proxyModel->mapToSource(index);
+    StockQuoteData quote = m_model->getQuote(sourceIndex.row());
 
     if (!quote.symbol.isEmpty())
     {
-        // 发送导航信号
         emit navigateToKLinePage(quote.symbol, quote.name);
         LOG_INFO(QString("Navigate to KLine: %1 (%2)").arg(quote.symbol, quote.name));
     }

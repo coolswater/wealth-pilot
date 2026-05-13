@@ -111,6 +111,8 @@ public:
 
 private:
     QVector<StockQuoteData> m_data; ///< 数据存储
+
+    static QString formatVolume(qint64 volume); ///< 格式化成交量/成交额
 };
 
 /**

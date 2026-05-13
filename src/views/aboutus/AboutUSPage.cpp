@@ -174,12 +174,12 @@ void AboutUSPage::setupUI()
     QLabel* teamName = new QLabel(QStringLiteral("WealthPilot Team"), this);
     StyleHelper::setValueLabel(teamName);
     teamLayout->addRow(QStringLiteral("团队:"), teamName);
-    
-    QLabel* copyrightLabel = new QLabel(QStringLiteral("© 2024-2026 WealthPilot Team. All rights reserved."), this);
+
+    QLabel* copyrightLabel = new QLabel(QStringLiteral("© 2026-2026 WealthPilot Team. All rights reserved."), this);
     StyleHelper::setLabelText(copyrightLabel);
     teamLayout->addRow(QStringLiteral("版权:"), copyrightLabel);
-    
-    QLabel* websiteLabel = new QLabel(QStringLiteral("https://github.com/openclaw/wealth-pilot"), this);
+
+    QLabel* websiteLabel = new QLabel(QStringLiteral("https://github.com/coolswater/wealth-pilot"), this);
     websiteLabel->setObjectName("websiteLink");
     websiteLabel->setCursor(Qt::PointingHandCursor);
     connect(websiteLabel, &QLabel::linkActivated, this, [](const QString& link) {
@@ -237,7 +237,7 @@ void AboutUSPage::onCheckUpdateClicked()
 
 void AboutUSPage::onVisitWebsiteClicked()
 {
-    QString url = QStringLiteral("https://github.com/openclaw/wealth-pilot");
+    QString url = QStringLiteral("https://github.com/coolswater/wealth-pilot");
     QDesktopServices::openUrl(QUrl(url));
     LOG_INFO(QString("Opening website: %1").arg(url));
 }

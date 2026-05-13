@@ -146,6 +146,7 @@ public:
     ~PortfolioPage() override;
 
     QString pageId() const override { return QStringLiteral("PortfolioPage"); }
+    QString pageName() const override { return QStringLiteral("账户"); }
     void initializePage() override;
 
     // 公共接口

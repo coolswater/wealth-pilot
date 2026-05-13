@@ -375,13 +375,12 @@ void MainWindow::setupUI()
 
     d->sidebar->addItem("dashboard", QStringLiteral("全局"));
     d->sidebar->addItem("quotes", QStringLiteral("行情"));
-    d->sidebar->addItem("portfolio", QStringLiteral("持仓"));
-    d->sidebar->addItem("account", QStringLiteral("账户"));
+    d->sidebar->addItem("news", QStringLiteral("资讯"));
+    d->sidebar->addItem("signal", QStringLiteral("信号"));
+    d->sidebar->addItem("portfolio", QStringLiteral("账户"));
     d->sidebar->addItem("watchlist", QStringLiteral("自选"));
     d->sidebar->addItem("backtest", QStringLiteral("量化"));
     d->sidebar->addItem("alertCenter", QStringLiteral("预警"));
-    d->sidebar->addItem("signal", QStringLiteral("信号"));
-    d->sidebar->addItem("news", QStringLiteral("资讯"));
     d->sidebar->addItem("riskSettings", QStringLiteral("风控"));
     d->sidebar->addItem("settings", QStringLiteral("设置"));
     d->sidebar->addItem("about", QStringLiteral("关于"));

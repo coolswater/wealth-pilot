@@ -15,8 +15,9 @@
  */
 
 #include "FuturesQuotesPage.h"
-#include "ui/components/StyleHelper.h"
 #include "core/config/Tokens.h"
+#include "ui/styles/ButtonStyles.h"
+#include "ui/components/StyleHelper.h"
 #include "utils/Logger.h"
 #include "models/FuturesQuoteModel.h"
 #include "models/FuturesQuoteDelegate.h"
@@ -1002,79 +1003,50 @@ void FuturesQuotesPage::flushPendingUpdates() const
 
 void FuturesQuotesPage::setupUI()
 {
-    // 主布局
-    QVBoxLayout* mainLayout = qobject_cast<QVBoxLayout*>(layout());
-    if (!mainLayout) {
-        mainLayout = new QVBoxLayout(this);
-        mainLayout->setSpacing(16);
-        mainLayout->setContentsMargins(24, 16, 24, 16);
-    }
-
-    // ========== 标题栏 ==========
-    QHBoxLayout* headerLayout = new QHBoxLayout();
-    headerLayout->setSpacing(12);
-
-    QLabel* titleLabel = new QLabel(QStringLiteral("期货行情"), this);
-    StyleHelper::setTitleLabel(titleLabel);
-    headerLayout->addWidget(titleLabel);
-
-    headerLayout->addStretch();
-
-    // 状态标签
-    d->m_statusLabel = new QLabel(QStringLiteral("正在连接CTP..."), this);
-    StyleHelper::setLabelText(d->m_statusLabel);
-    headerLayout->addWidget(d->m_statusLabel);
-
-    mainLayout->addLayout(headerLayout);
+    auto* mainLayout = new QVBoxLayout(this);
+    mainLayout->setSpacing(0);
+    mainLayout->setContentsMargins(10, 10, 10, 10);
 
     // ========== 工具栏 ==========
-    QHBoxLayout* toolbarLayout = new QHBoxLayout();
+    auto* toolbarLayout = new QHBoxLayout;
     toolbarLayout->setSpacing(8);
 
     // 刷新按钮
-    QPushButton* refreshBtn = new QPushButton(QStringLiteral("刷新"), this);
-    StyleHelper::setSecondaryButton(refreshBtn);
-    refreshBtn->setFixedWidth(80);
+    auto* refreshBtn = new QPushButton(QStringLiteral("刷新"), this);
+    ButtonStyles::setRefresh(refreshBtn);
     toolbarLayout->addWidget(refreshBtn);
 
     // 合约输入框
     d->m_contractInput = new QLineEdit(this);
     d->m_contractInput->setPlaceholderText(QStringLiteral("合约代码"));
-    d->m_contractInput->setFixedWidth(150);
+    d->m_contractInput->setMaximumWidth(150);
     toolbarLayout->addWidget(d->m_contractInput);
 
     // 订阅按钮
     d->m_subscribeBtn = new QPushButton(QStringLiteral("订阅"), this);
-    StyleHelper::setPrimaryButton(d->m_subscribeBtn);
-    d->m_subscribeBtn->setFixedWidth(80);
+    ButtonStyles::setAdd(d->m_subscribeBtn);
     toolbarLayout->addWidget(d->m_subscribeBtn);
 
     toolbarLayout->addSpacing(10);
 
     // 活跃度筛选
-    QLabel* activityLabel = new QLabel(QStringLiteral("显示:"), this);
-    StyleHelper::setLabelText(activityLabel);
-    toolbarLayout->addWidget(activityLabel);
-
     d->m_activityFilter = new QComboBox(this);
     d->m_activityFilter->addItem(QStringLiteral("全部"), 0);
     d->m_activityFilter->addItem(QStringLiteral("活跃合约"), 1);
     d->m_activityFilter->addItem(QStringLiteral("高流动性"), 2);
-    d->m_activityFilter->addItem(QStringLiteral("低流动性"), 3);
     d->m_activityFilter->setCurrentIndex(1);
-    d->m_activityFilter->setFixedWidth(120);
     toolbarLayout->addWidget(d->m_activityFilter);
 
     toolbarLayout->addStretch();
 
     // 筛选输入框
-    QLabel* filterLabel = new QLabel(QStringLiteral("筛选:"), this);
-    StyleHelper::setLabelText(filterLabel);
+    auto* filterLabel = new QLabel(QStringLiteral("搜索:"), this);
+    filterLabel->setProperty("secondary", true);
     toolbarLayout->addWidget(filterLabel);
 
     d->m_filterInput = new QLineEdit(this);
-    d->m_filterInput->setPlaceholderText(QStringLiteral("输入合约代码"));
-    d->m_filterInput->setFixedWidth(120);
+    d->m_filterInput->setPlaceholderText(QStringLiteral("搜索..."));
+    d->m_filterInput->setMaximumWidth(120);
     toolbarLayout->addWidget(d->m_filterInput);
 
     mainLayout->addLayout(toolbarLayout);
@@ -1088,7 +1060,7 @@ void FuturesQuotesPage::setupUI()
     d->m_tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     d->m_tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     d->m_tableView->setSelectionMode(QAbstractItemView::SingleSelection);
-    d->m_tableView->setSortingEnabled(false);
+    d->m_tableView->setSortingEnabled(true);
     d->m_tableView->setAlternatingRowColors(true);
     d->m_tableView->setShowGrid(false);
     d->m_tableView->verticalHeader()->setVisible(false);
@@ -1103,6 +1075,10 @@ void FuturesQuotesPage::setupUI()
     d->m_tableView->setColumnWidth(2, 80);
 
     mainLayout->addWidget(d->m_tableView);
+
+    // ========== 状态栏 ==========
+    d->m_statusLabel = new QLabel(QStringLiteral("正在连接CTP..."), this);
+    mainLayout->addWidget(d->m_statusLabel);
 
     connect(refreshBtn, &QPushButton::clicked, this, [this]() {
         d->m_model->clear();
