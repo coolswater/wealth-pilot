@@ -284,7 +284,15 @@ void NewsPage::setupCategoryBar()
     auto* barLayout = new QHBoxLayout(categoryBar);
     barLayout->setContentsMargins(16, 8, 16, 8);
     barLayout->setSpacing(8);
-    
+
+    // 页面标题
+    auto* titleLabel = new QLabel(QStringLiteral("新闻资讯"));
+    titleLabel->setStyleSheet(QString("font-size: 18px; font-weight: bold; color: %1;")
+        .arg(COLOR_TEXT_TITLE));
+    barLayout->addWidget(titleLabel);
+
+    barLayout->addSpacing(20);
+
     QStringList categories = {
         QStringLiteral("全部"),
         QStringLiteral("新闻"),

@@ -16,6 +16,11 @@
 
 #include "ui/components/BasePage.h"
 #include <QMap>
+#include <memory>
+
+QT_BEGIN_NAMESPACE
+class QFrame;
+QT_END_NAMESPACE
 
 namespace WealthPilot
 {
@@ -60,14 +65,17 @@ private:
     void setupUI();
 
     /**
-     * @brief 创建账户信息页
+     * @brief 创建账户信息卡片
      */
-    QWidget* createAccountInfoPage();
+    QFrame* createAccountInfoCard();
 
     /**
      * @brief 设置信号连接
      */
     void setupConnections();
+
+    struct Impl;
+    std::unique_ptr<Impl> d;
 };
 
 } // namespace WealthPilot

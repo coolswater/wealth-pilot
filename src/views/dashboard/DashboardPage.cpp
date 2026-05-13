@@ -198,8 +198,6 @@ struct DashboardPage::Impl {
     QSplitter* mainSplitter = nullptr;
 
     // 头部组件
-    QLineEdit* searchEdit = nullptr;
-    QComboBox* marketCombo = nullptr;
     QLabel* timeLabel = nullptr;
     QLabel* statusLabel = nullptr;
 
@@ -778,53 +776,6 @@ void DashboardPage::setupHeader()
         .arg(theme.textPrimary));
     layout->addWidget(titleLabel);
 
-    layout->addSpacing(20);
-
-    // 市场选择
-    d->marketCombo = new QComboBox(header);
-    d->marketCombo->addItems({
-        QStringLiteral("全部A股"),
-        QStringLiteral("沪市主板"),
-        QStringLiteral("深市主板"),
-        QStringLiteral("创业板"),
-        QStringLiteral("科创板")
-    });
-    d->marketCombo->setStyleSheet(QString(R"(
-        QComboBox {
-            background-color: %1;
-            border: 1px solid %2;
-            border-radius: 4px;
-            padding: 4px 12px;
-            color: %3;
-            min-width: 100px;
-        }
-        QComboBox::drop-down { border: none; }
-        QComboBox QAbstractItemView {
-            background-color: %1;
-            color: %3;
-            selection-background-color: %4;
-        }
-    )").arg(theme.bgElevated, theme.border, theme.textPrimary, theme.primary));
-    layout->addWidget(d->marketCombo);
-
-    layout->addSpacing(20);
-
-    // 搜索框
-    d->searchEdit = new QLineEdit(header);
-    d->searchEdit->setPlaceholderText(QStringLiteral("搜索股票代码/名称..."));
-    d->searchEdit->setFixedWidth(220);
-    d->searchEdit->setStyleSheet(QString(R"(
-        QLineEdit {
-            background-color: %1;
-            border: 1px solid %2;
-            border-radius: 4px;
-            padding: 6px 12px;
-            color: %3;
-        }
-        QLineEdit::placeholder { color: %4; }
-    )").arg(theme.bgElevated, theme.border, theme.textPrimary, theme.textTertiary));
-    layout->addWidget(d->searchEdit);
-
     layout->addStretch();
 
     // 时间显示
@@ -1390,9 +1341,6 @@ void DashboardPage::setupMoneyFlowPanel()
  */
 void DashboardPage::setupConnections()
 {
-    connect(d->searchEdit, &QLineEdit::textChanged, this, &DashboardPage::onSearchChanged);
-    connect(d->marketCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &DashboardPage::onMarketChanged);
     connect(d->watchlistFilter, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &DashboardPage::onWatchlistFilterChanged);
     connect(d->moneyFlowPeriod, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -1918,19 +1866,6 @@ void DashboardPage::refreshData()
 /**
  * @brief 搜索变化处理
  */
-void DashboardPage::onSearchChanged(const QString& text)
-{
-    LOG_DEBUG(QString("Search: %1").arg(text));
-}
-
-/**
- * @brief 市场切换处理
- */
-void DashboardPage::onMarketChanged(int index)
-{
-    LOG_DEBUG(QString("Market changed: %1").arg(index));
-}
-
 /**
  * @brief 板块Tab切换处理
  */
@@ -2755,38 +2690,6 @@ void DashboardPage::updateTheme()
     }
     
     // 更新头部工具栏
-    if (d->searchEdit) {
-        d->searchEdit->setStyleSheet(QString(R"(
-            QLineEdit {
-                background-color: %1;
-                border: 1px solid %2;
-                border-radius: 4px;
-                padding: 6px 12px;
-                color: %3;
-            }
-            QLineEdit::placeholder { color: %4; }
-        )").arg(theme.bgElevated, theme.border, theme.textPrimary, theme.textTertiary));
-    }
-    
-    if (d->marketCombo) {
-        d->marketCombo->setStyleSheet(QString(R"(
-            QComboBox {
-                background-color: %1;
-                border: 1px solid %2;
-                border-radius: 4px;
-                padding: 4px 12px;
-                color: %3;
-                min-width: 100px;
-            }
-            QComboBox::drop-down { border: none; }
-            QComboBox QAbstractItemView {
-                background-color: %1;
-                color: %3;
-                selection-background-color: %4;
-            }
-        )").arg(theme.bgElevated, theme.border, theme.textPrimary, theme.primary));
-    }
-    
     if (d->timeLabel) {
         d->timeLabel->setStyleSheet(QString("color: %1; font-size: 13px;")
             .arg(theme.textSecondary));

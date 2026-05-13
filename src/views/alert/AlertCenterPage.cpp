@@ -79,7 +79,12 @@ void AlertCenterPage::setupUI()
 {
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
-    
+    mainLayout->setSpacing(0);
+
+    // 页面头部
+    auto* header = StyleHelper::createPageHeader(this, QStringLiteral("预警中心"));
+    mainLayout->addWidget(header);
+
     initToolBar();
     
     // 主内容区域
@@ -125,10 +130,11 @@ void AlertCenterPage::initToolBar()
     auto* toolbar = new QWidget(this);
     toolbar->setObjectName("alertToolbar");
     toolbar->setFixedHeight(40);
-    
+    toolbar->setStyleSheet(QString("background-color: %1;").arg(Colors::BgElevated));
+
     auto* layout = new QHBoxLayout(toolbar);
-    layout->setContentsMargins(Spacing::SM, Spacing::XS, Spacing::SM, Spacing::XS);
-    layout->setSpacing(Spacing::XS);
+    layout->setContentsMargins(16, 8, 16, 8);
+    layout->setSpacing(8);
 
     d->addBtn = new QPushButton(QStringLiteral("添加预警"));
     d->addBtn->setFixedSize(80, 26);

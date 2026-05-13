@@ -14,6 +14,10 @@
 #include <QLabel>
 #include <QStyle>
 #include <QString>
+#include <QFrame>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include "core/config/Tokens.h"
 
 /**
  * @brief 样式辅助工具类
@@ -362,6 +366,80 @@ public:
     static void setInfo(QWidget* widget)
     {
         setStatus(widget, QStringLiteral("info"));
+    }
+
+    // ========================================================================
+    // 页面布局辅助
+    // ========================================================================
+
+    /**
+     * @brief 创建页面头部工具栏
+     * @param parent 父控件
+     * @param title 页面标题
+     * @param rightWidgets 右侧控件列表（可选）
+     * @return 创建的工具栏控件
+     */
+    static QFrame* createPageHeader(QWidget* parent, const QString& title,
+                                    const QList<QWidget*>& rightWidgets = {})
+    {
+        QFrame* header = new QFrame(parent);
+        header->setFixedHeight(48);
+        header->setStyleSheet(QString("background-color: %1; border-bottom: 1px solid %2;")
+            .arg(Tokens::Colors::BgElevated, Tokens::Colors::Border));
+
+        QHBoxLayout* layout = new QHBoxLayout(header);
+        layout->setContentsMargins(16, 0, 16, 0);
+        layout->setSpacing(16);
+
+        // 页面标题
+        QLabel* titleLabel = new QLabel(title, header);
+        titleLabel->setStyleSheet(QString("font-size: 18px; font-weight: bold; color: %1;")
+            .arg(Tokens::Colors::TextPrimary));
+        layout->addWidget(titleLabel);
+
+        layout->addStretch();
+
+        // 右侧控件
+        for (QWidget* widget : rightWidgets)
+        {
+            layout->addWidget(widget);
+        }
+
+        return header;
+    }
+
+    /**
+     * @brief 创建页面状态栏
+     * @param parent 父控件
+     * @param leftText 左侧文本
+     * @param rightText 右侧文本
+     * @return 创建的状态栏控件
+     */
+    static QFrame* createPageStatusBar(QWidget* parent, const QString& leftText,
+                                       const QString& rightText)
+    {
+        QFrame* statusBar = new QFrame(parent);
+        statusBar->setFixedHeight(32);
+        statusBar->setStyleSheet(QString("background-color: %1; border-top: 1px solid %2;")
+            .arg(Tokens::Colors::BgElevated, Tokens::Colors::Border));
+
+        QHBoxLayout* layout = new QHBoxLayout(statusBar);
+        layout->setContentsMargins(16, 0, 16, 0);
+        layout->setSpacing(16);
+
+        QLabel* leftLabel = new QLabel(leftText, statusBar);
+        leftLabel->setStyleSheet(QString("color: %1; font-size: 12px;")
+            .arg(Tokens::Colors::TextSecondary));
+        layout->addWidget(leftLabel);
+
+        layout->addStretch();
+
+        QLabel* rightLabel = new QLabel(rightText, statusBar);
+        rightLabel->setStyleSheet(QString("color: %1; font-size: 12px;")
+            .arg(Tokens::Colors::TextTertiary));
+        layout->addWidget(rightLabel);
+
+        return statusBar;
     }
 
 private:

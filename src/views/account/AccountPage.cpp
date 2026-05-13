@@ -7,16 +7,29 @@
  */
 
 #include "AccountPage.h"
+#include "core/config/Tokens.h"
+#include "ui/components/StyleHelper.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QLabel>
+#include <QFrame>
+#include <QDateTime>
+
+using namespace Tokens;
 
 namespace WealthPilot
 {
+    struct AccountPage::Impl
+    {
+        // 预留扩展
+    };
+
     AccountPage::AccountPage(QWidget* parent)
         : BasePage(parent)
-{
+          , d(std::make_unique<Impl>())
+    {
     setupUI();
     setupConnections();
     LOG_DEBUG("AccountPage created");
@@ -44,20 +57,66 @@ void AccountPage::setupUI()
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
 
-    // 创建账户信息页面
-    auto* accountInfoPage = createAccountInfoPage();
-    mainLayout->addWidget(accountInfoPage);
+    // 页面头部
+    auto* header = StyleHelper::createPageHeader(this, QStringLiteral("账户信息"));
+    mainLayout->addWidget(header);
+
+    // 主内容区域
+    auto* contentWidget = new QWidget(this);
+    contentWidget->setStyleSheet(QString("background-color: %1;").arg(Colors::BgBase));
+    auto* contentLayout = new QVBoxLayout(contentWidget);
+    contentLayout->setContentsMargins(16, 16, 16, 16);
+    contentLayout->setSpacing(16);
+
+    // 账户信息卡片
+    auto* infoCard = createAccountInfoCard();
+    contentLayout->addWidget(infoCard);
+
+    contentLayout->addStretch();
+    mainLayout->addWidget(contentWidget, 1);
+
+    // 状态栏
+    QString timeStr = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
+    auto* statusBar = StyleHelper::createPageStatusBar(this, QStringLiteral("账户状态: 正常"), timeStr);
+    mainLayout->addWidget(statusBar);
 }
 
-QWidget* AccountPage::createAccountInfoPage()
+QFrame* AccountPage::createAccountInfoCard()
 {
-    // 创建账户信息页面
-    auto* page = new QWidget(this);
-    auto* layout = new QVBoxLayout(page);
-    auto* label = new QLabel(QStringLiteral("账户信息页面 - 待实现"), page);
-    label->setAlignment(Qt::AlignCenter);
-    layout->addWidget(label);
-    return page;
+    auto* card = new QFrame(this);
+    card->setStyleSheet(QString(R"(
+        QFrame {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 8px;
+        }
+    )").arg(Colors::BgElevated, Colors::Border));
+
+    auto* layout = new QVBoxLayout(card);
+    layout->setContentsMargins(20, 20, 20, 20);
+    layout->setSpacing(12);
+
+    // 标题
+    auto* titleLabel = new QLabel(QStringLiteral("账户概览"), card);
+    titleLabel->setStyleSheet(QString("font-size: 16px; font-weight: bold; color: %1;")
+        .arg(Colors::TextPrimary));
+    layout->addWidget(titleLabel);
+
+    // 分隔线
+    auto* separator = new QFrame(card);
+    separator->setFrameShape(QFrame::HLine);
+    separator->setStyleSheet(QString("background-color: %1;").arg(Colors::Border));
+    separator->setFixedHeight(1);
+    layout->addWidget(separator);
+
+    // 提示信息
+    auto* infoLabel = new QLabel(QStringLiteral("账户信息功能开发中，敬请期待..."), card);
+    infoLabel->setStyleSheet(QString("color: %1; font-size: 14px;")
+        .arg(Colors::TextSecondary));
+    infoLabel->setAlignment(Qt::AlignCenter);
+    layout->addWidget(infoLabel);
+
+    return card;
 }
 
 void AccountPage::setupConnections()

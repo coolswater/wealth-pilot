@@ -32,7 +32,6 @@
 
 QT_BEGIN_NAMESPACE
 class QLabel;
-class QLineEdit;
 class QPushButton;
 class QComboBox;
 class QTabWidget;
@@ -269,8 +268,6 @@ protected:
     void hideEvent(QHideEvent* event) override;
 
 private slots:
-    void onSearchChanged(const QString& text);
-    void onMarketChanged(int index);
     void onSectorTabChanged(int index);
     void onWatchlistFilterChanged(int index);
     void onMoneyFlowPeriodChanged(int index);
