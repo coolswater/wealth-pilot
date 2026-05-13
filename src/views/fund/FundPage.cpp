@@ -15,6 +15,7 @@
 #include "FundPage.h"
 #include "ui/components/KLineChart.h"
 #include "core/config/Tokens.h"
+#include "ui/components/StyleHelper.h"
 #include "ui/delegates/ColorDelegates.h"
 #include "market/FundDataSource.h"
 #include "utils/Logger.h"
@@ -116,7 +117,11 @@ void FundPage::setupUI()
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
-    
+
+    // 页面头部
+    auto* header = StyleHelper::createPageHeader(this, QStringLiteral("基金行情"));
+    mainLayout->addWidget(header);
+
     // 初始化工具栏
     initToolBar();
     

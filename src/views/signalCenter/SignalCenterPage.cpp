@@ -519,6 +519,13 @@ void SignalCenterPage::setupCategoryBar()
     barLayout->setContentsMargins(20, 10, 20, 10);
     barLayout->setSpacing(4);
 
+    // 页面标题
+    auto* titleLabel = new QLabel(QStringLiteral("信号中心"));
+    titleLabel->setStyleSheet(QString("font-size: 18px; font-weight: bold; color: %1;")
+        .arg(COLOR_TEXT_TITLE));
+    barLayout->addWidget(titleLabel);
+    barLayout->addSpacing(20);
+
     QStringList categories = {
         QStringLiteral("我的订阅"),
         QStringLiteral("推荐信号"),

@@ -14,6 +14,7 @@
 
 #include "WarningPage.h"
 #include "core/config/Tokens.h"
+#include "ui/components/StyleHelper.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -46,16 +47,21 @@ void WarningPage::initializePage()
 void WarningPage::setupUI()
 {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(24, 24, 24, 24);
-    mainLayout->setSpacing(24);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setSpacing(0);
 
-    // 头部
-    QHBoxLayout* headerLayout = new QHBoxLayout();
-    QLabel* titleLabel = new QLabel("预警通知", this);
-    titleLabel->setStyleSheet(QString("font-size: 28px; font-weight: 700; color: %1;").arg(Tokens::Colors::TextPrimary));
-    headerLayout->addWidget(titleLabel);
-    headerLayout->addStretch();
+    // 页面头部
+    auto* header = StyleHelper::createPageHeader(this, QStringLiteral("预警通知"));
+    mainLayout->addWidget(header);
 
+    // 内容区域
+    QWidget* contentWidget = new QWidget(this);
+    QVBoxLayout* contentLayout = new QVBoxLayout(contentWidget);
+    contentLayout->setContentsMargins(24, 24, 24, 24);
+    contentLayout->setSpacing(24);
+
+    // 工具栏
+    QHBoxLayout* toolbarLayout = new QHBoxLayout();
     QPushButton* markAllBtn = new QPushButton("全部已读", this);
     markAllBtn->setStyleSheet(QString(R"(
         QPushButton {
@@ -66,8 +72,9 @@ void WarningPage::setupUI()
             padding: 10px 20px;
         }
     )").arg(Tokens::Colors::BgHover, Tokens::Colors::TextPrimary));
-    headerLayout->addWidget(markAllBtn);
-    mainLayout->addLayout(headerLayout);
+    toolbarLayout->addStretch();
+    toolbarLayout->addWidget(markAllBtn);
+    contentLayout->addLayout(toolbarLayout);
 
     // 筛选
     QHBoxLayout* filterLayout = new QHBoxLayout();
@@ -92,7 +99,7 @@ void WarningPage::setupUI()
         filterLayout->addWidget(btn);
     }
     filterLayout->addStretch();
-    mainLayout->addLayout(filterLayout);
+    contentLayout->addLayout(filterLayout);
 
     // 通知列表
     CardWidget* listCard = new CardWidget("", this);
@@ -151,5 +158,6 @@ void WarningPage::setupUI()
 
     listLayout->addStretch();
     listCard->setContent(listContent);
-    mainLayout->addWidget(listCard);
+    contentLayout->addWidget(listCard);
+    mainLayout->addWidget(contentWidget, 1);
 }

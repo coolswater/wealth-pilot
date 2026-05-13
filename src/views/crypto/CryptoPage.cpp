@@ -63,15 +63,26 @@ void CryptoPage::refresh()
 void CryptoPage::setupUI()
 {
     auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(Tokens::Spacing::MD, Tokens::Spacing::MD, Tokens::Spacing::MD, Tokens::Spacing::MD);
-    mainLayout->setSpacing(Tokens::Spacing::SM);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setSpacing(0);
+
+    // 页面头部
+    auto* header = StyleHelper::createPageHeader(this, QStringLiteral("数字货币"));
+    mainLayout->addWidget(header);
+
+    // 内容区域
+    auto* contentWidget = new QWidget(this);
+    auto* contentLayout = new QVBoxLayout(contentWidget);
+    contentLayout->setContentsMargins(Tokens::Spacing::MD, Tokens::Spacing::MD, Tokens::Spacing::MD,
+                                      Tokens::Spacing::MD);
+    contentLayout->setSpacing(Tokens::Spacing::SM);
 
     // 顶部工具栏
     auto* toolbarLayout = new QHBoxLayout();
     auto* refreshBtn = new QPushButton(QStringLiteral("刷新"), this);
     toolbarLayout->addStretch();
     toolbarLayout->addWidget(refreshBtn);
-    mainLayout->addLayout(toolbarLayout);
+    contentLayout->addLayout(toolbarLayout);
 
     // 分割器
     auto* splitter = new QSplitter(Qt::Horizontal, this);
@@ -104,7 +115,9 @@ void CryptoPage::setupUI()
     splitter->addWidget(d->detailPanel);
 
     splitter->setSizes({400, 400});
-    mainLayout->addWidget(splitter);
+    contentLayout->addWidget(splitter);
+
+    mainLayout->addWidget(contentWidget, 1);
 
     // 连接信号
     connect(refreshBtn, &QPushButton::clicked, this, &CryptoPage::onRefreshData);

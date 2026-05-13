@@ -327,20 +327,36 @@ void PortfolioPage::initializePage()
 void PortfolioPage::setupUI()
 {
     d->mainLayout = new QVBoxLayout(this);
-    d->mainLayout->setContentsMargins(20, 20, 20, 20);
-    d->mainLayout->setSpacing(16);
+    d->mainLayout->setContentsMargins(0, 0, 0, 0);
+    d->mainLayout->setSpacing(0);
 
-    // 1. 头部
-    setupHeader();
+    // 页面头部
+    auto* header = StyleHelper::createPageHeader(this, QStringLiteral("持仓管理"));
+    d->mainLayout->addWidget(header);
 
-    // 2. 汇总卡片
+    // 内容区域
+    auto* contentWidget = new QWidget(this);
+    auto* contentLayout = new QVBoxLayout(contentWidget);
+    contentLayout->setContentsMargins(20, 20, 20, 20);
+    contentLayout->setSpacing(16);
+
+    // 1. 汇总卡片
     setupSummaryCards();
+    contentLayout->addWidget(d->totalAssetCard);
 
-    // 3. 主内容区
+    // 汇总卡片行
+    auto* summaryRow = new QHBoxLayout();
+    summaryRow->setSpacing(16);
+    summaryRow->addWidget(d->dailyPnLCard);
+    summaryRow->addWidget(d->returnCard);
+    summaryRow->addWidget(d->riskCard);
+    contentLayout->addLayout(summaryRow);
+
+    // 2. 主内容区
     setupMainContent();
+    contentLayout->addWidget(d->mainSplitter, 1);
 
-    // 4. 持仓表格
-    setupPositionTable();
+    d->mainLayout->addWidget(contentWidget, 1);
 
     // 应用主题样式
     updateTheme();

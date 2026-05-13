@@ -5,6 +5,7 @@
 
 #include "WatchListPage.h"
 #include "core/config/Tokens.h"
+#include "ui/components/StyleHelper.h"
 #include "ui/styles/ButtonStyles.h"
 #include "utils/Logger.h"
 
@@ -341,8 +342,18 @@ void WatchListPage::setupUI()
     if (!mainLayout) {
         mainLayout = new QVBoxLayout(this);
         mainLayout->setSpacing(0);
-        mainLayout->setContentsMargins(10, 10, 10, 10);
+        mainLayout->setContentsMargins(0, 0, 0, 0);
     }
+
+    // 页面头部
+    auto* header = StyleHelper::createPageHeader(this, QStringLiteral("自选股"));
+    mainLayout->addWidget(header);
+
+    // 内容区域
+    auto* contentWidget = new QWidget(this);
+    auto* contentLayout = new QVBoxLayout(contentWidget);
+    contentLayout->setContentsMargins(10, 10, 10, 10);
+    contentLayout->setSpacing(0);
 
     // 工具栏
     auto* toolbarLayout = new QHBoxLayout;
@@ -376,7 +387,7 @@ void WatchListPage::setupUI()
     toolbarLayout->addWidget(filterLabel);
     toolbarLayout->addWidget(d->searchInput);
 
-    mainLayout->addLayout(toolbarLayout);
+    contentLayout->addLayout(toolbarLayout);
 
     // 表格模型
     d->model = new WatchListModel(this);
@@ -414,12 +425,14 @@ void WatchListPage::setupUI()
     d->tableView->setColumnWidth(WatchListModel::ColHigh, 80);
     d->tableView->setColumnWidth(WatchListModel::ColLow, 80);
 
-    mainLayout->addWidget(d->tableView);
+    contentLayout->addWidget(d->tableView);
 
     // 状态栏
     d->statusLabel = new QLabel(QStringLiteral("正在加载自选股..."), this);
     d->statusLabel->setObjectName("statusLabel");
-    mainLayout->addWidget(d->statusLabel);
+    contentLayout->addWidget(d->statusLabel);
+
+    mainLayout->addWidget(contentWidget, 1);
 
     // 连接按钮
     connect(refreshBtn, &QPushButton::clicked, this, &WatchListPage::onRefreshData);

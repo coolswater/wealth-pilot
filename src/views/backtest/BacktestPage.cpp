@@ -121,7 +121,11 @@ void BacktestPage::setupUI()
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
-    
+
+    // 页面头部
+    auto* header = StyleHelper::createPageHeader(this, QStringLiteral("策略回测"));
+    mainLayout->addWidget(header);
+
     initToolBar();
     
     // 主内容区域

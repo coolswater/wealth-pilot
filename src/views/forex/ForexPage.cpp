@@ -86,7 +86,11 @@ void ForexPage::setupUI()
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
-    
+
+    // 页面头部
+    auto* header = StyleHelper::createPageHeader(this, QStringLiteral("外汇行情"));
+    mainLayout->addWidget(header);
+
     initToolBar();
     
     // 主内容区域
