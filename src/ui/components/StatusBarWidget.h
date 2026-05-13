@@ -15,6 +15,9 @@ public:
     explicit StatusBarWidget(QWidget *parent = nullptr);
     ~StatusBarWidget();
 
+    // 触发搜索（用于快捷键）
+    void triggerSearch(const QString& initialText = QString());
+
 public slots:
     void setAIStatus(const QString& status);
     void setCTPStatus(const QString& status);

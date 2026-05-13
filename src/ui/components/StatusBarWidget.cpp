@@ -143,6 +143,33 @@ void StatusBarWidget::setVersion(const QString& version)
     d->versionLabel->setText(version);
 }
 
+void StatusBarWidget::triggerSearch(const QString& initialText)
+{
+    // 设置焦点到搜索框
+    if (d->searchEdit)
+    {
+        d->searchEdit->setFocus();
+
+        if (!initialText.isEmpty())
+        {
+            // 追加字符而不是替换，并将光标移到末尾
+            QString currentText = d->searchEdit->text();
+            d->searchEdit->setText(currentText + initialText);
+            d->searchEdit->setCursorPosition(d->searchEdit->text().length());
+        }
+        else
+        {
+            // 空字符串表示删除操作，模拟退格键
+            QString currentText = d->searchEdit->text();
+            if (!currentText.isEmpty())
+            {
+                d->searchEdit->setText(currentText.left(currentText.length() - 1));
+                d->searchEdit->setCursorPosition(d->searchEdit->text().length());
+            }
+        }
+    }
+}
+
 void StatusBarWidget::setupSearch()
 {
     // 搜索框
@@ -234,15 +261,35 @@ void StatusBarWidget::onSearchTextChanged(const QString& text)
             d->searchResultPopup->setItem(i, j, item);
         }
     }
-    
-    // 显示弹窗在搜索框下方（右下角）
+
+    // 显示弹窗在搜索框上方（向上弹出）
     if (results.size() > 0) {
-        QPoint pos = d->searchEdit->mapToGlobal(QPoint(0, d->searchEdit->height()));
-        // 调整位置到右下角
-        pos.setX(pos.x() - 160);  // 向左偏移
-        d->searchPopupWidget->move(pos);
+        // 计算弹窗位置：在搜索框上方
+        QRect searchEditRect = d->searchEdit->rect();
+        QPoint bottomLeft = d->searchEdit->mapToGlobal(searchEditRect.bottomLeft());
+        QPoint topLeft = d->searchEdit->mapToGlobal(searchEditRect.topLeft());
+
+        int popupHeight = 220; // 弹窗高度
+        int popupWidth = 320; // 弹窗宽度
+
+        // 向上弹出：Y坐标减去弹窗高度
+        int x = topLeft.x() + d->searchEdit->width() - popupWidth;
+        int y = topLeft.y() - popupHeight;
+
+        // 确保不超出屏幕左边界
+        if (x < 0) x = 0;
+
+        // 确保不超出屏幕上边界（如果超出，则改为向下弹出）
+        if (y < 0)
+        {
+            y = bottomLeft.y() + 2; // 向下弹出
+        }
+
+        d->searchPopupWidget->setFixedSize(popupWidth, popupHeight);
+        d->searchPopupWidget->move(x, y);
         d->searchPopupWidget->show();
-        d->searchPopupWidget->setFocus();
+        // 保持搜索框焦点，以便继续输入
+        d->searchEdit->setFocus();
     } else {
         d->searchPopupWidget->hide();
     }

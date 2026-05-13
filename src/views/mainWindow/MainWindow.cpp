@@ -55,9 +55,13 @@ using WealthPilot::CryptoPage;
 #include <QLabel>
 #include <QSettings>
 #include <QCloseEvent>
+#include <QKeyEvent>
 #include <QElapsedTimer>
 #include <QApplication>
 #include <QShortcut>
+#include <QLineEdit>
+#include <QTextEdit>
+#include <QPlainTextEdit>
 
 #include "plugins/IAIPlugin.h"
 #include "plugins/ICTPPlugin.h"
@@ -214,6 +218,60 @@ void MainWindow::closeEvent(QCloseEvent* event)
     event->accept();
 
     LOG_INFO("Application closed");
+}
+
+void MainWindow::keyPressEvent(QKeyEvent* event)
+{
+    // 获取当前焦点控件
+    QWidget* focusedWidget = QApplication::focusWidget();
+
+    // 如果焦点在输入控件上，不拦截键盘事件
+    if (focusedWidget &&
+        (qobject_cast<QLineEdit*>(focusedWidget) ||
+            qobject_cast<QTextEdit*>(focusedWidget) ||
+            qobject_cast<QPlainTextEdit*>(focusedWidget)))
+    {
+        QMainWindow::keyPressEvent(event);
+        return;
+    }
+
+    int key = event->key();
+
+    // 检查是否是删除键（Backspace/Delete）
+    if (key == Qt::Key_Backspace || key == Qt::Key_Delete)
+    {
+        // 触发状态栏搜索（删除操作）
+        if (d->statusBar)
+        {
+            d->statusBar->triggerSearch();
+        }
+        return;
+    }
+
+    // 检查是否是字母或数字键
+    bool isLetter = (key >= Qt::Key_A && key <= Qt::Key_Z);
+    bool isDigit = (key >= Qt::Key_0 && key <= Qt::Key_9);
+
+    // 如果是字母或数字，且没有修饰键（Ctrl/Alt），触发搜索
+    if ((isLetter || isDigit) &&
+        !(event->modifiers() & Qt::ControlModifier) &&
+        !(event->modifiers() & Qt::AltModifier))
+    {
+        // 获取按下的字符
+        QString text = event->text();
+        if (!text.isEmpty())
+        {
+            // 触发状态栏搜索
+            if (d->statusBar)
+            {
+                d->statusBar->triggerSearch(text);
+            }
+            return;
+        }
+    }
+
+    // 其他按键交给父类处理
+    QMainWindow::keyPressEvent(event);
 }
 
 /**

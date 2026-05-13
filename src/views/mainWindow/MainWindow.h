@@ -58,6 +58,11 @@ protected:
      */
     void closeEvent(QCloseEvent *event) override;
 
+    /**
+     * @brief 键盘事件 - 监听字母/数字触发搜索
+     */
+    void keyPressEvent(QKeyEvent* event) override;
+
 private slots:
     /**
      * @brief 侧边栏项目点击处理
