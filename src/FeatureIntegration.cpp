@@ -5,6 +5,7 @@
 
 #include "FeatureIntegration.h"
 #include "utils/Logger.h"
+#include "core/navigation/PageNavigator.h"
 
 // 短期规划功能
 #include "core/network/WebSocketManager.h"
@@ -187,8 +188,17 @@ void FeatureIntegration::registerDefaultShortcuts()
         tr("股票筛选"),
         QKeySequence("Ctrl+F"),
         [this]() {
-            // TODO: 打开股票筛选对话框
-            LOG_INFO("Stock screener shortcut triggered");
+            // 打开股票筛选对话框
+            auto* screener = StockScreener::instance();
+            // 设置默认筛选范围（沪深A股）
+            screener->setScope({});
+            // 使用突破策略
+            screener->setupBreakoutStrategy();
+            // 异步执行筛选
+            screener->executeAsync();
+            // 导航到自选页面显示结果
+            PageNavigator::instance().navigateTo("watchlist");
+            LOG_INFO("Stock screener shortcut triggered - navigating to watchlist");
         },
         "分析",
         tr("打开股票筛选器")
@@ -200,8 +210,9 @@ void FeatureIntegration::registerDefaultShortcuts()
         tr("策略回测"),
         QKeySequence("Ctrl+B"),
         [this]() {
-            // TODO: 打开回测对话框
-            LOG_INFO("Backtest shortcut triggered");
+            // 导航到量化页面
+            PageNavigator::instance().navigateTo("backtest");
+            LOG_INFO("Backtest shortcut triggered - navigating to backtest page");
         },
         "交易",
         tr("打开策略回测")
