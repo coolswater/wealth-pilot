@@ -7,6 +7,8 @@
  * - 资产配置饼图 + 占比明细
  * - 净值走势图（支持时间范围切换）
  * - 持仓明细表格（股票/期货/基金分类）
+ * - 成交记录
+ * - 条件单
  *
  * @author WealthPilot Team
  * @version 3.0.0
@@ -43,6 +45,15 @@ namespace QtCharts {
 }
 QT_END_NAMESPACE
 
+// 前向声明
+
+
+namespace WealthPilot
+{
+    class TradeHistoryPage;
+    class ConditionOrderPage;
+}
+
 /**
  * @brief 持仓数据结构
  */
@@ -50,11 +61,11 @@ struct PositionData {
     QString instrumentId;       ///< 合约代码
     QString instrumentName;     ///< 合约名称
     QString exchangeId;         ///< 交易所
-    QString type;               ///< 类型：股�?期货/基金
+    QString type; ///< 类型：股票/期货/基金
     int volume = 0;             ///< 持仓数量
     double avgPrice = 0.0;      ///< 持仓均价
     double currentPrice = 0.0;  ///< 当前价格
-    double marketValue = 0.0;   ///< 市�?
+    double marketValue = 0.0; ///< 市值
     double profitLoss = 0.0;    ///< 盈亏
     double profitLossPercent = 0.0; ///< 盈亏比例
     double cost = 0.0;          ///< 成本
@@ -172,8 +183,4 @@ private:
     std::unique_ptr<Impl> d;
 };
 
-
-
- // PORTFOLIOPAGE_H
-
-#endif
+#endif // PORTFOLIOPAGE_H

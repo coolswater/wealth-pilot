@@ -73,7 +73,7 @@ public:
     ~BacktestPage() override;
 
     QString pageId() const override { return QStringLiteral("Backtest"); }
-    QString pageName() const override { return QStringLiteral("策略回测"); }
+    QString pageName() const override { return QStringLiteral("量化"); }
 
     void initializePage() override;
     void refresh();

@@ -21,6 +21,8 @@
 #include "ui/ThemeManager.h"
 #include "core/config/Tokens.h"
 #include "ui/styles/ButtonStyles.h"
+#include "views/trading/TradeHistoryPage.h"
+#include "views/trading/ConditionOrderPage.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -139,6 +141,10 @@ struct PortfolioPage::Impl {
     PositionTableModel* stockModel = nullptr;
     PositionTableModel* futuresModel = nullptr;
     PositionTableModel* fundModel = nullptr;
+
+    // 成交记录和条件单页面
+    WealthPilot::TradeHistoryPage* tradeHistoryPage = nullptr;
+    WealthPilot::ConditionOrderPage* conditionOrderPage = nullptr;
 
     // 定时器
     QTimer* updateTimer = nullptr;
@@ -801,6 +807,16 @@ void PortfolioPage::setupPositionTable()
     d->fundTable->setSortingEnabled(true);
     d->fundTable->setStyleSheet(tableStyle);
     d->positionTabs->addTab(d->fundTable, QStringLiteral("基金"));
+
+    // 成交记录页面
+    d->tradeHistoryPage = new WealthPilot::TradeHistoryPage(d->positionTabs);
+    d->tradeHistoryPage->initializePage();
+    d->positionTabs->addTab(d->tradeHistoryPage, QStringLiteral("成交记录"));
+
+    // 条件单页面
+    d->conditionOrderPage = new WealthPilot::ConditionOrderPage(d->positionTabs);
+    d->conditionOrderPage->initializePage();
+    d->positionTabs->addTab(d->conditionOrderPage, QStringLiteral("条件单"));
 
     layout->addWidget(d->positionTabs);
 

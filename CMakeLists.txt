@@ -555,6 +555,8 @@ set(VIEW_SOURCES
         src/views/futures/FuturesPageIntegration.h
         src/views/futures/FuturesPageIntegration.cpp
         src/views/futures/FuturesPagesRegistration.cpp
+        src/views/quotes/QuotesPage.h
+        src/views/quotes/QuotesPage.cpp
         src/views/stock/StockQuotesPage.h
         src/views/stock/StockQuotesPage.cpp
         src/views/stock/StockKLinePage.h

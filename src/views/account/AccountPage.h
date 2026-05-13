@@ -1,118 +1,75 @@
-﻿#ifndef ACCOUNTPAGE_H
+/**
+ * @file AccountPage.h
+ * @brief 账户页面 - 账户信息展示
+ *
+ * @details 功能：
+ * - 账户基本信息
+ * - 资金状况
+ * - 账户设置
+ *
+ * @author WealthPilot Team
+ * @version 2.0.0
+ */
+
+#ifndef ACCOUNTPAGE_H
 #define ACCOUNTPAGE_H
 
 #include "ui/components/BasePage.h"
-#include <QLabel>
-#include <QPushButton>
-#include <QTableWidget>
-#include <QComboBox>
-#include <QDateEdit>
-#include <QVector>
-#include <QDateTime>
+#include <QMap>
 
-/**
- * @brief AccountPage - Account and fund management page
+namespace WealthPilot
+{
+    /**
+ * @brief 账户页面 - 账户信息展示
  */
-class AccountPage : public WealthPilot::BasePage
+class AccountPage : public BasePage
 {
     Q_OBJECT
 
 public:
-    explicit AccountPage(QWidget *parent = nullptr);
-    ~AccountPage();
-    
-    // BasePage interface
-    QString pageId() const override { return "account"; }
-    QString pageName() const override { return QStringLiteral("账户资金"); }
+    /**
+     * @brief 构造函数
+     * @param parent 父窗口
+     */
+    explicit AccountPage(QWidget* parent = nullptr);
+
+    /**
+     * @brief 析构函数
+     */
+    ~AccountPage() override;
+
+    /**
+     * @brief 获取页面ID
+     */
+    QString pageId() const override { return QStringLiteral("account"); }
+
+    /**
+     * @brief 获取页面名称
+     */
+    QString pageName() const override { return QStringLiteral("账户"); }
+
+    /**
+     * @brief 初始化页面
+     */
     void initializePage() override;
-    void onPageActivated(const QVariantMap &params) override;
-
-    // Update account data
-    void setAccountData(double balance, double available, double margin, 
-                        double frozenMargin, double commission, double closeProfit,
-                        double positionProfit);
-    
-    // Fund flow record
-    struct FundFlowRecord {
-        QDateTime time;
-        QString type;       // "Deposit", "Withdraw", "Profit", "Loss", "Commission", "Transfer"
-        double amount;
-        double balance;
-        QString remark;
-    };
-    
-    void addFundFlowRecord(const FundFlowRecord &record);
-    void setFundFlowRecords(const QVector<FundFlowRecord> &records);
-    
-    // Update statistics
-    void setStatistics(double totalProfit, double totalLoss, double totalCommission,
-                       double maxDrawdown, double winRate);
-
-public slots:
-    void refreshData();
-    void onDateRangeChanged();
-    void onExportClicked();
-
-signals:
-    void requestRefresh();
-    void requestExport(const QString &format);
 
 private:
-    void initUI();
-    void initConnections();
-    void updateStyles();
-    void updateSummary();
-    void updateFundFlowTable();
-    void updateStatistics();
-    
-    // Create summary card
-    QFrame* createSummaryCard(const QString &title, const QString &value, 
-                               const QString &change = "", bool isUp = true);
-    
-    // UI Components - Summary
-    QLabel *m_balanceLabel;
-    QLabel *m_availableLabel;
-    QLabel *m_marginLabel;
-    QLabel *m_frozenMarginLabel;
-    QLabel *m_commissionLabel;
-    QLabel *m_closeProfitLabel;
-    QLabel *m_positionProfitLabel;
-    
-    // UI Components - Fund Flow Table
-    QTableWidget *m_fundFlowTable;
-    QComboBox *m_typeFilterCombo;
-    QDateEdit *m_startDateEdit;
-    QDateEdit *m_endDateEdit;
-    QPushButton *m_refreshBtn;
-    QPushButton *m_exportBtn;
-    
-    // UI Components - Statistics
-    QLabel *m_totalProfitLabel;
-    QLabel *m_totalLossLabel;
-    QLabel *m_totalCommissionLabel;
-    QLabel *m_maxDrawdownLabel;
-    QLabel *m_winRateLabel;
-    
-    // Data
-    double m_balance;
-    double m_available;
-    double m_margin;
-    double m_frozenMargin;
-    double m_commission;
-    double m_closeProfit;
-    double m_positionProfit;
-    
-    double m_totalProfit;
-    double m_totalLoss;
-    double m_totalCommission;
-    double m_maxDrawdown;
-    double m_winRate;
-    
-    QVector<FundFlowRecord> m_fundFlowRecords;
+    /**
+     * @brief 设置 UI
+     */
+    void setupUI();
+
+    /**
+     * @brief 创建账户信息页
+     */
+    QWidget* createAccountInfoPage();
+
+    /**
+     * @brief 设置信号连接
+     */
+    void setupConnections();
 };
 
+} // namespace WealthPilot
 
-
- // ACCOUNTPAGE_H
-
-#endif
+#endif // ACCOUNTPAGE_H

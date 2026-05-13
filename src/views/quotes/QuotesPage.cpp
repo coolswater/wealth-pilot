@@ -1,0 +1,185 @@
+/**
+ * @file QuotesPage.cpp
+ * @brief 行情页面实现 - 整合股票/期货/基金/外汇/数字货币
+ *
+ * @author WealthPilot Team
+ * @version 2.0.0
+ */
+
+#include "QuotesPage.h"
+#include "views/stock/StockQuotesPage.h"
+#include "views/futures/FuturesQuotesPage.h"
+#include "views/fund/FundPage.h"
+#include "views/forex/ForexPage.h"
+#include "views/crypto/CryptoPage.h"
+#include "utils/Logger.h"
+
+// 使用 WealthPilot 命名空间中的类
+using WealthPilot::StockQuotesPage;
+using WealthPilot::FuturesQuotesPage;
+using WealthPilot::CryptoPage;
+// FundPage 和 ForexPage 不在 WealthPilot 命名空间中
+
+#include <QVBoxLayout>
+#include <QTabWidget>
+#include <QTabBar>
+#include <QLabel>
+
+namespace WealthPilot
+{
+    QuotesPage::QuotesPage(QWidget* parent)
+        : BasePage(parent)
+          , m_tabWidget(nullptr)
+          , m_stockPage(nullptr)
+          , m_futuresPage(nullptr)
+          , m_fundPage(nullptr)
+          , m_forexPage(nullptr)
+          , m_cryptoPage(nullptr)
+    {
+        setupUI();
+        setupConnections();
+
+        LOG_DEBUG("QuotesPage created");
+    }
+
+    QuotesPage::~QuotesPage()
+    {
+        LOG_DEBUG("QuotesPage destroyed");
+    }
+
+    void QuotesPage::initializePage()
+    {
+        if (isInitialized())
+        {
+            return;
+        }
+
+        // 初始化各子页面
+        if (m_stockPage)
+        {
+            m_stockPage->initializePage();
+        }
+        if (m_futuresPage)
+        {
+            m_futuresPage->initializePage();
+        }
+        if (m_fundPage)
+        {
+            m_fundPage->initializePage();
+        }
+        if (m_forexPage)
+        {
+            m_forexPage->initializePage();
+        }
+        if (m_cryptoPage)
+        {
+            m_cryptoPage->initializePage();
+        }
+
+        setInitialized(true);
+        LOG_INFO("QuotesPage initialized");
+    }
+
+    void QuotesPage::switchToMarket(const QString& market)
+    {
+        if (m_marketIndexMap.contains(market))
+        {
+            m_tabWidget->setCurrentIndex(m_marketIndexMap[market]);
+        }
+    }
+
+    void QuotesPage::setupUI()
+    {
+        QVBoxLayout* mainLayout = new QVBoxLayout(this);
+        mainLayout->setContentsMargins(0, 0, 0, 0);
+        mainLayout->setSpacing(0);
+
+        // 创建 Tab 控件
+        m_tabWidget = new QTabWidget(this);
+        m_tabWidget->setObjectName("quotesTabWidget");
+        m_tabWidget->setTabPosition(QTabWidget::North);
+        m_tabWidget->setDocumentMode(true);
+        m_tabWidget->setMovable(false);
+
+        // 添加各市场行情页
+        int index = 0;
+
+        // 股票行情
+        QWidget* stockPage = createStockPage();
+        m_tabWidget->addTab(stockPage, QStringLiteral("股票"));
+        m_marketIndexMap["stock"] = index++;
+
+        // 期货行情
+        QWidget* futuresPage = createFuturesPage();
+        m_tabWidget->addTab(futuresPage, QStringLiteral("期货"));
+        m_marketIndexMap["futures"] = index++;
+
+        // 基金行情
+        QWidget* fundPage = createFundPage();
+        m_tabWidget->addTab(fundPage, QStringLiteral("基金"));
+        m_marketIndexMap["fund"] = index++;
+
+        // 外汇行情
+        QWidget* forexPage = createForexPage();
+        m_tabWidget->addTab(forexPage, QStringLiteral("外汇"));
+        m_marketIndexMap["forex"] = index++;
+
+        // 数字货币行情
+        QWidget* cryptoPage = createCryptoPage();
+        m_tabWidget->addTab(cryptoPage, QStringLiteral("数字货币"));
+        m_marketIndexMap["crypto"] = index++;
+
+        mainLayout->addWidget(m_tabWidget);
+    }
+
+    QWidget* QuotesPage::createStockPage()
+    {
+        m_stockPage = new StockQuotesPage(this);
+        return m_stockPage;
+    }
+
+    QWidget* QuotesPage::createFuturesPage()
+    {
+        m_futuresPage = new FuturesQuotesPage(this);
+        return m_futuresPage;
+    }
+
+    QWidget* QuotesPage::createFundPage()
+    {
+        m_fundPage = new FundPage(this);
+        return m_fundPage;
+    }
+
+    QWidget* QuotesPage::createForexPage()
+    {
+        m_forexPage = new ForexPage(this);
+        return m_forexPage;
+    }
+
+    QWidget* QuotesPage::createCryptoPage()
+    {
+        m_cryptoPage = new CryptoPage(this);
+        return m_cryptoPage;
+    }
+
+    void QuotesPage::setupConnections()
+    {
+        // 连接股票页面的导航信号
+        if (m_stockPage)
+        {
+            connect(m_stockPage, &StockQuotesPage::navigateToKLinePage,
+                    this, &QuotesPage::navigateToKLinePage);
+        }
+
+        // 连接期货页面的导航信号
+        if (m_futuresPage)
+        {
+            connect(m_futuresPage, &FuturesQuotesPage::navigateToKLinePage,
+                    this, [this](const QString& symbol, const QVariantMap& params)
+                    {
+                        Q_UNUSED(params);
+                        emit navigateToKLinePage(symbol, symbol);
+                    });
+        }
+    }
+} // namespace WealthPilot

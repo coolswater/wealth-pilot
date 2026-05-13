@@ -21,33 +21,29 @@
 #include "ui/components/StatusBarWidget.h"
 #include "ui/components/DividerWidget.h"
 #include "ui/components/AIAssistantPanelWidget.h"
+#include "../quotes/QuotesPage.h"
+#include "../account/AccountPage.h"
 #include "../dashboard/DashboardPage.h"
-#include "../stock/StockQuotesPage.h"
-#include "../stock/StockKLinePage.h"
-#include "../futures/FuturesQuotesPage.h"
-#include "../futures/FuturesKLinePage.h"
 #include "../portfolio/PortfolioPage.h"
 #include "../watchList/WatchListPage.h"
 #include "../signalCenter/SignalCenterPage.h"
 #include "../news/NewsPage.h"
 #include "../settings/SettingsPage.h"
 #include "../aboutus/AboutUSPage.h"
-#include "../account/AccountPage.h"
-#include "../trading/TradeHistoryPage.h"
-#include "../trading/ConditionOrderPage.h"
-#include "../settings/RiskSettingsPage.h"
-#include "../fund/FundPage.h"
-#include "../forex/ForexPage.h"
-#include "../crypto/CryptoPage.h"
 #include "../backtest/BacktestPage.h"
 #include "../alert/AlertCenterPage.h"
-#include "../demo/QmlChartDemoPage.h"
+#include "../warning/WarningPage.h"
+#include "../settings/RiskSettingsPage.h"
+#include "../stock/StockKLinePage.h"
+#include "../futures/FuturesKLinePage.h"
 #include "../../ui/components/BasePage.h"
 
 // 使用 WealthPilot 命名空间中的类
 using WealthPilot::BasePage;
-using WealthPilot::StockQuotesPage;
+using WealthPilot::QuotesPage;
+using WealthPilot::AccountPage;
 using WealthPilot::WatchListPage;
+using WealthPilot::CryptoPage;
 using WealthPilot::SignalCenterPage;
 using WealthPilot::TradeHistoryPage;
 using WealthPilot::ConditionOrderPage;
@@ -378,24 +374,17 @@ void MainWindow::setupUI()
     d->sidebar->setFixedWidth(Layout::Width::Sidebar);
 
     d->sidebar->addItem("dashboard", QStringLiteral("全局"));
-    d->sidebar->addItem("stock", QStringLiteral("股票"));
-    d->sidebar->addItem("futures", QStringLiteral("期货"));
-    d->sidebar->addItem("fund", QStringLiteral("基金"));
-    d->sidebar->addItem("forex", QStringLiteral("外汇"));
-    d->sidebar->addItem("crypto", QStringLiteral("数字货币"));
+    d->sidebar->addItem("quotes", QStringLiteral("行情"));
     d->sidebar->addItem("portfolio", QStringLiteral("持仓"));
     d->sidebar->addItem("account", QStringLiteral("账户"));
-    d->sidebar->addItem("tradeHistory", QStringLiteral("成交"));
-    d->sidebar->addItem("conditionOrder", QStringLiteral("条件单"));
     d->sidebar->addItem("watchlist", QStringLiteral("自选"));
-    d->sidebar->addItem("backtest", QStringLiteral("回测"));
+    d->sidebar->addItem("backtest", QStringLiteral("量化"));
     d->sidebar->addItem("alertCenter", QStringLiteral("预警"));
     d->sidebar->addItem("signal", QStringLiteral("信号"));
     d->sidebar->addItem("news", QStringLiteral("资讯"));
     d->sidebar->addItem("riskSettings", QStringLiteral("风控"));
     d->sidebar->addItem("settings", QStringLiteral("设置"));
     d->sidebar->addItem("about", QStringLiteral("关于"));
-    d->sidebar->addItem("qmlChartDemo", QStringLiteral("QML演示"));
 
     d->mainLayout->addWidget(d->sidebar);
 
@@ -439,15 +428,9 @@ void MainWindow::createPages() const
     // Create placeholder pages (lazy loading)
     QStringList pageIds = {
         "dashboard",
-        "stock",
-        "futures",
-        "fund",
-        "forex",
-        "crypto",
+        "quotes",
         "portfolio",
         "account",
-        "tradeHistory",
-        "conditionOrder",
         "watchlist",
         "backtest",
         "alertCenter",
@@ -536,25 +519,21 @@ QWidget* MainWindow::getPage(const QString& pageId)
         connect(dashboardPage, &DashboardPage::navigateToStockKLine,
                 this, &MainWindow::onNavigateToStockKLinePage);
     }
-    else if (pageId == "stock")
+    else if (pageId == "quotes")
     {
-        auto* quotesPage = new StockQuotesPage(this);
+        auto* quotesPage = new QuotesPage(this);
         page = quotesPage;
-        // 链接K线页面信号
-        connect(quotesPage, &StockQuotesPage::navigateToKLinePage,
+        // 连接K线页面信号
+        connect(quotesPage, &QuotesPage::navigateToKLinePage,
                 this, &MainWindow::onNavigateToStockKLinePage);
-    }
-    else if (pageId == "futures")
-    {
-        auto* quotesPage = new WealthPilot::FuturesQuotesPage(this);
-        page = quotesPage;
-        // 链接K线页面信号
-        connect(quotesPage, &WealthPilot::FuturesQuotesPage::navigateToKLinePage,
-                this, &MainWindow::onNavigateToKLinePage);
     }
     else if (pageId == "portfolio")
     {
         page = new PortfolioPage(this);
+    }
+    else if (pageId == "account")
+    {
+        page = new AccountPage(this);
     }
     else if (pageId == "watchlist")
     {
@@ -576,43 +555,6 @@ QWidget* MainWindow::getPage(const QString& pageId)
     {
         page = new AboutUSPage(this);
     }
-    else if (pageId == "FuturesKLine")
-    {
-        page = new FuturesKLinePage(this);
-    }
-    else if (pageId == "StockKLine")
-    {
-        page = new StockKLinePage(this);
-    }
-    else if (pageId == "account")
-    {
-        page = new AccountPage(this);
-    }
-    else if (pageId == "tradeHistory")
-    {
-        page = new TradeHistoryPage(this);
-    }
-    else if (pageId == "conditionOrder")
-    {
-        page = new ConditionOrderPage(this);
-    }
-    else if (pageId == "riskSettings")
-    {
-        page = new RiskSettingsPage(this);
-    }
-    // ========== 新增模块 ==========
-    else if (pageId == "fund")
-    {
-        page = new FundPage(this);
-    }
-    else if (pageId == "forex")
-    {
-        page = new ForexPage(this);
-    }
-    else if (pageId == "crypto")
-    {
-        page = new CryptoPage(this);
-    }
     else if (pageId == "backtest")
     {
         page = new BacktestPage(this);
@@ -621,10 +563,18 @@ QWidget* MainWindow::getPage(const QString& pageId)
     {
         page = new AlertCenterPage(this);
     }
-    // ========== QML 演示 ==========
-    else if (pageId == "qmlChartDemo")
+    else if (pageId == "riskSettings")
     {
-        page = new QmlChartDemoPage(this);
+        page = new RiskSettingsPage(this);
+    }
+    else
+    {
+        // 默认占位页面
+        page = new QWidget(this);
+        auto* layout = new QVBoxLayout(page);
+        auto* label = new QLabel(pageId, page);
+        label->setAlignment(Qt::AlignCenter);
+        layout->addWidget(label);
     }
 
     if (page)

@@ -4,7 +4,6 @@
  */
 
 #include "TradingIntegration.h"
-#include "../account/AccountPage.h"
 #include "TradeHistoryPage.h"
 #include "ConditionOrderPage.h"
 #include "../../trading/TradingService.h"
@@ -110,30 +109,9 @@ void TradingIntegration::onProfitUpdated(double totalProfit)
 
 void TradingIntegration::updateAccountPage()
 {
-    if (!m_accountPage) return;
-    
-    auto& service = TradingService::instance();
-    auto accountInfo = service.getAccountInfo();
-    
-    m_accountPage->setAccountData(
-        accountInfo.balance,
-        accountInfo.available,
-        accountInfo.margin,
-        accountInfo.frozenMargin,
-        accountInfo.commission,
-        accountInfo.closeProfit,
-        accountInfo.positionProfit
-    );
-    
-    // 设置统计数据
-    double totalProfit = service.getTotalProfit();
-    m_accountPage->setStatistics(
-        totalProfit > 0 ? totalProfit : 0,
-        totalProfit < 0 ? std::abs(totalProfit) : 0,
-        accountInfo.commission,
-        0.0,  // maxDrawdown - TODO
-        0.0   // winRate - TODO
-    );
+    // 新的 AccountPage 是整合页面，不再直接设置数据
+    // 数据更新通过各个子页面自行处理
+    LOG_DEBUG("AccountPage update skipped - using integrated page");
 }
 
 } // namespace Trading
