@@ -340,17 +340,19 @@ void PortfolioPage::setupUI()
     contentLayout->setContentsMargins(20, 20, 20, 20);
     contentLayout->setSpacing(16);
 
-    // 1. 汇总卡片
-    setupSummaryCards();
-    contentLayout->addWidget(d->totalAssetCard);
+    // 1. 汇总卡片区域
+    auto* cardsFrame = new QFrame(this);
+    cardsFrame->setStyleSheet("background: transparent;");
+    auto* cardsLayout = new QHBoxLayout(cardsFrame);
+    cardsLayout->setContentsMargins(0, 0, 0, 0);
+    cardsLayout->setSpacing(16);
 
-    // 汇总卡片行
-    auto* summaryRow = new QHBoxLayout();
-    summaryRow->setSpacing(16);
-    summaryRow->addWidget(d->dailyPnLCard);
-    summaryRow->addWidget(d->returnCard);
-    summaryRow->addWidget(d->riskCard);
-    contentLayout->addLayout(summaryRow);
+    setupSummaryCards();
+    cardsLayout->addWidget(d->totalAssetCard, 1);
+    cardsLayout->addWidget(d->dailyPnLCard, 1);
+    cardsLayout->addWidget(d->returnCard, 1);
+    cardsLayout->addWidget(d->riskCard, 1);
+    contentLayout->addWidget(cardsFrame);
 
     // 2. 主内容区
     setupMainContent();
@@ -417,12 +419,6 @@ void PortfolioPage::setupHeader()
 
 void PortfolioPage::setupSummaryCards()
 {
-    QFrame* cardsFrame = new QFrame(this);
-    cardsFrame->setStyleSheet(QString("background: transparent;"));
-    QHBoxLayout* layout = new QHBoxLayout(cardsFrame);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(16);
-
     // 卡片样式
     QString cardStyle = QString(R"(
         QFrame {
@@ -451,8 +447,6 @@ void PortfolioPage::setupSummaryCards()
     d->totalAssetChangeLabel = new QLabel(QStringLiteral("较昨日 +¥0"), d->totalAssetCard);
     d->totalAssetChangeLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::TextTertiary));
     totalLayout->addWidget(d->totalAssetChangeLabel);
-    
-    layout->addWidget(d->totalAssetCard, 1);
 
     // 2. 今日盈亏卡片
     d->dailyPnLCard = new QFrame(this);
@@ -473,8 +467,6 @@ void PortfolioPage::setupSummaryCards()
     d->dailyPnLDetailLabel = new QLabel(QStringLiteral("股票 +¥0 | 期货 +¥0"), d->dailyPnLCard);
     d->dailyPnLDetailLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::TextTertiary));
     pnlLayout->addWidget(d->dailyPnLDetailLabel);
-    
-    layout->addWidget(d->dailyPnLCard, 1);
 
     // 3. 持仓收益率卡片
     d->returnCard = new QFrame(this);
@@ -495,8 +487,6 @@ void PortfolioPage::setupSummaryCards()
     d->returnDetailLabel = new QLabel(QStringLiteral("沪深300同期 +10.6%"), d->returnCard);
     d->returnDetailLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::TextTertiary));
     returnLayout->addWidget(d->returnDetailLabel);
-    
-    layout->addWidget(d->returnCard, 1);
 
     // 4. 期货风险度卡片
     d->riskCard = new QFrame(this);
@@ -519,36 +509,25 @@ void PortfolioPage::setupSummaryCards()
     d->riskBar->setValue(60);
     d->riskBar->setTextVisible(false);
     d->riskBar->setFixedHeight(8);
-    d->riskBar->setStyleSheet(QString(R"(
-        QProgressBar {
-            background-color: %1;
-            border: none;
-            border-radius: 4px;
-        }
-        QProgressBar::chunk {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 %2, stop:0.5 %3, stop:1 %4);
-            border-radius: 4px;
-        }
-    )"));
+    d->riskBar->setStyleSheet(
+        QString(
+            "QProgressBar { background-color: %1; border: none; border-radius: 4px; } QProgressBar::chunk { background-color: %2; border-radius: 4px; }")
+        .arg(Tokens::Colors::BgSurface, Tokens::Colors::Warning));
     riskLayout->addWidget(d->riskBar);
 
     QLabel* riskDetail = new QLabel(QStringLiteral("保证金占用 ¥210,000"), d->riskCard);
     riskDetail->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Tokens::Colors::TextTertiary));
     riskLayout->addWidget(riskDetail);
-    
-    layout->addWidget(d->riskCard, 1);
-
-    d->mainLayout->addWidget(cardsFrame);
 }
 
 void PortfolioPage::setupMainContent()
 {
-    QSplitter* splitter = new QSplitter(Qt::Horizontal, this);
-    splitter->setHandleWidth(1);
-    splitter->setStyleSheet(QString("QSplitter::handle { background-color: %1; }").arg(Tokens::Colors::Border));
+    d->mainSplitter = new QSplitter(Qt::Horizontal, this);
+    d->mainSplitter->setHandleWidth(1);
+    d->mainSplitter->setStyleSheet(QString("QSplitter::handle { background-color: %1; }").arg(Tokens::Colors::Border));
 
     // 左侧：资产配置
-    QFrame* leftPanel = new QFrame(splitter);
+    QFrame* leftPanel = new QFrame(d->mainSplitter);
     leftPanel->setStyleSheet(QString("background-color: %1; border-radius: 8px;").arg(Tokens::Colors::BgElevated));
     QVBoxLayout* leftLayout = new QVBoxLayout(leftPanel);
     leftLayout->setContentsMargins(20, 20, 20, 20);
@@ -562,10 +541,10 @@ void PortfolioPage::setupMainContent()
     leftLayout->addWidget(d->pieChartView);
     leftLayout->addWidget(d->allocationList);
 
-    splitter->addWidget(leftPanel);
+    d->mainSplitter->addWidget(leftPanel);
 
     // 右侧：净值走势
-    QFrame* rightPanel = new QFrame(splitter);
+    QFrame* rightPanel = new QFrame(d->mainSplitter);
     rightPanel->setStyleSheet(QString("background-color: %1; border-radius: 8px;").arg(Tokens::Colors::BgElevated));
     QVBoxLayout* rightLayout = new QVBoxLayout(rightPanel);
     rightLayout->setContentsMargins(20, 20, 20, 20);
@@ -607,12 +586,10 @@ void PortfolioPage::setupMainContent()
     setupNetValueChart();
     rightLayout->addWidget(d->lineChartView, 1);
 
-    splitter->addWidget(rightPanel);
+    d->mainSplitter->addWidget(rightPanel);
 
     // 设置分割比例
-    splitter->setSizes({300, 500});
-
-    d->mainLayout->addWidget(splitter, 1);
+    d->mainSplitter->setSizes({300, 500});
 }
 
 void PortfolioPage::setupAssetAllocation()

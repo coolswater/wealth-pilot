@@ -30,12 +30,12 @@ namespace WealthPilot
         : BasePage(parent)
           , d(std::make_unique<Impl>())
     {
-    setupUI();
-    setupConnections();
-    LOG_DEBUG("AccountPage created");
-}
+        setupUI();
+        setupConnections();
+        LOG_DEBUG("AccountPage created");
+    }
 
-AccountPage::~AccountPage()
+    AccountPage::~AccountPage()
 {
     LOG_DEBUG("AccountPage destroyed");
 }
