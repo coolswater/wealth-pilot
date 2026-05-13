@@ -358,7 +358,14 @@ void PortfolioPage::setupUI()
     setupMainContent();
     contentLayout->addWidget(d->mainSplitter, 1);
 
+    // 3. 持仓表格
+    setupPositionTable();
+    contentLayout->addWidget(d->positionTabs, 1);
+
     d->mainLayout->addWidget(contentWidget, 1);
+
+    // 4. 连接信号
+    setupConnections();
 
     // 应用主题样式
     updateTheme();
@@ -811,10 +818,6 @@ void PortfolioPage::setupPositionTable()
     d->conditionOrderPage->initializePage();
     d->positionTabs->addTab(d->conditionOrderPage, QStringLiteral("条件单"));
 
-    layout->addWidget(d->positionTabs);
-
-    d->mainLayout->addWidget(tableFrame);
-
     // 连接双击信号
     connect(d->stockTable, &QTableView::doubleClicked, this, &PortfolioPage::onRowDoubleClicked);
     connect(d->futuresTable, &QTableView::doubleClicked, this, &PortfolioPage::onRowDoubleClicked);
@@ -823,10 +826,24 @@ void PortfolioPage::setupPositionTable()
 
 void PortfolioPage::setupConnections()
 {
-    connect(d->searchEdit, &QLineEdit::textChanged, this, &PortfolioPage::onSearch);
-    connect(d->timeRangeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &PortfolioPage::onTimeRangeChanged);
-    connect(d->positionTabs, &QTabWidget::currentChanged, this, &PortfolioPage::onTabChanged);
+    // 搜索框连接（如果存在）
+    if (d->searchEdit)
+    {
+        connect(d->searchEdit, &QLineEdit::textChanged, this, &PortfolioPage::onSearch);
+    }
+
+    // 时间范围连接
+    if (d->timeRangeCombo)
+    {
+        connect(d->timeRangeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+                this, &PortfolioPage::onTimeRangeChanged);
+    }
+
+    // Tab切换连接
+    if (d->positionTabs)
+    {
+        connect(d->positionTabs, &QTabWidget::currentChanged, this, &PortfolioPage::onTabChanged);
+    }
 }
 
 void PortfolioPage::loadDemoData()
