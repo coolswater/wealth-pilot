@@ -123,7 +123,7 @@ namespace WealthPilot
 
         // 概念选股
         QList<StockPickResult> screenByConcept(
-            const QString& concept,
+            const QString& conceptName,
             int maxResults = 20);
 
         QStringList getHotConcepts() const;

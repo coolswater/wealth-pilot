@@ -358,9 +358,9 @@ void PortfolioPage::setupUI()
     setupMainContent();
     contentLayout->addWidget(d->mainSplitter, 1);
 
-    // 3. 持仓表格
-    setupPositionTable();
-    contentLayout->addWidget(d->positionTabs, 1);
+    // 3. 持仓表格 - 需要返回 tableFrame
+    QFrame* tableFrame = setupPositionTable();
+    contentLayout->addWidget(tableFrame, 1);
 
     d->mainLayout->addWidget(contentWidget, 1);
 
@@ -706,7 +706,7 @@ void PortfolioPage::setupNetValueChart()
     d->lineChartView->setStyleSheet("background: transparent;");
 }
 
-void PortfolioPage::setupPositionTable()
+QFrame* PortfolioPage::setupPositionTable()
 {
     QFrame* tableFrame = new QFrame(this);
     tableFrame->setStyleSheet(QString("background-color: %1; border-radius: 8px;")
@@ -822,6 +822,8 @@ void PortfolioPage::setupPositionTable()
     connect(d->stockTable, &QTableView::doubleClicked, this, &PortfolioPage::onRowDoubleClicked);
     connect(d->futuresTable, &QTableView::doubleClicked, this, &PortfolioPage::onRowDoubleClicked);
     connect(d->fundTable, &QTableView::doubleClicked, this, &PortfolioPage::onRowDoubleClicked);
+
+    return tableFrame;
 }
 
 void PortfolioPage::setupConnections()

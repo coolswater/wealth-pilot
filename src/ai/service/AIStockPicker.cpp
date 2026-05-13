@@ -305,15 +305,15 @@ namespace WealthPilot
 
     QList<StockPickResult> AIStockPicker::screenByConcept(
 
-    const QString &concept,
+        const QString& conceptName,
 
-    int maxResults
+        int maxResults
     )
 {
     QList<StockPickResult> results;
 
     // TODO: 从概念数据库获取成分股
-    Q_UNUSED(concept)
+    Q_UNUSED(conceptName)
     Q_UNUSED(maxResults)
 
     // 模拟数据

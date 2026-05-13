@@ -173,7 +173,7 @@ private:
     void setupMainContent();
     void setupAssetAllocation();
     void setupNetValueChart();
-    void setupPositionTable();
+    QFrame* setupPositionTable();
     void setupConnections();
     void loadDemoData();
     void updateSummaryDisplay();
