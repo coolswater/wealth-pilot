@@ -41,7 +41,36 @@ WarningPage::~WarningPage() = default;
 
 void WarningPage::initializePage()
 {
+    // ============================================================
+    // 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+}
 
+void WarningPage::setupDataHubSubscriptions()
+{
+    // 订阅预警消息
+    dataHub().subscribe(this, "warning:messages",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新预警消息列表
+        });
+    
+    // 订阅预警历史
+    dataHub().subscribe(this, "warning:history",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新预警历史
+        });
+    
+    // 订阅预警触发
+    dataHub().subscribe(this, "warning:triggered",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 处理预警触发
+        });
+    
+    LOG_INFO("[WarningPage] DataHub subscriptions setup complete");
 }
 
 void WarningPage::setupUI()

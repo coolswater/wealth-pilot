@@ -47,8 +47,39 @@ void AccountPage::initializePage()
         return;
     }
 
+    // ============================================================
+    // 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+
     setInitialized(true);
-    LOG_INFO("AccountPage initialized");
+    LOG_INFO("AccountPage initialized with DataHub");
+}
+
+void AccountPage::setupDataHubSubscriptions()
+{
+    // 订阅账户余额
+    dataHub().subscribe(this, "account:balance",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新账户余额显示
+        });
+    
+    // 订阅账户设置
+    dataHub().subscribe(this, "account:settings",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新账户设置显示
+        });
+    
+    // 订阅账户交易统计
+    dataHub().subscribe(this, "account:stats",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新交易统计
+        });
+    
+    LOG_INFO("[AccountPage] DataHub subscriptions setup complete");
 }
 
 void AccountPage::setupUI()

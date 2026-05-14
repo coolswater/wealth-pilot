@@ -489,9 +489,44 @@ QString SignalCenterPage::pageId() const
 
 void SignalCenterPage::initializePage()
 {
+    // ============================================================
+    // 1. 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+    
+    // ============================================================
+    // 2. 加载订阅数据
+    // ============================================================
     d->loadSubscriptions();
     updateCards();
-    LOG_INFO("SignalCenterPage initialized");
+    
+    LOG_INFO("SignalCenterPage initialized with DataHub");
+}
+
+void SignalCenterPage::setupDataHubSubscriptions()
+{
+    // 订阅信号列表
+    dataHub().subscribePattern(this, "signal:*",
+        [this](const QString& topic, const QVariant& value) {
+            Q_UNUSED(value)
+            if (topic == "signal:list") {
+                // 更新信号列表
+                updateCards();
+            } else if (topic.startsWith("signal:subscribed")) {
+                // 更新我的订阅
+                d->loadSubscriptions();
+            }
+        });
+    
+    // 订阅信号更新
+    dataHub().subscribe(this, "signal:updates",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新信号状态
+            updateCards();
+        });
+    
+    LOG_INFO("[SignalCenterPage] DataHub subscriptions setup complete");
 }
 
 void SignalCenterPage::setupUI()

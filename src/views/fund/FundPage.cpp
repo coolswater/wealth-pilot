@@ -86,7 +86,35 @@ FundPage::~FundPage() = default;
 
 void FundPage::initializePage()
 {
+    // ============================================================
+    // 1. 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+    
+    // ============================================================
+    // 2. 加载基金列表
+    // ============================================================
     loadFundList();
+}
+
+void FundPage::setupDataHubSubscriptions()
+{
+    // 订阅基金行情
+    dataHub().subscribePattern(this, "market:fund:*",
+        [this](const QString& topic, const QVariant& value) {
+            Q_UNUSED(topic)
+            Q_UNUSED(value)
+            // 更新基金行情
+        });
+    
+    // 订阅基金净值更新
+    dataHub().subscribe(this, "fund:nav",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新净值显示
+        });
+    
+    LOG_INFO("[FundPage] DataHub subscriptions setup complete");
 }
 
 void FundPage::refresh()

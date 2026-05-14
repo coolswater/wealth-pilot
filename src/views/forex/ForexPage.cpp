@@ -68,7 +68,40 @@ ForexPage::~ForexPage() = default;
 
 void ForexPage::initializePage()
 {
+    // ============================================================
+    // 1. 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+    
+    // ============================================================
+    // 2. 加载外汇列表
+    // ============================================================
     loadForexList();
+}
+
+void ForexPage::setupDataHubSubscriptions()
+{
+    // 订阅外汇行情
+    dataHub().subscribePattern(this, "market:forex:*",
+        [this](const QString& topic, const QVariant& value) {
+            Q_UNUSED(topic)
+            Q_UNUSED(value)
+            // 更新外汇行情
+        });
+    
+    // 订阅主要货币对
+    QStringList pairs = {"USD/CNY", "EUR/USD", "GBP/USD", "USD/JPY"};
+    for (const QString& pair : pairs) {
+        dataHub().subscribe(this, QString("market:forex:%1").arg(pair),
+            [this, pair](const QString&, const QVariant& value) {
+                Q_UNUSED(pair)
+                Q_UNUSED(value)
+                // 更新汇率
+            });
+        m_subscribedPairs.append(pair);
+    }
+    
+    LOG_INFO("[ForexPage] DataHub subscriptions setup complete");
 }
 
 void ForexPage::refresh()

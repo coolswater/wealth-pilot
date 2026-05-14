@@ -315,13 +315,55 @@ void PortfolioPage::initializePage()
 {
     if (isInitialized()) return;
 
+    // ============================================================
+    // 1. 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+
+    // ============================================================
+    // 2. 设置连接和加载初始数据
+    // ============================================================
     setupConnections();
     loadDemoData();
 
     setInitialized(true);
-    // emit pageStatusChanged(QStringLiteral("initialized"));
 
-    LOG_DEBUG("PortfolioPage initialized");
+    LOG_DEBUG("PortfolioPage initialized with DataHub");
+}
+
+void PortfolioPage::setupDataHubSubscriptions()
+{
+    // 订阅持仓合约的实时行情
+    // 获取持仓列表中的所有合约ID
+    QStringList instruments = d->stockModel->instrumentIds();
+    for (const QString& instrument : instruments) {
+        subscribeQuote(instrument, [this, instrument](const StockQuote& quote) {
+            // 更新持仓价格
+            d->stockModel->updatePrice(instrument, quote.price);
+            // 更新汇总显示
+            updateSummaryDisplay();
+        });
+        m_subscribedInstruments.append(instrument);
+    }
+    
+    // 订阅账户资金
+    dataHub().subscribe(this, "account:balance",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新账户汇总
+            updateSummaryDisplay();
+        });
+    
+    // 订阅持仓变动
+    dataHub().subscribePattern(this, "position:*",
+        [this](const QString& topic, const QVariant& value) {
+            Q_UNUSED(topic)
+            Q_UNUSED(value)
+            // 持仓变动时更新显示
+            updateSummaryDisplay();
+        });
+    
+    LOG_INFO("[PortfolioPage] DataHub subscriptions setup complete");
 }
 
 void PortfolioPage::setupUI()

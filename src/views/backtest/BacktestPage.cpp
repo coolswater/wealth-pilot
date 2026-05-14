@@ -91,7 +91,14 @@ BacktestPage::~BacktestPage() = default;
 
 void BacktestPage::initializePage()
 {
-    // 初始化默认策略代码
+    // ============================================================
+    // 1. 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+    
+    // ============================================================
+    // 2. 初始化默认策略代码
+    // ============================================================
     d->strategyEditor->setPlainText(R"(
 // 简单双均线策略
 // 参数: shortPeriod=5, longPeriod=20
@@ -107,6 +114,33 @@ function onBar(bar) {
     }
 }
 )");
+}
+
+void BacktestPage::setupDataHubSubscriptions()
+{
+    // 订阅回测进度
+    dataHub().subscribe(this, "backtest:progress",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新回测进度
+        });
+    
+    // 订阅回测结果
+    dataHub().subscribe(this, "backtest:result",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新回测结果
+        });
+    
+    // 订阅历史K线数据
+    dataHub().subscribePattern(this, "market:kline:*",
+        [this](const QString& topic, const QVariant& value) {
+            Q_UNUSED(topic)
+            Q_UNUSED(value)
+            // K线数据更新
+        });
+    
+    LOG_INFO("[BacktestPage] DataHub subscriptions setup complete");
 }
 
 void BacktestPage::refresh()

@@ -37,7 +37,14 @@ void CryptoPage::initializePage()
 {
     if (isInitialized()) return;
     
-    // 加载示例数据
+    // ============================================================
+    // 1. 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+    
+    // ============================================================
+    // 2. 加载示例数据
+    // ============================================================
     d->cryptoListTable->setRowCount(5);
     
     QStringList symbols = {"BTC", "ETH", "BNB", "SOL", "XRP"};
@@ -58,6 +65,31 @@ void CryptoPage::initializePage()
 void CryptoPage::refresh()
 {
     initializePage();
+}
+
+void CryptoPage::setupDataHubSubscriptions()
+{
+    // 订阅加密货币行情
+    dataHub().subscribePattern(this, "market:crypto:*",
+        [this](const QString& topic, const QVariant& value) {
+            Q_UNUSED(topic)
+            Q_UNUSED(value)
+            // 更新加密货币行情
+        });
+    
+    // 订阅主流加密货币
+    QStringList symbols = {"BTC", "ETH", "BNB", "SOL", "XRP"};
+    for (const QString& symbol : symbols) {
+        dataHub().subscribe(this, QString("market:crypto:%1").arg(symbol),
+            [this, symbol](const QString&, const QVariant& value) {
+                Q_UNUSED(symbol)
+                Q_UNUSED(value)
+                // 更新价格
+            });
+        m_subscribedSymbols.append(symbol);
+    }
+    
+    LOG_INFO("[CryptoPage] DataHub subscriptions setup complete");
 }
 
 void CryptoPage::setupUI()

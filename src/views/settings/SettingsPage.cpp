@@ -80,6 +80,37 @@ QString SettingsPage::pageId() const
 
 void SettingsPage::initializePage()
 {
+    // ============================================================
+    // 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+}
+
+void SettingsPage::setupDataHubSubscriptions()
+{
+    // 订阅设置变更
+    dataHub().subscribe(this, "settings:changed",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 重新加载设置
+            loadSettings();
+        });
+    
+    // 订阅主题变更
+    dataHub().subscribe(this, "settings:theme",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新主题设置显示
+        });
+    
+    // 订阅 AI 配置变更
+    dataHub().subscribe(this, "settings:ai",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新 AI 配置显示
+        });
+    
+    LOG_INFO("[SettingsPage] DataHub subscriptions setup complete");
 }
 
 void SettingsPage::setupUI()

@@ -49,6 +49,29 @@ QString AboutUSPage::pageId() const
 
 void AboutUSPage::initializePage()
 {
+    // ============================================================
+    // 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+}
+
+void AboutUSPage::setupDataHubSubscriptions()
+{
+    // 订阅版本信息
+    dataHub().subscribe(this, "app:version",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新版本显示
+        });
+    
+    // 订阅更新状态
+    dataHub().subscribe(this, "app:update",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新状态显示
+        });
+    
+    LOG_INFO("[AboutUSPage] DataHub subscriptions setup complete");
 }
 
 void AboutUSPage::setupUI()

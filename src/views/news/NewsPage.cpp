@@ -248,13 +248,50 @@ void NewsPage::initializePage()
 {
     if (isInitialized()) return;
     
-    // 初始化数据源
+    // ============================================================
+    // 1. 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+    
+    // ============================================================
+    // 2. 初始化数据源（作为备用）
+    // ============================================================
     d->dataSource = NewsDataSource::instance();
     connect(d->dataSource, &NewsDataSource::newsUpdated,
             this, &NewsPage::onNewsReceived);
     
     setInitialized(true);
-    LOG_INFO("NewsPage initialized");
+    LOG_INFO("NewsPage initialized with DataHub");
+}
+
+void NewsPage::setupDataHubSubscriptions()
+{
+    // 订阅新闻数据
+    dataHub().subscribePattern(this, "news:*",
+        [this](const QString& topic, const QVariant& value) {
+            // 处理新闻更新
+            if (topic.startsWith("news:market")) {
+                // 市场新闻
+                Q_UNUSED(value)
+            } else if (topic.startsWith("news:symbol:")) {
+                // 股票相关新闻
+                Q_UNUSED(value)
+            }
+        });
+    
+    // 订阅特定分类的新闻
+    QStringList categories = {"要闻", "研报", "公告", "快讯"};
+    for (const QString& category : categories) {
+        dataHub().subscribe(this, QString("news:category:%1").arg(category),
+            [this, category](const QString&, const QVariant& value) {
+                Q_UNUSED(value)
+                Q_UNUSED(category)
+                // 更新对应分类的新闻列表
+            });
+        m_subscribedCategories.append(category);
+    }
+    
+    LOG_INFO("[NewsPage] DataHub subscriptions setup complete");
 }
 
 void NewsPage::setupUI()

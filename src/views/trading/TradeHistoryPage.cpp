@@ -37,7 +37,14 @@ void TradeHistoryPage::initializePage()
 {
     if (isInitialized()) return;
     
-    // 加载示例数据
+    // ============================================================
+    // 1. 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+    
+    // ============================================================
+    // 2. 加载示例数据
+    // ============================================================
     m_records.clear();
     TradeRecord record;
     record.tradeId = "T001";
@@ -52,6 +59,34 @@ void TradeHistoryPage::initializePage()
     updateTable();
     setInitialized(true);
     LOG_DEBUG("TradeHistoryPage initialized");
+}
+
+void TradeHistoryPage::setupDataHubSubscriptions()
+{
+    // 订阅交易记录
+    dataHub().subscribe(this, "trade:history",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新交易记录列表
+            updateTable();
+        });
+    
+    // 订阅新成交
+    dataHub().subscribe(this, "trade:new",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 添加新成交记录
+        });
+    
+    // 订阅成交状态
+    dataHub().subscribePattern(this, "trade:status:*",
+        [this](const QString& topic, const QVariant& value) {
+            Q_UNUSED(topic)
+            Q_UNUSED(value)
+            // 更新成交状态
+        });
+    
+    LOG_INFO("[TradeHistoryPage] DataHub subscriptions setup complete");
 }
 
 void TradeHistoryPage::setupUI()

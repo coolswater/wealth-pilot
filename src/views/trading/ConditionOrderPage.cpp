@@ -33,10 +33,46 @@ void ConditionOrderPage::initializePage()
 {
     if (isInitialized()) return;
     
-    // 加载示例数据
+    // ============================================================
+    // 1. 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+    
+    // ============================================================
+    // 2. 加载示例数据
+    // ============================================================
     updateTable();
     setInitialized(true);
-    LOG_DEBUG("ConditionOrderPage initialized");
+    LOG_DEBUG("ConditionOrderPage initialized with DataHub");
+}
+
+void ConditionOrderPage::setupDataHubSubscriptions()
+{
+    // 订阅条件单列表
+    dataHub().subscribe(this, "condition:orders",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新条件单列表
+            updateTable();
+        });
+    
+    // 订阅条件触发事件
+    dataHub().subscribe(this, "condition:triggered",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 条件单触发
+            updateTable();
+        });
+    
+    // 订阅条件单状态
+    dataHub().subscribePattern(this, "condition:status:*",
+        [this](const QString& topic, const QVariant& value) {
+            Q_UNUSED(topic)
+            Q_UNUSED(value)
+            // 更新条件单状态
+        });
+    
+    LOG_INFO("[ConditionOrderPage] DataHub subscriptions setup complete");
 }
 
 void ConditionOrderPage::setupUI()

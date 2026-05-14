@@ -63,8 +63,45 @@ AlertCenterPage::~AlertCenterPage() = default;
 
 void AlertCenterPage::initializePage()
 {
+    // ============================================================
+    // 1. 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+    
+    // ============================================================
+    // 2. 加载预警数据
+    // ============================================================
     loadAlertRules();
     loadAlertHistory();
+}
+
+void AlertCenterPage::setupDataHubSubscriptions()
+{
+    // 订阅预警规则
+    dataHub().subscribe(this, "alert:rules",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新预警规则列表
+            loadAlertRules();
+        });
+    
+    // 订阅预警触发事件
+    dataHub().subscribe(this, "alert:triggered",
+        [this](const QString&, const QVariant& value) {
+            Q_UNUSED(value)
+            // 更新预警历史
+            loadAlertHistory();
+        });
+    
+    // 订阅特定预警状态
+    dataHub().subscribePattern(this, "alert:status:*",
+        [this](const QString& topic, const QVariant& value) {
+            Q_UNUSED(topic)
+            Q_UNUSED(value)
+            // 更新预警状态
+        });
+    
+    LOG_INFO("[AlertCenterPage] DataHub subscriptions setup complete");
 }
 
 void AlertCenterPage::refresh()

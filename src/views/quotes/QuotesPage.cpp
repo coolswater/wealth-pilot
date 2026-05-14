@@ -54,7 +54,14 @@ namespace WealthPilot
             return;
         }
 
-        // 初始化各子页面
+        // ============================================================
+        // 1. 设置 DataHub 订阅
+        // ============================================================
+        setupDataHubSubscriptions();
+
+        // ============================================================
+        // 2. 初始化各子页面
+        // ============================================================
         if (m_stockPage)
         {
             m_stockPage->initializePage();
@@ -77,7 +84,36 @@ namespace WealthPilot
         }
 
         setInitialized(true);
-        LOG_INFO("QuotesPage initialized");
+        LOG_INFO("QuotesPage initialized with DataHub");
+    }
+
+    void QuotesPage::setupDataHubSubscriptions()
+    {
+        // 订阅所有市场行情
+        dataHub().subscribePattern(this, "market:*",
+            [this](const QString& topic, const QVariant& value) {
+                // 根据当前 Tab 更新对应市场
+                Q_UNUSED(topic)
+                Q_UNUSED(value)
+            });
+        
+        // Tab 切换时订阅对应市场
+        connect(m_tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
+            Q_UNUSED(index)
+            // 更新当前市场
+            m_currentMarket = getCurrentMarket();
+        });
+        
+        LOG_INFO("[QuotesPage] DataHub subscriptions setup complete");
+    }
+    
+    QString QuotesPage::getCurrentMarket() const
+    {
+        if (!m_tabWidget) return QString();
+        
+        int index = m_tabWidget->currentIndex();
+        return m_marketIndexMap.key(index, QString());
+    }
     }
 
     void QuotesPage::switchToMarket(const QString& market)
