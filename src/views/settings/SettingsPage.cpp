@@ -60,8 +60,8 @@ struct SettingsPage::Impl {
     QPushButton* resetBtn = nullptr;
 };
 
-SettingsPage::SettingsPage(QWidget *parent)
-    : BasePage(parent)
+SettingsPage::SettingsPage(QWidget* parent)
+    : DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
     setupUI();

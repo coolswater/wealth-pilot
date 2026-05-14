@@ -33,7 +33,7 @@ struct AboutUSPage::Impl {
 };
 
 AboutUSPage::AboutUSPage(QWidget* parent)
-    : BasePage(parent)
+    : DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
     setObjectName("AboutUSPage");

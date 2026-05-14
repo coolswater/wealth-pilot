@@ -161,6 +161,8 @@ set(CORE_DATAHUB_SOURCES
         src/core/datahub/MarketDataProducer.cpp
         src/core/datahub/DataHubBootstrap.h
         src/core/datahub/DataHubBootstrap.cpp
+        src/core/datahub/DataHubMonitor.h
+        src/core/datahub/DataHubMonitor.cpp
 )
 
 # Core - Database 数据库

@@ -31,7 +31,7 @@ using WealthPilot::WarningPage;
 struct WarningPage::Impl {};
 
 WarningPage::WarningPage(QWidget *parent)
-    : BasePage(parent)
+    : DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
     setupUI();

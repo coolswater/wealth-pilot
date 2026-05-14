@@ -28,7 +28,7 @@ using WealthPilot::CryptoPage;
 namespace WealthPilot
 {
     QuotesPage::QuotesPage(QWidget* parent)
-        : BasePage(parent)
+        : DataHubPageBase(parent)
           , m_tabWidget(nullptr)
           , m_stockPage(nullptr)
           , m_futuresPage(nullptr)

@@ -55,7 +55,7 @@ struct ForexPage::Impl {
 // ========== 构造与析构 ==========
 
 ForexPage::ForexPage(QWidget *parent)
-    : BasePage(parent)
+    : DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
     setObjectName("ForexPage");

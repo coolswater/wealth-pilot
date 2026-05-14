@@ -664,7 +664,7 @@ void MoneyFlowModel::clear()
 // ============================================================================
 
 DashboardPage::DashboardPage(QWidget* parent)
-    : BasePage(parent)
+    : DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
     setupUI();
@@ -695,7 +695,14 @@ void DashboardPage::initializePage()
 {
     if (isInitialized()) return;
 
-    // 初始化数据存储服务
+    // ============================================================
+    // 1. 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+
+    // ============================================================
+    // 2. 初始化数据存储服务
+    // ============================================================
     if (!DataStorageService::instance()->isInitialized()) {
         DataStorageService::instance()->initialize();
     }
@@ -710,7 +717,29 @@ void DashboardPage::initializePage()
 
     setInitialized(true);
 
-    LOG_DEBUG("DashboardPage initialized");
+    LOG_DEBUG("DashboardPage initialized with DataHub");
+}
+
+void DashboardPage::setupDataHubSubscriptions()
+{
+    // 订阅指数数据
+    QStringList indexSymbols = {"sh000001", "sh000300", "sz399001", "sz399006"};
+    for (const QString& symbol : indexSymbols) {
+        subscribeQuote(symbol, [this](const StockQuote& quote) {
+            // 更新指数显示
+            Q_UNUSED(quote)
+        });
+        m_indexSymbols.append(symbol);
+    }
+    
+    // 订阅排行榜数据
+    dataHub().subscribePattern(this, "market:rank:*",
+        [this](const QString& topic, const QVariant& value) {
+            Q_UNUSED(topic)
+            Q_UNUSED(value)
+        });
+    
+    LOG_INFO("[DashboardPage] DataHub subscriptions setup complete");
 }
 
 /**

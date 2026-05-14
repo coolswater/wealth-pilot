@@ -74,7 +74,7 @@ struct FundPage::Impl {
 // ========== 构造与析构 ==========
 
 FundPage::FundPage(QWidget *parent)
-    : BasePage(parent)
+    : DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
     setupUI();

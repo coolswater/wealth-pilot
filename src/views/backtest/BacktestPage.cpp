@@ -78,7 +78,7 @@ struct BacktestPage::Impl {
 // ========== 构造与析构 ==========
 
 BacktestPage::BacktestPage(QWidget *parent)
-    : BasePage(parent)
+    : DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
     setObjectName("BacktestPage");

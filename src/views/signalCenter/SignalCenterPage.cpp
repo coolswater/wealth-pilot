@@ -471,7 +471,7 @@ bool SignalCenterPage::Impl::isSubscribed(const QString& signalId)
 }
 
 SignalCenterPage::SignalCenterPage(QWidget *parent)
-    : BasePage(parent)
+    : DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
     d->initDatabase();

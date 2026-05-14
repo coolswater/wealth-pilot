@@ -49,8 +49,8 @@ struct AlertCenterPage::Impl {
 
 // ========== 构造与析构 ==========
 
-AlertCenterPage::AlertCenterPage(QWidget *parent)
-    : BasePage(parent)
+AlertCenterPage::AlertCenterPage(QWidget* parent)
+    : DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
     setObjectName("AlertCenterPage");

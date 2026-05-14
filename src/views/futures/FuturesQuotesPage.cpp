@@ -189,7 +189,7 @@ public:
 };
 
 FuturesQuotesPage::FuturesQuotesPage(QWidget* parent)
-    : BasePage(parent)
+    : DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
     d->m_model = new FuturesQuoteModel(this);
@@ -265,6 +265,14 @@ void FuturesQuotesPage::initializePage()
 {
     LOG_INFO("initializePage() called - starting CTP initialization");
 
+    // ============================================================
+    // 1. 设置 DataHub 订阅
+    // ============================================================
+    setupDataHubSubscriptions();
+
+    // ============================================================
+    // 2. 初始化 CTP 连接
+    // ============================================================
     auto [brokerId, userId, password, appId, authCode] = std::make_tuple(
         QString("9999"),
         QString("120750"),
@@ -275,12 +283,8 @@ void FuturesQuotesPage::initializePage()
 
     d->m_CTPService->setCredentials(brokerId, userId, password, appId, authCode);
     // simnow
-    d->m_CTPService->setMarketFrontAddress("tcp://182.254.243.31:30011");
-    d->m_CTPService->setTradingFrontAddress("tcp://182.254.243.31:30001");
-
-    // simnow 7*24小时
-    // d->m_CTPService->setMarketFrontAddress("tcp://182.254.243.31:40011");
-    // d->m_CTPService->setTradingFrontAddress("tcp://182.254.243.31:40001");
+    d->m_CTPService->setMarketFrontAddress("tcp://180.168.146.187:10211");
+    d->m_CTPService->setTradingFrontAddress("tcp://180.168.146.187:10201");
 
     LOG_INFO("CTP credentials configured, calling setupConnections()...");
 
@@ -1004,6 +1008,20 @@ void FuturesQuotesPage::flushPendingUpdates() const
 
     LOG_DEBUG(QString("Flushed %1 updates, model now has %2 rows")
              .arg(updates.size()).arg(d->m_model->rowCount()));
+}
+
+void FuturesQuotesPage::setupDataHubSubscriptions()
+{
+    // 订阅期货行情数据
+    // 使用模式订阅监听所有 market:futures:* 更新
+    dataHub().subscribePattern(this, "market:futures:*",
+        [this](const QString& topic, const QVariant& value) {
+            Q_UNUSED(topic)
+            Q_UNUSED(value)
+            // CTP 数据通过独立回调处理，这里仅作为备用
+        });
+    
+    LOG_INFO("[FuturesQuotesPage] DataHub subscriptions setup complete");
 }
 
 void FuturesQuotesPage::setupUI()

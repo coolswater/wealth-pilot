@@ -1,15 +1,23 @@
 /**
  * @file WatchListPage.cpp
- * @brief 自选股页面实现 - 个人自选股管理
+ * @brief 自选股页面实现 - 使用 DataHub 数据中心
+ *
+ * @details 实现功能：
+ * - 个人自选股管理
+ * - 实时行情展示
+ * - DataHub 数据订阅（自动生命周期管理）
+ *
+ * @author WealthPilot Team
+ * @version 2.0.0
  */
 
 #include "WatchListPage.h"
 #include "core/config/Tokens.h"
+#include "core/datahub/DataHub.h"
 #include "ui/components/StyleHelper.h"
 #include "ui/styles/ButtonStyles.h"
 #include "utils/Logger.h"
 
-// 使用 WealthPilot 命名空间中的类
 using WealthPilot::WatchListModel;
 using WealthPilot::WatchListPage;
 
@@ -152,7 +160,29 @@ void WatchListModel::setData(const QVector<StockQuote>& quotes)
 {
     beginResetModel();
     m_data = quotes;
+    m_symbolIndex.clear();
+    for (int i = 0; i < quotes.size(); ++i) {
+        m_symbolIndex[quotes[i].symbol] = i;
+    }
     endResetModel();
+}
+
+void WatchListModel::updateQuote(const QString& symbol, const StockQuote& quote)
+{
+    int row = findRowBySymbol(symbol);
+    if (row >= 0 && row < m_data.size()) {
+        m_data[row] = quote;
+        emit dataChanged(index(row, 0), index(row, ColCount - 1));
+    }
+}
+
+int WatchListModel::findRowBySymbol(const QString& symbol) const
+{
+    auto it = m_symbolIndex.find(symbol);
+    if (it != m_symbolIndex.end()) {
+        return it.value();
+    }
+    return -1;
 }
 
 void WatchListModel::addSymbol(const QString& symbol)
@@ -251,7 +281,7 @@ public:
 // ============================================================================
 
 WatchListPage::WatchListPage(QWidget* parent)
-    : BasePage(parent)
+    : DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
     setupUI();
@@ -261,9 +291,7 @@ WatchListPage::WatchListPage(QWidget* parent)
 WatchListPage::~WatchListPage()
 {
     saveWatchList();
-    if (d->dataSource) {
-        d->dataSource->stopAutoRefresh();
-    }
+    // DataHub 自动取消订阅，无需手动清理
 }
 
 QString WatchListPage::pageId() const
@@ -275,10 +303,8 @@ void WatchListPage::initializePage()
 {
     if (isInitialized()) return;
     
-    // 初始化数据源
-    d->dataSource = new StockDataSource(StockDataSource::Source::Sina, this);
-    connect(d->dataSource, &StockDataSource::quotesReceived,
-            this, &WatchListPage::onQuotesReceived);
+    // 设置 DataHub 数据订阅
+    setupDataHubSubscriptions();
     
     // 加载自选股列表
     loadWatchList();
@@ -286,28 +312,46 @@ void WatchListPage::initializePage()
     // 请求初始数据
     requestStockData();
     
-    // 启动自动刷新（10秒）
-    d->dataSource->startAutoRefresh(10000);
-    
     setInitialized(true);
-    LOG_INFO("WatchListPage initialized");
+    LOG_INFO("WatchListPage initialized with DataHub");
+}
+
+void WatchListPage::setupDataHubSubscriptions()
+{
+    // 订阅自选股行情数据
+    for (const QString& symbol : d->defaultSymbols) {
+        subscribeQuote(symbol, [this](const StockQuote& quote) {
+            // 更新模型数据
+            int row = d->model->findRowBySymbol(quote.symbol);
+            if (row >= 0) {
+                d->model->updateQuote(quote.symbol, quote);
+            }
+        });
+        m_subscribedSymbols.append(symbol);
+    }
+    
+    // 使用模式订阅监听所有行情更新
+    dataHub().subscribePattern(this, "market:quote:*",
+        [this](const QString& topic, const QVariant& value) {
+            Q_UNUSED(topic)
+            Q_UNUSED(value)
+            // 可选：处理模式匹配的更新
+        });
 }
 
 void WatchListPage::onPageActivated(const QVariantMap& params)
 {
     Q_UNUSED(params);
     d->isVisible = true;
-    if (d->dataSource) {
-        d->dataSource->startAutoRefresh(10000);
-    }
+    // DataHub 自动管理订阅，无需手动启动
+    // 刷新数据
+    requestStockData();
 }
 
 void WatchListPage::onPageDeactivated()
 {
     d->isVisible = false;
-    if (d->dataSource) {
-        d->dataSource->stopAutoRefresh();
-    }
+    // DataHub 自动管理订阅，无需手动停止
 }
 
 void WatchListPage::addStock(const QString& symbol, const QString& name)
@@ -479,8 +523,14 @@ void WatchListPage::saveWatchList()
 
 void WatchListPage::requestStockData()
 {
-    if (d->dataSource && !d->defaultSymbols.isEmpty()) {
-        d->dataSource->requestQuotes(d->defaultSymbols);
+    // 通过 DataHub 请求数据
+    QStringList topics;
+    for (const QString& symbol : d->defaultSymbols) {
+        topics.append(QString("market:quote:%1").arg(symbol));
+    }
+    
+    if (!topics.isEmpty()) {
+        requestData(topics, true);
         d->statusLabel->setText(QStringLiteral("正在请求行情数据..."));
     }
 }

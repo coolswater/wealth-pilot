@@ -292,7 +292,7 @@ AccountSummary PositionTableModel::calculateSummary() const
 // ============================================================================
 
 PortfolioPage::PortfolioPage(QWidget* parent)
-    : BasePage(parent)
+    : DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
     setupUI();

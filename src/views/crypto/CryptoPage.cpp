@@ -25,7 +25,7 @@ struct CryptoPage::Impl {
 };
 
 CryptoPage::CryptoPage(QWidget *parent)
-    : BasePage(parent)
+    : DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
     setupUI();
