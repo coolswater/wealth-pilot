@@ -1,6 +1,6 @@
-﻿/**
+/**
  * @file BacktestPage.h
- * @brief 策略回测页面 - 量化策略回测与分析
+ * @brief 策略回测页面 - 使用 DataHub 数据中心
  *
  * @details 功能：
  * - 策略编写与编辑
@@ -9,14 +9,19 @@
  * - 策略参数优化
  * - 回测报告导出
  *
+ * DataHub 集成：
+ * - 通过 DataHub 订阅历史数据
+ * - 自动生命周期管理
+ * - 回测结果实时更新
+ *
  * @author WealthPilot Team
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 #ifndef BACKTESTPAGE_H
 #define BACKTESTPAGE_H
 
-#include "ui/components/BasePage.h"
+#include "ui/components/DataHubPageBase.h"
 #include <QWidget>
 #include <QTableWidget>
 #include <QTextEdit>
@@ -50,7 +55,7 @@ struct BacktestResult {
 };
 
 /**
- * @brief 回测交易记录结构（用于回测结果展示）
+ * @brief 回测交易记录结构
  */
 struct BacktestTradeRecord {
     QDateTime time;                 ///< 交易时间
@@ -62,9 +67,14 @@ struct BacktestTradeRecord {
 };
 
 /**
- * @brief 策略回测页面�?
+ * @brief 策略回测页面
+ *
+ * @details 继承 DataHubPageBase，自动管理数据订阅：
+ * - 订阅历史K线数据（market:kline:*）
+ * - 订阅回测进度（backtest:progress）
+ * - 页面销毁时自动取消订阅
  */
-class BacktestPage : public WealthPilot::BasePage
+class BacktestPage : public WealthPilot::DataHubPageBase
 {
     Q_OBJECT
 
@@ -72,10 +82,24 @@ public:
     explicit BacktestPage(QWidget *parent = nullptr);
     ~BacktestPage() override;
 
+    // ========== 页面信息 ==========
+
     QString pageId() const override { return QStringLiteral("Backtest"); }
     QString pageName() const override { return QStringLiteral("量化"); }
 
+    /**
+     * @brief 初始化页面
+     *
+     * @details 初始化流程：
+     * 1. 设置 UI 组件
+     * 2. 订阅 DataHub 数据
+     * 3. 加载初始数据
+     */
     void initializePage() override;
+
+    /**
+     * @brief 刷新数据
+     */
     void refresh();
 
 signals:
@@ -85,6 +109,8 @@ signals:
     void backtestCompleted(const BacktestResult& result);
 
 private slots:
+    // ========== UI 交互槽函数 ==========
+
     void onRunBacktest();
     void onStopBacktest();
     void onExportReport();
@@ -93,6 +119,8 @@ private slots:
     void onTradeClicked(int row, int column);
 
 private:
+    // ========== UI 初始化 ==========
+
     void setupUI();
     void initToolBar();
     void initStrategyEditor();
@@ -100,18 +128,37 @@ private:
     void initTradeHistory();
     void initConnections();
     void initStrategies();
+
+    // ========== DataHub 数据订阅 ==========
+
+    /**
+     * @brief 设置 DataHub 数据订阅
+     *
+     * @details 订阅流程：
+     * 1. 订阅回测进度（backtest:progress）
+     * 2. 订阅回测结果（backtest:result）
+     * 3. 回调函数中更新显示
+     */
+    void setupDataHubSubscriptions();
+
+    // ========== 数据更新 ==========
+
     void updateResult(const BacktestResult& result);
     void updateTradeTable(const QVector<BacktestTradeRecord>& trades);
     void generateMockBacktest();
     void runBacktest(const QString& symbol, const QDate& startDate, const QDate& endDate);
     void exportReport(const QString& filePath);
 
+    // ========== 私有实现类（PIMPL） ==========
     struct Impl;
     std::unique_ptr<Impl> d;
+
+    // ========== DataHub 相关 ==========
+
+    /**
+     * @brief 已订阅的回测任务ID
+     */
+    QString m_currentBacktestId;
 };
 
-
-
- // BACKTESTPAGE_H
-
-#endif
+#endif // BACKTESTPAGE_H

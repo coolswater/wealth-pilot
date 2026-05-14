@@ -1,8 +1,77 @@
 cmake_minimum_required(VERSION 3.16)
 project(WealthPilot VERSION 1.0.0 LANGUAGES CXX)
 
+# ==================== 编译器版本检验 (C++20要求) ====================
+if (MSVC AND MSVC_VERSION LESS 1930)
+    message(FATAL_ERROR
+            "MSVC 19.30 (Visual Studio 2022 17.0) or newer required for C++20 support.\n"
+            "Detected MSVC_VERSION: ${MSVC_VERSION}\n"
+            "Install VS 2022 from https://visualstudio.microsoft.com/downloads/")
+endif ()
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 10.0)
+    message(FATAL_ERROR
+            "GCC 10.0 or newer required for C++20 support. Detected: ${CMAKE_CXX_COMPILER_VERSION}")
+endif ()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13.0)
+    message(FATAL_ERROR
+            "Clang 13.0 or newer required for C++20 support. Detected: ${CMAKE_CXX_COMPILER_VERSION}")
+endif ()
+
+# ==================== 构建选项 ====================
+option(WEALTHPILOT_ENABLE_LTO "Enable Link Time Optimization" OFF)
+option(WEALTHPILOT_ENABLE_UNITY_BUILD "Enable Unity Build for faster compilation" OFF)
+option(WEALTHPILOT_ENABLE_CCACHE "Enable ccache/sccache for compiler caching" ON)
+option(WEALTHPILOT_ENABLE_DEBUG_OUTPUT "Enable debug output" OFF)
+
+# ==================== 编译缓存 (增强PCH支持) ====================
+if (WEALTHPILOT_ENABLE_CCACHE)
+    find_program(CCACHE_PROGRAM NAMES ccache sccache)
+    if (CCACHE_PROGRAM)
+        # 设置ccache环境变量以支持PCH
+        if (WIN32)
+            set(CCACHE_DIR "$ENV{LOCALAPPDATA}/ccache")
+        elseif (APPLE)
+            set(CCACHE_DIR "$ENV{HOME}/Library/Caches/ccache")
+        else ()
+            set(CCACHE_DIR "$ENV{HOME}/.ccache")
+        endif ()
+
+        # 写入ccache配置文件
+        if (EXISTS "${CCACHE_DIR}" AND IS_DIRECTORY "${CCACHE_DIR}")
+            file(WRITE "${CCACHE_DIR}/ccache.conf"
+                    "sloppiness = pch_defines,time_macros,include_file_mtime,include_file_ctime,locale\n"
+                    "pch_external_checksum = true\n"
+                    "depend_mode = true\n"
+                    "compiler_check = content\n"
+                    "max_size = 5G\n")
+            message(STATUS "Wrote ccache config to ${CCACHE_DIR}/ccache.conf")
+        endif ()
+
+        set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+        set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+        message(STATUS "Compiler cache enabled: ${CCACHE_PROGRAM} (PCH-aware)")
+    endif ()
+endif ()
+
+# ==================== Unity Build ====================
+if (WEALTHPILOT_ENABLE_UNITY_BUILD)
+    set(CMAKE_UNITY_BUILD ON)
+    set(CMAKE_UNITY_BUILD_BATCH_SIZE 14)
+    message(STATUS "Unity Build enabled with batch size 14")
+endif ()
+
 # 设置Qt6路径（如果未设置）
-set(CMAKE_PREFIX_PATH "C:/Qt/6.10.2/mingw_64")
+if (NOT CMAKE_PREFIX_PATH)
+    if (WIN32)
+        set(CMAKE_PREFIX_PATH "C:/Qt/6.10.2/msvc2022_64")
+    elseif (APPLE)
+        set(CMAKE_PREFIX_PATH "$ENV{HOME}/Qt/6.10.2/macos")
+    else ()
+        set(CMAKE_PREFIX_PATH "$ENV{HOME}/Qt/6.10.2/gcc_64")
+    endif ()
+endif ()
 
 # 设置默认构建类型
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -10,10 +79,16 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif ()
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 
-set(CMAKE_CXX_STANDARD 17)
+# ==================== C++ 标准 ====================
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)  # 使用标准C++，不使用编译器扩展
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
+# 导出 compile_commands.json
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # 查找Qt6组件
 find_package(Qt6 REQUIRED COMPONENTS
@@ -52,7 +127,13 @@ set(CORE_BASE_SOURCES
         src/core/base/ErrorHandler.cpp
         src/core/base/ApplicationBootstrap.h
         src/core/base/ApplicationBootstrap.cpp
+        src/core/base/Result.h
         src/core/types/MarketTypes.h
+)
+
+# Core - Events 事件系统
+set(CORE_EVENTS_SOURCES
+        src/core/events/EventBus.h
 )
 
 # Core - Config 配置管理
@@ -70,6 +151,16 @@ set(CORE_CACHE_SOURCES
         src/core/cache/CacheManager.cpp
         src/core/cache/DataCacheManager.h
         src/core/cache/DataCacheManager.cpp
+)
+
+# Core - DataHub 数据中心 (新增)
+set(CORE_DATAHUB_SOURCES
+        src/core/datahub/DataHub.h
+        src/core/datahub/DataHub.cpp
+        src/core/datahub/MarketDataProducer.h
+        src/core/datahub/MarketDataProducer.cpp
+        src/core/datahub/DataHubBootstrap.h
+        src/core/datahub/DataHubBootstrap.cpp
 )
 
 # Core - Database 数据库
@@ -432,6 +523,9 @@ set(UI_COMPONENT_SOURCES
         src/ui/components/BaseWidget.cpp
         src/ui/components/BasePage.h
         src/ui/components/BasePage.cpp
+        src/ui/components/DataHubPageBase.h
+        src/ui/components/DataHubPageBase.cpp
+        src/ui/components/BasePage.cpp
         src/ui/components/SidebarWidget.h
         src/ui/components/SidebarWidget.cpp
         src/ui/components/SvgIconEngine.h
@@ -505,8 +599,8 @@ set(UI_ANIMATION_SOURCES
 
 # UI Utils 样式工具
 set(UI_UTILS_SOURCES
-        src/ui/utils/StyleHelper.h
-        src/ui/utils/StyleHelper.cpp
+        src/ui/utils/StyleGenerator.h
+        src/ui/utils/StyleGenerator.cpp
         src/ui/utils/PageStyleHelper.h
         src/ui/utils/PageStyleHelper.cpp
         src/ui/styles/ButtonStyles.h
@@ -625,8 +719,10 @@ set(SOURCES
         main.cpp
         ${APP_SOURCES}
         ${CORE_BASE_SOURCES}
+        ${CORE_EVENTS_SOURCES}
         ${CORE_CONFIG_SOURCES}
         ${CORE_CACHE_SOURCES}
+        ${CORE_DATAHUB_SOURCES}
         ${CORE_DATABASE_SOURCES}
         ${CORE_TASK_SOURCES}
         ${CORE_PERFORMANCE_SOURCES}

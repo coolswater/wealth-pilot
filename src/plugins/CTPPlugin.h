@@ -98,9 +98,9 @@ signals:
     // ICTPPlugin signals
     void connected();
     void disconnected();
-    void marketDataUpdated(const MarketData& data);
-    void orderUpdated(const OrderData& order);
-    void accountUpdated(const AccountData& account);
+    void marketDataUpdated(const ::MarketData& data);
+    void orderUpdated(const ::OrderData& order);
+    void accountUpdated(const ::AccountData& account);
 
 private:
     // Internal implementation
@@ -112,7 +112,7 @@ private:
     QJsonObject m_config;
     
     // Performance optimization: market data cache
-    QMap<QString, MarketData> m_marketDataCache;
+    QMap<QString, ::MarketData> m_marketDataCache;
     mutable QMutex m_cacheMutex;
     
     // Batch subscription buffer (performance optimization)
@@ -121,8 +121,8 @@ private:
     void flushSubscribeBuffer();
     
     // Integrate CacheManager
-    void updateMarketDataCache(const QString& instrumentId, const MarketData& data);
-    MarketData getCachedMarketData(const QString& instrumentId) const;
+    void updateMarketDataCache(const QString& instrumentId, const ::MarketData& data);
+    ::MarketData getCachedMarketData(const QString& instrumentId) const;
     
     // Integrate EnvironmentConfig
     void loadEnvironmentConfig();

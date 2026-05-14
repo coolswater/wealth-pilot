@@ -1,0 +1,47 @@
+# WealthPilot clangd LSP 配置
+# 提升IDE代码补全和导航体验
+
+CompileFlags:
+  Add: 
+    - "-std=c++20"
+    - "-Wall"
+    - "-Wextra"
+    - "-Wno-unused-parameter"
+    # Qt MOC 相关
+    - "-DQT_NO_DEBUG"
+    - "-DQT_NO_KEYWORDS"
+    # Windows 特定
+    - "-DWIN32"
+    - "-D_WINDOWS"
+    - "-DNOMINMAX"
+    - "-DWIN32_LEAN_AND_MEAN"
+  Remove:
+    # 移除可能导致问题的标志
+    - "-Werror"
+    - "-W*"
+
+Diagnostics:
+  # 抑制一些常见的误报
+  Suppress:
+    - "pp_file_not_found"
+    - "pp_pragma_sysheader_in_main"
+  # 开启更多诊断
+  UnusedIncludes: Strict
+  MissingIncludes: Strict
+
+Hover:
+  ShowAKA: Yes
+
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+  Designators: Yes
+  TypeNameLimit: 24
+
+Index:
+  Background: Build
+  StandardLibrary: Yes
+
+# Qt 信号槽支持
+# clangd 会自动识别 Qt 的信号槽机制

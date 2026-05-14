@@ -23,8 +23,8 @@ public:
     QString userId;
     QString tradingDay;
     
-    // Market data cache
-    QMap<QString, MarketData> marketDataCache;
+    // Market data cache (using global MarketData)
+    QMap<QString, ::MarketData> marketDataCache;
     QMutex marketDataMutex;
     
     // Order management
@@ -299,13 +299,13 @@ void CTPPlugin::unsubscribeMarketData(const QStringList& instruments)
     }
 }
 
-MarketData CTPPlugin::getMarketData(const QString& instrumentId) const
+::MarketData CTPPlugin::getMarketData(const QString& instrumentId) const
 {
     QMutexLocker locker(&d->marketDataMutex);
     return d->marketDataCache.value(instrumentId);
 }
 
-QMap<QString, MarketData> CTPPlugin::getAllMarketData() const
+QMap<QString, ::MarketData> CTPPlugin::getAllMarketData() const
 {
     QMutexLocker locker(&d->marketDataMutex);
     return d->marketDataCache;
@@ -399,7 +399,7 @@ void CTPPlugin::flushSubscribeBuffer()
     }
 }
 
-void CTPPlugin::updateMarketDataCache(const QString& instrumentId, const MarketData& data)
+void CTPPlugin::updateMarketDataCache(const QString& instrumentId, const ::MarketData& data)
 {
     QMutexLocker locker(&d->marketDataMutex);
     d->marketDataCache[instrumentId] = data;
@@ -412,7 +412,7 @@ void CTPPlugin::updateMarketDataCache(const QString& instrumentId, const MarketD
     );
 }
 
-MarketData CTPPlugin::getCachedMarketData(const QString& instrumentId) const
+::MarketData CTPPlugin::getCachedMarketData(const QString& instrumentId) const
 {
     // Try CacheManager first
     QVariant cached = CacheManager::instance()->get(
@@ -420,7 +420,7 @@ MarketData CTPPlugin::getCachedMarketData(const QString& instrumentId) const
     );
     
     if (cached.isValid()) {
-        return cached.value<MarketData>();
+        return cached.value<::MarketData>();
     }
     
     // Fall back to local cache

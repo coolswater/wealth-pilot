@@ -1,11 +1,18 @@
 /**
  * @file ApplicationInitializer.cpp
- * @brief Application Initializer Implementation
+ * @brief 应用初始化管理器实现
+ *
+ * @details 初始化流程：
+ * 1. Core 阶段：Logger -> EnvironmentConfig -> CacheManager -> DataHub
+ * 2. Services 阶段：AsyncTaskManager -> 数据源服务
+ * 3. Plugins 阶段：PluginLoader -> CTPPlugin -> AIPlugin
+ * 4. UI 阶段：ThemeManager -> 页面注册
  */
 
 #include "ApplicationInitializer.h"
 #include "../core/config/EnvironmentConfig.h"
 #include "../core/cache/CacheManager.h"
+#include "../core/datahub/DataHubBootstrap.h"
 #include "../core/di/ServiceLocator.h"
 #include "../core/database/DatabaseManager.h"
 #include "../core/task/AsyncTaskManager.h"
@@ -88,7 +95,12 @@ void ApplicationInitializer::shutdown()
     QElapsedTimer timer;
     timer.start();
 
-    // Shutdown in reverse order
+    // ============================================================
+    // 关闭顺序：反向释放资源
+    // UI -> Plugins -> Services -> Core
+    // ============================================================
+    
+    // 1. 关闭 UI 层
     emit phaseStarted(InitPhase::UI);
     for (const auto& module : m_modules[InitPhase::UI]) {
         if (module.shutdownFunc) {
@@ -96,6 +108,7 @@ void ApplicationInitializer::shutdown()
         }
     }
 
+    // 2. 关闭插件系统
     emit phaseStarted(InitPhase::Plugins);
     for (const auto& module : m_modules[InitPhase::Plugins]) {
         if (module.shutdownFunc) {
@@ -103,6 +116,7 @@ void ApplicationInitializer::shutdown()
         }
     }
 
+    // 3. 关闭服务层
     emit phaseStarted(InitPhase::Services);
     for (const auto& module : m_modules[InitPhase::Services]) {
         if (module.shutdownFunc) {
@@ -110,6 +124,7 @@ void ApplicationInitializer::shutdown()
         }
     }
 
+    // 4. 关闭核心模块
     emit phaseStarted(InitPhase::Core);
     for (const auto& module : m_modules[InitPhase::Core]) {
         if (module.shutdownFunc) {
@@ -117,6 +132,11 @@ void ApplicationInitializer::shutdown()
         }
     }
 
+    // 5. 关闭 DataHub（新增）
+    // DataHub 会在 ServiceLocator::clear() 之前自动清理
+    LOG_INFO("DataHub will be cleaned up automatically");
+
+    // 6. 清理服务定位器
     ServiceLocator::instance().clear();
 
     m_initialized = false;
@@ -155,16 +175,21 @@ bool ApplicationInitializer::initializeCore()
 
     QElapsedTimer timer;
     int current = 0;
-    int total = m_modules[InitPhase::Core].size() + 3; // +3 for Logger, Env, Cache
+    // +4 for Logger, Env, Cache, DataHub
+    int total = m_modules[InitPhase::Core].size() + 4;
 
-    // Initialize Logger (must be first, synchronous)
+    // ============================================================
+    // 1. 初始化 Logger（必须第一个，同步）
+    // ============================================================
     timer.start();
     Logger::instance()->init();
     LOG_DEBUG("Logger initialized");
     emit moduleInitialized("Logger", true, timer.elapsed());
     emit progressUpdated(++current, total, "Logger");
 
-    // 并行初始化 EnvironmentConfig 和 CacheManager
+    // ============================================================
+    // 2. 并行初始化 EnvironmentConfig 和 CacheManager
+    // ============================================================
     timer.restart();
 
     QFuture<bool> envFuture = QtConcurrent::run([this]()
@@ -198,10 +223,27 @@ bool ApplicationInitializer::initializeCore()
         return false;
     }
 
+    // ============================================================
+    // 3. 初始化 DataHub 数据中心（新增）
+    // ============================================================
+    timer.restart();
+    WealthPilot::DataHubBootstrap dataHubBootstrap;
+    bool dataHubResult = dataHubBootstrap.initialize();
+    emit moduleInitialized("DataHub", dataHubResult, timer.elapsed());
+    emit progressUpdated(++current, total, "DataHub");
+
+    if (!dataHubResult) {
+        LOG_ERROR("Failed to initialize DataHub");
+        return false;
+    }
+    LOG_INFO("DataHub initialized successfully");
+
+    // ============================================================
+    // 4. 初始化注册的核心模块
+    // ============================================================
     // Note: DatabaseManager is initialized by DataStorageService
     LOG_DEBUG("DatabaseManager will be initialized by DataStorageService");
 
-    // Initialize registered modules
     for (const auto& module : m_modules[InitPhase::Core]) {
         timer.restart();
         bool success = true;

@@ -1,6 +1,6 @@
-﻿/**
+/**
  * @file DashboardPage.h
- * @brief 金融行情综合看板页面 - 专业级六宫格布局
+ * @brief 金融行情综合看板页面 - 使用 DataHub 数据中心
  *
  * @details 页面布局结构：
  * - 顶部区域（25%）：指数大盘走势 - 分时图展示
@@ -15,20 +15,25 @@
  *   - 中下：24小时滚动新闻
  *   - 右下：资金流向统计
  *
+ * DataHub 集成：
+ * - 通过 DataHub 订阅指数、排行榜、自选股数据
+ * - 自动生命周期管理
+ * - 统一数据刷新策略
+ *
  * @author WealthPilot Team
- * @version 4.0.0
+ * @version 5.0.0
  */
 
 #ifndef DASHBOARDPAGE_H
 #define DASHBOARDPAGE_H
 
-#include <ui/components/BasePage.h>
+#include <ui/components/DataHubPageBase.h>
 #include <QTableView>
 #include <QAbstractTableModel>
 #include <memory>
 #include "core/config/Tokens.h"
 #include "market/StockDataSource.h"
-#include "market/NewsDataSource.h"  // NewsItem 定义
+#include "market/NewsDataSource.h"
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -36,14 +41,13 @@ class QPushButton;
 class QComboBox;
 class QTabWidget;
 class QSplitter;
-class QTimer;
 class QGridLayout;
 class QFrame;
 class QListWidgetItem;
 QT_END_NAMESPACE
 
 // ============================================================================
-// 数据结构定义（颜色使用 Colors 命名空间）
+// 数据结构定义
 // ============================================================================
 
 /**
@@ -136,18 +140,20 @@ public:
     };
 
     explicit StockRankModel(QObject* parent = nullptr);
-    
+
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-    
+
     void setData(const QVector<StockRankData>& data);
+    void updateRow(int row, const StockRankData& data);
     void clear();
 
 private:
     QVector<StockRankData> m_data;
-    
+    QHash<QString, int> m_codeIndex; ///< 代码到行索引的映射
+
     static QString formatValue(double value);
 };
 
@@ -172,17 +178,19 @@ public:
     };
 
     explicit WatchlistModel(QObject* parent = nullptr);
-    
+
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-    
+
     void setData(const QVector<StockRankData>& data);
+    void updateRow(int row, const StockRankData& data);
     void clear();
 
 private:
     QVector<StockRankData> m_data;
+    QHash<QString, int> m_codeIndex;
 };
 
 /**
@@ -192,12 +200,12 @@ class SectorHeatmapModel : public QAbstractTableModel {
     Q_OBJECT
 public:
     explicit SectorHeatmapModel(QObject* parent = nullptr);
-    
+
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-    
+
     void setData(const QVector<SectorData>& data);
     void clear();
 
@@ -223,12 +231,12 @@ public:
     };
 
     explicit MoneyFlowModel(QObject* parent = nullptr);
-    
+
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-    
+
     void setData(const QVector<MoneyFlowData>& data);
     void clear();
 
@@ -242,8 +250,16 @@ private:
 
 /**
  * @brief 金融行情综合看板页面 - 六宫格布局
+ *
+ * @details 继承 DataHubPageBase，自动管理数据订阅：
+ * - 指数数据订阅（上证、深证、创业板）
+ * - 排行榜数据订阅（涨跌榜）
+ * - 自选股数据订阅
+ * - 新闻数据订阅
+ *
+ * 页面销毁时自动取消所有订阅
  */
-class DashboardPage : public WealthPilot::BasePage {
+class DashboardPage : public WealthPilot::DataHubPageBase {
     Q_OBJECT
 
 public:
@@ -251,9 +267,22 @@ public:
     ~DashboardPage() override;
 
     QString pageId() const override { return QStringLiteral("DashboardPage"); }
+
+    /**
+     * @brief 初始化页面
+     *
+     * @details 初始化流程：
+     * 1. 设置 UI 组件
+     * 2. 订阅 DataHub 数据
+     * 3. 加载初始数据
+     */
     void initializePage() override;
 
-    // 公共接口
+    /**
+     * @brief 刷新数据
+     *
+     * @note 通过 DataHub 请求刷新，而非直接调用数据源
+     */
     void refreshData();
 
 signals:
@@ -268,22 +297,23 @@ protected:
     void hideEvent(QHideEvent* event) override;
 
 private slots:
+    // ========== UI 交互槽函数 ==========
+
     void onSectorTabChanged(int index);
     void onWatchlistFilterChanged(int index);
     void onMoneyFlowPeriodChanged(int index);
     void onRowDoubleClicked(const QModelIndex& index);
     void onMoneyFlowRowDoubleClicked(const QModelIndex& index);
     void onSectorRowDoubleClicked(const QModelIndex& index);
-    void onNewsItemClicked(QListWidgetItem* item);  ///< 新闻点击弹窗
-    void updateRealTimeData();
+    void onNewsItemClicked(QListWidgetItem* item);
+
+    // ========== 定时更新槽函数 ==========
+
     void updateTimeDisplay();
-    
-    // 真实数据槽函数
-    void onIndexQuotesReceived(const QVector<StockQuote>& quotes);
-    void onRankQuotesReceived(const QVector<StockQuote>& quotes);
-    void onWatchlistQuotesReceived(const QVector<StockQuote>& quotes);
 
 private:
+    // ========== UI 初始化 ==========
+
     void setupUI();
     void setupHeader();
     void setupIndexPanel();
@@ -293,15 +323,29 @@ private:
     void setupNewsPanel();
     void setupMoneyFlowPanel();
     void setupConnections();
-    
-    // 数据加载
+
+    // ========== DataHub 数据订阅 ==========
+
+    /**
+     * @brief 设置 DataHub 数据订阅
+     *
+     * @details 订阅的数据：
+     * 1. 指数数据：market:quote:sh000001, sh000300, sz399001, sz399006
+     * 2. 排行榜数据：通过模式订阅 market:rank:*
+     * 3. 自选股数据：market:watchlist:*
+     * 4. 新闻数据：news:*
+     */
+    void setupDataHubSubscriptions();
+
+    // ========== 数据加载 ==========
+
     void loadDataWithFallback();    ///< 缓存->数据库->网络数据源
-    bool loadFromCache();            ///< 从缓存加载数据
-    bool loadFromDatabase();         ///< 从数据库加载数据
-    void loadFromNetwork();          ///< 从网络加载数据
-    void saveToCache();              ///< 保存数据到缓存
-    void saveToDatabase();           ///< 保存数据到数据库
-    
+    bool loadFromCache();           ///< 从缓存加载数据
+    bool loadFromDatabase();        ///< 从数据库加载数据
+    void loadFromNetwork();         ///< 从网络加载数据
+    void saveToCache();             ///< 保存数据到缓存
+    void saveToDatabase();          ///< 保存数据到数据库
+
     void loadDemoData();
     void loadRealData();            ///< 加载真实数据
     void loadLocalData();           ///< 加载本地缓存数据
@@ -311,32 +355,36 @@ private:
     void loadNewsData();
     void loadMoneyFlowData();
     void loadSectorData();
-    
-    // UI更新
-    void updateTheme();           ///< 主题切换更新
+
+    // ========== UI 更新 ==========
+
+    void updateTheme();             ///< 主题切换更新
     void updateIndexDisplay();
     void updateSectorHeatmap();
-    
-    // 数据处理
+
+    // ========== 数据处理 ==========
+
     void processIndexQuotes(const QVector<StockQuote>& quotes);
     void processRankQuotes(const QVector<StockQuote>& quotes);
     QVector<StockRankData> filterTopGainers(const QVector<StockQuote>& quotes, int count);
     QVector<StockRankData> filterTopLosers(const QVector<StockQuote>& quotes, int count);
-    
-    // 数据存储
+
+    // ========== 数据存储 ==========
+
     void saveIndexDataToDb(const QVector<StockQuote>& quotes);
     void saveQuoteCacheToDb(const QVector<StockQuote>& quotes);
     void saveNewsToDb(const QVector<NewsItem>& news);
     bool checkAndLoadLocalData();
 
+    // ========== 私有实现类（PIMPL） ==========
     struct Impl;
     std::unique_ptr<Impl> d;
+
+    // ========== DataHub 相关 ==========
+
+    QStringList m_indexSymbols;     ///< 已订阅的指数代码
+    QStringList m_watchlistSymbols; ///< 已订阅的自选股代码
 };
-
-
-
- // DASHBOARDPAGE_H
-#endif
 
 // 注册数据类型以支持 QVariant 序列化
 Q_DECLARE_METATYPE(IndexData)
@@ -349,3 +397,5 @@ Q_DECLARE_METATYPE(QVector<StockRankData>)
 Q_DECLARE_METATYPE(QVector<SectorData>)
 Q_DECLARE_METATYPE(QVector<NewsData>)
 Q_DECLARE_METATYPE(QVector<MoneyFlowData>)
+
+#endif // DASHBOARDPAGE_H

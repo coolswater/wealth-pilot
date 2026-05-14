@@ -1,10 +1,15 @@
 ﻿/**
  * @file FuturesQuotesPage.cpp
- * @brief 期货行情页面实现
- * @details 实现CTP实时行情数据展示、主力合约识别、活跃度筛选等功能
+ * @brief 期货行情页面实现 - 使用 DataHub 数据中心
+ *
+ * @details 实现功能：
+ * - CTP 实时行情数据展示
+ * - 主力合约识别、活跃度筛选
+ * - DataHub 数据订阅（自动生命周期管理）
+ *
  * @author WealthPilot Team
- * @version 1.0.0
- * 
+ * @version 2.0.0
+ *
  * @note 关键特性:
  *   1. 自动查询并订阅所有合约
  *   2. 零拷贝优化：CTP数据直接转换为FuturesQuoteItem
@@ -12,6 +17,7 @@
  *   4. 线程安全：所有CTP回调通过QueuedConnection切换到UI线程
  *   5. 智能合约筛选：自动过滤过期合约
  *   6. 主力合约识别和优先显示
+ *   7. DataHub 集成：统一数据订阅管理
  */
 
 #include "FuturesQuotesPage.h"
@@ -32,7 +38,6 @@
 #include <QTableView>
 #include <QHeaderView>
 #include <QSortFilterProxyModel>
-#include <QTimer>
 #include <QMenu>
 #include <QAction>
 #include <QMessageBox>

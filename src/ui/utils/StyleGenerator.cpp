@@ -1,14 +1,14 @@
 /**
- * @file StyleHelper.cpp
- * @brief 样式辅助工具实现
+ * @file StyleGenerator.cpp
+ * @brief 样式生成工具实现
  */
 
-#include "StyleHelper.h"
+#include "StyleGenerator.h"
 #include <QWidget>
 
 using namespace Tokens;
 
-QString StyleHelper::buttonStyle(
+QString StyleGenerator::buttonStyle(
     const QString& bgColor,
     const QString& hoverColor,
     const QString& textColor,
@@ -48,7 +48,7 @@ QString StyleHelper::buttonStyle(
     .arg(Colors::TextDisabled);
 }
 
-QString StyleHelper::inputStyle(
+QString StyleGenerator::inputStyle(
     const QString& bgColor,
     const QString& textColor,
     const QString& borderColor,
@@ -86,7 +86,7 @@ QString StyleHelper::inputStyle(
     .arg(Colors::TextDisabled);
 }
 
-QString StyleHelper::cardStyle(
+QString StyleGenerator::cardStyle(
     const QString& bgColor,
     const QString& borderColor,
     int radius,
@@ -106,7 +106,7 @@ QString StyleHelper::cardStyle(
     .arg(padding);
 }
 
-QString StyleHelper::tableStyle(
+QString StyleGenerator::tableStyle(
     const QString& bgColor,
     const QString& textColor,
     const QString& borderColor,
@@ -152,7 +152,7 @@ QString StyleHelper::tableStyle(
     .arg(Spacing::SM);
 }
 
-QString StyleHelper::labelStyle(
+QString StyleGenerator::labelStyle(
     const QString& textColor,
     int fontSize)
 {
@@ -166,7 +166,7 @@ QString StyleHelper::labelStyle(
     .arg(fontSize);
 }
 
-QString StyleHelper::dividerStyle(
+QString StyleGenerator::dividerStyle(
     const QString& color,
     int thickness)
 {
@@ -181,13 +181,13 @@ QString StyleHelper::dividerStyle(
     .arg(thickness);
 }
 
-QString StyleHelper::trendStyle(double change, bool useChineseStyle)
+QString StyleGenerator::trendStyle(double change, bool useChineseStyle)
 {
     QString color = useChineseStyle ? getTrendColor(change) : getTrendColorInternational(change);
     return QString("color: %1;").arg(color);
 }
 
-QString StyleHelper::badgeStyle(
+QString StyleGenerator::badgeStyle(
     const QString& bgColor,
     const QString& textColor,
     int radius)
@@ -209,7 +209,7 @@ QString StyleHelper::badgeStyle(
     .arg(Font::Size::Small);
 }
 
-QString StyleHelper::progressBarStyle(
+QString StyleGenerator::progressBarStyle(
     const QString& bgColor,
     const QString& chunkColor,
     int radius)
@@ -233,7 +233,7 @@ QString StyleHelper::progressBarStyle(
     .arg(chunkColor);
 }
 
-QString StyleHelper::scrollBarStyle(
+QString StyleGenerator::scrollBarStyle(
     const QString& bgColor,
     const QString& handleColor,
     int width)
@@ -272,7 +272,7 @@ QString StyleHelper::scrollBarStyle(
     .arg(handleColor);
 }
 
-QString StyleHelper::toolTipStyle(
+QString StyleGenerator::toolTipStyle(
     const QString& bgColor,
     const QString& textColor,
     const QString& borderColor,
@@ -296,63 +296,59 @@ QString StyleHelper::toolTipStyle(
     .arg(Font::Size::Small);
 }
 
-QString StyleHelper::getTrendColor(double change)
+QString StyleGenerator::getTrendColor(double change)
 {
     if (change > 0.0001) return Colors::Danger;   // 红涨
     if (change < -0.0001) return Colors::Success; // 绿跌
     return Colors::TextSecondary;
 }
 
-QString StyleHelper::getTrendColorInternational(double change)
+QString StyleGenerator::getTrendColorInternational(double change)
 {
     if (change > 0.0001) return Colors::Success;  // 绿涨
     if (change < -0.0001) return Colors::Danger;  // 红跌
     return Colors::TextSecondary;
 }
 
-QString StyleHelper::getRiskLevelColor(int level)
+QString StyleGenerator::getRiskLevelColor(int level)
 {
     switch (level) {
-    case 0: return Colors::Success;       // 低风险
-    case 1: return Colors::Warning;       // 中风险
-    case 2: return Colors::WarningLight;  // 高风险
-    case 3: return Colors::Danger;        // 极高风险
+    case 0: return Colors::Success;       // 低风�?    case 1: return Colors::Warning;       // 中风�?    case 2: return Colors::WarningLight;  // 高风�?    case 3: return Colors::Danger;        // 极高风险
     default: return Colors::TextSecondary;
     }
 }
 
-QString StyleHelper::getSentimentColor(int sentiment)
+QString StyleGenerator::getSentimentColor(int sentiment)
 {
     switch (sentiment) {
     case 1: return Colors::Success;  // 正面
     case -1: return Colors::Danger;  // 负面
-    case 0: return Colors::TextSecondary; // 中性
-    default: return Colors::TextSecondary;
+    case 0: return Colors::TextSecondary; // 中�?    default: return Colors::TextSecondary;
     }
 }
 
-void StyleHelper::applyStyle(QWidget* widget, const QString& style)
+void StyleGenerator::applyStyle(QWidget* widget, const QString& style)
 {
     if (widget) {
         widget->setStyleSheet(style);
     }
 }
 
-void StyleHelper::applyCardStyle(QWidget* widget)
+void StyleGenerator::applyCardStyle(QWidget* widget)
 {
     if (widget) {
         widget->setStyleSheet(cardStyle());
     }
 }
 
-void StyleHelper::applyInputStyle(QWidget* widget)
+void StyleGenerator::applyInputStyle(QWidget* widget)
 {
     if (widget) {
         widget->setStyleSheet(inputStyle());
     }
 }
 
-void StyleHelper::applyButtonStyle(QWidget* widget, bool isPrimary)
+void StyleGenerator::applyButtonStyle(QWidget* widget, bool isPrimary)
 {
     if (widget) {
         if (isPrimary) {
@@ -367,32 +363,33 @@ void StyleHelper::applyButtonStyle(QWidget* widget, bool isPrimary)
     }
 }
 
-QString StyleHelper::fontSize(int size)
+QString StyleGenerator::fontSize(int size)
 {
     return QString("font-size: %1px;").arg(size);
 }
 
-QString StyleHelper::fontWeight(int weight)
+QString StyleGenerator::fontWeight(int weight)
 {
     return QString("font-weight: %1;").arg(weight);
 }
 
-QString StyleHelper::fontColor(const QString& color)
+QString StyleGenerator::fontColor(const QString& color)
 {
     return QString("color: %1;").arg(color);
 }
 
-QString StyleHelper::padding(int value)
+QString StyleGenerator::padding(int value)
 {
     return QString("padding: %1px;").arg(value);
 }
 
-QString StyleHelper::margin(int value)
+QString StyleGenerator::margin(int value)
 {
     return QString("margin: %1px;").arg(value);
 }
 
-QString StyleHelper::borderRadius(int radius)
+QString StyleGenerator::borderRadius(int radius)
 {
     return QString("border-radius: %1px;").arg(radius);
 }
+

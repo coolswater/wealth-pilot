@@ -1,8 +1,8 @@
 /**
- * @file StyleHelper.h
- * @brief 样式辅助工具 - 统一样式管理
+ * @file StyleGenerator.h
+ * @brief 样式生成工具 - 统一样式管理
  *
- * @details 提供样式辅助功能：
+ * @details 提供样式生成功能：
  * - 样式表生成
  * - 颜色转换
  * - 统一样式应用
@@ -11,8 +11,8 @@
  * @version 1.0.0
  */
 
-#ifndef STYLEHELPER_H
-#define STYLEHELPER_H
+#ifndef STYLEGENERATOR_H
+#define STYLEGENERATOR_H
 
 #include <QString>
 #include <QColor>
@@ -20,9 +20,9 @@
 #include "core/config/Tokens.h"
 
 /**
- * @brief 样式辅助工具类
+ * @brief 样式生成工具类
  */
-class StyleHelper
+class StyleGenerator
 {
 public:
     // ==================== 基础样式表生成 ====================
@@ -209,7 +209,7 @@ public:
     static QString borderRadius(int radius);
 
 private:
-    StyleHelper() = delete; // 禁止实例化
+    StyleGenerator() = delete; // 禁止实例化
 };
 
-#endif // STYLEHELPER_H
+#endif // STYLEGENERATOR_H

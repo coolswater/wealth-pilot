@@ -1,6 +1,6 @@
-﻿/**
+/**
  * @file FuturesKLinePage.h
- * @brief 期货K线页面 - 专业级K线图表和技术分析
+ * @brief 期货K线页面 - 使用 DataHub 数据中心
  *
  * @details 布局结构：
  * +-----------------------------------------------------------------------------+
@@ -17,15 +17,20 @@
  * | ChartStatusBar (账户信息、连接状态、坐标数值)                              |
  * +-----------------------------------------------------------------------------+
  *
+ * DataHub 集成：
+ * - 通过 DataHub 订阅K线数据
+ * - 自动生命周期管理
+ * - CTP 实时行情对接
+ *
  * @author WealthPilot Team
- * @version 2.0.0
+ * @version 3.0.0
  */
 
 #ifndef FUTURES_KLINE_PAGE_H
 #define FUTURES_KLINE_PAGE_H
 
-#include "ui/components/BasePage.h"
-#include "core/types/MarketTypes.h"  // 使用统一的类型定义
+#include "ui/components/DataHubPageBase.h"
+#include "core/types/MarketTypes.h"
 #include "ui/components/KLineChart.h"
 #include "ui/components/ChartToolBar.h"
 #include "ui/components/MarketDepthWidget.h"
@@ -49,89 +54,45 @@ class IAIPlugin;
 /**
  * @brief 期货K线页面
  *
- * @details 专业级K线图表页面，提供：
- * - 多周期K线图表（分时、1分、5分、15分、30分、60分、日线、周线、月线）
- * - 技术指标叠加（MA、MACD、RSI、KDJ、BOLL等）
- * - 实时盘口深度
- * - 分笔成交记录
- * - 十字光标交互
- * - CTP实时行情对接
- *
- * @example
- * @code
- * FuturesKLinePage* page = new FuturesKLinePage();
- * page->setInstrument("IF2501", "沪深300指数期货");
- * page->setPeriod(KLinePeriod::Minute15);
- * page->setIndicatorEnabled("MA5", true);
- * @endcode
+ * @details 继承 DataHubPageBase，自动管理数据订阅：
+ * - 订阅K线数据（market:kline:{instrument}:{period}）
+ * - 订阅实时行情（market:quote:{instrument}）
+ * - 订阅盘口深度（market:depth:{instrument}）
+ * - 页面销毁时自动取消订阅
  */
-class FuturesKLinePage : public WealthPilot::BasePage
+class FuturesKLinePage : public WealthPilot::DataHubPageBase
 {
     Q_OBJECT
 
 public:
     // ========== 构造与析构 ==========
 
-    /**
-     * @brief 构造函�?
-     * @param parent 父控�?
-     */
     explicit FuturesKLinePage(QWidget *parent = nullptr);
-
-    /**
-     * @brief 析构函数
-     */
     ~FuturesKLinePage() override;
 
-    // ========== BasePage 接口实现 ==========
+    // ========== 页面信息 ==========
 
     QString pageId() const override { return "FuturesKLine"; }
+    QString pageName() const override { return QStringLiteral("期货K线"); }
+
+    /**
+     * @brief 初始化页面
+     *
+     * @details 初始化流程：
+     * 1. 设置 UI 组件
+     * 2. 订阅 DataHub K线数据
+     * 3. 加载初始数据
+     */
     void initializePage() override;
 
     // ========== 公共接口 ==========
 
-    /**
-     * @brief 设置合约
-     * @param instrumentId 合约代码
-     * @param instrumentName 合约名称
-     */
     void setInstrument(const QString& instrumentId, const QString& instrumentName = QString());
-
-    /**
-     * @brief 获取当前合约代码
-     * @return 合约代码
-     */
     QString instrument() const;
-
-    /**
-     * @brief 设置K线周期
-     * @param period K线周期
-     */
     void setPeriod(KLinePeriod period);
-
-    /**
-     * @brief 获取当前K线周期
-     * @return K线周期
-     */
     KLinePeriod period() const;
-
-    /**
-     * @brief 设置指标启用状态
-     * @param indicator 指标名称
-     * @param enabled 是否启用
-     */
     void setIndicatorEnabled(const QString& indicator, bool enabled);
-
-    /**
-     * @brief 获取指标启用状态
-     * @param indicator 指标名称
-     * @return 是否启用
-     */
     bool isIndicatorEnabled(const QString& indicator) const;
-
-    /**
-     * @brief 刷新页面数据
-     */
     void refresh();
 
     // ========== 页面生命周期 ==========
@@ -139,66 +100,22 @@ public:
     void onPageActivated(const QVariantMap& params) override;
 
 signals:
-    /**
-     * @brief 交易请求信号
-     * @param instrumentId 合约代码
-     * @param direction 方向（"buy" 或 "sell"）
-     * @param price 价格
-     * @param volume 数量
-     */
     void tradeRequested(const QString& instrumentId,
                        const QString& direction,
                        double price,
                        int volume);
-
-    /**
-     * @brief 页面标题变化信号
-     * @param title 新标题
-     */
     void pageTitleChanged(const QString& title);
-
-    /**
-     * @brief 十字光标移动信号
-     * @param time 时间
-     * @param price 价格
-     * @param info 附加信息
-     */
     void crosshairMoved(const QDateTime& time, double price, const QString& info);
 
 protected:
-    /**
-     * @brief 大小改变事件
-     */
     void resizeEvent(QResizeEvent *event) override;
 
 private slots:
     // ========== CTP 数据槽 ==========
 
-    /**
-     * @brief CTP行情数据接收槽
-     * @param data 行情数据
-     */
     void onCtpMarketDataReceived(const CTP::MarketData& data);
-
-    /**
-     * @brief 插件行情数据接收槽
-     * @param data 行情数据
-     */
     void onMarketDataUpdated(const MarketData& data);
-
-    /**
-     * @brief K线数据接收槽
-     * @param data K线数据
-     */
     void onKLineDataReceived(const QVector<KLineData>& data);
-
-    /**
-     * @brief 分笔成交接收槽
-     * @param time 时间
-     * @param price 价格
-     * @param volume 成交量
-     * @param flag 方向
-     */
     void onTickReceived(const QString& time, double price, int volume, const QString& flag);
 
     // ========== 工具栏槽 ==========
@@ -215,11 +132,24 @@ private slots:
     void onCrosshairMoved(const QDateTime& time, double price);
 
 private:
-    // ========== 初始化方法 ==========
+    // ========== UI 初始化 ==========
 
     void setupUI();
     void setupConnections();
     void setupServices();
+
+    // ========== DataHub 数据订阅 ==========
+
+    /**
+     * @brief 设置 DataHub 数据订阅
+     *
+     * @details 订阅流程：
+     * 1. 订阅K线数据（market:kline:{instrument}:{period}）
+     * 2. 订阅实时行情（market:quote:{instrument}）
+     * 3. 订阅盘口深度（market:depth:{instrument}）
+     * 4. 回调函数中更新图表
+     */
+    void setupDataHubSubscriptions();
 
     // ========== 数据处理方法 ==========
 
@@ -239,14 +169,16 @@ private:
     void updateStatusBar();
     void updateWindowTitle();
 
-    // ========== PIMPL ==========
-
+    // ========== 私有实现类（PIMPL） ==========
     struct Impl;
     std::unique_ptr<Impl> d;
+
+    // ========== DataHub 相关 ==========
+
+    /**
+     * @brief 当前订阅的合约ID
+     */
+    QString m_currentInstrument;
 };
 
-
-
- // FUTURES_KLINE_PAGE_H
-
-#endif
+#endif // FUTURES_KLINE_PAGE_H

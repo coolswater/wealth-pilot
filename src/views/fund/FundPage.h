@@ -1,6 +1,6 @@
-﻿/**
+/**
  * @file FundPage.h
- * @brief 基金页面 - 基金行情展示与分析
+ * @brief 基金页面 - 使用 DataHub 数据中心
  *
  * @details 功能：
  * - 基金列表展示（场内基金ETF、LOF、场外基金）
@@ -10,14 +10,19 @@
  * - 基金对比功能
  * - 自选基金管理
  *
+ * DataHub 集成：
+ * - 通过 DataHub 订阅基金行情数据
+ * - 自动生命周期管理
+ * - 实时净值更新
+ *
  * @author WealthPilot Team
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 #ifndef FUNDPAGE_H
 #define FUNDPAGE_H
 
-#include "ui/components/BasePage.h"
+#include "ui/components/DataHubPageBase.h"
 #include <QWidget>
 #include <QTableWidget>
 #include <QComboBox>
@@ -45,8 +50,13 @@ struct FundHolding {
 
 /**
  * @brief 基金页面类
+ *
+ * @details 继承 DataHubPageBase，自动管理数据订阅：
+ * - 订阅基金行情数据（market:fund:*）
+ * - 实时净值更新
+ * - 页面销毁时自动取消订阅
  */
-class FundPage : public WealthPilot::BasePage
+class FundPage : public WealthPilot::DataHubPageBase
 {
     Q_OBJECT
 
@@ -56,24 +66,31 @@ public:
      * @param parent 父窗口
      */
     explicit FundPage(QWidget *parent = nullptr);
-    
+
     /**
      * @brief 析构函数
      */
     ~FundPage() override;
 
+    // ========== 页面信息 ==========
+
     /**
      * @brief 获取页面ID
      */
     QString pageId() const override { return QStringLiteral("Fund"); }
-    
+
     /**
      * @brief 获取页面名称
      */
     QString pageName() const override { return QStringLiteral("基金"); }
 
     /**
-     * @brief 初始化页面（BasePage接口）
+     * @brief 初始化页面
+     *
+     * @details 初始化流程：
+     * 1. 设置 UI 组件
+     * 2. 订阅 DataHub 基金数据
+     * 3. 加载初始数据
      */
     void initializePage() override;
 
@@ -95,89 +112,76 @@ signals:
     void fundSelected(const QString& code, const QString& name);
 
 private slots:
+    // ========== UI 交互槽函数 ==========
+
     /**
      * @brief 基金类型切换
      */
     void onFundTypeChanged(int index);
-    
+
     /**
      * @brief 搜索基金
      */
     void onSearchTextChanged(const QString& text);
-    
+
     /**
      * @brief 基金列表行选中
      */
     void onFundListClicked(int row, int column);
-    
+
     /**
      * @brief 添加到自选
      */
     void onAddToWatchlist();
-    
+
     /**
      * @brief 刷新基金数据
      */
     void onRefreshData();
 
 private:
-    /**
-     * @brief 初始化UI
-     */
+    // ========== UI 初始化 ==========
+
     void setupUI();
-    
-    /**
-     * @brief 初始化工具栏
-     */
     void initToolBar();
-    
-    /**
-     * @brief 初始化基金列表
-     */
     void initFundList();
-    
-    /**
-     * @brief 初始化详情面板
-     */
     void initDetailPanel();
-    
-    /**
-     * @brief 初始化连接
-     */
     void initConnections();
-    
+
+    // ========== DataHub 数据订阅 ==========
+
     /**
-     * @brief 加载基金列表
+     * @brief 设置 DataHub 数据订阅
+     *
+     * @details 订阅流程：
+     * 1. 使用 subscribeQuote() 订阅主要基金
+     * 2. 使用模式订阅 market:fund:*
+     * 3. 回调函数中更新表格显示
      */
+    void setupDataHubSubscriptions();
+
+    // ========== 数据加载 ==========
+
     void loadFundList();
-    
-    /**
-     * @brief 更新基金详情
-     */
     void updateFundDetail(const FundQuote& quote);
-    
-    /**
-     * @brief 加载基金持仓
-     */
     void loadFundHolding(const QString& code);
-    
-    /**
-     * @brief 加载基金K线
-     */
     void loadFundKLine(const QString& code);
-    
+
     /**
      * @brief 格式化基金类型
      */
     static QString formatFundType(FundType type);
 
-    // PIMPL实现
+    // ========== 私有实现类（PIMPL） ==========
     struct Impl;
     std::unique_ptr<Impl> d;
+
+    // ========== DataHub 相关 ==========
+
+    /**
+     * @brief 已订阅的基金列表
+     */
+    QStringList m_subscribedFunds;
 };
 
-
-
- // FUNDPAGE_H
-
-#endif
+#endif // FUNDPAGE_H
