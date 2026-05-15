@@ -76,8 +76,8 @@ endif ()
 # 设置默认构建类型
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif ()
-set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 
 # ==================== C++ 标准 ====================
 set(CMAKE_CXX_STANDARD 20)
@@ -378,8 +378,8 @@ set(UTIL_SOURCES
         src/utils/Result.h
         src/utils/TechnicalIndicators.h
         src/utils/TechnicalIndicators.cpp
-        src/utils/PerformanceMonitor.h
-        src/utils/PerformanceMonitor.cpp
+        src/utils/StressTest.h
+        src/utils/StressTest.cpp
         src/utils/ExcelExporter.h
         src/utils/ExcelExporter.cpp
         src/utils/ReportGenerator.h
