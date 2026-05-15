@@ -38,10 +38,10 @@ CtpMarketSpi::CtpMarketSpi(QObject *parent)
     d->buffer = new BatchBuffer<MarketData>(200, 16, this);
 
     // 在构造函数或Initialize函数中设置回调
-    d->buffer->setCallback([=](const std::vector<MarketData>& data) {
+    d->buffer->setCallback([this](const std::vector<MarketData>& data) {
         // 处理数据
         // 如果需要切换到主线程，使用 QMetaObject::invokeMethod
-        QMetaObject::invokeMethod(this, [=]() {
+        QMetaObject::invokeMethod(this, [this, &data]() {
             // 批量发射到主业务逻辑
             for (const auto& item : data) {
                 emit marketDataReceived(item);

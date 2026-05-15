@@ -140,6 +140,7 @@ MainWindow::MainWindow(QWidget* parent)
         LOG_ERROR("Application initialization failed");
         return;
     }
+
     // 构建UI
     setupUI();
 

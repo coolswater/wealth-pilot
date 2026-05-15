@@ -131,15 +131,8 @@ int main(int argc, char* argv[])
     // ========== 创建主窗口 ==========
     MainWindow w;
 
-    // 注册 ViewModel 到 QML（如果使用 QML）
-    // QQmlEngine qmlEngine;
-    // WealthPilot::registerViewModels(qmlEngine);
-
     // 初始化所有功能
     WealthPilot::FeatureIntegration::instance()->initialize(&w);
-
-    // 获取状态报告
-    qDebug() << WealthPilot::FeatureIntegration::instance()->getStatusReport();
 
     // 确保退出时清理服务
     QObject::connect(&app, &QApplication::aboutToQuit, []()
@@ -147,6 +140,7 @@ int main(int argc, char* argv[])
         cleanupServices();
     });
 
+    LOG_INFO("Showing MainWindow...");
     w.show();
 
     LOG_INFO("Application started successfully");

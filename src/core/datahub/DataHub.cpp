@@ -59,9 +59,10 @@ QMetaObject::Connection DataHub::subscribe(
     state.subscribers.insert(owner);
     
     // 绑定owner销毁时自动取消订阅
+    // 注意：不能使用 UniqueConnection 与 lambda，先断开再连接
+    disconnect(owner, &QObject::destroyed, this, nullptr);
     connect(owner, &QObject::destroyed, 
-            this, [this, owner]() { onOwnerDestroyed(owner); },
-            Qt::UniqueConnection);
+            this, [this, owner]() { onOwnerDestroyed(owner); });
     
     // 如果之前空闲，触发激活
     if (wasIdle) {
@@ -100,9 +101,9 @@ QMetaObject::Connection DataHub::subscribePattern(
     m_patternSubscriptions[pattern].insert(owner);
     
     // 绑定销毁
+    disconnect(owner, &QObject::destroyed, this, nullptr);
     connect(owner, &QObject::destroyed, 
-            this, [this, owner]() { onOwnerDestroyed(owner); },
-            Qt::UniqueConnection);
+            this, [this, owner]() { onOwnerDestroyed(owner); });
     
     qDebug() << "[DataHub] Subscribed pattern:" << pattern;
     

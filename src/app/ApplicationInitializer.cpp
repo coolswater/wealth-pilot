@@ -82,6 +82,7 @@ bool ApplicationInitializer::initialize()
     m_currentPhase = InitPhase::Complete;
 
     emit initializationComplete(true);
+    LOG_INFO("Application initialization complete");
     return true;
 }
 
@@ -183,7 +184,6 @@ bool ApplicationInitializer::initializeCore()
     // ============================================================
     timer.start();
     Logger::instance()->init();
-    LOG_DEBUG("Logger initialized");
     emit moduleInitialized("Logger", true, timer.elapsed());
     emit progressUpdated(++current, total, "Logger");
 
@@ -194,19 +194,13 @@ bool ApplicationInitializer::initializeCore()
 
     QFuture<bool> envFuture = QtConcurrent::run([this]()
     {
-        QElapsedTimer t;
-        t.start();
         (void)EnvironmentConfig::instance();
-        emit moduleInitialized("EnvironmentConfig", true, t.elapsed());
         return true;
     });
 
     QFuture<bool> cacheFuture = QtConcurrent::run([this]()
     {
-        QElapsedTimer t;
-        t.start();
         bool result = CacheManager::instance()->initialize();
-        emit moduleInitialized("CacheManager", result, t.elapsed());
         return result;
     });
 
@@ -214,6 +208,9 @@ bool ApplicationInitializer::initializeCore()
     envFuture.waitForFinished();
     cacheFuture.waitForFinished();
 
+    // 在主线程中发射信号
+    emit moduleInitialized("EnvironmentConfig", true, 0);
+    emit moduleInitialized("CacheManager", cacheFuture.result(), 0);
     emit progressUpdated(++current, total, "EnvironmentConfig");
     emit progressUpdated(++current, total, "CacheManager");
 
@@ -236,14 +233,10 @@ bool ApplicationInitializer::initializeCore()
         LOG_ERROR("Failed to initialize DataHub");
         return false;
     }
-    LOG_INFO("DataHub initialized successfully");
 
     // ============================================================
     // 4. 初始化注册的核心模块
     // ============================================================
-    // Note: DatabaseManager is initialized by DataStorageService
-    LOG_DEBUG("DatabaseManager will be initialized by DataStorageService");
-
     for (const auto& module : m_modules[InitPhase::Core]) {
         timer.restart();
         bool success = true;
