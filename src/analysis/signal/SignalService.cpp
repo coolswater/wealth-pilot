@@ -11,6 +11,8 @@
 #include <QDebug>
 #include <QTimer>
 
+#include "utils/Logger.h"
+
 namespace WealthPilot {
 namespace Analysis {
 
@@ -48,7 +50,7 @@ void SignalService::initialize()
     // 启动定时更新
     d->updateTimer->start(d->updateIntervalMs);
 
-    qDebug() << "SignalService initialized";
+    LOG_DEBUG("SignalService initialized");
 }
 
 void SignalService::registerAnalyzer(IAnalyzer* analyzer)
@@ -61,7 +63,7 @@ void SignalService::registerAnalyzer(IAnalyzer* analyzer)
     connect(analyzer, &IAnalyzer::signalDetected,
             this, &SignalService::onAnalyzerSignal);
 
-    qDebug() << "Analyzer registered:" << analyzer->name();
+    LOG_DEBUG(QString("Analyzer registered: %1").arg(analyzer->name()));
 }
 
 void SignalService::setSignalFilter(SignalFilter* filter)

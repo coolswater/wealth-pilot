@@ -927,39 +927,51 @@ if(BUILD_TESTS)
     
     # 查找 Qt Test 模块
     find_package(Qt6 REQUIRED COMPONENTS Test)
-    
-    # 测试源文件
-    set(TEST_SOURCES
-        tests/TestServiceLocator.cpp
-        tests/TestCacheManager.cpp
-        tests/TestPluginLoader.cpp
-        tests/TestApplicationInitializer.cpp
-        tests/PerformanceTest.cpp
-        tests/AnalysisTest.cpp
+
+    # 通用测试源文件（共享的核心模块）
+    set(TEST_COMMON_SOURCES
+            src/core/cache/CacheManager.cpp
+            src/core/di/ServiceLocator.cpp
+            src/utils/Logger.cpp
     )
-    
-    # 创建测试可执行文件
-    add_executable(WealthPilotTests ${TEST_SOURCES})
-    
-    target_link_libraries(WealthPilotTests PRIVATE
-        Qt6::Core
-        Qt6::Test
-        Qt6::Sql
-        Qt6::Network
-    )
-    
-    target_include_directories(WealthPilotTests PRIVATE
-        ${CMAKE_SOURCE_DIR}
-        ${CMAKE_SOURCE_DIR}/src
-    )
-    
-    # 添加测试
-    add_test(NAME ServiceLocatorTest COMMAND WealthPilotTests -functions "TestServiceLocator*")
-    add_test(NAME CacheManagerTest COMMAND WealthPilotTests -functions "TestCacheManager*")
-    add_test(NAME PluginLoaderTest COMMAND WealthPilotTests -functions "TestPluginLoader*")
-    add_test(NAME ApplicationInitializerTest COMMAND WealthPilotTests -functions "TestApplicationInitializer*")
-    add_test(NAME PerformanceTest COMMAND WealthPilotTests -functions "PerformanceTest*")
-    add_test(NAME AnalysisTest COMMAND WealthPilotTests -functions "AnalysisTest*")
+
+    # ==================== 独立测试可执行文件 ====================
+
+    # 1. ServiceLocator 测试
+    add_executable(TestServiceLocator tests/TestServiceLocator.cpp ${TEST_COMMON_SOURCES})
+    target_link_libraries(TestServiceLocator PRIVATE Qt6::Core Qt6::Test)
+    target_include_directories(TestServiceLocator PRIVATE ${CMAKE_SOURCE_DIR}/src)
+    add_test(NAME ServiceLocatorTest COMMAND TestServiceLocator)
+
+    # 2. CacheManager 测试
+    add_executable(TestCacheManager tests/TestCacheManager.cpp ${TEST_COMMON_SOURCES})
+    target_link_libraries(TestCacheManager PRIVATE Qt6::Core Qt6::Test Qt6::Sql Qt6::Network)
+    target_include_directories(TestCacheManager PRIVATE ${CMAKE_SOURCE_DIR}/src)
+    add_test(NAME CacheManagerTest COMMAND TestCacheManager)
+
+    # 3. PluginLoader 测试
+    add_executable(TestPluginLoader tests/TestPluginLoader.cpp)
+    target_link_libraries(TestPluginLoader PRIVATE Qt6::Core Qt6::Test)
+    target_include_directories(TestPluginLoader PRIVATE ${CMAKE_SOURCE_DIR}/src)
+    add_test(NAME PluginLoaderTest COMMAND TestPluginLoader)
+
+    # 4. ApplicationInitializer 测试
+    add_executable(TestApplicationInitializer tests/TestApplicationInitializer.cpp)
+    target_link_libraries(TestApplicationInitializer PRIVATE Qt6::Core Qt6::Test)
+    target_include_directories(TestApplicationInitializer PRIVATE ${CMAKE_SOURCE_DIR}/src)
+    add_test(NAME ApplicationInitializerTest COMMAND TestApplicationInitializer)
+
+    # 5. Performance 测试
+    add_executable(PerformanceTest tests/PerformanceTest.cpp)
+    target_link_libraries(PerformanceTest PRIVATE Qt6::Core Qt6::Test)
+    target_include_directories(PerformanceTest PRIVATE ${CMAKE_SOURCE_DIR}/src)
+    add_test(NAME PerformanceTest COMMAND PerformanceTest)
+
+    # 6. Analysis 测试
+    add_executable(AnalysisTest tests/AnalysisTest.cpp)
+    target_link_libraries(AnalysisTest PRIVATE Qt6::Core Qt6::Test)
+    target_include_directories(AnalysisTest PRIVATE ${CMAKE_SOURCE_DIR}/src)
+    add_test(NAME AnalysisTest COMMAND AnalysisTest)
     
     message(STATUS "Tests enabled")
 endif()

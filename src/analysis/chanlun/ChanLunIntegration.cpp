@@ -90,9 +90,9 @@ void ChanLunIntegration::setShowFractals(bool show)
 void ChanLunIntegration::performAnalysis()
 {
     if (m_klines.isEmpty()) return;
-    
-    qDebug() << "ChanLunIntegration: Starting analysis for" << m_klines.size() << "klines";
-    
+
+    LOG_DEBUG(QString("ChanLunIntegration: Starting analysis for %1 klines").arg(m_klines.size()));
+
     // 转换 KLineData 到 RawKLine
     QVector<RawKLine> rawKlines;
     rawKlines.reserve(m_klines.size());
@@ -111,13 +111,12 @@ void ChanLunIntegration::performAnalysis()
     
     // 执行缠论分析
     m_result = m_analyzer.analyze(rawKlines);
-    
-    qDebug() << "ChanLunIntegration: Analysis completed:"
-             << "pens=" << m_result.pens.size()
-             << "segments=" << m_result.segments.size()
-             << "pivots=" << m_result.pivots.size()
-             << "signals=" << m_result.tradeSignals.size();
-    
+
+    LOG_DEBUG(QString("ChanLunIntegration: Analysis completed: pens=%1 segments=%2 pivots=%3 signals=%4")
+             .arg(m_result.pens.size())
+             .arg(m_result.segments.size())
+             .arg(m_result.pivots.size())
+             .arg(m_result.tradeSignals.size()));
     // 更新图表叠加层
     updateChartOverlay();
     

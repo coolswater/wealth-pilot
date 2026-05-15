@@ -10,6 +10,8 @@
 #include <QDebug>
 #include <iterator>
 
+#include "utils/Logger.h"
+
 /**
  * @brief 构造函数
  * 初始化网络管理器和定时器，设置默认数据源
@@ -83,7 +85,7 @@ void QuoteDataManager::requestRealTimeQuotes(const QStringList& codes)
     case Tushare:
         {
             // Tushare Pro需要Token认证，这里预留接口
-            qDebug() << "Tushare API需要配置Token";
+            LOG_DEBUG("Tushare API需要配置Token");
             break;
         }
     case Mock:
