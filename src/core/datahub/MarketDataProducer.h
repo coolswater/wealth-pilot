@@ -15,7 +15,7 @@
 #define MARKETDATAPRODUCER_H
 
 #include "core/datahub/DataHub.h"
-#include "core/types/MarketTypes.h"
+#include "core/types/MarketTypes.h"  // 使用统一的类型定义
 #include <QObject>
 #include <QHash>
 #include <QSet>
@@ -97,7 +97,7 @@ signals:
     void kLineRequested(const QString& symbol, KLinePeriod period);
 
 private slots:
-    void onStockQuotesReceived(const QVector<StockQuote>& quotes);
+    void onStockDataReceived(const QVariantList& quotesData);
     void onFuturesQuotesUpdated();
 
 private:

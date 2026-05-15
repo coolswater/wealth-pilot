@@ -59,14 +59,14 @@ void AboutUSPage::setupDataHubSubscriptions()
 {
     // 订阅版本信息
     dataHub().subscribe(this, "app:version",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新版本显示
         });
     
     // 订阅更新状态
     dataHub().subscribe(this, "app:update",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新状态显示
         });

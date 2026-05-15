@@ -281,7 +281,7 @@ FundQuote FundDataSource::parseEastMoneyResponse(const QString& code, const QByt
             quote.accNav = obj["gsz"].toDouble();
             quote.lastPrice = obj["gsz"].toDouble();
             quote.changePercent = obj["gszzl"].toDouble();
-            quote.navDate = QDate::fromString(obj["jzrq"].toString(), "yyyy-MM-dd").startOfDay();
+            quote.navDate = QDate::fromString(obj["jzrq"].toString(), "yyyy-MM-dd");
             quote.updateTime = QDateTime::currentDateTime();
             
             // 根据代码判断基金类型

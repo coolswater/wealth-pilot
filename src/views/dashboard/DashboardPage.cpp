@@ -2125,9 +2125,9 @@ void DashboardPage::loadLocalData()
         }
         
         // 分发数据
-        onIndexQuotesReceived(quotes);
-        onRankQuotesReceived(quotes);
-        onWatchlistQuotesReceived(quotes);
+        processIndexQuotes(quotes);
+        processRankQuotes(quotes);
+        // onWatchlistQuotesReceived(quotes);  // TODO: 需要实现此方法
         
         LOG_INFO(QString("Loaded %1 cached quotes").arg(cacheData.size()));
     }
@@ -2506,20 +2506,21 @@ void DashboardPage::loadFromNetwork()
         // 连接信号
         connect(d->indexDataSource, &StockDataSource::quotesReceived,
                 this, [this](const QVector<StockQuote>& quotes) {
-                    onIndexQuotesReceived(quotes);
+                    processIndexQuotes(quotes);
                     // 保存到缓存和数据库
                     saveToCache();
                     saveToDatabase();
                 });
         connect(d->rankDataSource, &StockDataSource::quotesReceived,
                 this, [this](const QVector<StockQuote>& quotes) {
-                    onRankQuotesReceived(quotes);
+                    processRankQuotes(quotes);
                     saveToCache();
                     saveToDatabase();
                 });
         connect(d->watchlistDataSource, &StockDataSource::quotesReceived,
                 this, [this](const QVector<StockQuote>& quotes) {
-                    onWatchlistQuotesReceived(quotes);
+                    // processWatchlistQuotes(quotes);  // TODO: 需要实现此方法
+                    Q_UNUSED(quotes)
                     saveToCache();
                     saveToDatabase();
                 });
@@ -2833,4 +2834,18 @@ void DashboardPage::updateTheme()
     update();
     
     LOG_DEBUG("DashboardPage theme updated");
+}
+
+void DashboardPage::processIndexQuotes(const QVector<StockQuote>& quotes)
+{
+    // 处理指数行情数据
+    Q_UNUSED(quotes)
+    LOG_DEBUG("Processing index quotes");
+}
+
+void DashboardPage::processRankQuotes(const QVector<StockQuote>& quotes)
+{
+    // 处理排行榜行情数据
+    Q_UNUSED(quotes)
+    LOG_DEBUG("Processing rank quotes");
 }

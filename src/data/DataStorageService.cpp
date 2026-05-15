@@ -25,6 +25,12 @@
 #include <QDir>
 #include <QStandardPaths>
 
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::KLineData;
+using WealthPilot::TimeShareData;
+using WealthPilot::StockQuote;
+using WealthPilot::MarketSnapshot;
+
 // ============================================================================
 // 静态成员
 // ============================================================================

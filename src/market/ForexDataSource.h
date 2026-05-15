@@ -21,25 +21,10 @@
 #include <QHash>
 #include <QVector>
 #include <functional>
+#include "core/types/MarketTypes.h"  // 使用统一的类型定义
 
-/**
- * @brief 外汇行情数据
- */
-struct ForexQuote {
-    QString pair;               ///< 货币对（如 USD/CNY）
-    QString baseCurrency;       ///< 基础货币
-    QString quoteCurrency;      ///< 报价货币
-    double rate = 0.0;          ///< 当前汇率
-    double bid = 0.0;           ///< 买入价
-    double ask = 0.0;           ///< 卖出价
-    double high24h = 0.0;       ///< 24小时最高
-    double low24h = 0.0;        ///< 24小时最低
-    double change = 0.0;        ///< 涨跌额
-    double changePercent = 0.0; ///< 涨跌幅
-    QDateTime updateTime;       ///< 更新时间
-
-    bool isValid() const { return !pair.isEmpty() && rate > 0; }
-};
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::ForexQuote;
 
 /**
  * @brief 外汇数据源

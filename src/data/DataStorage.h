@@ -23,6 +23,12 @@
 #include <memory>
 #include "core/types/MarketTypes.h"
 
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::KLineData;
+using WealthPilot::KLinePeriod;
+using WealthPilot::StockQuote;
+using WealthPilot::MarketSnapshot;
+
 /**
  * @brief 数据存储管理器
  */

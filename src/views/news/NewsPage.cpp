@@ -27,16 +27,16 @@
 // 颜色常量 - 使用 Tokens 主题令牌
 // ============================================================================
 namespace {
-    // 使用 Tokens 中定义的颜色
-    const QString COLOR_BG_GLOBAL = Tokens::Colors::BgBase;        // 全局背景
-    const QString COLOR_BG_CARD = Tokens::Colors::BgElevated;          // 卡片背景
-    const QString COLOR_TEXT_TITLE = Tokens::Colors::TextPrimary;       // 标题文字
-    const QString COLOR_TEXT_META = Tokens::Colors::TextSecondary;        // 元数据文字
-    const QString COLOR_TEXT_SUMMARY = Tokens::Colors::TextPrimary;     // 摘要文字
-    const QString COLOR_HIGHLIGHT = Tokens::Colors::Warning;        // 强调色（数字）
-    const QString COLOR_CATEGORY_ACTIVE = Tokens::Colors::Primary;  // 分类标签高亮
-    const QString COLOR_SEPARATOR = Tokens::Colors::Border;      // 分隔线
-    const QString COLOR_HOVER_BG = Tokens::Colors::BgHover; // 悬停背景
+    // NewsPage 专用颜色常量
+    const QString NEWS_COLOR_BG_GLOBAL = Tokens::Colors::BgBase;        // 全局背景
+    const QString NEWS_COLOR_BG_CARD = Tokens::Colors::BgElevated;          // 卡片背景
+    const QString NEWS_COLOR_TEXT_TITLE = Tokens::Colors::TextPrimary;       // 标题文字
+    const QString NEWS_COLOR_TEXT_META = Tokens::Colors::TextSecondary;        // 元数据文字
+    const QString NEWS_COLOR_TEXT_SUMMARY = Tokens::Colors::TextPrimary;     // 摘要文字
+    const QString NEWS_COLOR_HIGHLIGHT = Tokens::Colors::Warning;        // 强调色（数字）
+    const QString NEWS_COLOR_CATEGORY_ACTIVE = Tokens::Colors::Primary;  // 分类标签高亮
+    const QString NEWS_COLOR_SEPARATOR = Tokens::Colors::Border;      // 分隔线
+    const QString NEWS_COLOR_HOVER_BG = Tokens::Colors::BgHover; // 悬停背景
 }
 
 // ============================================================================
@@ -84,7 +84,7 @@ void NewsCardWidget::setupUI()
             border: 1px solid %2;
             border-radius: 8px;
         }
-    )").arg(COLOR_BG_CARD, COLOR_SEPARATOR));
+    )").arg(NEWS_COLOR_BG_CARD, NEWS_COLOR_SEPARATOR));
     
     // 添加阴影效果
     auto* shadow = new QGraphicsDropShadowEffect(this);
@@ -107,14 +107,14 @@ void NewsCardWidget::setupUI()
     m_titleLabel = new QLabel(m_data.title);
     m_titleLabel->setStyleSheet(QString(
         "QLabel { color: %1; font-size: 15px; font-weight: bold; }"
-    ).arg(COLOR_TEXT_TITLE));
+    ).arg(NEWS_COLOR_TEXT_TITLE));
     m_titleLabel->setWordWrap(true);
     titleRow->addWidget(m_titleLabel, 1);
     
     m_timeLabel = new QLabel(formatTime(m_data.publishTime));
     m_timeLabel->setStyleSheet(QString(
         "QLabel { color: %1; font-size: 12px; }"
-    ).arg(COLOR_TEXT_META));
+    ).arg(NEWS_COLOR_TEXT_META));
     m_timeLabel->setAlignment(Qt::AlignTop | Qt::AlignRight);
     titleRow->addWidget(m_timeLabel);
     
@@ -131,7 +131,7 @@ void NewsCardWidget::setupUI()
     m_sourceLabel = new QLabel(sourceText);
     m_sourceLabel->setStyleSheet(QString(
         "QLabel { color: %1; font-size: 12px; }"
-    ).arg(COLOR_TEXT_META));
+    ).arg(NEWS_COLOR_TEXT_META));
     metaRow->addWidget(m_sourceLabel, 1);
     
     m_detailBtn = new QPushButton(QStringLiteral("详情"));
@@ -151,7 +151,7 @@ void NewsCardWidget::setupUI()
     m_summaryLabel->setText(summaryText);
     m_summaryLabel->setStyleSheet(QString(
         "QLabel { color: %1; font-size: 13px; line-height: 1.5; }"
-    ).arg(COLOR_TEXT_SUMMARY));
+    ).arg(NEWS_COLOR_TEXT_SUMMARY));
     m_summaryLabel->setWordWrap(true);
     m_summaryLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     mainLayout->addWidget(m_summaryLabel);
@@ -161,7 +161,7 @@ void NewsCardWidget::setupUI()
     m_separator->setFrameShape(QFrame::HLine);
     m_separator->setStyleSheet(QString(
         "QFrame { background-color: %1; border: none; max-height: 1px; }"
-    ).arg(COLOR_SEPARATOR));
+    ).arg(NEWS_COLOR_SEPARATOR));
     mainLayout->addWidget(m_separator);
 }
 
@@ -186,7 +186,7 @@ QString NewsCardWidget::highlightNumbersInText(const QString& text, const QStrin
     for (const auto& num : numbers) {
         // 使用富文本标记高亮数字
         result.replace(num, QString("<span style='color: %1; font-weight: bold;'>%2</span>")
-            .arg(COLOR_HIGHLIGHT, num));
+            .arg(NEWS_COLOR_HIGHLIGHT, num));
     }
     return result;
 }
@@ -208,7 +208,7 @@ void NewsCardWidget::enterEvent(QEnterEvent* event)
             border: 1px solid %2;
             border-radius: 8px;
         }
-    )").arg(COLOR_BG_CARD, COLOR_CATEGORY_ACTIVE));
+    )").arg(NEWS_COLOR_BG_CARD, NEWS_COLOR_CATEGORY_ACTIVE));
 }
 
 void NewsCardWidget::leaveEvent(QEvent* event)
@@ -220,7 +220,7 @@ void NewsCardWidget::leaveEvent(QEvent* event)
             border: 1px solid %2;
             border-radius: 8px;
         }
-    )").arg(COLOR_BG_CARD, COLOR_SEPARATOR));
+    )").arg(NEWS_COLOR_BG_CARD, NEWS_COLOR_SEPARATOR));
 }
 
 // ============================================================================
@@ -283,7 +283,7 @@ void NewsPage::setupDataHubSubscriptions()
     QStringList categories = {"要闻", "研报", "公告", "快讯"};
     for (const QString& category : categories) {
         dataHub().subscribe(this, QString("news:category:%1").arg(category),
-            [this, category](const QString&, const QVariant& value) {
+            [this, category](const QVariant& value) {
                 Q_UNUSED(value)
                 Q_UNUSED(category)
                 // 更新对应分类的新闻列表
@@ -297,7 +297,7 @@ void NewsPage::setupDataHubSubscriptions()
 void NewsPage::setupUI()
 {
     // 全局背景
-    setStyleSheet(QString("QWidget { background-color: %1; }").arg(COLOR_BG_GLOBAL));
+    setStyleSheet(QString("QWidget { background-color: %1; }").arg(NEWS_COLOR_BG_GLOBAL));
     
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
@@ -315,7 +315,7 @@ void NewsPage::setupCategoryBar()
     auto* categoryBar = new QFrame();
     categoryBar->setStyleSheet(QString(
         "QFrame { background-color: %1; border-bottom: 1px solid %2; }"
-    ).arg(COLOR_BG_CARD, COLOR_SEPARATOR));
+    ).arg(NEWS_COLOR_BG_CARD, NEWS_COLOR_SEPARATOR));
     categoryBar->setFixedHeight(48);
     
     auto* barLayout = new QHBoxLayout(categoryBar);
@@ -325,7 +325,7 @@ void NewsPage::setupCategoryBar()
     // 页面标题
     auto* titleLabel = new QLabel(QStringLiteral("新闻资讯"));
     titleLabel->setStyleSheet(QString("font-size: 18px; font-weight: bold; color: %1;")
-        .arg(COLOR_TEXT_TITLE));
+        .arg(NEWS_COLOR_TEXT_TITLE));
     barLayout->addWidget(titleLabel);
 
     barLayout->addSpacing(20);
@@ -353,7 +353,7 @@ void NewsPage::setupCategoryBar()
                 padding: 4px 16px;
                 font-size: 13px;
             }
-        )").arg(COLOR_CATEGORY_ACTIVE);
+        )").arg(NEWS_COLOR_CATEGORY_ACTIVE);
         
         QString normalStyle = QString(R"(
             QPushButton {
@@ -368,7 +368,7 @@ void NewsPage::setupCategoryBar()
                 background-color: %3;
                 border-color: %4;
             }
-        )").arg(COLOR_TEXT_META, COLOR_SEPARATOR, COLOR_HOVER_BG, COLOR_CATEGORY_ACTIVE);
+        )").arg(NEWS_COLOR_TEXT_META, NEWS_COLOR_SEPARATOR, NEWS_COLOR_HOVER_BG, NEWS_COLOR_CATEGORY_ACTIVE);
         
         btn->setStyleSheet(btn->isChecked() ? activeStyle : normalStyle);
         
@@ -409,10 +409,10 @@ void NewsPage::setupScrollArea()
         "QScrollBar:vertical { width: 8px; background-color: transparent; }"
         "QScrollBar::handle:vertical { background-color: %2; border-radius: 4px; min-height: 40px; }"
         "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }"
-    ).arg(COLOR_BG_GLOBAL, Tokens::Colors::Border));
+    ).arg(NEWS_COLOR_BG_GLOBAL, Tokens::Colors::Border));
     
     d->scrollContent = new QWidget();
-    d->scrollContent->setStyleSheet(QString("QWidget { background-color: %1; }").arg(COLOR_BG_GLOBAL));
+    d->scrollContent->setStyleSheet(QString("QWidget { background-color: %1; }").arg(NEWS_COLOR_BG_GLOBAL));
     
     d->cardsLayout = new QVBoxLayout(d->scrollContent);
     d->cardsLayout->setContentsMargins(16, 16, 16, 16);
@@ -563,7 +563,7 @@ void NewsPage::showDetailDialog(const NewsCardData& data)
         QLabel {
             color: %2;
         }
-    )").arg(COLOR_BG_CARD, COLOR_TEXT_TITLE));
+    )").arg(NEWS_COLOR_BG_CARD, NEWS_COLOR_TEXT_TITLE));
     
     auto* layout = new QVBoxLayout(dialog);
     layout->setContentsMargins(20, 20, 20, 20);
@@ -573,7 +573,7 @@ void NewsPage::showDetailDialog(const NewsCardData& data)
     auto* titleLabel = new QLabel(data.title);
     titleLabel->setStyleSheet(QString(
         "QLabel { font-size: 16px; font-weight: bold; color: %1; }"
-    ).arg(COLOR_TEXT_TITLE));
+    ).arg(NEWS_COLOR_TEXT_TITLE));
     titleLabel->setWordWrap(true);
     layout->addWidget(titleLabel);
     
@@ -583,7 +583,7 @@ void NewsPage::showDetailDialog(const NewsCardData& data)
     auto* metaLabel = new QLabel(metaText);
     metaLabel->setStyleSheet(QString(
         "QLabel { font-size: 12px; color: %1; }"
-    ).arg(COLOR_TEXT_META));
+    ).arg(NEWS_COLOR_TEXT_META));
     layout->addWidget(metaLabel);
     
     // 内容
@@ -597,7 +597,7 @@ void NewsPage::showDetailDialog(const NewsCardData& data)
             font-size: 13px;
             color: %3;
         }
-    )").arg(COLOR_BG_GLOBAL, COLOR_SEPARATOR, COLOR_TEXT_SUMMARY));
+    )").arg(NEWS_COLOR_BG_GLOBAL, NEWS_COLOR_SEPARATOR, NEWS_COLOR_TEXT_SUMMARY));
     contentBrowser->setPlainText(data.fullContent.isEmpty() ? data.summary : data.fullContent);
     contentBrowser->setOpenExternalLinks(true);
     layout->addWidget(contentBrowser);
@@ -607,7 +607,7 @@ void NewsPage::showDetailDialog(const NewsCardData& data)
     buttonBox->setStyleSheet(QString(
         "QPushButton { padding: 8px 24px; border-radius: 4px; background-color: %1; color: white; border: none; }"
         "QPushButton:hover { background-color: %2; }"
-    ).arg(COLOR_CATEGORY_ACTIVE, Tokens::Colors::PrimaryHover));
+    ).arg(NEWS_COLOR_CATEGORY_ACTIVE, Tokens::Colors::PrimaryHover));
     connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::close);
     layout->addWidget(buttonBox);
     

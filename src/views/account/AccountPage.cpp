@@ -60,21 +60,21 @@ void AccountPage::setupDataHubSubscriptions()
 {
     // 订阅账户余额
     dataHub().subscribe(this, "account:balance",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新账户余额显示
         });
     
     // 订阅账户设置
     dataHub().subscribe(this, "account:settings",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新账户设置显示
         });
     
     // 订阅账户交易统计
     dataHub().subscribe(this, "account:stats",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新交易统计
         });

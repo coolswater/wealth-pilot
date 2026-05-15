@@ -92,7 +92,7 @@ struct FuturesKLinePage::Impl {
 // ============================================================================
 
 FuturesKLinePage::FuturesKLinePage(QWidget *parent)
-    : BasePage(parent)
+    : DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
     setupUI();

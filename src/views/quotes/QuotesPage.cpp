@@ -114,7 +114,6 @@ namespace WealthPilot
         int index = m_tabWidget->currentIndex();
         return m_marketIndexMap.key(index, QString());
     }
-    }
 
     void QuotesPage::switchToMarket(const QString& market)
     {
@@ -217,5 +216,18 @@ namespace WealthPilot
                         emit navigateToKLinePage(symbol, symbol);
                     });
         }
+        
+        // 连接 Tab 切换信号
+        if (m_tabWidget)
+        {
+            connect(m_tabWidget, &QTabWidget::currentChanged, this, &QuotesPage::onTabChanged);
+        }
+    }
+    
+    void QuotesPage::onTabChanged(int index)
+    {
+        // 更新当前市场
+        m_currentMarket = getCurrentMarket();
+        LOG_DEBUG(QString("Tab changed to index %1, market: %2").arg(index).arg(m_currentMarket));
     }
 } // namespace WealthPilot

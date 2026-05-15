@@ -23,6 +23,12 @@
 #include "market/NewsDataSource.h"  // 使用已有的 NewsItem 定义
 #include "core/types/MarketTypes.h" // KLineData 定义
 
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::KLineData;
+using WealthPilot::TimeShareData;
+using WealthPilot::StockQuote;
+using WealthPilot::MarketSnapshot;
+
 // ============================================================================
 // 数据结构定义
 // ============================================================================

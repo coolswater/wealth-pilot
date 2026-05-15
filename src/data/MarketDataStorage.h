@@ -26,12 +26,13 @@
 #include <QDateTime>
 #include <memory>
 #include <functional>
+#include "core/types/MarketTypes.h"  // 使用完整的类型定义
 
-// 前向声明
-struct StockQuote;
-struct ForexQuote;
-struct CryptoQuote;
-struct FundQuote;
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::StockQuote;
+using WealthPilot::ForexQuote;
+using WealthPilot::CryptoQuote;
+using WealthPilot::FundQuote;
 
 /**
  * @brief 数据类型枚举

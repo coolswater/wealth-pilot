@@ -19,7 +19,7 @@
 namespace WealthPilot {
 
 TradeHistoryPage::TradeHistoryPage(QWidget* parent)
-    : BasePage(parent)
+    : DataHubPageBase(parent)
     , m_table(new QTableWidget(this))
     , m_refreshBtn(new QPushButton(QStringLiteral("刷新"), this))
     , m_exportBtn(new QPushButton(QStringLiteral("导出"), this))
@@ -65,7 +65,7 @@ void TradeHistoryPage::setupDataHubSubscriptions()
 {
     // 订阅交易记录
     dataHub().subscribe(this, "trade:history",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新交易记录列表
             updateTable();
@@ -73,7 +73,7 @@ void TradeHistoryPage::setupDataHubSubscriptions()
     
     // 订阅新成交
     dataHub().subscribe(this, "trade:new",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 添加新成交记录
         });

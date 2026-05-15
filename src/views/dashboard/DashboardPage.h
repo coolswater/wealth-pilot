@@ -28,6 +28,13 @@
 #define DASHBOARDPAGE_H
 
 #include <ui/components/DataHubPageBase.h>
+#include "core/types/MarketTypes.h"
+
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::StockQuote;
+using WealthPilot::KLineData;
+using WealthPilot::TimeShareData;
+using WealthPilot::MarketSnapshot;
 #include <QTableView>
 #include <QAbstractTableModel>
 #include <memory>
@@ -359,6 +366,7 @@ private:
     // ========== UI 更新 ==========
 
     void updateTheme();             ///< 主题切换更新
+    void updateRealTimeData();      ///< 实时数据更新
     void updateIndexDisplay();
     void updateSectorHeatmap();
 
@@ -366,6 +374,9 @@ private:
 
     void processIndexQuotes(const QVector<StockQuote>& quotes);
     void processRankQuotes(const QVector<StockQuote>& quotes);
+    void onIndexQuotesReceived(const QVector<StockQuote>& quotes);
+    void onRankQuotesReceived(const QVector<StockQuote>& quotes);
+    void onWatchlistQuotesReceived(const QVector<StockQuote>& quotes);
     QVector<StockRankData> filterTopGainers(const QVector<StockQuote>& quotes, int count);
     QVector<StockRankData> filterTopLosers(const QVector<StockQuote>& quotes, int count);
 

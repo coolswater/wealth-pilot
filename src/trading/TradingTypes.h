@@ -27,6 +27,10 @@
 // 包含市场类型定义，避免重复定义
 #include "core/types/MarketTypes.h"
 
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::TradeDirection;
+using WealthPilot::OrderStatus;
+
 // ============================================================================
 // 枚举定义（扩展 MarketTypes.h 中的定义）
 // ============================================================================

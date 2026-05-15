@@ -22,11 +22,18 @@
 #include <QVector>
 #include "core/types/MarketTypes.h"
 
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::StockQuote;
+using WealthPilot::KLinePeriod;
+using WealthPilot::KLineData;
+using WealthPilot::TimeShareData;
+
 /**
- * @brief 股票行情数据
+ * @brief 旧版股票行情数据（兼容适配器）
+ * @note 用于解析第三方 API 数据，然后转换为 WealthPilot::StockQuote
  */
-struct StockQuote {
-    QString symbol;             ///< 股票代码（如 sh600000）
+struct StockQuoteApiData {
+    QString symbol;             ///< 股票代码
     QString name;               ///< 股票名称
     double lastPrice = 0.0;     ///< 最新价
     double openPrice = 0.0;     ///< 开盘价
@@ -60,6 +67,34 @@ struct StockQuote {
     qint64 innerVolume = 0;    ///< 内盘
 
     bool isValid() const { return !symbol.isEmpty() && lastPrice > 0; }
+
+    /**
+     * @brief 转换为 WealthPilot::StockQuote
+     */
+    WealthPilot::StockQuote toStockQuote() const {
+        WealthPilot::StockQuote quote;
+        quote.symbol = symbol;
+        quote.name = name;
+        quote.price = lastPrice;
+        quote.open = openPrice;
+        quote.high = highPrice;
+        quote.low = lowPrice;
+        quote.prevClose = preClose;
+        quote.volume = volume;
+        quote.amount = turnover;
+        quote.change = changeAmount;
+        quote.changePercent = changePercent;
+        quote.updateTime = updateTime;
+        quote.upperLimit = limitUp;
+        quote.lowerLimit = limitDown;
+        for (int i = 0; i < 5; ++i) {
+            quote.bidPrice[i] = bidPrice[i];
+            quote.bidVolume[i] = bidVolume[i];
+            quote.askPrice[i] = askPrice[i];
+            quote.askVolume[i] = askVolume[i];
+        }
+        return quote;
+    }
 };
 
 // TimeShareData 已在 core/types/MarketTypes.h 中定义
@@ -126,7 +161,7 @@ public:
     /**
      * @brief 获取缓存行情
      */
-    StockQuote getCachedQuote(const QString &symbol) const;
+    WealthPilot::StockQuote getCachedQuote(const QString &symbol) const;
 
     /**
      * @brief 启动实时行情推送
@@ -152,10 +187,10 @@ public:
     void stopAutoRefresh();
 
 signals:
-    void quotesReceived(const QVector<StockQuote> &quotes);
-    void kLineReceived(const QString &symbol, const QVector<KLineData> &data);
-    void timeShareReceived(const QString &symbol, const QVector<TimeShareData> &data);
-    void realtimeQuoteReceived(const QString &symbol, const StockQuote &quote);
+    void quotesReceived(const QVector<WealthPilot::StockQuote> &quotes);
+    void kLineReceived(const QString &symbol, const QVector<WealthPilot::KLineData> &data);
+    void timeShareReceived(const QString &symbol, const QVector<WealthPilot::TimeShareData> &data);
+    void realtimeQuoteReceived(const QString &symbol, const WealthPilot::StockQuote &quote);
     void realtimeKLineUpdate(const QString &symbol, const RealtimeKLineUpdate &update);
     void stockListReceived(const QStringList &symbols);
     void errorOccurred(const QString &error);

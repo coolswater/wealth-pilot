@@ -24,6 +24,11 @@
 #include <memory>
 #include "core/types/MarketTypes.h"  // 使用统一的类型定义
 
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::KLineData;
+using WealthPilot::TimeShareData;
+using WealthPilot::KLinePeriod;
+
 /**
  * @brief 主图指标类型
  */

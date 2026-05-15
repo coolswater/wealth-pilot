@@ -4,7 +4,7 @@
  */
 
 #include <QtTest/QtTest>
-#include "../src/core/ServiceLocator.h"
+#include "../src/core/di/ServiceLocator.h"
 
 class TestService : public QObject
 {

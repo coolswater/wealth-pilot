@@ -90,7 +90,7 @@ void SettingsPage::setupDataHubSubscriptions()
 {
     // 订阅设置变更
     dataHub().subscribe(this, "settings:changed",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 重新加载设置
             loadSettings();
@@ -98,14 +98,14 @@ void SettingsPage::setupDataHubSubscriptions()
     
     // 订阅主题变更
     dataHub().subscribe(this, "settings:theme",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新主题设置显示
         });
     
     // 订阅 AI 配置变更
     dataHub().subscribe(this, "settings:ai",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新 AI 配置显示
         });

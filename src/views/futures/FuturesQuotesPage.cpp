@@ -1183,5 +1183,12 @@ void FuturesQuotesPage::initializeSampleData()
     }
 }
 
+void FuturesQuotesPage::onRefreshData()
+{
+    // 刷新数据 - 触发重新订阅
+    // TODO: 实现实际的数据刷新逻辑
+    LOG_INFO("FuturesQuotesPage data refresh requested");
+}
+
 
 } // namespace WealthPilot

@@ -115,13 +115,13 @@ private slots:
 
     void onCtpMarketDataReceived(const CTP::MarketData& data);
     void onMarketDataUpdated(const MarketData& data);
-    void onKLineDataReceived(const QVector<KLineData>& data);
+    void onKLineDataReceived(const QVector<WealthPilot::KLineData>& data);
     void onTickReceived(const QString& time, double price, int volume, const QString& flag);
 
     // ========== 工具栏槽 ==========
 
-    void onPeriodChanged(KLinePeriod period);
-    void onAdjustmentChanged(AdjustmentType type);
+    void onPeriodChanged(WealthPilot::KLinePeriod period);
+    void onAdjustmentChanged(WealthPilot::AdjustmentType type);
     void onMainIndicatorChanged(const QString& indicator);
     void onSubIndicatorChanged(const QString& indicator);
     void onDrawToolSelected(const QString& tool);

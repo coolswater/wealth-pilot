@@ -81,7 +81,7 @@ void CryptoPage::setupDataHubSubscriptions()
     QStringList symbols = {"BTC", "ETH", "BNB", "SOL", "XRP"};
     for (const QString& symbol : symbols) {
         dataHub().subscribe(this, QString("market:crypto:%1").arg(symbol),
-            [this, symbol](const QString&, const QVariant& value) {
+            [this, symbol](const QVariant& value) {
                 Q_UNUSED(symbol)
                 Q_UNUSED(value)
                 // 更新价格

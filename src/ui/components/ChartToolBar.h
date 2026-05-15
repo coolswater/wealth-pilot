@@ -21,6 +21,10 @@
 #include <memory>
 #include "core/types/MarketTypes.h"  // 使用统一的类型定义
 
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::KLinePeriod;
+using WealthPilot::AdjustmentType;
+
 // 前向声明
 class QComboBox;
 class QToolButton;

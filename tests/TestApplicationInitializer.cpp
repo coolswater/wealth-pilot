@@ -4,9 +4,9 @@
  */
 
 #include <QtTest/QtTest>
-#include "../src/core/ApplicationInitializer.h"
-#include "../src/core/CacheManager.h"
-#include "../src/core/ServiceLocator.h"
+#include "../src/app/ApplicationInitializer.h"
+#include "../src/core/cache/CacheManager.h"
+#include "../src/core/di/ServiceLocator.h"
 
 class TestApplicationInitializer : public QObject
 {
@@ -56,7 +56,7 @@ private slots:
         QVERIFY(result);
         
         // 验证核心模块已初始化
-        QVERIFY(CacheManager::instance().statistics().itemCount >= 0);
+        QVERIFY(CacheManager::instance()->statistics().itemCount >= 0);
     }
 
     void testPerformance()

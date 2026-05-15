@@ -5,9 +5,10 @@
 
 #include <QtTest/QtTest>
 #include <QElapsedTimer>
-#include "../src/core/CacheManager.h"
-#include "../src/core/ServiceLocator.h"
-#include "../src/core/AsyncTaskManager.h"
+#include <QRandomGenerator>
+#include "../src/core/cache/CacheManager.h"
+#include "../src/core/di/ServiceLocator.h"
+#include "../src/core/task/AsyncTaskManager.h"
 #include "../src/utils/TechnicalIndicators.h"
 
 class PerformanceTest : public QObject
@@ -17,14 +18,14 @@ class PerformanceTest : public QObject
 private slots:
     void initTestCase()
     {
-        CacheManager::instance().initialize(100 * 1024 * 1024, 1024 * 1024 * 1024);
+        CacheManager::instance()->initialize(100 * 1024 * 1024, 1024 * 1024 * 1024);
         AsyncTaskManager::instance().initialize(QThread::idealThreadCount());
         qDebug() << "Performance Test Suite Started";
     }
 
     void cleanupTestCase()
     {
-        CacheManager::instance().clearAll();
+        CacheManager::instance()->clearAll();
         qDebug() << "Performance Test Suite Completed";
     }
 
@@ -40,13 +41,13 @@ private slots:
         QList<int> counts = {100, 1000, 10000};
         
         for (int count : counts) {
-            CacheManager::instance().clearAll();
+            CacheManager::instance()->clearAll();
             timer.start();
             
             for (int i = 0; i < count; ++i) {
                 QString key = QString("key_%1").arg(i);
                 QString value = QString("value_%1_%2").arg(i).arg(QString(100, 'x'));
-                CacheManager::instance().set(key, value, 60, CacheLevel::L1_Memory);
+                CacheManager::instance()->set(key, value, 60, CacheLevel::L1_Memory);
             }
             
             qint64 elapsed = timer.elapsed();
@@ -68,7 +69,7 @@ private slots:
         int count = 10000;
         for (int i = 0; i < count; ++i) {
             QString key = QString("read_key_%1").arg(i);
-            CacheManager::instance().set(key, QString("value_%1").arg(i), 60, CacheLevel::L1_Memory);
+            CacheManager::instance()->set(key, QString("value_%1").arg(i), 60, CacheLevel::L1_Memory);
         }
         
         QElapsedTimer timer;
@@ -77,7 +78,7 @@ private slots:
         timer.start();
         for (int i = 0; i < count; ++i) {
             QString key = QString("read_key_%1").arg(i);
-            CacheManager::instance().get(key);
+            CacheManager::instance()->get(key);
         }
         
         qint64 elapsed = timer.elapsed();
@@ -94,24 +95,24 @@ private slots:
     {
         qDebug() << "\n=== Cache Hit Rate ===";
         
-        CacheManager::instance().clearAll();
+        CacheManager::instance()->clearAll();
         
         // 设置100个缓存项
         for (int i = 0; i < 100; ++i) {
-            CacheManager::instance().set(QString("hit_key_%1").arg(i), i, 60, CacheLevel::L1_Memory);
+            CacheManager::instance()->set(QString("hit_key_%1").arg(i), i, 60, CacheLevel::L1_Memory);
         }
         
         // 访问存在的缓存（命中）
         for (int i = 0; i < 100; ++i) {
-            CacheManager::instance().get(QString("hit_key_%1").arg(i));
+            CacheManager::instance()->get(QString("hit_key_%1").arg(i));
         }
         
         // 访问不存在的缓存（未命中）
         for (int i = 0; i < 50; ++i) {
-            CacheManager::instance().get(QString("miss_key_%1").arg(i));
+            CacheManager::instance()->get(QString("miss_key_%1").arg(i));
         }
         
-        CacheStats stats = CacheManager::instance().statistics();
+        CacheStats stats = CacheManager::instance()->statistics();
         qDebug() << QString("Hits: %1, Misses: %2, Hit Rate: %3%")
             .arg(stats.totalHits).arg(stats.totalMisses).arg(stats.hitRate * 100, 0, 'f', 1);
         
@@ -128,8 +129,9 @@ private slots:
         // 生成测试数据
         int dataSize = 10000;
         QVector<double> data(dataSize);
+        QRandomGenerator rng(42);
         for (int i = 0; i < dataSize; ++i) {
-            data[i] = 100.0 + qSin(i * 0.1) * 10.0 + (qrand() % 100) / 100.0;
+            data[i] = 100.0 + qSin(i * 0.1) * 10.0 + rng.bounded(100) / 100.0;
         }
         
         QElapsedTimer timer;
@@ -207,7 +209,7 @@ private slots:
     {
         qDebug() << "\n=== Memory Usage ===";
         
-        CacheManager::instance().clearAll();
+        CacheManager::instance()->clearAll();
         
         // 设置大量缓存
         int itemCount = 10000;
@@ -216,10 +218,10 @@ private slots:
         for (int i = 0; i < itemCount; ++i) {
             QString key = QString("mem_key_%1").arg(i);
             QString value(itemSize, 'x');
-            CacheManager::instance().set(key, value, 60, CacheLevel::L1_Memory);
+            CacheManager::instance()->set(key, value, 60, CacheLevel::L1_Memory);
         }
         
-        CacheStats stats = CacheManager::instance().statistics();
+        CacheStats stats = CacheManager::instance()->statistics();
         double memoryMB = stats.memoryUsage / 1024.0 / 1024.0;
         
         qDebug() << QString("Memory usage: %1 MB for %2 items (%3 KB/item)")
@@ -243,7 +245,7 @@ private slots:
         
         // 1. 缓存操作
         for (int i = 0; i < 1000; ++i) {
-            CacheManager::instance().set(QString("overall_%1").arg(i), i, 60, CacheLevel::L1_Memory);
+            CacheManager::instance()->set(QString("overall_%1").arg(i), i, 60, CacheLevel::L1_Memory);
         }
         qint64 cacheTime = timer.elapsed();
         

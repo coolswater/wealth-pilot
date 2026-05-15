@@ -93,7 +93,7 @@ void ForexPage::setupDataHubSubscriptions()
     QStringList pairs = {"USD/CNY", "EUR/USD", "GBP/USD", "USD/JPY"};
     for (const QString& pair : pairs) {
         dataHub().subscribe(this, QString("market:forex:%1").arg(pair),
-            [this, pair](const QString&, const QVariant& value) {
+            [this, pair](const QVariant& value) {
                 Q_UNUSED(pair)
                 Q_UNUSED(value)
                 // 更新汇率

@@ -13,6 +13,10 @@
 #include <QVector>
 #include "market/StockDataSource.h"
 
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::StockQuote;
+using WealthPilot::TickData;
+
 /**
  * @brief 股票信息面板
  */

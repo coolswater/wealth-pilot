@@ -21,6 +21,12 @@
 #include <memory>
 #include "ui/components/DataHubPageBase.h"
 #include "market/StockDataSource.h"
+#include "core/types/MarketTypes.h"
+
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::StockQuote;
+using WealthPilot::KLineData;
+using WealthPilot::TimeShareData;
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -178,6 +184,11 @@ public slots:
      * @param name 股票名称（可选）
      */
     void addStock(const QString& symbol, const QString& name = QString());
+
+    /**
+     * @brief 行情数据接收槽函数
+     */
+    void onQuotesReceived(const QVector<StockQuote>& quotes);
 
 signals:
     /**

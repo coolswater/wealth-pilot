@@ -40,7 +40,7 @@ struct StockKLinePage::Impl {
 };
 
 StockKLinePage::StockKLinePage(QWidget* parent)
-    : BasePage(parent)
+    : WealthPilot::DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
     setupUI();
@@ -48,6 +48,51 @@ StockKLinePage::StockKLinePage(QWidget* parent)
 }
 
 StockKLinePage::~StockKLinePage() = default;
+
+void StockKLinePage::initializePage()
+{
+    if (isInitialized())
+    {
+        return;
+    }
+    
+    // 设置 DataHub 订阅
+    setupDataHubSubscriptions();
+    
+    // 加载初始数据
+    if (!m_stockCode.isEmpty())
+    {
+        loadDataWithFallback();
+    }
+    
+    setInitialized(true);
+    LOG_INFO("StockKLinePage initialized");
+}
+
+void StockKLinePage::setupDataHubSubscriptions()
+{
+    // 订阅K线数据
+    if (!m_stockCode.isEmpty()) {
+        QString topic = QString("market:kline:%1:%2").arg(m_stockCode, QString::number(static_cast<int>(m_period)));
+        dataHub().subscribe(this, topic,
+            [this](const QVariant& value) {
+                Q_UNUSED(value)
+                // K线数据更新
+            });
+    }
+    
+    // 订阅实时行情
+    if (!m_stockCode.isEmpty()) {
+        QString quoteTopic = QString("market:quote:%1").arg(m_stockCode);
+        dataHub().subscribe(this, quoteTopic,
+            [this](const QVariant& value) {
+                Q_UNUSED(value)
+                // 实时行情更新
+            });
+    }
+    
+    LOG_INFO("StockKLinePage DataHub subscriptions setup complete");
+}
 
 void StockKLinePage::setStock(const QString& stockCode, const QString& stockName)
 {
@@ -1126,7 +1171,7 @@ void StockKLinePage::runPerformanceBenchmark(int iterations)
     }
     
     // 测试 Widgets 渲染性能
-    PerformanceStats widgetsStats;
+    KLinePerformanceStats widgetsStats;
     widgetsStats.engineName = QStringLiteral("Widgets");
     
     QElapsedTimer timer;
@@ -1142,7 +1187,7 @@ void StockKLinePage::runPerformanceBenchmark(int iterations)
     widgetsStats.renderTimeMs = totalWidgetsTime / iterations;
     
     // 测试 QML 渲染性能
-    PerformanceStats qmlStats;
+    KLinePerformanceStats qmlStats;
     qmlStats.engineName = QStringLiteral("QML");
     
     qint64 totalQmlTime = 0;

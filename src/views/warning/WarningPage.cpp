@@ -15,6 +15,7 @@
 #include "WarningPage.h"
 #include "core/config/Tokens.h"
 #include "ui/components/StyleHelper.h"
+#include "utils/Logger.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -51,21 +52,21 @@ void WarningPage::setupDataHubSubscriptions()
 {
     // 订阅预警消息
     dataHub().subscribe(this, "warning:messages",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新预警消息列表
         });
     
     // 订阅预警历史
     dataHub().subscribe(this, "warning:history",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新预警历史
         });
     
     // 订阅预警触发
     dataHub().subscribe(this, "warning:triggered",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 处理预警触发
         });

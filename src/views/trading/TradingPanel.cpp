@@ -14,6 +14,7 @@
 
 TradingPanel::TradingPanel(QWidget *parent)
     : QWidget(parent)
+    , m_dataHub(DataHubNS::DataHub::instance())
     , m_orderDialog(new OrderDialog(this))
 {
     initUI();

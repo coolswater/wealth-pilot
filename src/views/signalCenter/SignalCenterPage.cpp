@@ -34,16 +34,17 @@ using namespace Tokens;
 // 颜色常量
 // ============================================================================
 namespace {
-    const QString COLOR_BG_GLOBAL = Colors::BgBase;
-    const QString COLOR_BG_CARD = Colors::BgElevated;
-    const QString COLOR_TEXT_TITLE = Colors::TextPrimary;
-    const QString COLOR_TEXT_META = Colors::TextSecondary;
-    const QString COLOR_TEXT_VALUE = Colors::TextPrimary;
-    const QString COLOR_SUCCESS = Colors::Success;
-    const QString COLOR_DANGER = Colors::Danger;
-    const QString COLOR_PRIMARY = Colors::Primary;
-    const QString COLOR_SEPARATOR = Colors::Border;
-    const QString COLOR_HOVER_BG = Colors::BgHover;
+    // SignalCenterPage 专用颜色常量
+    const QString SIG_COLOR_BG_GLOBAL = Colors::BgBase;
+    const QString SIG_COLOR_BG_CARD = Colors::BgElevated;
+    const QString SIG_COLOR_TEXT_TITLE = Colors::TextPrimary;
+    const QString SIG_COLOR_TEXT_META = Colors::TextSecondary;
+    const QString SIG_COLOR_TEXT_VALUE = Colors::TextPrimary;
+    const QString SIG_COLOR_SUCCESS = Colors::Success;
+    const QString SIG_COLOR_DANGER = Colors::Danger;
+    const QString SIG_COLOR_PRIMARY = Colors::Primary;
+    const QString SIG_COLOR_SEPARATOR = Colors::Border;
+    const QString SIG_COLOR_HOVER_BG = Colors::BgHover;
 }
 
 // ============================================================================
@@ -105,7 +106,7 @@ private:
                 QPushButton:hover {
                     background-color: %2;
                 }
-            )").arg(COLOR_PRIMARY, Colors::PrimaryHover));
+            )").arg(SIG_COLOR_PRIMARY, Colors::PrimaryHover));
         } else {
             setStyleSheet(QString(R"(
                 QPushButton {
@@ -120,7 +121,7 @@ private:
                     background-color: %3;
                     border-color: %4;
                 }
-            )").arg(COLOR_TEXT_META, COLOR_SEPARATOR, COLOR_HOVER_BG, COLOR_PRIMARY));
+            )").arg(SIG_COLOR_TEXT_META, SIG_COLOR_SEPARATOR, SIG_COLOR_HOVER_BG, SIG_COLOR_PRIMARY));
         }
     }
 
@@ -178,7 +179,7 @@ void SignalMiniCard::setupUI()
             border: 1px solid %2;
             border-radius: 10px;
         }
-    )").arg(COLOR_BG_CARD, COLOR_SEPARATOR));
+    )").arg(SIG_COLOR_BG_CARD, SIG_COLOR_SEPARATOR));
 
     auto* shadow = new QGraphicsDropShadowEffect(this);
     shadow->setBlurRadius(12);
@@ -200,7 +201,7 @@ void SignalMiniCard::setupUI()
     m_nameLabel = new QLabel(m_data.name);
     m_nameLabel->setStyleSheet(QString(
         "QLabel { color: %1; font-size: 14px; font-weight: bold; }"
-    ).arg(COLOR_TEXT_TITLE));
+    ).arg(SIG_COLOR_TEXT_TITLE));
     m_nameLabel->setWordWrap(false);
     titleRow->addWidget(m_nameLabel, 1);
 
@@ -208,7 +209,7 @@ void SignalMiniCard::setupUI()
         QLabel* strategyLabel = new QLabel(m_data.strategy);
         strategyLabel->setStyleSheet(QString(
             "QLabel { color: %1; font-size: 10px; background: %2; padding: 2px 8px; border-radius: 4px; font-weight: 500; }"
-        ).arg(COLOR_PRIMARY, Colors::PrimaryLight));
+        ).arg(SIG_COLOR_PRIMARY, Colors::PrimaryLight));
         titleRow->addWidget(strategyLabel);
     }
 
@@ -221,7 +222,7 @@ void SignalMiniCard::setupUI()
     m_returnLabel = new QLabel(returnText);
     m_returnLabel->setStyleSheet(QString(
         "QLabel { color: %1; font-size: 26px; font-weight: bold; font-family: 'DIN Alternate', 'Consolas', monospace; }"
-    ).arg(m_data.returnRate >= 0 ? COLOR_SUCCESS : COLOR_DANGER));
+    ).arg(m_data.returnRate >= 0 ? SIG_COLOR_SUCCESS : SIG_COLOR_DANGER));
     mainLayout->addWidget(m_returnLabel);
 
     mainLayout->addStretch();
@@ -234,10 +235,10 @@ void SignalMiniCard::setupUI()
     auto* winRateBox = new QVBoxLayout();
     winRateBox->setSpacing(2);
     QLabel* winRateTitle = new QLabel(QStringLiteral("胜率"));
-    winRateTitle->setStyleSheet(QString("QLabel { color: %1; font-size: 11px; }").arg(COLOR_TEXT_META));
+    winRateTitle->setStyleSheet(QString("QLabel { color: %1; font-size: 11px; }").arg(SIG_COLOR_TEXT_META));
     winRateBox->addWidget(winRateTitle);
     m_winRateLabel = new QLabel(QString("%1%").arg(m_data.winRate));
-    m_winRateLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 14px; font-weight: 600; }").arg(COLOR_TEXT_VALUE));
+    m_winRateLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 14px; font-weight: 600; }").arg(SIG_COLOR_TEXT_VALUE));
     winRateBox->addWidget(m_winRateLabel);
     statsRow->addLayout(winRateBox);
 
@@ -245,10 +246,10 @@ void SignalMiniCard::setupUI()
     auto* followersBox = new QVBoxLayout();
     followersBox->setSpacing(2);
     QLabel* followersTitle = new QLabel(QStringLiteral("订阅"));
-    followersTitle->setStyleSheet(QString("QLabel { color: %1; font-size: 11px; }").arg(COLOR_TEXT_META));
+    followersTitle->setStyleSheet(QString("QLabel { color: %1; font-size: 11px; }").arg(SIG_COLOR_TEXT_META));
     followersBox->addWidget(followersTitle);
     m_followersLabel = new QLabel(QString::number(m_data.followers));
-    m_followersLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 14px; font-weight: 600; }").arg(COLOR_TEXT_VALUE));
+    m_followersLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 14px; font-weight: 600; }").arg(SIG_COLOR_TEXT_VALUE));
     followersBox->addWidget(m_followersLabel);
     statsRow->addLayout(followersBox);
 
@@ -288,7 +289,7 @@ void SignalMiniCard::setupUI()
             QPushButton:hover {
                 background-color: %2;
             }
-        )").arg(COLOR_PRIMARY, Colors::PrimaryHover));
+        )").arg(SIG_COLOR_PRIMARY, Colors::PrimaryHover));
     }
 
     connect(m_subscribeBtn, &QPushButton::clicked, this, [this]() {
@@ -320,7 +321,7 @@ void SignalMiniCard::enterEvent(QEnterEvent* event)
             border: 2px solid %2;
             border-radius: 10px;
         }
-    )").arg(COLOR_BG_CARD, COLOR_PRIMARY));
+    )").arg(SIG_COLOR_BG_CARD, SIG_COLOR_PRIMARY));
 }
 
 void SignalMiniCard::leaveEvent(QEvent* event)
@@ -332,7 +333,7 @@ void SignalMiniCard::leaveEvent(QEvent* event)
             border: 1px solid %2;
             border-radius: 10px;
         }
-    )").arg(COLOR_BG_CARD, COLOR_SEPARATOR));
+    )").arg(SIG_COLOR_BG_CARD, SIG_COLOR_SEPARATOR));
 }
 
 // ============================================================================
@@ -520,7 +521,7 @@ void SignalCenterPage::setupDataHubSubscriptions()
     
     // 订阅信号更新
     dataHub().subscribe(this, "signal:updates",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新信号状态
             updateCards();
@@ -531,7 +532,7 @@ void SignalCenterPage::setupDataHubSubscriptions()
 
 void SignalCenterPage::setupUI()
 {
-    setStyleSheet(QString("QWidget { background-color: %1; }").arg(COLOR_BG_GLOBAL));
+    setStyleSheet(QString("QWidget { background-color: %1; }").arg(SIG_COLOR_BG_GLOBAL));
 
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
@@ -547,7 +548,7 @@ void SignalCenterPage::setupCategoryBar()
     auto* categoryBar = new QFrame();
     categoryBar->setStyleSheet(QString(
         "QFrame { background-color: %1; border-bottom: 1px solid %2; }"
-    ).arg(COLOR_BG_CARD, COLOR_SEPARATOR));
+    ).arg(SIG_COLOR_BG_CARD, SIG_COLOR_SEPARATOR));
     categoryBar->setFixedHeight(52);
 
     auto* barLayout = new QHBoxLayout(categoryBar);
@@ -557,7 +558,7 @@ void SignalCenterPage::setupCategoryBar()
     // 页面标题
     auto* titleLabel = new QLabel(QStringLiteral("信号中心"));
     titleLabel->setStyleSheet(QString("font-size: 18px; font-weight: bold; color: %1;")
-        .arg(COLOR_TEXT_TITLE));
+        .arg(SIG_COLOR_TEXT_TITLE));
     barLayout->addWidget(titleLabel);
     barLayout->addSpacing(20);
 
@@ -586,7 +587,7 @@ void SignalCenterPage::setupCategoryBar()
                 font-size: 13px;
                 font-weight: 600;
             }
-        )").arg(COLOR_PRIMARY);
+        )").arg(SIG_COLOR_PRIMARY);
 
         QString normalStyle = QString(R"(
             QPushButton {
@@ -600,7 +601,7 @@ void SignalCenterPage::setupCategoryBar()
             QPushButton:hover {
                 background-color: %2;
             }
-        )").arg(COLOR_TEXT_META, COLOR_HOVER_BG);
+        )").arg(SIG_COLOR_TEXT_META, SIG_COLOR_HOVER_BG);
 
         btn->setStyleSheet(btn->isChecked() ? activeStyle : normalStyle);
 
@@ -632,7 +633,7 @@ void SignalCenterPage::setupToolBar()
     auto* toolBar = new QFrame();
     toolBar->setStyleSheet(QString(
         "QFrame { background-color: %1; border-bottom: 1px solid %2; }"
-    ).arg(COLOR_BG_GLOBAL, COLOR_SEPARATOR));
+    ).arg(SIG_COLOR_BG_GLOBAL, SIG_COLOR_SEPARATOR));
     toolBar->setFixedHeight(48);
 
     auto* barLayout = new QHBoxLayout(toolBar);
@@ -641,14 +642,14 @@ void SignalCenterPage::setupToolBar()
 
     // 数量标签
     d->countLabel = new QLabel(QStringLiteral("共 0 个信号"));
-    d->countLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 13px; }").arg(COLOR_TEXT_META));
+    d->countLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 13px; }").arg(SIG_COLOR_TEXT_META));
     barLayout->addWidget(d->countLabel);
 
     barLayout->addStretch();
 
     // 排序标签
     QLabel* sortLabel = new QLabel(QStringLiteral("排序:"));
-    sortLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 12px; }").arg(COLOR_TEXT_META));
+    sortLabel->setStyleSheet(QString("QLabel { color: %1; font-size: 12px; }").arg(SIG_COLOR_TEXT_META));
     barLayout->addWidget(sortLabel);
 
     // 收益率排序按钮
@@ -704,10 +705,10 @@ void SignalCenterPage::setupScrollArea()
         "QScrollBar:vertical { width: 8px; background-color: transparent; }"
         "QScrollBar::handle:vertical { background-color: %2; border-radius: 4px; min-height: 40px; }"
         "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }"
-    ).arg(COLOR_BG_GLOBAL, Tokens::Colors::Border));
+    ).arg(SIG_COLOR_BG_GLOBAL, Tokens::Colors::Border));
 
     d->scrollContent = new QWidget();
-    d->scrollContent->setStyleSheet(QString("QWidget { background-color: %1; }").arg(COLOR_BG_GLOBAL));
+    d->scrollContent->setStyleSheet(QString("QWidget { background-color: %1; }").arg(SIG_COLOR_BG_GLOBAL));
 
     auto* contentLayout = new QVBoxLayout(d->scrollContent);
     contentLayout->setContentsMargins(20, 20, 20, 20);

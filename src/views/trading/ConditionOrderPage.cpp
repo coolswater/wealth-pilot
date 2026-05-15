@@ -17,7 +17,7 @@
 namespace WealthPilot {
 
 ConditionOrderPage::ConditionOrderPage(QWidget* parent)
-    : BasePage(parent)
+    : DataHubPageBase(parent)
     , m_table(new QTableWidget(this))
     , m_addBtn(new QPushButton(QStringLiteral("添加"), this))
     , m_editBtn(new QPushButton(QStringLiteral("修改"), this))
@@ -50,7 +50,7 @@ void ConditionOrderPage::setupDataHubSubscriptions()
 {
     // 订阅条件单列表
     dataHub().subscribe(this, "condition:orders",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新条件单列表
             updateTable();
@@ -58,7 +58,7 @@ void ConditionOrderPage::setupDataHubSubscriptions()
     
     // 订阅条件触发事件
     dataHub().subscribe(this, "condition:triggered",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 条件单触发
             updateTable();

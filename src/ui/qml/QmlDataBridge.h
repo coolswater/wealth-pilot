@@ -21,6 +21,10 @@
 #include <QColor>
 #include "core/types/MarketTypes.h"  // 包含完整类型定义
 
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::KLineData;
+using WealthPilot::TimeShareData;
+
 // 前向声明不再需要，因为已包含 MarketTypes.h
 
 /**

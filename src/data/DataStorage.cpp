@@ -13,6 +13,12 @@
 #include <QDir>
 #include <QDateTime>
 
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::KLineData;
+using WealthPilot::KLinePeriod;
+using WealthPilot::StockQuote;
+using WealthPilot::MarketSnapshot;
+
 struct DataStorage::Impl {
     QSqlDatabase db;
     QString dbPath;

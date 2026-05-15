@@ -853,6 +853,10 @@ else ()
             -Wno-unused-parameter
             -Wno-unused-variable
     )
+    # MinGW Debug 模式需要 -Wa,-mbig-obj 避免大文件编译错误
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "")
+        target_compile_options(WealthPilot PRIVATE -Wa,-mbig-obj)
+    endif ()
 endif ()
 
 # ==================== 构建后操作 ====================

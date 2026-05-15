@@ -16,10 +16,18 @@
 
 #include "ui/components/BasePage.h"
 #include "core/datahub/DataHub.h"
+#include "core/types/MarketTypes.h"  // 直接包含类型定义
 #include <QVariant>
+#include <optional>
 
 namespace WealthPilot {
 namespace UI {
+
+// 前向声明
+using WealthPilot::StockQuote;
+using WealthPilot::MarketSnapshot;
+using WealthPilot::KLineData;
+using WealthPilot::TimeShareData;
 
 /**
  * @brief DataHub 页面基类
@@ -33,13 +41,13 @@ class DataHubPageBase : public BasePage
 
 public:
     explicit DataHubPageBase(QWidget* parent = nullptr);
-    ~DataHubPageBase() override;
+    virtual ~DataHubPageBase() override;
 
 protected:
     /**
      * @brief 获取 DataHub 实例
      */
-    DataHub::DataHub& dataHub() { return DataHub::DataHub::instance(); }
+    DataHub::DataHub& dataHub() const { return DataHub::DataHub::instance(); }
 
     /**
      * @brief 订阅 Topic
@@ -131,5 +139,12 @@ QMetaObject::Connection DataHubPageBase::subscribe(
 
 } // namespace UI
 } // namespace WealthPilot
+
+// ========== 命名空间别名 ==========
+// 为方便使用，在 WealthPilot 命名空间中添加别名
+namespace WealthPilot {
+    // 使用 DataHubPageBase 时无需指定 UI 命名空间
+    using DataHubPageBase = UI::DataHubPageBase;
+}
 
 #endif // DATAHUBPAGEBASE_H

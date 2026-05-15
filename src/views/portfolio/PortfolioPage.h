@@ -160,9 +160,9 @@ public:
      * @brief 计算汇总
      */
     AccountSummary calculateSummary() const;
-
+    
     /**
-     * @brief 获取所有合约ID
+     * @brief 获取所有合约ID列表
      */
     QStringList instrumentIds() const;
 
@@ -205,6 +205,11 @@ public:
      * @brief 刷新数据
      */
     void refreshData();
+
+    /**
+     * @brief 更新实时数据
+     */
+    void updateRealTimeData();
 
     /**
      * @brief 设置账户汇总

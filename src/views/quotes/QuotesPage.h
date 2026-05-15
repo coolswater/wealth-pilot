@@ -97,6 +97,12 @@ namespace WealthPilot
         QWidget* createForexPage();
         QWidget* createCryptoPage();
         void setupConnections();
+        
+        /**
+         * @brief 获取当前选中的市场名称
+         * @return 市场名称 (stock/futures/fund/forex/crypto)
+         */
+        QString getCurrentMarket() const;
 
         // ========== DataHub 数据订阅 ==========
 

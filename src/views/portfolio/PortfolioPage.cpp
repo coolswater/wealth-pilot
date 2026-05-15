@@ -23,6 +23,12 @@
 #include "ui/styles/ButtonStyles.h"
 #include "views/trading/TradeHistoryPage.h"
 #include "views/trading/ConditionOrderPage.h"
+#include "core/types/MarketTypes.h"
+
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::StockQuote;
+using WealthPilot::KLineData;
+using WealthPilot::TimeShareData;
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -287,6 +293,15 @@ AccountSummary PositionTableModel::calculateSummary() const
     return summary;
 }
 
+QStringList PositionTableModel::instrumentIds() const
+{
+    QStringList ids;
+    for (const auto& pos : m_data) {
+        ids.append(pos.instrumentId);
+    }
+    return ids;
+}
+
 // ============================================================================
 // PortfolioPage 实现
 // ============================================================================
@@ -348,7 +363,7 @@ void PortfolioPage::setupDataHubSubscriptions()
     
     // 订阅账户资金
     dataHub().subscribe(this, "account:balance",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新账户汇总
             updateSummaryDisplay();

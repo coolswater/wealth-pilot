@@ -23,6 +23,10 @@
 #include <memory>
 #include "core/types/MarketTypes.h"
 
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::MarketSnapshot;
+using WealthPilot::KLinePeriod;
+
 // 前向声明
 namespace CTP {
     struct MarketData;

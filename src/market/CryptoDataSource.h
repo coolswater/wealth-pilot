@@ -21,25 +21,10 @@
 #include <QHash>
 #include <QVector>
 #include <functional>
+#include "core/types/MarketTypes.h"  // 使用统一的类型定义
 
-/**
- * @brief 数字货币行情数据
- */
-struct CryptoQuote {
-    QString symbol;             ///< 币种代码（如 BTC）
-    QString name;               ///< 币种名称（如 Bitcoin）
-    double price = 0.0;         ///< 当前价格（USD）
-    double priceCny = 0.0;      ///< 当前价格（CNY）
-    double change24h = 0.0;     ///< 24小时涨跌幅（%）
-    double volume24h = 0.0;     ///< 24小时成交量
-    double marketCap = 0.0;     ///< 市值
-    double high24h = 0.0;       ///< 24小时最高
-    double low24h = 0.0;        ///< 24小时最低
-    int rank = 0;               ///< 排名
-    QDateTime updateTime;       ///< 更新时间
-
-    bool isValid() const { return !symbol.isEmpty() && price > 0; }
-};
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::CryptoQuote;
 
 /**
  * @brief 数字货币数据源

@@ -79,7 +79,7 @@ void AlertCenterPage::setupDataHubSubscriptions()
 {
     // 订阅预警规则
     dataHub().subscribe(this, "alert:rules",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新预警规则列表
             loadAlertRules();
@@ -87,7 +87,7 @@ void AlertCenterPage::setupDataHubSubscriptions()
     
     // 订阅预警触发事件
     dataHub().subscribe(this, "alert:triggered",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新预警历史
             loadAlertHistory();

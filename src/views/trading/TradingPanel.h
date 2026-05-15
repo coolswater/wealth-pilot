@@ -31,6 +31,9 @@
 #include "ui/components/OrderDialog.h"
 #include "core/datahub/DataHub.h"
 
+// 使用 DataHub 命名空间
+namespace DataHubNS = WealthPilot::DataHub;
+
 /**
  * @brief 交易面板组件
  *
@@ -148,7 +151,7 @@ private:
     /**
      * @brief DataHub 实例引用
      */
-    DataHub& m_dataHub;
+    DataHubNS::DataHub& m_dataHub;
 };
 
 #endif // TRADINGPANEL_H

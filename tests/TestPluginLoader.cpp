@@ -8,7 +8,7 @@
 #include "../src/plugins/IPlugin.h"
 
 // 测试插件实现
-class TestPlugin : public QObject, public IPlugin
+class TestPlugin : public IPlugin
 {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "com.wealthpilot.IPlugin" FILE "testplugin.json")

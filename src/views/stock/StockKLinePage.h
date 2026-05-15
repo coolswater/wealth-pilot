@@ -71,9 +71,9 @@ enum class RenderEngine {
 };
 
 /**
- * @brief 性能统计
+ * @brief K线图性能统计
  */
-struct PerformanceStats {
+struct KLinePerformanceStats {
     qint64 renderTimeMs = 0;        ///< 渲染耗时
     qint64 dataLoadTimeMs = 0;      ///< 数据加载耗时
     int frameRate = 0;              ///< 帧率
@@ -126,14 +126,14 @@ public:
 
     // ========== 性能统计 ==========
 
-    PerformanceStats lastPerformanceStats() const { return m_lastStats; }
+    KLinePerformanceStats lastPerformanceStats() const { return m_lastStats; }
     void runPerformanceBenchmark(int iterations = 10);
 
 signals:
     void stockChanged(const QString& stockCode);
     void periodChanged(int period);
     void renderEngineChanged(int engine);
-    void performanceStatsChanged(const PerformanceStats& stats);
+    void performanceStatsChanged(const KLinePerformanceStats& stats);
 
 private slots:
     // ========== UI 交互槽函数 ==========
@@ -151,6 +151,13 @@ private slots:
 
     void startRealtimeUpdate();
     void stopRealtimeUpdate();
+    
+    // ========== 数据接收槽函数 ==========
+    
+    void onKLineReceived(const QString& symbol, const QVector<KLineData>& data);
+    void onTimeShareReceived(const QString& symbol, const QVector<TimeShareData>& data);
+    void onRealtimeQuoteReceived(const QString& symbol, const StockQuote& quote);
+    void onRealtimeKLineUpdate(const QString& symbol, const RealtimeKLineUpdate& update);
 
 private:
     // ========== UI 初始化 ==========
@@ -238,7 +245,7 @@ private:
     WealthPilot::ChanLun::ChanLunIntegration* m_chanLun = nullptr;
 
     // 性能统计
-    PerformanceStats m_lastStats;
+    KLinePerformanceStats m_lastStats;
 
     // ========== 私有实现类（PIMPL） ==========
     struct Impl;

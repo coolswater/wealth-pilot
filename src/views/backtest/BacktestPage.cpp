@@ -120,14 +120,14 @@ void BacktestPage::setupDataHubSubscriptions()
 {
     // 订阅回测进度
     dataHub().subscribe(this, "backtest:progress",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新回测进度
         });
     
     // 订阅回测结果
     dataHub().subscribe(this, "backtest:result",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新回测结果
         });

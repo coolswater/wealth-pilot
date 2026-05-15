@@ -1,19 +1,18 @@
 /**
  * @file MarketTypes.h
- * @brief 市场数据类型定义 - 统一管理行情相关数据结构
+ * @brief 统一的市场数据类型定义
  *
- * @details 定义：
- * - K线数据结构
- * - 行情数据结构
- * - 枚举类型定义
- * - 数据转换工具
+ * @details 整合所有行情相关结构，包括：
+ * - 枚举类型：MarketType, KLinePeriod, AdjustmentType 等
+ * - 行情数据：StockQuote, FuturesQuote, MarketSnapshot
+ * - K线数据：KLineData, TimeShareData
  *
  * @author WealthPilot Team
- * @version 2.0.0
+ * @version 3.0.0
  */
 
-#ifndef MARKETTYPES_H
-#define MARKETTYPES_H
+#ifndef WEALTHPILOT_MARKETTYPES_H
+#define WEALTHPILOT_MARKETTYPES_H
 
 #include <QString>
 #include <QDateTime>
@@ -21,9 +20,22 @@
 #include <QMap>
 #include <QVariant>
 
+namespace WealthPilot {
+
 // ============================================================================
 // 枚举定义
 // ============================================================================
+
+/**
+ * @brief 市场类型
+ */
+enum class MarketType {
+    Stock,      ///< 股票
+    Futures,    ///< 期货
+    Forex,      ///< 外汇
+    Crypto,     ///< 数字货币
+    Fund        ///< 基金
+};
 
 /**
  * @brief K线周期枚举
@@ -86,17 +98,219 @@ enum class MarketStatus {
     Auction         ///< 集合竞价
 };
 
+/**
+ * @brief 基金类型枚举
+ */
+enum class FundType {
+    ETF,        ///< 交易所交易基金
+    LOF,        ///< 上市开放式基金
+    OpenEnd,    ///< 开放式基金
+    ClosedEnd,  ///< 封闭式基金
+    Money,      ///< 货币基金
+    Bond,       ///< 债券基金
+    Mixed,      ///< 混合基金
+    Stock,      ///< 股票基金
+    Index,      ///< 指数基金
+    QDII,       ///< QDII基金
+    Unknown     ///< 未知类型
+};
+
 // ============================================================================
-// 数据结构
+// 行情基类
+// ============================================================================
+
+/**
+ * @brief 行情基类
+ */
+struct QuoteBase {
+    QString symbol;             ///< 代码
+    QString name;               ///< 名称
+    double price = 0.0;         ///< 最新价
+    double change = 0.0;        ///< 涨跌额
+    double changePercent = 0.0; ///< 涨跌幅
+    qint64 volume = 0;          ///< 成交量
+    double amount = 0.0;        ///< 成交额
+    QDateTime updateTime;       ///< 更新时间
+
+    virtual ~QuoteBase() = default;
+    virtual MarketType marketType() const = 0;
+
+    /**
+     * @brief 判断是否有效
+     */
+    bool isValid() const { return !symbol.isEmpty() && price > 0; }
+};
+
+// ============================================================================
+// 股票行情
+// ============================================================================
+
+/**
+ * @brief 股票行情数据
+ */
+struct StockQuote : QuoteBase {
+    // ========== 价格信息 ==========
+    double lastPrice = 0.0;     ///< 最新价（兼容别名）
+    double open = 0.0;          ///< 开盘价
+    double openPrice = 0.0;     ///< 开盘价（兼容别名）
+    double high = 0.0;          ///< 最高价
+    double highPrice = 0.0;     ///< 最高价（兼容别名）
+    double low = 0.0;           ///< 最低价
+    double lowPrice = 0.0;      ///< 最低价（兼容别名）
+    double prevClose = 0.0;     ///< 昨收价
+    double preClose = 0.0;      ///< 昨收价（兼容别名）
+    double turnover = 0.0;      ///< 成交额（兼容别名）
+    double changeAmount = 0.0;  ///< 涨跌额（兼容别名）
+    qint64 orderDiff = 0;       ///< 委差
+    double orderRatio = 0.0;    ///< 委比
+
+    // ========== 五档行情 ==========
+    double bidPrice[5] = {};    ///< 买价[1-5]
+    qint64 bidVolume[5] = {};   ///< 买量[1-5]
+    double askPrice[5] = {};    ///< 卖价[1-5]
+    qint64 askVolume[5] = {};   ///< 卖量[1-5]
+
+    // ========== 涨跌停 ==========
+    double upperLimit = 0.0;    ///< 涨停价
+    double lowerLimit = 0.0;    ///< 跌停价
+
+    // ========== 构造函数 ==========
+    StockQuote() = default;
+    ~StockQuote() override = default;
+
+    // ========== 虚函数实现 ==========
+    MarketType marketType() const override { return MarketType::Stock; }
+
+    // ========== 辅助方法 ==========
+
+    /**
+     * @brief 获取买一价
+     */
+    double bidPrice1() const { return bidPrice[0]; }
+
+    /**
+     * @brief 获取卖一价
+     */
+    double askPrice1() const { return askPrice[0]; }
+
+    /**
+     * @brief 获取买一量
+     */
+    qint64 bidVolume1() const { return bidVolume[0]; }
+
+    /**
+     * @brief 获取卖一量
+     */
+    qint64 askVolume1() const { return askVolume[0]; }
+
+    /**
+     * @brief 判断是否涨停
+     */
+    bool isUpperLimit() const {
+        return upperLimit > 0 && price >= upperLimit * 0.998;
+    }
+
+    /**
+     * @brief 判断是否跌停
+     */
+    bool isLowerLimit() const {
+        return lowerLimit > 0 && price <= lowerLimit * 1.002;
+    }
+};
+
+// ============================================================================
+// 期货行情
+// ============================================================================
+
+/**
+ * @brief 期货行情数据
+ */
+struct FuturesQuote : QuoteBase {
+    double open = 0.0;          ///< 开盘价
+    double high = 0.0;          ///< 最高价
+    double low = 0.0;           ///< 最低价
+    double settlement = 0.0;    ///< 结算价
+    double prevSettlement = 0.0;///< 昨结算
+    qint64 openInterest = 0;    ///< 持仓量
+    qint64 preOpenInterest = 0; ///< 昨持仓
+    double upperLimit = 0.0;    ///< 涨停价
+    double lowerLimit = 0.0;    ///< 跌停价
+
+    MarketType marketType() const override { return MarketType::Futures; }
+};
+
+// ============================================================================
+// 外汇行情
+// ============================================================================
+
+/**
+ * @brief 外汇行情数据
+ */
+struct ForexQuote : QuoteBase {
+    QString pair;               ///< 货币对（如 USD/CNY）
+    double rate = 0.0;          ///< 当前汇率
+    double bid = 0.0;           ///< 买入价
+    double ask = 0.0;           ///< 卖出价
+    double high = 0.0;          ///< 最高价
+    double low = 0.0;           ///< 最低价
+    double high24h = 0.0;       ///< 24小时最高
+    double low24h = 0.0;        ///< 24小时最低
+    QString baseCurrency;       ///< 基础货币
+    QString quoteCurrency;      ///< 报价货币
+
+    MarketType marketType() const override { return MarketType::Forex; }
+};
+
+// ============================================================================
+// 数字货币行情
+// ============================================================================
+
+/**
+ * @brief 数字货币行情数据
+ */
+struct CryptoQuote : QuoteBase {
+    double priceUsd = 0.0;      ///< USD价格
+    double priceCny = 0.0;      ///< CNY价格
+    double change24h = 0.0;     ///< 24小时涨跌幅
+    double volume24h = 0.0;     ///< 24小时成交量
+    double high24h = 0.0;       ///< 24小时最高
+    double low24h = 0.0;        ///< 24小时最低
+    double marketCap = 0.0;     ///< 市值
+    qint64 circulatingSupply = 0; ///< 流通量
+    int rank = 0;               ///< 排名
+    QString exchange;           ///< 交易所
+
+    MarketType marketType() const override { return MarketType::Crypto; }
+};
+
+// ============================================================================
+// 基金行情
+// ============================================================================
+
+/**
+ * @brief 基金行情数据
+ */
+struct FundQuote : QuoteBase {
+    QString code;               ///< 基金代码
+    double nav = 0.0;           ///< 净值
+    double accNav = 0.0;        ///< 累计净值
+    double lastPrice = 0.0;     ///< 最新价格（ETF/LOF）
+    double changeAmount = 0.0;  ///< 涨跌额
+    FundType type = FundType::Unknown;  ///< 基金类型
+    QString manager;            ///< 基金经理
+    QString company;            ///< 基金公司
+    double scale = 0.0;         ///< 基金规模（亿元）
+    QDate navDate;              ///< 净值日期
+
+    MarketType marketType() const override { return MarketType::Fund; }
+};
+
+// ============================================================================
+// K线数据
 // ============================================================================
 
 /**
  * @brief K线数据结构
- *
- * @details 存储单根K线的所有信息，包括：
- * - 时间、开高低收
- * - 成交量、成交额
- * - 持仓量（期货专用）
  */
 struct KLineData {
     QDateTime time;             ///< 时间
@@ -108,81 +322,41 @@ struct KLineData {
     double turnover = 0.0;      ///< 成交额
     double openInterest = 0.0;  ///< 持仓量（期货）
 
-    /**
-     * @brief 默认构造函数
-     */
     KLineData() = default;
-
-    /**
-     * @brief 构造函数
-     */
     KLineData(const QDateTime& t, double o, double h, double l, double c, qint64 v = 0)
         : time(t), open(o), high(h), low(l), close(c), volume(v) {}
 
-    /**
-     * @brief 判断是否有效
-     */
     bool isValid() const {
         return time.isValid() && open > 0 && high > 0 && low > 0 && close > 0;
     }
 
-    /**
-     * @brief 判断是否上涨
-     */
     bool isUp() const { return close > open; }
-
-    /**
-     * @brief 判断是否下跌
-     */
     bool isDown() const { return close < open; }
-
-    /**
-     * @brief 获取实体长度
-     */
     double body() const { return qAbs(close - open); }
-
-    /**
-     * @brief 获取上影线长度
-     */
     double upperShadow() const { return high - qMax(open, close); }
-
-    /**
-     * @brief 获取下影线长度
-     */
     double lowerShadow() const { return qMin(open, close) - low; }
-
-    /**
-     * @brief 获取振幅
-     */
     double amplitude() const {
         return low > 0 ? (high - low) / low * 100 : 0;
     }
-
-    /**
-     * @brief 获取涨跌幅
-     * @param preClose 昨收价
-     */
     double changePercent(double preClose) const {
         return preClose > 0 ? (close - preClose) / preClose * 100 : 0;
     }
 };
 
+// ============================================================================
+// 行情快照
+// ============================================================================
+
 /**
  * @brief 行情快照数据
- *
- * @details 存储实时行情的完整信息，包括：
- * - 合约信息
- * - 价格信息
- * - 买卖盘口
- * - 成交统计
  */
 struct MarketSnapshot {
-    // ========== 合约信息 ==========
+    // 合约信息
     QString instrumentId;           ///< 合约代码
     QString exchangeId;             ///< 交易所代码
     QString instrumentName;         ///< 合约名称
 
-    // ========== 价格信息 ==========
+    // 价格信息
     double lastPrice = 0.0;         ///< 最新价
     double preClose = 0.0;          ///< 昨收价
     double preSettlement = 0.0;     ///< 昨结算价
@@ -192,73 +366,73 @@ struct MarketSnapshot {
     double upperLimit = 0.0;        ///< 涨停价
     double lowerLimit = 0.0;        ///< 跌停价
 
-    // ========== 成交信息 ==========
+    // 成交信息
     qint64 volume = 0;              ///< 成交量
     double turnover = 0.0;          ///< 成交额
     qint64 openInterest = 0;        ///< 持仓量
 
-    // ========== 买卖盘口 ==========
+    // 买卖盘口
     double bidPrice[5] = {};        ///< 买价[1-5]
     int bidVolume[5] = {};          ///< 买量[1-5]
     double askPrice[5] = {};        ///< 卖价[1-5]
     int askVolume[5] = {};          ///< 卖量[1-5]
 
-    // ========== 时间信息 ==========
+    // 时间信息
     QDateTime updateTime;           ///< 更新时间
     QDateTime tradingDay;           ///< 交易日
 
-    // ========== 辅助方法 ==========
-
-    /**
-     * @brief 获取涨跌额
-     */
+    // 辅助方法
     double change() const {
         double base = preSettlement > 0 ? preSettlement : preClose;
         return base > 0 ? lastPrice - base : 0;
     }
 
-    /**
-     * @brief 获取涨跌幅
-     */
     double changePercent() const {
         double base = preSettlement > 0 ? preSettlement : preClose;
         return base > 0 ? (lastPrice - base) / base * 100 : 0;
     }
 
-    /**
-     * @brief 判断是否涨停
-     */
     bool isUpperLimit() const {
         return upperLimit > 0 && lastPrice >= upperLimit;
     }
 
-    /**
-     * @brief 判断是否跌停
-     */
     bool isLowerLimit() const {
         return lowerLimit > 0 && lastPrice <= lowerLimit;
     }
 
-    /**
-     * @brief 获取买一价
-     */
     double bidPrice1() const { return bidPrice[0]; }
-
-    /**
-     * @brief 获取买一量
-     */
     int bidVolume1() const { return bidVolume[0]; }
-
-    /**
-     * @brief 获取卖一价
-     */
     double askPrice1() const { return askPrice[0]; }
-
-    /**
-     * @brief 获取卖一量
-     */
     int askVolume1() const { return askVolume[0]; }
 };
+
+// ============================================================================
+// 分时数据
+// ============================================================================
+
+/**
+ * @brief 分时数据结构
+ */
+struct TimeShareData {
+    QDateTime time;             ///< 时间
+    double price = 0.0;         ///< 当前价格
+    double avgPrice = 0.0;      ///< 均价
+    qint64 volume = 0;          ///< 成交量
+    double turnover = 0.0;      ///< 成交额
+    double changePercent = 0.0; ///< 涨跌幅
+
+    TimeShareData() = default;
+    TimeShareData(const QDateTime& t, double p, double avg = 0.0, qint64 v = 0)
+        : time(t), price(p), avgPrice(avg), volume(v) {}
+
+    bool isValid() const {
+        return time.isValid() && price > 0;
+    }
+};
+
+// ============================================================================
+// 分笔成交数据
+// ============================================================================
 
 /**
  * @brief 分笔成交数据
@@ -269,9 +443,6 @@ struct TickData {
     int volume = 0;             ///< 成交数量
     TradeDirection direction = TradeDirection::Unknown;  ///< 成交方向
 
-    /**
-     * @brief 获取方向字符串
-     */
     QString directionString() const {
         switch (direction) {
             case TradeDirection::Buy: return QStringLiteral("买");
@@ -280,46 +451,6 @@ struct TickData {
         }
     }
 };
-
-/**
- * @brief 分时数据结构
- *
- * @details 存储分时图的每个时间点数据，包括：
- * - 时间、价格、均价
- * - 成交量
- */
-struct TimeShareData {
-    QDateTime time;             ///< 时间
-    double price = 0.0;         ///< 当前价格
-    double avgPrice = 0.0;      ///< 均价
-    qint64 volume = 0;          ///< 成交量
-    double turnover = 0.0;      ///< 成交额
-    double changePercent = 0.0; ///< 涨跌幅
-
-    /**
-     * @brief 默认构造函数
-     */
-    TimeShareData() = default;
-
-    /**
-     * @brief 构造函数
-     */
-    TimeShareData(const QDateTime& t, double p, double avg = 0.0, qint64 v = 0)
-        : time(t), price(p), avgPrice(avg), volume(v) {}
-
-    /**
-     * @brief 判断是否有效
-     */
-    bool isValid() const {
-        return time.isValid() && price > 0;
-    }
-};
-
-/**
- * @brief 订单数据（CTP专用）
- * @note 此结构体在 ICTPPlugin.h 中定义，此处仅做前向声明
- */
-// struct OrderData; // 使用 ICTPPlugin.h 中的定义
 
 // ============================================================================
 // 工具函数
@@ -396,31 +527,23 @@ inline QString formatMoney(double value) {
     return QString::number(value, 'f', 2);
 }
 
-/**
- * @brief 格式化涨跌幅
- */
-inline QString formatChangePercent(double percent, bool showSign = true) {
-    QString result = QString::number(qAbs(percent), 'f', 2) + "%";
-    if (showSign) {
-        if (percent > 0) return "+" + result;
-        if (percent < 0) return "-" + result;
-    }
-    return result;
-}
-
 } // namespace MarketUtils
 
 // ============================================================================
-// Qt 元类型注册
+// QMetaType 注册
 // ============================================================================
 
-Q_DECLARE_METATYPE(KLineData)
-Q_DECLARE_METATYPE(MarketSnapshot)
-Q_DECLARE_METATYPE(TickData)
-// Q_DECLARE_METATYPE(OrderData) // 在 ICTPPlugin.h 中定义
-Q_DECLARE_METATYPE(KLinePeriod)
-Q_DECLARE_METATYPE(AdjustmentType)
-Q_DECLARE_METATYPE(TradeDirection)
-Q_DECLARE_METATYPE(OrderStatus)
+} // namespace WealthPilot
 
-#endif // MARKETTYPES_H
+// 注册 QMetaType 以支持 QVariant
+Q_DECLARE_METATYPE(WealthPilot::StockQuote)
+Q_DECLARE_METATYPE(WealthPilot::FuturesQuote)
+Q_DECLARE_METATYPE(WealthPilot::ForexQuote)
+Q_DECLARE_METATYPE(WealthPilot::CryptoQuote)
+Q_DECLARE_METATYPE(WealthPilot::FundQuote)
+Q_DECLARE_METATYPE(WealthPilot::KLineData)
+Q_DECLARE_METATYPE(WealthPilot::MarketSnapshot)
+Q_DECLARE_METATYPE(WealthPilot::TimeShareData)
+Q_DECLARE_METATYPE(WealthPilot::TickData)
+
+#endif // WEALTHPILOT_MARKETTYPES_H

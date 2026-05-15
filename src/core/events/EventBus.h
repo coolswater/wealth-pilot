@@ -27,6 +27,9 @@
 #include <QMutexLocker>
 #include <functional>
 #include <memory>
+#include <vector>
+#include <algorithm>
+#include <map>
 
 namespace WealthPilot {
 
@@ -146,8 +149,9 @@ public:
 
         QMutexLocker locker(&m_mutex);
 
-        if (m_handlers.contains(eventType)) {
-            auto handlers = m_handlers[eventType];
+        auto it = m_handlers.find(eventType);
+        if (it != m_handlers.end()) {
+            const auto& handlers = it->second;  // std::map 使用 ->second
             locker.unlock();
 
             for (const auto& handler : handlers) {
@@ -164,8 +168,9 @@ public:
     void publish(const Event& event) {
         QMutexLocker locker(&m_mutex);
 
-        if (m_handlers.contains(event.type())) {
-            auto handlers = m_handlers[event.type()];
+        auto it = m_handlers.find(event.type());
+        if (it != m_handlers.end()) {
+            const auto& handlers = it->second;  // std::map 使用 ->second
             locker.unlock();
 
             for (const auto& handler : handlers) {
@@ -185,7 +190,8 @@ public:
         QMutexLocker locker(&m_mutex);
 
         auto handler = std::make_unique<MemberEventHandler<Receiver, Args...>>(receiver, function);
-        m_handlers[eventType].append(std::move(handler));
+        // std::map 的 operator[] 会创建空 vector
+        m_handlers[eventType].push_back(std::move(handler));
 
         // 记录接收者到事件类型的映射
         m_receiverEvents[receiver].append(eventType);
@@ -197,7 +203,7 @@ public:
     void subscribe(const QString& eventType,
                    std::function<void(const Event&)> handler) {
         QMutexLocker locker(&m_mutex);
-        m_handlers[eventType].append(std::make_unique<LambdaEventHandler>(std::move(handler)));
+        m_handlers[eventType].push_back(std::make_unique<LambdaEventHandler>(std::move(handler)));
     }
 
     /**
@@ -206,14 +212,15 @@ public:
     void unsubscribe(const QString& eventType, QObject* receiver) {
         QMutexLocker locker(&m_mutex);
 
-        if (m_handlers.contains(eventType)) {
-            auto& handlers = m_handlers[eventType];
-            handlers.erase(
-                std::remove_if(handlers.begin(), handlers.end(),
-                               [receiver](const std::unique_ptr<EventHandler>& h) {
-                                   return h->receiver() == receiver;
-                               }),
-                handlers.end());
+        auto it = m_handlers.find(eventType);
+        if (it != m_handlers.end()) {
+            auto& handlers = it->second;  // std::map 使用 ->second
+            // 使用 std::remove_if 和 erase
+            auto removeIt = std::remove_if(handlers.begin(), handlers.end(),
+                [receiver](std::unique_ptr<EventHandler>& h) {
+                    return h->receiver() == receiver;
+                });
+            handlers.erase(removeIt, handlers.end());
         }
 
         // 从接收者映射中移除
@@ -253,7 +260,8 @@ public:
      */
     bool hasSubscribers(const QString& eventType) const {
         QMutexLocker locker(&m_mutex);
-        return m_handlers.contains(eventType) && !m_handlers[eventType].isEmpty();
+        auto it = m_handlers.find(eventType);
+        return it != m_handlers.end() && !it->second.empty();
     }
 
     /**
@@ -261,7 +269,8 @@ public:
      */
     int subscriberCount(const QString& eventType) const {
         QMutexLocker locker(&m_mutex);
-        return m_handlers.contains(eventType) ? m_handlers[eventType].size() : 0;
+        auto it = m_handlers.find(eventType);
+        return it != m_handlers.end() ? static_cast<int>(it->second.size()) : 0;
     }
 
     /**
@@ -286,7 +295,7 @@ private:
     EventBus& operator=(const EventBus&) = delete;
 
     mutable QMutex m_mutex;
-    QMap<QString, QList<std::unique_ptr<EventHandler>>> m_handlers;
+    std::map<QString, std::vector<std::unique_ptr<EventHandler>>> m_handlers;
     QMap<QObject*, QList<QString>> m_receiverEvents;
 };
 

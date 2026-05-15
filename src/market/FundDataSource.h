@@ -21,50 +21,11 @@
 #include <QHash>
 #include <QVector>
 #include <functional>
+#include "core/types/MarketTypes.h"  // 使用统一的类型定义
 
-/**
- * @brief 基金类型
- */
-enum class FundType {
-    ETF,        ///< 交易所交易基金
-    LOF,        ///< 上市开放式基金
-    OpenEnd,    ///< 开放式基金
-    ClosedEnd,  ///< 封闭式基金
-    Money,      ///< 货币基金
-    Bond,       ///< 债券基金
-    Mixed,      ///< 混合基金
-    Stock,      ///< 股票基金
-    Index,      ///< 指数基金
-    QDII,       ///< QDII基金
-    Unknown     ///< 未知类型
-};
-
-/**
- * @brief 基金行情数据
- */
-struct FundQuote {
-    QString code;               ///< 基金代码
-    QString name;               ///< 基金名称
-    FundType type = FundType::Unknown;  ///< 基金类型
-    
-    double nav = 0.0;           ///< 单位净值
-    double accNav = 0.0;        ///< 累计净值
-    double lastPrice = 0.0;     ///< 最新价格（ETF/LOF）
-    double changeAmount = 0.0;  ///< 涨跌额
-    double changePercent = 0.0; ///< 涨跌幅
-    
-    qint64 volume = 0;          ///< 成交量
-    double turnover = 0.0;      ///< 成交额
-    
-    QString manager;            ///< 基金经理
-    QString company;            ///< 基金公司
-    double scale = 0.0;         ///< 基金规模（亿元）
-    
-    QDateTime navDate;          ///< 净值日期
-    QDateTime updateTime;       ///< 更新时间
-
-    bool isValid() const { return !code.isEmpty() && nav > 0; }
-};
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::FundQuote;
+using WealthPilot::FundType;
 
 /**
  * @brief 基金数据源

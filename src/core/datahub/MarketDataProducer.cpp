@@ -115,8 +115,15 @@ void MarketDataProducer::setStockDataSource(StockDataSource* source)
     m_stockSource = source;
 
     if (m_stockSource) {
+        // 使用 lambda 适配信号
         connect(m_stockSource, &StockDataSource::quotesReceived,
-                this, &MarketDataProducer::onStockQuotesReceived);
+                this, [this](const QVector<WealthPilot::StockQuote>& quotes) {
+                    QVariantList dataList;
+                    for (const auto& q : quotes) {
+                        dataList.append(QVariant::fromValue(q));
+                    }
+                    onStockDataReceived(dataList);
+                });
     }
 }
 
@@ -129,16 +136,19 @@ void MarketDataProducer::setFuturesModel(FuturesQuoteModel* model)
     m_futuresModel = model;
 
     if (m_futuresModel) {
-        connect(m_futuresModel, &FuturesQuoteModel::dataUpdated,
-                this, &MarketDataProducer::onFuturesQuotesUpdated);
+        // TODO: FuturesQuoteModel 需要添加 dataUpdated 信号
+        // connect(m_futuresModel, &FuturesQuoteModel::dataUpdated,
+        //         this, &MarketDataProducer::onFuturesQuotesUpdated);
     }
 }
 
-void MarketDataProducer::onStockQuotesReceived(const QVector<StockQuote>& quotes)
+void MarketDataProducer::onStockDataReceived(const QVariantList& quotesData)
 {
     auto& hub = DataHub::DataHub::instance();
+    int count = 0;
 
-    for (const auto& quote : quotes) {
+    for (const auto& quoteVar : quotesData) {
+        auto quote = quoteVar.value<WealthPilot::StockQuote>();
         if (!quote.isValid()) continue;
 
         // 发布到 DataHub
@@ -146,33 +156,34 @@ void MarketDataProducer::onStockQuotesReceived(const QVector<StockQuote>& quotes
         hub.publish(topic, QVariant::fromValue(quote));
 
         // 同时发布为 MarketSnapshot 格式（兼容）
-        MarketSnapshot snapshot;
+        WealthPilot::MarketSnapshot snapshot;
         snapshot.instrumentId = quote.symbol;
         snapshot.instrumentName = quote.name;
-        snapshot.lastPrice = quote.lastPrice;
-        snapshot.preClose = quote.preClose;
-        snapshot.openPrice = quote.openPrice;
-        snapshot.highestPrice = quote.highPrice;
-        snapshot.lowestPrice = quote.lowPrice;
+        snapshot.lastPrice = quote.price;
+        snapshot.preClose = quote.prevClose;
+        snapshot.openPrice = quote.open;
+        snapshot.highestPrice = quote.high;
+        snapshot.lowestPrice = quote.low;
         snapshot.volume = quote.volume;
-        snapshot.turnover = quote.turnover;
-        snapshot.upperLimit = quote.limitUp;
-        snapshot.lowerLimit = quote.limitDown;
+        snapshot.turnover = quote.amount;
+        snapshot.upperLimit = quote.upperLimit;
+        snapshot.lowerLimit = quote.lowerLimit;
         snapshot.updateTime = quote.updateTime;
 
         // 复制五档盘口
         for (int i = 0; i < 5; ++i) {
             snapshot.bidPrice[i] = quote.bidPrice[i];
-            snapshot.bidVolume[i] = quote.bidVolume[i];
+            snapshot.bidVolume[i] = static_cast<int>(quote.bidVolume[i]);
             snapshot.askPrice[i] = quote.askPrice[i];
-            snapshot.askVolume[i] = quote.askVolume[i];
+            snapshot.askVolume[i] = static_cast<int>(quote.askVolume[i]);
         }
 
         hub.publish(QString("market:snapshot:%1").arg(quote.symbol), 
                     QVariant::fromValue(snapshot));
+        count++;
     }
 
-    qDebug() << "[MarketDataProducer] Published" << quotes.size() << "stock quotes";
+    qDebug() << "[MarketDataProducer] Published" << count << "stock quotes";
 }
 
 void MarketDataProducer::onFuturesQuotesUpdated()
@@ -222,24 +233,24 @@ void MarketDataProducer::refreshKLine(const QString& symbol, const QString& peri
 {
     if (!m_stockSource) return;
 
-    KLinePeriod klinePeriod = KLinePeriod::Day1;
+    WealthPilot::KLinePeriod klinePeriod = WealthPilot::KLinePeriod::Day1;
 
     if (period == "1m" || period == "minute1") {
-        klinePeriod = KLinePeriod::Minute1;
+        klinePeriod = WealthPilot::KLinePeriod::Minute1;
     } else if (period == "5m" || period == "minute5") {
-        klinePeriod = KLinePeriod::Minute5;
+        klinePeriod = WealthPilot::KLinePeriod::Minute5;
     } else if (period == "15m" || period == "minute15") {
-        klinePeriod = KLinePeriod::Minute15;
+        klinePeriod = WealthPilot::KLinePeriod::Minute15;
     } else if (period == "30m" || period == "minute30") {
-        klinePeriod = KLinePeriod::Minute30;
+        klinePeriod = WealthPilot::KLinePeriod::Minute30;
     } else if (period == "60m" || period == "hour1") {
-        klinePeriod = KLinePeriod::Hour1;
+        klinePeriod = WealthPilot::KLinePeriod::Hour1;
     } else if (period == "day" || period == "day1") {
-        klinePeriod = KLinePeriod::Day1;
+        klinePeriod = WealthPilot::KLinePeriod::Day1;
     } else if (period == "week" || period == "week1") {
-        klinePeriod = KLinePeriod::Week1;
+        klinePeriod = WealthPilot::KLinePeriod::Week1;
     } else if (period == "month" || period == "month1") {
-        klinePeriod = KLinePeriod::Month1;
+        klinePeriod = WealthPilot::KLinePeriod::Month1;
     }
 
     m_stockSource->requestKLine(symbol, klinePeriod);

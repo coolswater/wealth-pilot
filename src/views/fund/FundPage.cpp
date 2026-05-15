@@ -109,7 +109,7 @@ void FundPage::setupDataHubSubscriptions()
     
     // 订阅基金净值更新
     dataHub().subscribe(this, "fund:nav",
-        [this](const QString&, const QVariant& value) {
+        [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新净值显示
         });
