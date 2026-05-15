@@ -1,0 +1,42 @@
+{
+  "ctp": {
+    "market": {
+      "frontAddress": "tcp://180.168.146.187:10211",
+      "brokerId": "9999",
+      "userId": "",
+      "password": "",
+      "appId": "",
+      "authCode": "",
+      "enabled": false,
+      "description": "CTP行情前置（SimNow模拟环境）"
+    },
+    "trade": {
+      "frontAddress": "tcp://180.168.146.187:10201",
+      "brokerId": "9999",
+      "userId": "",
+      "password": "",
+      "appId": "",
+      "authCode": "",
+      "enabled": false,
+      "description": "CTP交易前置（SimNow模拟环境）"
+    },
+    "settings": {
+      "reconnectInterval": 5000,
+      "maxReconnectAttempts": 10,
+      "heartbeatInterval": 60000,
+      "dataBufferSize": 200,
+      "logLevel": "info"
+    },
+    "subscriptions": {
+      "defaultSymbols": [
+        "IF2501",
+        "IC2501",
+        "IH2501",
+        "au2506",
+        "ag2506"
+      ],
+      "autoSubscribe": true
+    }
+  },
+  "note": "请填写您的 SimNow 账号信息后启用 CTP 连接。SimNow 注册地址: https://www.simnow.com.cn/"
+}

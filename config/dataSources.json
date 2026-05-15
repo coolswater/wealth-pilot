@@ -1,0 +1,68 @@
+{
+  "dataSources": {
+    "stock": [
+      {
+        "name": "sina",
+        "type": "stock",
+        "priority": 1,
+        "enabled": true,
+        "apiUrl": "https://hq.sinajs.cn/list=",
+        "description": "新浪财经A股数据源"
+      },
+      {
+        "name": "eastmoney",
+        "type": "stock",
+        "priority": 2,
+        "enabled": true,
+        "apiUrl": "https://push2.eastmoney.com/api/qt/stock/get",
+        "description": "东方财富数据源"
+      }
+    ],
+    "forex": [
+      {
+        "name": "forexpro",
+        "type": "forex",
+        "priority": 1,
+        "enabled": true,
+        "apiUrl": "https://www.freeforexapi.com/api/live",
+        "description": "FreeForexAPI外汇数据源"
+      }
+    ],
+    "crypto": [
+      {
+        "name": "binance",
+        "type": "crypto",
+        "priority": 1,
+        "enabled": true,
+        "apiUrl": "https://api.binance.com/api/v3/ticker/price",
+        "wsUrl": "wss://stream.binance.com:9443/ws",
+        "description": "币安加密货币数据源"
+      },
+      {
+        "name": "coinbase",
+        "type": "crypto",
+        "priority": 2,
+        "enabled": false,
+        "apiUrl": "https://api.coinbase.com/v2/prices",
+        "description": "Coinbase数据源（备用）"
+      }
+    ],
+    "fund": [
+      {
+        "name": "eastmoney_fund",
+        "type": "fund",
+        "priority": 1,
+        "enabled": true,
+        "apiUrl": "https://fund.eastmoney.com/pingzhongdata",
+        "description": "东方财富基金数据源"
+      }
+    ]
+  },
+  "settings": {
+    "healthCheckInterval": 300000,
+    "maxFailCount": 3,
+    "recoveryThreshold": 5,
+    "requestTimeout": 10000,
+    "retryCount": 2
+  }
+}
