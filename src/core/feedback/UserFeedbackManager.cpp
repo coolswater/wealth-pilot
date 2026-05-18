@@ -7,6 +7,7 @@
  */
 
 #include "UserFeedbackManager.h"
+#include "../ui/components/ToastWidget.h"
 #include <QApplication>
 #include <QInputDialog>
 #include <QUuid>
@@ -337,13 +338,10 @@ void UserFeedbackManager::recordFeedback(const FeedbackRecord& record) {
 }
 
 void UserFeedbackManager::showToast(const FeedbackRecord& record, int duration) {
-    // TODO: 实现自定义 Toast 控件
-    // 当前使用简单的消息框模拟
-    qDebug() << "[Toast]" << record.title << ":" << record.message
-             << "Duration:" << duration << "ms";
-
-    // 临时方案：使用状态栏或简单提示
-    // 实际项目中应该实现一个自定义的 Toast 控件
+    // 使用自定义 Toast 控件
+    UI::ToastManager::instance()->showToast(
+        record.title, record.message, record.type, duration
+    );
 }
 
 void UserFeedbackManager::showDialog(const FeedbackRecord& record) {

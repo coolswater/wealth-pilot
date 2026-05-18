@@ -191,6 +191,7 @@ set(CORE_PERFORMANCE_SOURCES
 set(CORE_FEEDBACK_SOURCES
         src/core/feedback/UserFeedbackManager.h
         src/core/feedback/UserFeedbackManager.cpp
+        src/core/feedback/FeedbackTranslations.h
 )
 
 # Core - Network 网络
@@ -542,6 +543,8 @@ set(UI_COMPONENT_SOURCES
         src/ui/components/CardWidget.cpp
         src/ui/components/StatusBarWidget.h
         src/ui/components/StatusBarWidget.cpp
+        src/ui/components/ToastWidget.h
+        src/ui/components/ToastWidget.cpp
         src/ui/components/AssetCardWidget.h
         src/ui/components/AssetCardWidget.cpp
         src/ui/components/AssetPieChart.h
@@ -971,6 +974,12 @@ if(BUILD_TESTS)
     target_link_libraries(AnalysisTest PRIVATE Qt6::Core Qt6::Test)
     target_include_directories(AnalysisTest PRIVATE ${CMAKE_SOURCE_DIR}/src)
     add_test(NAME AnalysisTest COMMAND AnalysisTest)
+
+    # 7. UserFeedbackManager 测试
+    add_executable(UserFeedbackManagerTest tests/UserFeedbackManagerTest.cpp)
+    target_link_libraries(UserFeedbackManagerTest PRIVATE Qt6::Core Qt6::Test Qt6::Widgets)
+    target_include_directories(UserFeedbackManagerTest PRIVATE ${CMAKE_SOURCE_DIR}/src)
+    add_test(NAME UserFeedbackManagerTest COMMAND UserFeedbackManagerTest)
     
     message(STATUS "Tests enabled")
 endif()
