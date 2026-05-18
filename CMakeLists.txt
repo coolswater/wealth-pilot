@@ -187,6 +187,12 @@ set(CORE_PERFORMANCE_SOURCES
         src/core/performance/PerformanceManager.cpp
 )
 
+# Core - Feedback 用户反馈
+set(CORE_FEEDBACK_SOURCES
+        src/core/feedback/UserFeedbackManager.h
+        src/core/feedback/UserFeedbackManager.cpp
+)
+
 # Core - Network 网络
 set(CORE_NETWORK_SOURCES
         src/core/network/WebSocketManager.h
@@ -722,6 +728,7 @@ set(SOURCES
         ${CORE_DATABASE_SOURCES}
         ${CORE_TASK_SOURCES}
         ${CORE_PERFORMANCE_SOURCES}
+        ${CORE_FEEDBACK_SOURCES}
         ${CORE_NETWORK_SOURCES}
         ${CORE_UI_SOURCES}
         ${CORE_ANALYSIS_SOURCES}
