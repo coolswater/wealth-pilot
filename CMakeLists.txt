@@ -65,7 +65,7 @@ endif ()
 # 设置Qt6路径（如果未设置）
 if (NOT CMAKE_PREFIX_PATH)
     if (WIN32)
-        set(CMAKE_PREFIX_PATH "C:/Qt/6.10.2/msvc2022_64")
+        set(CMAKE_PREFIX_PATH "C:/Qt/6.10.2/mingw_64")
     elseif (APPLE)
         set(CMAKE_PREFIX_PATH "$ENV{HOME}/Qt/6.10.2/macos")
     else ()
@@ -81,7 +81,6 @@ endif ()
 
 # ==================== C++ 标准 ====================
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)  # 使用标准C++，不使用编译器扩展
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -261,6 +260,8 @@ set(CORE_API_SOURCES
 set(CORE_PLUGIN_SOURCES
         src/core/plugin/PluginMarketManager.h
         src/core/plugin/PluginMarketManager.cpp
+        src/core/plugin/PluginSystem.h
+        src/core/plugin/PluginSystem.cpp
 )
 
 # Core - DI 依赖注入
@@ -375,7 +376,6 @@ set(UTIL_SOURCES
         src/utils/Logger.h
         src/utils/FuturesMockDataGenerator.h
         src/utils/FuturesMockDataGenerator.cpp
-        src/utils/Result.h
         src/utils/TechnicalIndicators.h
         src/utils/TechnicalIndicators.cpp
         src/utils/StressTest.h
@@ -410,12 +410,6 @@ set(NEWS_ANALYSIS_SOURCES
         src/core/analysis/NewsSentimentAnalyzer.cpp
         src/market/NewsDataSource.h
         src/market/NewsDataSource.cpp
-)
-
-# Plugin 插件系统
-set(PLUGIN_SOURCES
-        src/core/plugin/PluginSystem.h
-        src/core/plugin/PluginSystem.cpp
 )
 
 # Layout 布局管理
@@ -761,7 +755,6 @@ set(SOURCES
         ${PLUGIN_SOURCES}
         ${LAYOUT_SOURCES}
         ${NETWORK_SOURCES}
-        ${PLUGIN_SOURCES}
         ${ANALYSIS_CHANLUN_SOURCES}
         ${ANALYSIS_ELLIOTTWAVE_SOURCES}
         ${ANALYSIS_DOWTHEORY_SOURCES}
@@ -770,7 +763,6 @@ set(SOURCES
         ${UI_COMPONENT_SOURCES}
         ${UI_ANIMATION_SOURCES}
         ${UI_UTILS_SOURCES}
-        ${WIDGET_SOURCES}
         ${VIEW_SOURCES}
         ${TRADING_SOURCES}
         ${QML_RESOURCES}

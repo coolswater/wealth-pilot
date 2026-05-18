@@ -36,6 +36,7 @@
 #include "../settings/RiskSettingsPage.h"
 #include "../stock/StockKLinePage.h"
 #include "../futures/FuturesKLinePage.h"
+#include "../feedback/FeedbackDialog.h"
 #include "../../ui/components/BasePage.h"
 
 // 使用 WealthPilot 命名空间中的类
@@ -442,6 +443,7 @@ void MainWindow::setupUI()
     d->sidebar->addItem("alertCenter", QStringLiteral("预警"));
     d->sidebar->addItem("riskSettings", QStringLiteral("风控"));
     d->sidebar->addItem("settings", QStringLiteral("设置"));
+    d->sidebar->addItem("feedback", QStringLiteral("反馈"));
     d->sidebar->addItem("about", QStringLiteral("关于"));
 
     d->mainLayout->addWidget(d->sidebar);
@@ -624,6 +626,12 @@ QWidget* MainWindow::getPage(const QString& pageId)
     else if (pageId == "riskSettings")
     {
         page = new RiskSettingsPage(this);
+    }
+    else if (pageId == "feedback")
+    {
+        // 反馈页面 - 显示反馈对话框
+        showFeedbackDialog();
+        return nullptr;
     }
     else
     {
@@ -862,3 +870,17 @@ void MainWindow::setupShortcuts()
 
 
 
+
+void MainWindow::showFeedbackDialog()
+{
+    // ��ʼ������ϵͳ
+    static bool initialized = false;
+    if (!initialized) {
+        WealthPilot::FeedbackSystem::instance().initialize("data/feedback");
+        initialized = true;
+    }
+
+    // ��ʾ�����Ի���
+    WealthPilot::FeedbackDialog dialog(this);
+    dialog.exec();
+}
