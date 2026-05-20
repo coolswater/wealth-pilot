@@ -56,14 +56,20 @@ void StockKLinePage::initializePage()
         return;
     }
     
+    // 设置默认股票代码（贵州茅台）
+    if (m_stockCode.isEmpty()) {
+        m_stockCode = "sh600519";
+        m_stockName = QStringLiteral("贵州茅台");
+        if (m_stockNameLabel) {
+            m_stockNameLabel->setText(QStringLiteral("%1 (%2)").arg(m_stockName, m_stockCode));
+        }
+    }
+    
     // 设置 DataHub 订阅
     setupDataHubSubscriptions();
     
     // 加载初始数据
-    if (!m_stockCode.isEmpty())
-    {
-        loadDataWithFallback();
-    }
+    loadDataWithFallback();
     
     setInitialized(true);
     LOG_INFO("StockKLinePage initialized");

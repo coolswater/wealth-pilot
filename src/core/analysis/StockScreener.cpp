@@ -104,7 +104,7 @@ void StockScreener::execute()
 
 void StockScreener::executeAsync()
 {
-    QtConcurrent::run([this]() {
+    QThreadPool::globalInstance()->start([this]() {
         execute();
     });
 }

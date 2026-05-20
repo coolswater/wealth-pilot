@@ -44,7 +44,8 @@ namespace
     /**
  * @brief 获取按钮字体大小
  */
-    int getButtonFontSize(ButtonSize size)
+    // 按钮字体大小辅助函数（内部使用）
+    [[maybe_unused]] int getButtonFontSize(ButtonSize size)
     {
         switch (size)
         {

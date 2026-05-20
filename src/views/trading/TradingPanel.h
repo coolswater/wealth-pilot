@@ -131,6 +131,13 @@ private:
     QTableWidget *m_orderTable = nullptr;
     QLabel *m_statusLabel = nullptr;
 
+    // ========== DataHub 相关 ==========
+
+    /**
+     * @brief DataHub 实例引用
+     */
+    DataHubNS::DataHub& m_dataHub;
+
     // 订单对话框
     OrderDialog *m_orderDialog = nullptr;
 
@@ -145,13 +152,6 @@ private:
     // ========== 当前持仓 ==========
     int m_longPosition = 0;
     int m_shortPosition = 0;
-
-    // ========== DataHub 相关 ==========
-
-    /**
-     * @brief DataHub 实例引用
-     */
-    DataHubNS::DataHub& m_dataHub;
 };
 
 #endif // TRADINGPANEL_H

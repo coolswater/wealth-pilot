@@ -853,6 +853,21 @@ void DashboardPage::setupIndexPanel()
         QStringLiteral("沪深300"),
         QStringLiteral("北证50")
     };
+    
+    // 初始化指数数据
+    d->indexData.clear();
+    for (int i = 0; i < 7; ++i) {
+        IndexData data;
+        data.code = d->indexSymbols.value(i, QString());
+        data.name = indexNames[i];
+        data.current = 0.0;
+        data.change = 0.0;
+        data.changePercent = 0.0;
+        data.volume = 0;
+        data.amount = 0.0;
+        d->indexData.append(data);
+    }
+    
     for (int i = 0; i < 7; ++i) {
         QFrame* card = new QFrame(d->indexPanel);
         card->setStyleSheet(QString(R"(
@@ -2844,13 +2859,71 @@ void DashboardPage::updateTheme()
 void DashboardPage::processIndexQuotes(const QVector<StockQuote>& quotes)
 {
     // 处理指数行情数据
-    Q_UNUSED(quotes)
-    LOG_DEBUG("Processing index quotes");
+    LOG_DEBUG(QString("Processing %1 index quotes").arg(quotes.size()));
+    
+    for (const auto& quote : quotes) {
+        // 查找对应的指数数据
+        for (int i = 0; i < d->indexData.size(); ++i) {
+            if (d->indexData[i].code == quote.symbol) {
+                d->indexData[i].current = quote.lastPrice;
+                d->indexData[i].change = quote.change;
+                d->indexData[i].changePercent = quote.changePercent;
+                d->indexData[i].volume = quote.volume;
+                d->indexData[i].amount = quote.amount;
+                break;
+            }
+        }
+    }
+    
+    // 更新显示
+    updateIndexDisplay();
+    d->statusLabel->setText(QStringLiteral("数据已更新"));
 }
 
 void DashboardPage::processRankQuotes(const QVector<StockQuote>& quotes)
 {
     // 处理排行榜行情数据
-    Q_UNUSED(quotes)
-    LOG_DEBUG("Processing rank quotes");
+    LOG_DEBUG(QString("Processing %1 rank quotes").arg(quotes.size()));
+    
+    // 转换为排行榜数据格式
+    QVector<StockRankData> rankData;
+    for (const auto& quote : quotes) {
+        StockRankData data;
+        data.code = quote.symbol;
+        data.name = quote.name;
+        data.price = quote.lastPrice;
+        data.change = quote.change;
+        data.changePercent = quote.changePercent;
+        data.volume = quote.volume;
+        data.amount = quote.amount;
+        rankData.append(data);
+    }
+    
+    // 按涨跌幅排序
+    std::sort(rankData.begin(), rankData.end(), 
+        [](const StockRankData& a, const StockRankData& b) {
+            return a.changePercent > b.changePercent;
+        });
+    
+    // 更新沪A涨跌榜（前10名）
+    if (d->shGainModel) {
+        QVector<StockRankData> shGainData;
+        for (const auto& data : rankData) {
+            if (data.code.startsWith("sh") && shGainData.size() < 10) {
+                shGainData.append(data);
+            }
+        }
+        d->shGainModel->setData(shGainData);
+    }
+    
+    // 更新深A涨跌榜（前10名）
+    if (d->szGainModel) {
+        QVector<StockRankData> szGainData;
+        for (const auto& data : rankData) {
+            if (data.code.startsWith("sz") && szGainData.size() < 10) {
+                szGainData.append(data);
+            }
+        }
+        d->szGainModel->setData(szGainData);
+    }
 }

@@ -96,7 +96,7 @@ void BacktestEngine::run()
 
 void BacktestEngine::runAsync()
 {
-    QtConcurrent::run([this]() {
+    QThreadPool::globalInstance()->start([this]() {
         run();
     });
 }

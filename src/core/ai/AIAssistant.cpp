@@ -114,7 +114,7 @@ AIResponse AIAssistant::processInput(const QString& input)
 
 void AIAssistant::processInputAsync(const QString& input)
 {
-    QtConcurrent::run([this, input]() {
+    QThreadPool::globalInstance()->start([this, input]() {
         AIResponse response = processInput(input);
         emit responseReady(response);
     });
