@@ -58,7 +58,9 @@ private:
     // UI组件
     QLabel* m_stockNameLabel = nullptr;
     QLabel* m_priceLabel = nullptr;
-    QLabel* m_changeLabel = nullptr;
+    QLabel* m_changeLabel = nullptr;  // 保留用于兼容
+    QLabel* m_changeAmountLabel = nullptr;  // 涨跌额
+    QLabel* m_changePercentLabel = nullptr;  // 涨跌幅
     QLabel* m_statusLabel = nullptr;
     QLabel* m_orderRatioLabel = nullptr;
     QLabel* m_bidLabels[5];

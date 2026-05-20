@@ -44,22 +44,41 @@ void StockInfoPanel::setupUI()
     headerWidget->setStyleSheet(QString("background-color: %1;").arg(Tokens::Colors::BgElevated));
     auto* headerLayout = new QVBoxLayout(headerWidget);
     headerLayout->setContentsMargins(12, 12, 12, 12);
-    headerLayout->setSpacing(4);
+    headerLayout->setSpacing(8);
 
-    // 股票名称
+    // 第一行：代码 + 名称
     m_stockNameLabel = new QLabel("--", headerWidget);
-    m_stockNameLabel->setStyleSheet(QString("color: %1; font-size: 16px; font-weight: bold;").arg(Tokens::Colors::TextPrimary));
+    m_stockNameLabel->setStyleSheet(QString("color: %1; font-size: 14px; font-weight: bold;").arg(Tokens::Colors::TextPrimary));
     headerLayout->addWidget(m_stockNameLabel);
 
-    // 价格
-    m_priceLabel = new QLabel("--", headerWidget);
-    m_priceLabel->setStyleSheet(QString("color: %1; font-size: 24px; font-weight: bold;").arg(Tokens::Colors::TextPrimary));
-    headerLayout->addWidget(m_priceLabel);
+    // 第二行：价格（左） + 涨跌信息（右，上下分布）
+    auto* priceChangeLayout = new QHBoxLayout();
+    priceChangeLayout->setSpacing(16);
 
-    // 涨跌
-    m_changeLabel = new QLabel("--", headerWidget);
-    m_changeLabel->setStyleSheet(QString("color: %1; font-size: 14px;").arg(Tokens::Colors::TextSecondary));
-    headerLayout->addWidget(m_changeLabel);
+    // 价格（左侧，大字体）
+    m_priceLabel = new QLabel("--", headerWidget);
+    m_priceLabel->setStyleSheet(QString("color: %1; font-size: 28px; font-weight: bold;").arg(Tokens::Colors::TextPrimary));
+    priceChangeLayout->addWidget(m_priceLabel);
+
+    // 涨跌信息（右侧，上下分布）
+    auto* changeLayout = new QVBoxLayout();
+    changeLayout->setSpacing(2);
+
+    // 涨跌额
+    m_changeAmountLabel = new QLabel("--", headerWidget);
+    m_changeAmountLabel->setStyleSheet(QString("color: %1; font-size: 14px; font-weight: bold;").arg(Tokens::Colors::TextSecondary));
+    m_changeAmountLabel->setAlignment(Qt::AlignRight);
+    changeLayout->addWidget(m_changeAmountLabel);
+
+    // 涨跌幅
+    m_changePercentLabel = new QLabel("--", headerWidget);
+    m_changePercentLabel->setStyleSheet(QString("color: %1; font-size: 14px; font-weight: bold;").arg(Tokens::Colors::TextSecondary));
+    m_changePercentLabel->setAlignment(Qt::AlignRight);
+    changeLayout->addWidget(m_changePercentLabel);
+
+    priceChangeLayout->addLayout(changeLayout);
+    priceChangeLayout->addStretch();
+    headerLayout->addLayout(priceChangeLayout);
 
     mainLayout->addWidget(headerWidget);
 
@@ -192,7 +211,9 @@ void StockInfoPanel::setupUI()
 void StockInfoPanel::setStock(const QString& stockCode, const QString& stockName)
 {
     m_stockCode = stockCode;
-    m_stockNameLabel->setText(stockName.isEmpty() ? stockCode : stockName);
+    // 显示：代码 + 名称
+    QString displayText = stockName.isEmpty() ? stockCode : QString("%1 %2").arg(stockCode, stockName);
+    m_stockNameLabel->setText(displayText);
     clearData();
     
     if (!m_dataSource) {
@@ -219,20 +240,30 @@ void StockInfoPanel::updateQuote(const StockQuote& quote)
     m_priceLabel->setText(QString::number(quote.lastPrice, 'f', 2));
     updatePriceLabel(m_priceLabel, quote.lastPrice, quote.preClose);
 
-    // 更新涨跌
-    QString changeText;
+    // 更新涨跌额和涨跌幅（分开显示）
+    QString changeAmountText;
+    QString changePercentText;
+    QString changeColor;
+
     if (quote.changePercent >= 0) {
-        changeText = QString("+%1 (+%2%)")
-            .arg(QString::number(quote.changeAmount, 'f', 2))
-            .arg(QString::number(quote.changePercent, 'f', 2));
-        m_changeLabel->setStyleSheet(QString("color: %1; font-size: 14px;").arg(Tokens::Colors::Danger));
+        changeAmountText = QString("+%1").arg(QString::number(quote.changeAmount, 'f', 2));
+        changePercentText = QString("+%1%").arg(QString::number(quote.changePercent, 'f', 2));
+        changeColor = Tokens::Colors::Danger;
     } else {
-        changeText = QString("%1 (%2%)")
-            .arg(QString::number(quote.changeAmount, 'f', 2))
-            .arg(QString::number(quote.changePercent, 'f', 2));
-        m_changeLabel->setStyleSheet(QString("color: %1; font-size: 14px;").arg(Tokens::Colors::Success));
+        changeAmountText = QString("%1").arg(QString::number(quote.changeAmount, 'f', 2));
+        changePercentText = QString("%1%").arg(QString::number(quote.changePercent, 'f', 2));
+        changeColor = Tokens::Colors::Success;
     }
-    m_changeLabel->setText(changeText);
+
+    m_changeAmountLabel->setText(changeAmountText);
+    m_changeAmountLabel->setStyleSheet(QString("color: %1; font-size: 14px; font-weight: bold;").arg(changeColor));
+
+    m_changePercentLabel->setText(changePercentText);
+    m_changePercentLabel->setStyleSheet(QString("color: %1; font-size: 14px; font-weight: bold;").arg(changeColor));
+
+    // 保留旧的 changeLabel 用于兼容
+    m_changeLabel->setText(QString("%1 (%2%)").arg(changeAmountText, changePercentText));
+    m_changeLabel->setStyleSheet(QString("color: %1; font-size: 14px;").arg(changeColor));
 
     // 更新五档（只显示价格）
     for (int i = 0; i < 5; ++i) {
