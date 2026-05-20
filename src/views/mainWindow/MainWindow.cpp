@@ -387,11 +387,8 @@ void MainWindow::onNavigateToStockKLinePage(const QString& symbol, const QString
         auto* kline = qobject_cast<StockKLinePage*>(klinePage);
         if (kline)
         {
-            // 确定交易所
-            QString exchange = symbol.startsWith("6") ? "SH" : "SZ";
-            
-            // 设置股票
-            kline->setStock(symbol, exchange);
+            // 设置股票（代码和名称）
+            kline->setStock(symbol, name);
         }
         // Switch to KLine page
         d->contentStack->setCurrentWidget(klinePage);
@@ -611,6 +608,10 @@ QWidget* MainWindow::getPage(const QString& pageId)
     else if (pageId == "settings")
     {
         page = new SettingsPage(this);
+    }
+    else if (pageId == "StockKLine")
+    {
+        page = new StockKLinePage(this);
     }
     else if (pageId == "about")
     {

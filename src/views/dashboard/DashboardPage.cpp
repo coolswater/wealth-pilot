@@ -2880,7 +2880,8 @@ void DashboardPage::processIndexQuotes(const QVector<StockQuote>& quotes)
         for (int i = 0; i < d->indexData.size(); ++i) {
             if (d->indexData[i].code == quote.symbol) {
                 d->indexData[i].current = quote.lastPrice;
-                d->indexData[i].change = quote.change;
+                // 使用 changeAmount（涨跌额）和 changePercent（涨跌幅）
+                d->indexData[i].change = quote.changeAmount;
                 d->indexData[i].changePercent = quote.changePercent;
                 d->indexData[i].volume = quote.volume;
                 d->indexData[i].amount = quote.amount;
@@ -2906,7 +2907,8 @@ void DashboardPage::processRankQuotes(const QVector<StockQuote>& quotes)
         data.code = quote.symbol;
         data.name = quote.name;
         data.price = quote.lastPrice;
-        data.change = quote.change;
+        // 使用 changeAmount（涨跌额）和 changePercent（涨跌幅）
+        data.change = quote.changeAmount;
         data.changePercent = quote.changePercent;
         data.volume = quote.volume;
         data.amount = quote.amount;
