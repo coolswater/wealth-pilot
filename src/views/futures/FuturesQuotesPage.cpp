@@ -57,61 +57,64 @@ namespace {
     constexpr int MIN_OPEN_INTEREST = 50;    ///< 最小持仓量
     constexpr int MIN_DAILY_VOLUME = 100;    ///< 最小日成交量
     constexpr int EXPIRY_MONTHS_AHEAD = 3;   ///< 到期月数阈值
+}
+
+// ============================================================================
+// 活跃合约代理模型
+// ============================================================================
+/**
+ * @brief 活跃合约代理模型
+ * @details 根据活跃度状态筛选合约
+ */
+class ActiveContractProxyModel : public QSortFilterProxyModel {
+public:
+    /**
+     * @brief 构造函数
+     */
+    explicit ActiveContractProxyModel(QObject* parent = nullptr)
+        : QSortFilterProxyModel(parent)
+        , m_filterMode(1)  // 默认显示活跃合约
+    {}
 
     /**
-     * @brief 活跃合约代理模型
-     * @details 根据活跃度状态筛选合约
+     * @brief 设置筛选模式
+     * @param mode 筛选模式（0:全部, 1:活跃, 2:高流动性, 3:低流动性）
      */
-    class ActiveContractProxyModel : public QSortFilterProxyModel {
-    public:
-        /**
-         * @brief 构造函数
-         */
-        explicit ActiveContractProxyModel(QObject* parent = nullptr)
-            : QSortFilterProxyModel(parent)
-            , m_filterMode(1)  // 默认显示活跃合约
-        {}
+    void setFilterMode(int mode) {
+        m_filterMode = mode;
+        beginFilterChange();
+        endFilterChange();
+    }
 
-        /**
-         * @brief 设置筛选模式
-         * @param mode 筛选模式（0:全部, 1:活跃, 2:高流动性, 3:低流动性）
-         */
-        void setFilterMode(int mode) {
-            m_filterMode = mode;
-            beginFilterChange();
-            endFilterChange();
+    /**
+     * @brief 获取筛选模式
+     */
+    int filterMode() const { return m_filterMode; }
+
+protected:
+    /**
+     * @brief 判断行是否接受筛选
+     */
+    bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override {
+        // 全部显示模式
+        if (m_filterMode == 0) {
+            return true;
         }
 
-        /**
-         * @brief 获取筛选模式
-         */
-        int filterMode() const { return m_filterMode; }
+        QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
+        int activityStatus = sourceModel()->data(index, Qt::UserRole + 1).toInt();
 
-    protected:
-        /**
-         * @brief 判断行是否接受筛选
-         */
-        bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override {
-            // 全部显示模式
-            if (m_filterMode == 0) {
-                return true;
-            }
-
-            QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
-            int activityStatus = sourceModel()->data(index, Qt::UserRole + 1).toInt();
-
-            switch (m_filterMode) {
-                case 1: return activityStatus > 0;    // 活跃合约
-                case 2: return activityStatus >= 2;  // 高流动性
-                case 3: return activityStatus == 1;  // 低流动性
-                default: return true;
-            }
+        switch (m_filterMode) {
+            case 1: return activityStatus > 0;    // 活跃合约
+            case 2: return activityStatus >= 2;  // 高流动性
+            case 3: return activityStatus == 1;  // 低流动性
+            default: return true;
         }
+    }
 
-    private:
-        int m_filterMode;  ///< 筛选模式
-    };
-}
+private:
+    int m_filterMode;  ///< 筛选模式
+};
 
 // ============================================================================
 // FuturesQuotesPage::Impl - 私有实现
