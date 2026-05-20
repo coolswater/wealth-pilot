@@ -292,7 +292,7 @@ namespace WealthPilot
             alert.stockCode = stockCode;
             alert.stockName = stockCode;
             alert.title = QStringLiteral("AI 分析预警");
-            alert.message = result.unwrap();
+            alert.message = result.value();
             alert.suggestion = QStringLiteral("请结合自身判断做出决策");
             alert.triggeredAt = QDateTime::currentDateTime();
             alerts.append(alert);

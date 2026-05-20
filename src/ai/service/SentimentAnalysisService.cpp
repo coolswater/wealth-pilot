@@ -256,7 +256,7 @@ namespace WealthPilot
             }
 
             SentimentResult sentiment;
-            sentiment.summary = result.unwrap();
+            sentiment.summary = result.value();
             sentiment.score = 0; // TODO: 从响应中解析
             sentiment.type = SentimentType::Neutral;
             sentiment.confidence = 0.7;
@@ -290,7 +290,7 @@ namespace WealthPilot
             }
 
             SentimentResult sentiment;
-            sentiment.summary = result.unwrap();
+            sentiment.summary = result.value();
             sentiment.score = 0;
             sentiment.type = SentimentType::Neutral;
             sentiment.confidence = 0.6;
@@ -321,7 +321,7 @@ namespace WealthPilot
             }
 
             SentimentResult sentiment;
-            sentiment.summary = result.unwrap();
+            sentiment.summary = result.value();
             sentiment.score = 0;
             sentiment.type = SentimentType::Neutral;
             sentiment.confidence = 0.65;
@@ -556,7 +556,7 @@ namespace WealthPilot
             }
 
             // 尝试解析 JSON
-            QString response = result.unwrap();
+            QString response = result.value();
 
             // 提取 JSON 部分
             QRegularExpression jsonRegex("\\{[\\s\\S]*\\}");

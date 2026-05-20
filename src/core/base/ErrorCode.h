@@ -98,17 +98,17 @@ enum class ErrorCode : int {
 };
 
 /**
- * @brief 错误信息结构
+ * @brief 错误信息结构（带错误码）
  */
-struct Error {
+struct ErrorInfo {
     ErrorCode code = ErrorCode::Success;  ///< 错误码
     QString message;                       ///< 错误消息
     QString detail;                        ///< 详细信息
     QVariant context;                      ///< 上下文数据
     
-    Error() = default;
+    ErrorInfo() = default;
     
-    Error(ErrorCode c, const QString& msg, const QString& det = {}, const QVariant& ctx = {})
+    ErrorInfo(ErrorCode c, const QString& msg, const QString& det = {}, const QVariant& ctx = {})
         : code(c), message(msg), detail(det), context(ctx) {}
     
     /**
@@ -134,14 +134,14 @@ struct Error {
     /**
      * @brief 创建成功结果
      */
-    static Error ok() { return Error(); }
+    static ErrorInfo ok() { return ErrorInfo(); }
     
     /**
      * @brief 创建错误
      */
-    static Error create(ErrorCode code, const QString& message, 
+    static ErrorInfo create(ErrorCode code, const QString& message, 
                        const QString& detail = {}, const QVariant& context = {}) {
-        return Error(code, message, detail, context);
+        return ErrorInfo(code, message, detail, context);
     }
 };
 
@@ -217,7 +217,7 @@ inline QString errorCodeName(ErrorCode code) {
     }
 }
 
-inline QString Error::codeName() const {
+inline QString ErrorInfo::codeName() const {
     return errorCodeName(code);
 }
 

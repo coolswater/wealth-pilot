@@ -192,6 +192,8 @@ set(CORE_FEEDBACK_SOURCES
         src/core/feedback/UserFeedbackManager.h
         src/core/feedback/UserFeedbackManager.cpp
         src/core/feedback/FeedbackTranslations.h
+        src/core/feedback/FeedbackSystem.h
+        src/core/feedback/FeedbackSystem.cpp
 )
 
 # Core - Network 网络
@@ -373,7 +375,6 @@ set(MODEL_SOURCES
         # src/models/StockQuoteModel.cpp
         src/models/QuoteModelBase.h
         src/models/QuoteModelBase.cpp
-        src/domain/types/MarketTypes.h
 )
 
 # Utils 工具
@@ -660,6 +661,8 @@ set(VIEW_SOURCES
         src/views/stock/StockQuotesPage.cpp
         src/views/stock/StockKLinePage.h
         src/views/stock/StockKLinePage.cpp
+        src/views/feedback/FeedbackDialog.h
+        src/views/feedback/FeedbackDialog.cpp
         src/views/settings/SettingsPage.h
         src/views/settings/SettingsPage.cpp
         src/views/settings/CTPBrokerDialog.h

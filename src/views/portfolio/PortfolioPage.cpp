@@ -331,15 +331,19 @@ void PortfolioPage::initializePage()
     if (isInitialized()) return;
 
     // ============================================================
-    // 1. 设置 DataHub 订阅
+    // 1. 先加载初始数据（确保模型有数据）
     // ============================================================
-    setupDataHubSubscriptions();
+    loadDemoData();
 
     // ============================================================
-    // 2. 设置连接和加载初始数据
+    // 2. 设置连接
     // ============================================================
     setupConnections();
-    loadDemoData();
+
+    // ============================================================
+    // 3. 设置 DataHub 订阅（在数据加载后）
+    // ============================================================
+    setupDataHubSubscriptions();
 
     setInitialized(true);
 
@@ -348,15 +352,23 @@ void PortfolioPage::initializePage()
 
 void PortfolioPage::setupDataHubSubscriptions()
 {
+    // 确保页面已完全初始化
+    if (!isInitialized()) {
+        LOG_WARNING("[PortfolioPage] setupDataHubSubscriptions called before initialization");
+        return;
+    }
+
     // 订阅持仓合约的实时行情
     // 获取持仓列表中的所有合约ID
     QStringList instruments = d->stockModel->instrumentIds();
     for (const QString& instrument : instruments) {
         subscribeQuote(instrument, [this, instrument](const StockQuote& quote) {
             // 更新持仓价格
-            d->stockModel->updatePrice(instrument, quote.price);
-            // 更新汇总显示
-            updateSummaryDisplay();
+            if (d && d->stockModel) {
+                d->stockModel->updatePrice(instrument, quote.price);
+                // 更新汇总显示
+                updateSummaryDisplay();
+            }
         });
         m_subscribedInstruments.append(instrument);
     }
@@ -366,7 +378,9 @@ void PortfolioPage::setupDataHubSubscriptions()
         [this](const QVariant& value) {
             Q_UNUSED(value)
             // 更新账户汇总
-            updateSummaryDisplay();
+            if (d) {
+                updateSummaryDisplay();
+            }
         });
     
     // 订阅持仓变动
@@ -375,7 +389,9 @@ void PortfolioPage::setupDataHubSubscriptions()
             Q_UNUSED(topic)
             Q_UNUSED(value)
             // 持仓变动时更新显示
-            updateSummaryDisplay();
+            if (d) {
+                updateSummaryDisplay();
+            }
         });
     
     LOG_INFO("[PortfolioPage] DataHub subscriptions setup complete");
@@ -420,9 +436,6 @@ void PortfolioPage::setupUI()
     contentLayout->addWidget(tableFrame, 1);
 
     d->mainLayout->addWidget(contentWidget, 1);
-
-    // 4. 连接信号
-    setupConnections();
 
     // 应用主题样式
     updateTheme();

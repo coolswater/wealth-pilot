@@ -195,10 +195,10 @@ void AIService::setSystemPrompt(const QString& prompt)
  * 支持缓存，相同消息会返回缓存结果
  * 自动管理对话历史
  */
-void AIService::chat(const QString& message, std::function<void(Result<QString>)> callback)
+void AIService::chat(const QString& message, std::function<void(AIResult<QString>)> callback)
 {
     if (m_config.provider == AIProvider::None || m_config.apiKey.isEmpty()) {
-        callback(Result<QString>::err(ErrorCode::AiError, "AI service not configured"));
+        callback(AIResult<QString>::error("AI service not configured"));
         return;
     }
 
@@ -209,7 +209,7 @@ void AIService::chat(const QString& message, std::function<void(Result<QString>)
         if (cached.isValid()) {
             QString cachedResponse = cached.toString();
             m_history.append(AIMessage::assistant(cachedResponse));
-            callback(Result<QString>::ok(cachedResponse));
+            callback(AIResult<QString>::ok(cachedResponse));
             return;
         }
     }
@@ -218,9 +218,9 @@ void AIService::chat(const QString& message, std::function<void(Result<QString>)
 
     QJsonObject request = buildRequest(message);
 
-    sendRequest(request, [this, callback, message, cacheKey = generateCacheKey(message)](Result<QString> result) {
+    sendRequest(request, [this, callback, message, cacheKey = generateCacheKey(message)](AIResult<QString> result) {
         if (result.isOk()) {
-            QString response = result.unwrap();
+            QString response = result.value();
             m_history.append(AIMessage::assistant(response));
 
             // 缓存响应
@@ -243,20 +243,18 @@ void AIService::chat(const QString& message, std::function<void(Result<QString>)
  *
  * 阻塞等待响应，适用于需要同步处理的场景
  */
-Result<QString> AIService::chatSync(const QString& message, int timeoutMs)
+AIResult<QString> AIService::chatSync(const QString& message, int timeoutMs)
 {
     QString resultValue;
-    ErrorCode errorCode = ErrorCode::Success;
     QString errorMessage;
     bool success = false;
     QEventLoop loop;
 
-    chat(message, [&](Result<QString> r) {
+    chat(message, [&](AIResult<QString> r) {
         if (r.isOk()) {
-            resultValue = r.unwrap();
+            resultValue = r.value();
             success = true;
         } else {
-            errorCode = r.errorCode();
             errorMessage = r.errorMessage();
         }
         loop.quit();
@@ -271,13 +269,13 @@ Result<QString> AIService::chatSync(const QString& message, int timeoutMs)
     loop.exec();
 
     if (!timer.isActive()) {
-        return Result<QString>::err(ErrorCode::NetworkTimeout, "AI request timeout");
+        return AIResult<QString>::error("AI request timeout");
     }
 
     if (success) {
-        return Result<QString>::ok(resultValue);
+        return AIResult<QString>::ok(resultValue);
     } else {
-        return Result<QString>::err(errorCode, errorMessage);
+        return AIResult<QString>::error(errorMessage);
     }
 }
 
@@ -293,9 +291,9 @@ void AIService::chatStream(const QString& message,
                            std::function<void(const QString&)> onChunk,
                            std::function<void()> onComplete)
 {
-    chat(message, [onChunk, onComplete](Result<QString> result) {
+    chat(message, [onChunk, onComplete](AIResult<QString> result) {
         if (result.isOk()) {
-            onChunk(result.unwrap());
+            onChunk(result.value());
         }
         onComplete();
     });
@@ -381,21 +379,21 @@ void AIService::clearHistory()
  * 调用AI分析持仓结构、风险评估、优化建议等
  */
 void AIService::analyzePortfolio(const QJsonObject& positions,
-                                  std::function<void(Result<AIAnalysis>)> callback)
+                                  std::function<void(AIResult<AIAnalysis>)> callback)
 {
     QString prompt = QString("请分析以下投资组合，并提供投资建议：\n\n%1")
         .arg(QString::fromUtf8(QJsonDocument(positions).toJson()));
 
-    chat(prompt, [callback](Result<QString> result) {
+    chat(prompt, [callback](AIResult<QString> result) {
         if (result.isError()) {
-            callback(Result<AIAnalysis>::fromError(result.error()));
+            callback(AIResult<AIAnalysis>::error(result.errorMessage()));
             return;
         }
 
         AIAnalysis analysis;
-        analysis.summary = result.unwrap();
+        analysis.summary = result.value();
         analysis.confidence = 0.8;
-        callback(Result<AIAnalysis>::ok(analysis));
+        callback(AIResult<AIAnalysis>::ok(analysis));
     });
 }
 
@@ -408,22 +406,22 @@ void AIService::analyzePortfolio(const QJsonObject& positions,
  * 提供技术分析、基本面分析、投资建议
  */
 void AIService::analyzeStock(const QString& code, const QJsonObject& data,
-                              std::function<void(Result<AIAnalysis>)> callback)
+                              std::function<void(AIResult<AIAnalysis>)> callback)
 {
     QString prompt = QString("请分析股�?%1 的以下数据：\n\n%2\n\n请提供：\n1. 技术分析\n2. 基本面分析\n3. 投资建议")
         .arg(code)
         .arg(QString::fromUtf8(QJsonDocument(data).toJson()));
 
-    chat(prompt, [callback](Result<QString> result) {
+    chat(prompt, [callback](AIResult<QString> result) {
         if (result.isError()) {
-            callback(Result<AIAnalysis>::fromError(result.error()));
+            callback(AIResult<AIAnalysis>::error(result.errorMessage()));
             return;
         }
 
         AIAnalysis analysis;
-        analysis.summary = result.unwrap();
+        analysis.summary = result.value();
         analysis.confidence = 0.75;
-        callback(Result<AIAnalysis>::ok(analysis));
+        callback(AIResult<AIAnalysis>::ok(analysis));
     });
 }
 
@@ -435,21 +433,21 @@ void AIService::analyzeStock(const QString& code, const QJsonObject& data,
  * 基于市场数据判断当前市场情绪状态
  */
 void AIService::analyzeMarketSentiment(const QJsonObject& marketData,
-                                        std::function<void(Result<AIAnalysis>)> callback)
+                                        std::function<void(AIResult<AIAnalysis>)> callback)
 {
     QString prompt = QString("请分析以下市场数据，判断当前市场情绪：\n\n%1")
         .arg(QString::fromUtf8(QJsonDocument(marketData).toJson()));
 
-    chat(prompt, [callback](Result<QString> result) {
+    chat(prompt, [callback](AIResult<QString> result) {
         if (result.isError()) {
-            callback(Result<AIAnalysis>::fromError(result.error()));
+            callback(AIResult<AIAnalysis>::error(result.errorMessage()));
             return;
         }
 
         AIAnalysis analysis;
-        analysis.summary = result.unwrap();
+        analysis.summary = result.value();
         analysis.confidence = 0.7;
-        callback(Result<AIAnalysis>::ok(analysis));
+        callback(AIResult<AIAnalysis>::ok(analysis));
     });
 }
 
@@ -461,7 +459,7 @@ void AIService::analyzeMarketSentiment(const QJsonObject& marketData,
  * 简单的问答接口，不携带上下文
  */
 void AIService::quickAsk(const QString& question,
-                          std::function<void(Result<QString>)> callback)
+                          std::function<void(AIResult<QString>)> callback)
 {
     chat(question, callback);
 }
@@ -474,7 +472,7 @@ void AIService::quickAsk(const QString& question,
  * 基于用户提供的上下文给出投资建议
  */
 void AIService::getInvestmentAdvice(const QString& context,
-                                     std::function<void(Result<QString>)> callback)
+                                     std::function<void(AIResult<QString>)> callback)
 {
     QString prompt = QString("基于以下情况，请给出投资建议：\n\n%1").arg(context);
     chat(prompt, callback);
@@ -539,7 +537,7 @@ QString AIService::parseResponse(const QByteArray& data)
 }
 
 void AIService::sendRequest(const QJsonObject& request,
-                             std::function<void(Result<QString>)> callback)
+                             std::function<void(AIResult<QString>)> callback)
 {
     QString url;
     QMap<QString, QString> headers;
@@ -575,20 +573,20 @@ void AIService::sendRequest(const QJsonObject& request,
     QByteArray data = QJsonDocument(request).toJson();
 
     NetworkManager::instance()->postAsync(url, data,
-        [this, callback](Result<QByteArray> result) {
+        [this, callback](NetResult<QByteArray> result) {
             if (result.isError()) {
-                callback(Result<QString>::err(result.errorCode(), result.errorMessage()));
+                callback(AIResult<QString>::error(result.errorMessage()));
                 return;
             }
 
-            QString content = parseResponse(result.unwrap());
+            QString content = parseResponse(result.value());
 
             if (content.isEmpty()) {
-                callback(Result<QString>::err(ErrorCode::AiParseError, "Failed to parse response"));
+                callback(AIResult<QString>::error("Failed to parse response"));
                 return;
             }
 
             emit responseComplete(content);
-            callback(Result<QString>::ok(content));
+            callback(AIResult<QString>::ok(content));
         }, headers);
 }

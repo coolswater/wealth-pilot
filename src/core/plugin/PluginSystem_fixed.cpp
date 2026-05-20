@@ -1,6 +1,6 @@
-/**
+﻿/**
  * @file PluginSystem.cpp
- * @brief 插件系统实现
+ * @brief 鎻掍欢绯荤粺瀹炵幇
  */
 
 #include "PluginSystem.h"
@@ -31,7 +31,7 @@ bool PluginSystem::initialize()
 
     LOG_INFO("Initializing Plugin System");
 
-    // 检测Python环境
+    // 妫€娴婸ython鐜
     QProcess process;
     process.start(m_pythonPath, QStringList() << QStringLiteral("--version"));
     if (process.waitForFinished(5000)) {
@@ -41,14 +41,14 @@ bool PluginSystem::initialize()
         LOG_WARNING("Python not found, plugin system will run in limited mode");
     }
 
-    // 扫描插件目录
+    // 鎵弿鎻掍欢鐩綍
     QString pluginDir = QDir::currentPath() + QStringLiteral("/plugins");
     if (!QDir(pluginDir).exists()) {
         QDir().mkpath(pluginDir);
         LOG_INFO(QString("Created plugin directory: %1").arg(pluginDir));
     }
 
-    // 扫描已有插件
+    // 鎵弿宸叉湁鎻掍欢
     QDir dir(pluginDir);
     QStringList filters;
     filters << QStringLiteral("*.py");
@@ -71,8 +71,7 @@ bool PluginSystem::installPlugin(const QString& scriptPath)
         return false;
     }
 
-    // 解析插件元数?
-    PluginInfo info;
+    // 瑙ｆ瀽鎻掍欢鍏冩暟鎹?    PluginInfo info;
     if (!parsePluginMetadata(scriptPath, info)) {
         LOG_ERROR(QString("Failed to parse plugin metadata: %1").arg(scriptPath));
         return false;
@@ -83,7 +82,7 @@ bool PluginSystem::installPlugin(const QString& scriptPath)
     info.installTime = QDateTime::currentDateTime();
     info.updateTime = QDateTime::currentDateTime();
 
-    // 验证脚本
+    // 楠岃瘉鑴氭湰
     QString errorMsg;
     if (!validateScript(scriptPath, errorMsg)) {
         LOG_ERROR(QString("Script validation failed: %1 - %2").arg(scriptPath, errorMsg));
@@ -156,10 +155,10 @@ IndicatorResult PluginSystem::calculateIndicator(const QString& pluginId,
         return result;
     }
 
-    // 构建Python脚本
+    // 鏋勫缓Python鑴氭湰
     QString script = buildScript(plugin.scriptPath, context);
 
-    // 执行Python脚本
+    // 鎵цPython鑴氭湰
     QVariantMap params;
     params[QStringLiteral("symbol")] = context.symbol;
     params[QStringLiteral("action")] = QStringLiteral("calculate");
@@ -168,13 +167,12 @@ IndicatorResult PluginSystem::calculateIndicator(const QString& pluginId,
     if (executePython(script, params, output)) {
         result.name = output.value(QStringLiteral("name"), plugin.name).toString();
 
-        // 解析指标
-        QVariantList values = output.value(QStringLiteral("values")).toList();
+        // 瑙ｆ瀽鎸囨爣鍊?        QVariantList values = output.value(QStringLiteral("values")).toList();
         for (const QVariant& v : values) {
             result.values.append(v.toDouble());
         }
 
-        result.color = output.value(QStringLiteral("color"), QStringLiteral("#58a6ff")).toString();
+        result.color = output.value(QStringLiteral("color"), QStringLiteral("#3B82F6")).toString();
         result.lineWidth = output.value(QStringLiteral("lineWidth"), 1).toInt();
         result.lineStyle = output.value(QStringLiteral("lineStyle"), QStringLiteral("solid")).toString();
         result.visible = output.value(QStringLiteral("visible"), true).toBool();
@@ -210,19 +208,19 @@ bool PluginSystem::validateScript(const QString& scriptPath, QString& errorMsg)
     QString content = QString::fromUtf8(file.readAll());
     file.close();
 
-    // 检查必须的函数
+    // 妫€鏌ュ繀椤荤殑鍑芥暟
     if (!content.contains(QStringLiteral("def calculate"))) {
         errorMsg = QStringLiteral("Missing 'calculate' function");
         return false;
     }
 
-    // 检查元数据
+    // 妫€鏌ュ厓鏁版嵁
     if (!content.contains(QStringLiteral("@plugin"))) {
         errorMsg = QStringLiteral("Missing @plugin decorator");
         return false;
     }
 
-    // 使用Python验证语法
+    // 浣跨敤Python楠岃瘉璇硶
     QProcess process;
     process.start(m_pythonPath, QStringList()
         << QStringLiteral("-c")
@@ -251,36 +249,36 @@ QString PluginSystem::getScriptTemplate(PluginType type) const
             "# -*- coding: utf-8 -*-\n"
             "\"\"\"\n"
             "@plugin\n"
-            "name: 我的自定义指标\n"
+            "name: 鎴戠殑鑷畾涔夋寚鏍嘰n"
             "version: 1.0.0\n"
             "author: WealthPilot User\n"
-            "description: 自定义指标计算\n"
+            "description: 鑷畾涔夋寚鏍囪绠梊n"
             "type: indicator\n"
             "\"\"\"\n"
             "\n"
             "def calculate(prices, highs, lows, opens, volumes, **params):\n"
             "    \"\"\"\n"
-            "    计算自定义指标\n"
+            "    璁＄畻鑷畾涔夋寚鏍嘰n"
             "    \n"
-            "    参数:\n"
-            "        prices: 收盘价数组\n"
-            "        highs: 最高价数组\n"
-            "        lows: 最低价数组\n"
-            "        opens: 开盘价数组\n"
-            "        volumes: 成交量数组\n"
-            "        **params: 自定义参数\n"
+            "    鍙傛暟:\n"
+            "        prices: 鏀剁洏浠锋暟缁刓n"
+            "        highs: 鏈€楂樹环鏁扮粍\n"
+            "        lows: 鏈€浣庝环鏁扮粍\n"
+            "        opens: 寮€鐩樹环鏁扮粍\n"
+            "        volumes: 鎴愪氦閲忔暟缁刓n"
+            "        **params: 鑷畾涔夊弬鏁癨n"
             "    \n"
-            "    返回:\n"
+            "    杩斿洖:\n"
             "        dict: {\n"
-            "            'name': '指标名称',\n"
-            "            'values': [指标值数组],\n"
-            "            'color': '#58a6ff',\n"
+            "            'name': '鎸囨爣鍚嶇О',\n"
+            "            'values': [鎸囨爣鍊兼暟缁刔,\n"
+            "            'color': '#3B82F6',\n"
             "            'lineWidth': 1,\n"
             "            'lineStyle': 'solid',\n"
             "            'visible': True\n"
             "        }\n"
             "    \"\"\"\n"
-            "    # 示例：简单移动平均线\n"
+            "    # 绀轰緥锛氱畝鍗曠Щ鍔ㄥ钩鍧囩嚎\n"
             "    period = params.get('period', 20)\n"
             "    \n"
             "    values = []\n"
@@ -294,7 +292,7 @@ QString PluginSystem::getScriptTemplate(PluginType type) const
             "    return {\n"
             "        'name': f'MA{period}',\n"
             "        'values': values,\n"
-            "        'color': '#58a6ff',\n"
+            "        'color': '#3B82F6',\n"
             "        'lineWidth': 1,\n"
             "        'lineStyle': 'solid',\n"
             "        'visible': True\n"
@@ -306,37 +304,37 @@ QString PluginSystem::getScriptTemplate(PluginType type) const
             "# -*- coding: utf-8 -*-\n"
             "\"\"\"\n"
             "@plugin\n"
-            "name: 我的自定义策略\n"
+            "name: 鎴戠殑鑷畾涔夌瓥鐣n"
             "version: 1.0.0\n"
             "author: WealthPilot User\n"
-            "description: 自定义交易策略\n"
+            "description: 鑷畾涔変氦鏄撶瓥鐣n"
             "type: strategy\n"
             "\"\"\"\n"
             "\n"
             "def evaluate(prices, highs, lows, opens, volumes, **params):\n"
             "    \"\"\"\n"
-            "    评估策略信号\n"
+            "    璇勪及绛栫暐淇″彿\n"
             "    \n"
-            "    返回:\n"
+            "    杩斿洖:\n"
             "        dict: {\n"
             "            'signal': 'buy' | 'sell' | 'hold',\n"
             "            'strength': 0-100,\n"
-            "            'reason': '信号原因'\n"
+            "            'reason': '淇″彿鍘熷洜'\n"
             "        }\n"
             "    \"\"\"\n"
-            "    # 示例：简单均线策略\n"
+            "    # 绀轰緥锛氱畝鍗曞潎绾跨瓥鐣n"
             "    if len(prices) < 20:\n"
-            "        return {'signal': 'hold', 'strength': 0, 'reason': '数据不足'}\n"
+            "        return {'signal': 'hold', 'strength': 0, 'reason': '鏁版嵁涓嶈冻'}\n"
             "    \n"
             "    ma5 = sum(prices[-5:]) / 5\n"
             "    ma20 = sum(prices[-20:]) / 20\n"
             "    \n"
             "    if ma5 > ma20:\n"
-            "        return {'signal': 'buy', 'strength': 70, 'reason': 'MA5上穿MA20'}\n"
+            "        return {'signal': 'buy', 'strength': 70, 'reason': 'MA5涓婄┛MA20'}\n"
             "    elif ma5 < ma20:\n"
-            "        return {'signal': 'sell', 'strength': 70, 'reason': 'MA5下穿MA20'}\n"
+            "        return {'signal': 'sell', 'strength': 70, 'reason': 'MA5涓嬬┛MA20'}\n"
             "    else:\n"
-            "        return {'signal': 'hold', 'strength': 30, 'reason': '无明确信?}\n"
+            "        return {'signal': 'hold', 'strength': 30, 'reason': '鏃犳槑纭俊鍙?}\n"
         );
     } else if (type == PluginType::Alert) {
         template_ = QStringLiteral(
@@ -344,21 +342,21 @@ QString PluginSystem::getScriptTemplate(PluginType type) const
             "# -*- coding: utf-8 -*-\n"
             "\"\"\"\n"
             "@plugin\n"
-            "name: 我的自定义预警\n"
+            "name: 鎴戠殑鑷畾涔夐璀n"
             "version: 1.0.0\n"
             "author: WealthPilot User\n"
-            "description: 自定义预警条件\n"
+            "description: 鑷畾涔夐璀︽潯浠禱n"
             "type: alert\n"
             "\"\"\"\n"
             "\n"
             "def check(prices, highs, lows, opens, volumes, **params):\n"
             "    \"\"\"\n"
-            "    检查预警条件\n"
+            "    妫€鏌ラ璀︽潯浠禱n"
             "    \n"
-            "    返回:\n"
+            "    杩斿洖:\n"
             "        dict: {\n"
             "            'triggered': True/False,\n"
-            "            'message': '预警消息',\n"
+            "            'message': '棰勮娑堟伅',\n"
             "            'level': 'low' | 'medium' | 'high' | 'critical'\n"
             "        }\n"
             "    \"\"\"\n"
@@ -370,10 +368,10 @@ QString PluginSystem::getScriptTemplate(PluginType type) const
             "    change = (prices[-1] - prices[-2]) / prices[-2] * 100\n"
             "    \n"
             "    if abs(change) >= threshold:\n"
-            "        direction = '上涨' if change > 0 else '下跌'\n"
+            "        direction = '涓婃定' if change > 0 else '涓嬭穼'\n"
             "        return {\n"
             "            'triggered': True,\n"
-            "            'message': f'股价{direction}{abs(change):.2f}%',\n"
+            "            'message': f'鑲′环{direction}{abs(change):.2f}%',\n"
             "            'level': 'high' if abs(change) >= threshold * 2 else 'medium'\n"
             "        }\n"
             "    \n"
@@ -394,7 +392,7 @@ bool PluginSystem::executePython(const QString& script, const QVariantMap& param
 {
     QProcess process;
 
-    // 构建JSON输入
+    // 鏋勫缓JSON杈撳叆
     QJsonObject inputObj;
     for (auto it = params.begin(); it != params.end(); ++it) {
         inputObj[it.key()] = QJsonValue::fromVariant(it.value());
@@ -402,7 +400,7 @@ bool PluginSystem::executePython(const QString& script, const QVariantMap& param
 
     QString inputJson = QString::fromUtf8(QJsonDocument(inputObj).toJson());
 
-    // 执行Python脚本
+    // 鎵цPython鑴氭湰
     process.start(m_pythonPath, QStringList() << QStringLiteral("-c") << script);
 
     if (!process.waitForStarted(5000)) {
@@ -410,7 +408,7 @@ bool PluginSystem::executePython(const QString& script, const QVariantMap& param
         return false;
     }
 
-    // 发送输入数?    process.write(inputJson.toUtf8());
+    // 鍙戦€佽緭鍏ユ暟鎹?    process.write(inputJson.toUtf8());
     process.closeWriteChannel();
 
     if (!process.waitForFinished(30000)) {
@@ -425,7 +423,7 @@ bool PluginSystem::executePython(const QString& script, const QVariantMap& param
         return false;
     }
 
-    // 解析输出
+    // 瑙ｆ瀽杈撳嚭
     QByteArray output = process.readAllStandardOutput();
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson(output, &error);
@@ -449,27 +447,26 @@ QString PluginSystem::buildScript(const QString& scriptPath, const PluginContext
     QString script = QString::fromUtf8(file.readAll());
     file.close();
 
-    // 包装脚本，添加数据输出
-    QString wrapper = QStringLiteral(
+    // 鍖呰鑴氭湰锛屾坊鍔犳暟鎹緭鍏?    QString wrapper = QStringLiteral(
         "import json\n"
         "import sys\n"
         "\n"
         "def main():\n"
-        "    # 读取输入数据\n"
+        "    # 璇诲彇杈撳叆鏁版嵁\n"
         "    input_data = json.loads(sys.stdin.read())\n"
         "    params = input_data.get('params', {})\n"
         "\n"
-        "    # 提供价格数据\n"
+        "    # 鎻愪緵浠锋牸鏁版嵁\n"
         "    prices = %1\n"
         "    highs = %2\n"
         "    lows = %3\n"
         "    opens = %4\n"
         "    volumes = %5\n"
         "\n"
-        "    # 执行用户脚本\n"
+        "    # 鎵ц鐢ㄦ埛鑴氭湰\n"
         "    result = calculate(prices, highs, lows, opens, volumes, **params)\n"
         "\n"
-        "    # 输出结果\n"
+        "    # 杈撳嚭缁撴灉\n"
         "    print(json.dumps(result))\n"
         "\n"
         "%6\n"
@@ -477,7 +474,7 @@ QString PluginSystem::buildScript(const QString& scriptPath, const PluginContext
         "main()\n"
     );
 
-    // 转换数据为Python列表
+    // 杞崲鏁版嵁涓篜ython鍒楄〃
     auto toPyList = [](const QVector<double>& data) -> QString {
         QStringList items;
         for (double v : data) {
@@ -518,7 +515,7 @@ bool PluginSystem::parsePluginMetadata(const QString& scriptPath, PluginInfo& in
     QString content = QString::fromUtf8(file.readAll());
     file.close();
 
-    // 解析文档字符串中的元数据
+    // 瑙ｆ瀽鏂囨。瀛楃涓蹭腑鐨勫厓鏁版嵁
     QRegularExpression nameRe(QStringLiteral("@plugin\\s*\\n.*?name:\\s*(.+)"));
     QRegularExpression versionRe(QStringLiteral("version:\\s*(.+)"));
     QRegularExpression authorRe(QStringLiteral("author:\\s*(.+)"));

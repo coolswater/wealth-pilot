@@ -24,10 +24,13 @@
 #include <QPropertyAnimation>
 #include <QQueue>
 #include <memory>
-#include "../feedback/UserFeedbackManager.h"
+#include "../../core/feedback/UserFeedbackManager.h"
 
 namespace WealthPilot {
 namespace UI {
+
+// 使用 WealthPilot::FeedbackType
+using WealthPilot::FeedbackType;
 
 /**
  * @brief Toast 显示位置

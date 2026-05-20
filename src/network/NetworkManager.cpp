@@ -151,7 +151,7 @@ QNetworkReply* NetworkManager::del(const QString& url, const QMap<QString, QStri
 }
 
 void NetworkManager::getAsync(const QString& url,
-                               std::function<void(Result<QByteArray>)> callback,
+                               std::function<void(NetResult<QByteArray>)> callback,
                                const QMap<QString, QString>& headers)
 {
     // Check cache
@@ -159,7 +159,7 @@ void NetworkManager::getAsync(const QString& url,
         QString cacheKey = QString("GET_%1").arg(url);
         QVariant cached = getCachedResponse(cacheKey);
         if (cached.isValid()) {
-            callback(Result<QByteArray>::ok(cached.toByteArray()));
+            callback(NetResult<QByteArray>::ok(cached.toByteArray()));
             return;
         }
     }
@@ -170,7 +170,7 @@ void NetworkManager::getAsync(const QString& url,
         reply->deleteLater();
 
         if (reply->error() != QNetworkReply::NoError) {
-            callback(Result<QByteArray>::err(ErrorCode::NetworkDisconnected, reply->errorString()));
+            callback(NetResult<QByteArray>::error(reply->errorString()));
             return;
         }
 
@@ -181,12 +181,12 @@ void NetworkManager::getAsync(const QString& url,
             setCachedResponse(cacheKey, data);
         }
 
-        callback(Result<QByteArray>::ok(data));
+        callback(NetResult<QByteArray>::ok(data));
     });
 }
 
 void NetworkManager::postAsync(const QString& url, const QByteArray& data,
-                                std::function<void(Result<QByteArray>)> callback,
+                                std::function<void(NetResult<QByteArray>)> callback,
                                 const QMap<QString, QString>& headers)
 {
     // Check cache
@@ -194,7 +194,7 @@ void NetworkManager::postAsync(const QString& url, const QByteArray& data,
         QString cacheKey = QString("POST_%1_%2").arg(url, QString::fromUtf8(data.toBase64()));
         QVariant cached = getCachedResponse(cacheKey);
         if (cached.isValid()) {
-            callback(Result<QByteArray>::ok(cached.toByteArray()));
+            callback(NetResult<QByteArray>::ok(cached.toByteArray()));
             return;
         }
     }
@@ -205,7 +205,7 @@ void NetworkManager::postAsync(const QString& url, const QByteArray& data,
         reply->deleteLater();
 
         if (reply->error() != QNetworkReply::NoError) {
-            callback(Result<QByteArray>::err(ErrorCode::NetworkDisconnected, reply->errorString()));
+            callback(NetResult<QByteArray>::error(reply->errorString()));
             return;
         }
 
@@ -216,7 +216,7 @@ void NetworkManager::postAsync(const QString& url, const QByteArray& data,
             setCachedResponse(cacheKey, responseData);
         }
 
-        callback(Result<QByteArray>::ok(responseData));
+        callback(NetResult<QByteArray>::ok(responseData));
     });
 }
 
@@ -465,7 +465,7 @@ void NetworkManager::enqueueRequest(const NetworkRequest& request)
 // ========== 批量请求 ==========
 
 void NetworkManager::getBatchAsync(const QStringList& urls,
-                                   std::function<void(const QString &, Result<QByteArray>)> callback,
+                                   std::function<void(const QString &, NetResult<QByteArray>)> callback,
                                    std::function<void()> allCompleteCallback,
                                    const QMap<QString, QString>& headers)
 {
@@ -480,7 +480,7 @@ void NetworkManager::getBatchAsync(const QStringList& urls,
 
     for (const QString& url : urls)
     {
-        getAsync(url, [this, url, callback, &completedCount, totalCount, allCompleteCallback](Result<QByteArray> result)
+        getAsync(url, [this, url, callback, &completedCount, totalCount, allCompleteCallback](NetResult<QByteArray> result)
         {
             if (callback)
             {
@@ -497,7 +497,7 @@ void NetworkManager::getBatchAsync(const QStringList& urls,
 }
 
 void NetworkManager::getBatchMerged(const QStringList& urls,
-                                    std::function<void(QMap<QString, Result<QByteArray>>)> callback,
+                                    std::function<void(QMap<QString, NetResult<QByteArray>>)> callback,
                                     const QMap<QString, QString>& headers)
 {
     if (urls.isEmpty())
@@ -506,13 +506,13 @@ void NetworkManager::getBatchMerged(const QStringList& urls,
         return;
     }
 
-    auto results = std::make_shared<QMap<QString, Result<QByteArray>>>();
+    auto results = std::make_shared<QMap<QString, NetResult<QByteArray>>>();
     auto completedCount = std::make_shared<int>(0);
     int totalCount = urls.size();
 
     for (const QString& url : urls)
     {
-        getAsync(url, [results, completedCount, totalCount, callback, url](Result<QByteArray> result)
+        getAsync(url, [results, completedCount, totalCount, callback, url](NetResult<QByteArray> result)
         {
             results->insert(url, result);
             (*completedCount)++;

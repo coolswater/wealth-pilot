@@ -269,7 +269,7 @@ private:
  * @brief 显示信息提示
  */
 inline void showInfo(const QString& title, const QString& message,
-                     UserFeedbackManager::FeedbackLevel level = UserFeedbackManager::FeedbackLevel::Toast,
+                     FeedbackLevel level = FeedbackLevel::Toast,
                      int duration = 3000) {
     UserFeedbackManager::instance()->showInfo(title, message, level, duration);
 }
@@ -278,7 +278,7 @@ inline void showInfo(const QString& title, const QString& message,
  * @brief 显示警告
  */
 inline void showWarning(const QString& title, const QString& message,
-                        UserFeedbackManager::FeedbackLevel level = UserFeedbackManager::FeedbackLevel::Dialog) {
+                        FeedbackLevel level = FeedbackLevel::Dialog) {
     UserFeedbackManager::instance()->showWarning(title, message, level);
 }
 
@@ -286,7 +286,7 @@ inline void showWarning(const QString& title, const QString& message,
  * @brief 显示错误
  */
 inline void showError(const QString& title, const QString& message,
-                      UserFeedbackManager::FeedbackLevel level = UserFeedbackManager::FeedbackLevel::Dialog) {
+                      FeedbackLevel level = FeedbackLevel::Dialog) {
     UserFeedbackManager::instance()->showError(title, message, level);
 }
 
@@ -294,7 +294,7 @@ inline void showError(const QString& title, const QString& message,
  * @brief 显示成功
  */
 inline void showSuccess(const QString& title, const QString& message,
-                        UserFeedbackManager::FeedbackLevel level = UserFeedbackManager::FeedbackLevel::Toast,
+                        FeedbackLevel level = FeedbackLevel::Toast,
                         int duration = 3000) {
     UserFeedbackManager::instance()->showSuccess(title, message, level, duration);
 }

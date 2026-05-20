@@ -263,11 +263,11 @@ void AIAssistantPanelWidget::sendMessage(const QString& message)
 
     addTypingIndicator();
 
-    AIService::instance()->chat(message, [this](Result<QString> result) {
+    AIService::instance()->chat(message, [this](AIResult<QString> result) {
         removeTypingIndicator();
 
         if (result.isOk()) {
-            addAIResponse(result.unwrap());
+            addAIResponse(result.value());
         } else {
             showSystemMessage(QString("AI 响应失败: %1").arg(result.errorMessage()), "error");
         }

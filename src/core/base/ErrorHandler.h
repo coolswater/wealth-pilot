@@ -37,7 +37,7 @@ public:
      * @param error 错误对象
      * @param showUser 是否显示给用户
      */
-    void handleError(const Error& error, bool showUser = true);
+    void handleError(const ErrorInfo& error, bool showUser = true);
 
     /**
      * @brief 处理错误（简化版）
@@ -52,27 +52,27 @@ public:
      * @param error 错误对象
      * @return 用户友好的提示文本
      */
-    QString getUserMessage(const Error& error) const;
+    QString getUserMessage(const ErrorInfo& error) const;
 
     /**
      * @brief 获取错误恢复建议
      * @param error 错误对象
      * @return 恢复建议
      */
-    QString getRecoverySuggestion(const Error& error) const;
+    QString getRecoverySuggestion(const ErrorInfo& error) const;
 
     /**
      * @brief 设置错误回调
      * @param callback 错误处理回调函数
      */
-    void setErrorCallback(std::function<void(const Error&)> callback);
+    void setErrorCallback(std::function<void(const ErrorInfo&)> callback);
 
 signals:
     /**
      * @brief 错误发生信号
      * @param error 错误对象
      */
-    void errorOccurred(const Error& error);
+    void errorOccurred(const ErrorInfo& error);
 
     /**
      * @brief 需要显示给用户的错误提示
@@ -86,7 +86,7 @@ private:
     explicit ErrorHandler(QObject* parent = nullptr);
     ~ErrorHandler() override = default;
 
-    std::function<void(const Error&)> m_errorCallback;
+    std::function<void(const ErrorInfo&)> m_errorCallback;
 };
 
 // ========== 便捷宏定义 ==========

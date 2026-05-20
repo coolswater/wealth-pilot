@@ -21,8 +21,6 @@ FeedbackDialog::FeedbackDialog(QWidget* parent)
     setupUI();
 }
 
-FeedbackDialog::~FeedbackDialog() = default;
-
 void FeedbackDialog::setupUI()
 {
     setWindowTitle(tr("提交反馈"));
@@ -40,11 +38,11 @@ void FeedbackDialog::setupUI()
 
     // 类型
     m_typeCombo = new QComboBox(this);
-    m_typeCombo->addItem(tr("Bug 报告"), static_cast<int>(FeedbackType::BugReport));
-    m_typeCombo->addItem(tr("功能请求"), static_cast<int>(FeedbackType::FeatureRequest));
-    m_typeCombo->addItem(tr("改进建议"), static_cast<int>(FeedbackType::Improvement));
-    m_typeCombo->addItem(tr("问题咨询"), static_cast<int>(FeedbackType::Question));
-    m_typeCombo->addItem(tr("其他"), static_cast<int>(FeedbackType::Other));
+    m_typeCombo->addItem(tr("Bug 报告"), static_cast<int>(FeedbackCategoryType::BugReport));
+    m_typeCombo->addItem(tr("功能请求"), static_cast<int>(FeedbackCategoryType::FeatureRequest));
+    m_typeCombo->addItem(tr("改进建议"), static_cast<int>(FeedbackCategoryType::Improvement));
+    m_typeCombo->addItem(tr("问题咨询"), static_cast<int>(FeedbackCategoryType::Question));
+    m_typeCombo->addItem(tr("其他"), static_cast<int>(FeedbackCategoryType::Other));
     formLayout->addRow(tr("类型:"), m_typeCombo);
 
     // 优先级
@@ -106,7 +104,7 @@ void FeedbackDialog::onSubmit()
     FeedbackInfo feedback;
     feedback.title = title;
     feedback.content = content;
-    feedback.type = static_cast<FeedbackType>(m_typeCombo->currentData().toInt());
+    feedback.type = static_cast<FeedbackCategoryType>(m_typeCombo->currentData().toInt());
     feedback.priority = static_cast<FeedbackPriority>(m_priorityCombo->currentData().toInt());
     feedback.userEmail = m_emailEdit->text().trimmed();
     feedback.userVersion = QApplication::applicationVersion();
@@ -133,7 +131,7 @@ QString FeedbackDialog::getContent() const
     return m_contentEdit->toPlainText().trimmed();
 }
 
-int FeedbackDialog::getType() const
+int FeedbackDialog::getFeedbackType() const
 {
     return m_typeCombo->currentData().toInt();
 }
@@ -146,6 +144,11 @@ int FeedbackDialog::getPriority() const
 QString FeedbackDialog::getUserEmail() const
 {
     return m_emailEdit->text().trimmed();
+}
+
+void FeedbackDialog::onCancel()
+{
+    reject();
 }
 
 } // namespace WealthPilot

@@ -115,7 +115,7 @@ QVector<FeedbackInfo> FeedbackSystem::getFeedbacksByStatus(FeedbackStatus status
     return result;
 }
 
-QVector<FeedbackInfo> FeedbackSystem::getFeedbacksByType(FeedbackType type) const
+QVector<FeedbackInfo> FeedbackSystem::getFeedbacksByType(FeedbackCategoryType type) const
 {
     QVector<FeedbackInfo> result;
     for (const auto& feedback : m_feedbacks) {
@@ -166,10 +166,10 @@ FeedbackStats FeedbackSystem::getStats() const
         }
 
         switch (feedback.type) {
-            case FeedbackType::BugReport: stats.bugCount++; break;
-            case FeedbackType::FeatureRequest: stats.featureCount++; break;
-            case FeedbackType::Improvement: stats.improvementCount++; break;
-            case FeedbackType::Question: stats.questionCount++; break;
+            case FeedbackCategoryType::BugReport: stats.bugCount++; break;
+            case FeedbackCategoryType::FeatureRequest: stats.featureCount++; break;
+            case FeedbackCategoryType::Improvement: stats.improvementCount++; break;
+            case FeedbackCategoryType::Question: stats.questionCount++; break;
             default: break;
         }
 
@@ -255,7 +255,7 @@ void FeedbackSystem::loadFeedbacks()
                 QJsonObject obj = item.toObject();
                 FeedbackInfo feedback;
                 feedback.id = obj["id"].toString();
-                feedback.type = static_cast<FeedbackType>(obj["type"].toInt());
+                feedback.type = static_cast<FeedbackCategoryType>(obj["type"].toInt());
                 feedback.priority = static_cast<FeedbackPriority>(obj["priority"].toInt());
                 feedback.status = static_cast<FeedbackStatus>(obj["status"].toInt());
                 feedback.title = obj["title"].toString();

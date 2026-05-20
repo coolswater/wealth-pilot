@@ -24,9 +24,9 @@
 #include <memory>
 
 /**
- * @brief 插件信息
+ * @brief 插件加载信息
  */
-struct PluginInfo {
+struct PluginLoadInfo {
     QString filePath;           // 插件文件路径
     IPlugin* plugin;           // 插件实例
     QPluginLoader* loader;     // Qt插件加载器
@@ -141,7 +141,7 @@ private:
     QStringList sortPluginsByPriority() const;
 
     QString m_pluginPath;
-    QMap<QString, PluginInfo> m_plugins;
+    QMap<QString, PluginLoadInfo> m_plugins;
     mutable QMutex m_mutex;
     
     // 性能优化：插件缓存

@@ -25,9 +25,9 @@
 namespace WealthPilot {
 
 /**
- * @brief 反馈类型
+ * @brief 反馈类别类型
  */
-enum class FeedbackType {
+enum class FeedbackCategoryType {
     BugReport,      ///< Bug 报告
     FeatureRequest, ///< 功能请求
     Improvement,    ///< 改进建议
@@ -61,7 +61,7 @@ enum class FeedbackStatus {
  */
 struct FeedbackInfo {
     QString id;                 ///< 反馈ID
-    FeedbackType type;          ///< 反馈类型
+    FeedbackCategoryType type;          ///< 反馈类型
     FeedbackPriority priority;  ///< 优先级
     FeedbackStatus status;      ///< 状态
     QString title;              ///< 标题
@@ -145,7 +145,7 @@ public:
     /**
      * @brief 按类型获取反馈
      */
-    QVector<FeedbackInfo> getFeedbacksByType(FeedbackType type) const;
+    QVector<FeedbackInfo> getFeedbacksByType(FeedbackCategoryType type) const;
 
     /**
      * @brief 搜索反馈

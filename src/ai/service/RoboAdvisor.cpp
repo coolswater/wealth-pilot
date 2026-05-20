@@ -840,7 +840,7 @@ namespace WealthPilot
             InvestmentAdvice advice;
             advice.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
             advice.title = QStringLiteral("AI 投资建议");
-            advice.detailedAnalysis = result.unwrap();
+            advice.detailedAnalysis = result.value();
             advice.generatedAt = QDateTime::currentDateTime();
             advice.confidence = 0.8;
 

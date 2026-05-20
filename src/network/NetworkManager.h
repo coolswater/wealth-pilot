@@ -13,7 +13,11 @@
 #define NETWORKMANAGER_H
 
 #include "../core/base/Singleton.h"
-#include "../utils/Result.h"
+#include "../core/base/Result.h"
+
+// 简化 Result 类型使用
+template<typename T>
+using NetResult = WealthPilot::Result<T>;
 
 #include <QObject>
 #include <QNetworkAccessManager>
@@ -89,14 +93,14 @@ public:
      * @param callback 完成回调
      */
     void getAsync(const QString& url,
-                  std::function<void(Result<QByteArray>)> callback,
+                  std::function<void(NetResult<QByteArray>)> callback,
                   const QMap<QString, QString>& headers = {});
 
     /**
      * @brief 异步POST请求
      */
     void postAsync(const QString& url, const QByteArray& data,
-                   std::function<void(Result<QByteArray>)> callback,
+                   std::function<void(NetResult<QByteArray>)> callback,
                    const QMap<QString, QString>& headers = {});
 
     // ========== 批量请求 ==========
@@ -108,7 +112,7 @@ public:
      * @param allCompleteCallback 所有请求完成回调
      */
     void getBatchAsync(const QStringList& urls,
-                       std::function<void(const QString & url, Result<QByteArray>)> callback,
+                       std::function<void(const QString & url, NetResult<QByteArray>)> callback,
                        std::function<void()> allCompleteCallback = nullptr,
                        const QMap<QString, QString>& headers = {});
 
@@ -118,7 +122,7 @@ public:
      * @param callback 所有请求完成后的合并结果回调
      */
     void getBatchMerged(const QStringList& urls,
-                        std::function<void(QMap<QString, Result<QByteArray>>)> callback,
+                        std::function<void(QMap<QString, NetResult<QByteArray>>)> callback,
                         const QMap<QString, QString>& headers = {});
 
     // ========== WebSocket ==========

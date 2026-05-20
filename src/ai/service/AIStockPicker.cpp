@@ -246,7 +246,7 @@ namespace WealthPilot
 
             // 解析 AI 响应
             QList<StockPickResult> picks;
-            QString response = result.unwrap();
+            QString response = result.value();
             QStringList lines = response.split('\n');
 
             int rank = 1;

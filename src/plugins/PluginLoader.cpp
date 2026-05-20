@@ -268,7 +268,7 @@ bool PluginLoader::registerBuiltInPlugin(IPlugin* plugin)
         return false;
     }
     
-    PluginInfo info;
+    PluginLoadInfo info;
     info.plugin = plugin;
     info.loader = nullptr;
     info.state = PluginState::Unloaded;
@@ -311,7 +311,7 @@ void PluginLoader::scanPluginDirectory()
         // 读取元数据
         QJsonObject metaData = loader->metaData().value("MetaData").toObject();
         
-        PluginInfo info;
+        PluginLoadInfo info;
         info.filePath = filePath;
         info.loader = loader;
         info.plugin = nullptr;

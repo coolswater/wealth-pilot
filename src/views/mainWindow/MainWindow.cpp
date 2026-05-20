@@ -37,6 +37,7 @@
 #include "../stock/StockKLinePage.h"
 #include "../futures/FuturesKLinePage.h"
 #include "../feedback/FeedbackDialog.h"
+#include "../../core/feedback/FeedbackSystem.h"
 #include "../../ui/components/BasePage.h"
 
 // 使用 WealthPilot 命名空间中的类

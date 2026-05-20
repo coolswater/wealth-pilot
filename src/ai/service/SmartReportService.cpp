@@ -729,7 +729,7 @@ namespace WealthPilot
             }
 
             QJsonObject data;
-            data["summary"] = result.unwrap();
+            data["summary"] = result.value();
             data["confidence"] = 0.75;
 
             callback(data);

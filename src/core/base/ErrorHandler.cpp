@@ -20,7 +20,7 @@ ErrorHandler::ErrorHandler(QObject* parent)
 {
 }
 
-void ErrorHandler::handleError(const Error& error, bool showUser)
+void ErrorHandler::handleError(const ErrorInfo& error, bool showUser)
 {
     if (error.isOk()) return;
 
@@ -49,10 +49,10 @@ void ErrorHandler::handleError(const Error& error, bool showUser)
 
 void ErrorHandler::handleError(ErrorCode code, const QString& message, bool showUser)
 {
-    handleError(Error(code, message), showUser);
+    handleError(ErrorInfo(code, message), showUser);
 }
 
-QString ErrorHandler::getUserMessage(const Error& error) const
+QString ErrorHandler::getUserMessage(const ErrorInfo& error) const
 {
     // 根据错误码返回用户友好的消息
     int code = error.codeValue();
@@ -166,7 +166,7 @@ QString ErrorHandler::getUserMessage(const Error& error) const
     return error.message.isEmpty() ? QStringLiteral("未知错误。") : error.message;
 }
 
-QString ErrorHandler::getRecoverySuggestion(const Error& error) const
+QString ErrorHandler::getRecoverySuggestion(const ErrorInfo& error) const
 {
     int code = error.codeValue();
 
@@ -189,7 +189,7 @@ QString ErrorHandler::getRecoverySuggestion(const Error& error) const
     return QString();
 }
 
-void ErrorHandler::setErrorCallback(std::function<void(const Error&)> callback)
+void ErrorHandler::setErrorCallback(std::function<void(const ErrorInfo&)> callback)
 {
     m_errorCallback = std::move(callback);
 }

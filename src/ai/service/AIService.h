@@ -7,7 +7,7 @@
 #define AISERVICE_H
 
 #include "../../core/base/Singleton.h"
-#include "../../utils/Result.h"
+#include "../../core/base/Result.h"
 
 #include <QObject>
 #include <QString>
@@ -15,6 +15,10 @@
 #include <QJsonArray>
 #include <QMutex>
 #include <functional>
+
+// 简化 Result 类型使用
+template<typename T>
+using AIResult = WealthPilot::Result<T>;
 
 enum class AIRole {
     User,
@@ -82,9 +86,9 @@ public:
     void setSystemPrompt(const QString& prompt);
 
     void chat(const QString& message,
-              std::function<void(Result<QString>)> callback);
+              std::function<void(AIResult<QString>)> callback);
 
-    Result<QString> chatSync(const QString& message, int timeoutMs = 30000);
+    AIResult<QString> chatSync(const QString& message, int timeoutMs = 30000);
 
     void chatStream(const QString& message,
                     std::function<void(const QString& chunk)> onChunk,
@@ -93,19 +97,19 @@ public:
     void clearHistory();
 
     void analyzePortfolio(const QJsonObject& positions,
-                          std::function<void(Result<AIAnalysis>)> callback);
+                          std::function<void(AIResult<AIAnalysis>)> callback);
 
     void analyzeStock(const QString& code, const QJsonObject& data,
-                      std::function<void(Result<AIAnalysis>)> callback);
+                      std::function<void(AIResult<AIAnalysis>)> callback);
 
     void analyzeMarketSentiment(const QJsonObject& marketData,
-                                std::function<void(Result<AIAnalysis>)> callback);
+                                std::function<void(AIResult<AIAnalysis>)> callback);
 
     void quickAsk(const QString& question,
-                  std::function<void(Result<QString>)> callback);
+                  std::function<void(AIResult<QString>)> callback);
 
     void getInvestmentAdvice(const QString& context,
-                             std::function<void(Result<QString>)> callback);
+                             std::function<void(AIResult<QString>)> callback);
 
 signals:
     void streamChunk(const QString& chunk);
@@ -121,7 +125,7 @@ private:
     QString parseResponse(const QByteArray& data);
 
     void sendRequest(const QJsonObject& request,
-                     std::function<void(Result<QString>)> callback);
+                     std::function<void(AIResult<QString>)> callback);
 
     AIConfig m_config;
     QString m_systemPrompt;
