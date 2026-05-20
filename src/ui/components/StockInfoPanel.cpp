@@ -16,6 +16,7 @@
 #include <QTimer>
 #include <QVariantMap>
 #include <QVariantList>
+#include <QAbstractItemView>
 
 using namespace Tokens;
 
@@ -32,71 +33,160 @@ StockInfoPanel::~StockInfoPanel() = default;
 void StockInfoPanel::setupUI()
 {
     setFixedWidth(280);
+    setStyleSheet(QString("background-color: %1;").arg(Tokens::Colors::BgBase));
 
     auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(Spacing::SM, Spacing::SM, Spacing::SM, Spacing::SM);
-    mainLayout->setSpacing(Spacing::SM);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setSpacing(0);
 
-    // 第一行：股票名称和价格
-    auto* headerLayout = new QVBoxLayout();
-    m_stockNameLabel = new QLabel("--", this);
-    m_stockNameLabel->setObjectName("stockNameLabel");
-    m_stockNameLabel->setProperty("dataType", "title");
+    // ========== 顶部：股票信息 ==========
+    auto* headerWidget = new QWidget(this);
+    headerWidget->setStyleSheet(QString("background-color: %1;").arg(Tokens::Colors::BgElevated));
+    auto* headerLayout = new QVBoxLayout(headerWidget);
+    headerLayout->setContentsMargins(12, 12, 12, 12);
+    headerLayout->setSpacing(4);
+
+    // 股票名称
+    m_stockNameLabel = new QLabel("--", headerWidget);
+    m_stockNameLabel->setStyleSheet(QString("color: %1; font-size: 16px; font-weight: bold;").arg(Tokens::Colors::TextPrimary));
     headerLayout->addWidget(m_stockNameLabel);
 
-    m_priceLabel = new QLabel("--", this);
-    m_priceLabel->setObjectName("priceLabel");
-    m_priceLabel->setProperty("dataType", "price");
+    // 价格
+    m_priceLabel = new QLabel("--", headerWidget);
+    m_priceLabel->setStyleSheet(QString("color: %1; font-size: 24px; font-weight: bold;").arg(Tokens::Colors::TextPrimary));
     headerLayout->addWidget(m_priceLabel);
 
-    m_changeLabel = new QLabel("--", this);
-    m_changeLabel->setObjectName("changeLabel");
-    m_changeLabel->setProperty("dataType", "change");
+    // 涨跌
+    m_changeLabel = new QLabel("--", headerWidget);
+    m_changeLabel->setStyleSheet(QString("color: %1; font-size: 14px;").arg(Tokens::Colors::TextSecondary));
     headerLayout->addWidget(m_changeLabel);
-    mainLayout->addLayout(headerLayout);
 
-    // 第二行：交易状态
-    m_statusLabel = new QLabel(QStringLiteral("交易状态: --"), this);
-    m_statusLabel->setProperty("dataType", "status");
-    mainLayout->addWidget(m_statusLabel);
+    mainLayout->addWidget(headerWidget);
 
-    // 第三行：委比委差
-    m_orderRatioLabel = new QLabel(QStringLiteral("委比: --  委差: --"), this);
-    m_orderRatioLabel->setProperty("dataType", "label");
-    mainLayout->addWidget(m_orderRatioLabel);
+    // ========== 五档盘口 ==========
+    auto* orderBookWidget = new QWidget(this);
+    orderBookWidget->setStyleSheet(QString("background-color: %1; border-top: 1px solid %2; border-bottom: 1px solid %2;")
+        .arg(Tokens::Colors::BgElevated, Tokens::Colors::Border));
+    auto* orderBookLayout = new QVBoxLayout(orderBookWidget);
+    orderBookLayout->setContentsMargins(8, 8, 8, 8);
+    orderBookLayout->setSpacing(2);
 
-    // 第四行：五档盘口
-    auto* orderBookLayout = new QGridLayout();
-    for (int i = 0; i < 5; ++i) {
-        m_bidLabels[i] = new QLabel(QStringLiteral("买%1: --").arg(5-i), this);
-        m_bidLabels[i]->setObjectName("bidLabel");
-        m_bidLabels[i]->setProperty("orderType", "bid");
-        StyleHelper::refreshStyle(m_bidLabels[i]);
+    // 五档标题
+    auto* orderBookTitle = new QLabel(QStringLiteral("五档盘口"), orderBookWidget);
+    orderBookTitle->setStyleSheet(QString("color: %1; font-size: 12px; font-weight: bold; padding-bottom: 4px;").arg(Tokens::Colors::TextSecondary));
+    orderBookLayout->addWidget(orderBookTitle);
 
-        m_askLabels[i] = new QLabel(QStringLiteral("卖%1: --").arg(i+1), this);
-        m_askLabels[i]->setObjectName("askLabel");
-        m_askLabels[i]->setProperty("orderType", "ask");
-        StyleHelper::refreshStyle(m_askLabels[i]);
+    // 五档表格（卖5-卖1，买1-买5）
+    for (int i = 4; i >= 0; --i) {
+        auto* rowLayout = new QHBoxLayout();
+        rowLayout->setSpacing(4);
 
-        orderBookLayout->addWidget(m_bidLabels[i], i, 0);
-        orderBookLayout->addWidget(m_askLabels[i], i, 1);
+        // 卖盘标签
+        auto* askLabel = new QLabel(QStringLiteral("卖%1").arg(i+1), orderBookWidget);
+        askLabel->setStyleSheet(QString("color: %1; font-size: 11px; width: 30px;").arg(Tokens::Colors::TextSecondary));
+        askLabel->setFixedWidth(30);
+        rowLayout->addWidget(askLabel);
+
+        // 卖盘价格
+        m_askLabels[i] = new QLabel("--", orderBookWidget);
+        m_askLabels[i]->setStyleSheet(QString("color: %1; font-size: 12px; font-weight: bold;").arg(Tokens::Colors::Danger));
+        m_askLabels[i]->setAlignment(Qt::AlignCenter);
+        rowLayout->addWidget(m_askLabels[i], 1);
+
+        // 买盘价格
+        m_bidLabels[i] = new QLabel("--", orderBookWidget);
+        m_bidLabels[i]->setStyleSheet(QString("color: %1; font-size: 12px; font-weight: bold;").arg(Tokens::Colors::Success));
+        m_bidLabels[i]->setAlignment(Qt::AlignCenter);
+        rowLayout->addWidget(m_bidLabels[i], 1);
+
+        // 买盘标签
+        auto* bidLabel = new QLabel(QStringLiteral("买%1").arg(i+1), orderBookWidget);
+        bidLabel->setStyleSheet(QString("color: %1; font-size: 11px; width: 30px;").arg(Tokens::Colors::TextSecondary));
+        bidLabel->setFixedWidth(30);
+        rowLayout->addWidget(bidLabel);
+
+        orderBookLayout->addLayout(rowLayout);
     }
-    mainLayout->addLayout(orderBookLayout);
 
-    // 第五行：详细行情
-    m_detailTable = new QTableWidget(14, 2, this);
-    m_detailTable->setObjectName("detailTable");
-    m_detailTable->horizontalHeader()->setVisible(false);
-    m_detailTable->verticalHeader()->setVisible(false);
-    m_detailTable->setShowGrid(false);
-    mainLayout->addWidget(m_detailTable);
+    mainLayout->addWidget(orderBookWidget);
 
-    // 第六行：成交明细
-    m_tickTable = new QTableWidget(this);
-    m_tickTable->setObjectName("tickTable");
+    // ========== 详细行情 ==========
+    auto* detailWidget = new QWidget(this);
+    detailWidget->setStyleSheet(QString("background-color: %1; border-bottom: 1px solid %2;")
+        .arg(Tokens::Colors::BgElevated, Tokens::Colors::Border));
+    auto* detailLayout = new QGridLayout(detailWidget);
+    detailLayout->setContentsMargins(8, 8, 8, 8);
+    detailLayout->setSpacing(4);
+
+    // 详细行情数据
+    QStringList detailLabels = {
+        QStringLiteral("今开"), QStringLiteral("最高"),
+        QStringLiteral("昨收"), QStringLiteral("最低"),
+        QStringLiteral("成交量"), QStringLiteral("成交额"),
+        QStringLiteral("换手率"), QStringLiteral("量比")
+    };
+
+    for (int i = 0; i < detailLabels.size(); ++i) {
+        auto* label = new QLabel(detailLabels[i], detailWidget);
+        label->setStyleSheet(QString("color: %1; font-size: 11px;").arg(Tokens::Colors::TextSecondary));
+        detailLayout->addWidget(label, i / 2, (i % 2) * 2);
+
+        auto* value = new QLabel("--", detailWidget);
+        value->setStyleSheet(QString("color: %1; font-size: 11px;").arg(Tokens::Colors::TextPrimary));
+        detailLayout->addWidget(value, i / 2, (i % 2) * 2 + 1);
+    }
+
+    mainLayout->addWidget(detailWidget);
+
+    // ========== 成交明细 ==========
+    auto* tickWidget = new QWidget(this);
+    tickWidget->setStyleSheet(QString("background-color: %1;").arg(Tokens::Colors::BgElevated));
+    auto* tickLayout = new QVBoxLayout(tickWidget);
+    tickLayout->setContentsMargins(8, 8, 8, 8);
+    tickLayout->setSpacing(4);
+
+    // 成交明细标题
+    auto* tickTitle = new QLabel(QStringLiteral("成交明细"), tickWidget);
+    tickTitle->setStyleSheet(QString("color: %1; font-size: 12px; font-weight: bold;").arg(Tokens::Colors::TextSecondary));
+    tickLayout->addWidget(tickTitle);
+
+    // 成交明细表格
+    m_tickTable = new QTableWidget(tickWidget);
     m_tickTable->setColumnCount(3);
     m_tickTable->setHorizontalHeaderLabels({QStringLiteral("时间"), QStringLiteral("价格"), QStringLiteral("数量")});
-    mainLayout->addWidget(m_tickTable, 1);
+    m_tickTable->setStyleSheet(QString(R"(
+        QTableWidget {
+            background-color: transparent;
+            border: none;
+            gridline-color: %1;
+        }
+        QTableWidget::item {
+            padding: 2px;
+            font-size: 11px;
+        }
+        QHeaderView::section {
+            background-color: transparent;
+            color: %2;
+            border: none;
+            padding: 4px;
+            font-size: 11px;
+        }
+    )").arg(Tokens::Colors::Border, Tokens::Colors::TextSecondary));
+    m_tickTable->horizontalHeader()->setStretchLastSection(true);
+    m_tickTable->verticalHeader()->setVisible(false);
+    m_tickTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_tickTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    tickLayout->addWidget(m_tickTable, 1);
+
+    mainLayout->addWidget(tickWidget, 1);
+
+    // 隐藏不需要的控件
+    m_statusLabel = new QLabel(this);
+    m_statusLabel->hide();
+    m_orderRatioLabel = new QLabel(this);
+    m_orderRatioLabel->hide();
+    m_detailTable = new QTableWidget(this);
+    m_detailTable->hide();
 }
 
 void StockInfoPanel::setStock(const QString& stockCode, const QString& stockName)
@@ -130,24 +220,25 @@ void StockInfoPanel::updateQuote(const StockQuote& quote)
     updatePriceLabel(m_priceLabel, quote.lastPrice, quote.preClose);
 
     // 更新涨跌
-    QString changeText = QString("%1 (%2%)")
-        .arg(QString::number(quote.changeAmount, 'f', 2))
-        .arg(QString::number(quote.changePercent, 'f', 2));
-    m_changeLabel->setText(changeText);
-    updatePriceLabel(m_changeLabel, quote.changeAmount);
-
-    // 更新五档
-    for (int i = 0; i < 5; ++i) {
-        m_bidLabels[i]->setText(QStringLiteral("买%1: %2").arg(5-i)
-            .arg(QString::number(quote.bidPrice[i], 'f', 2)));
-        m_askLabels[i]->setText(QStringLiteral("卖%1: %2").arg(i+1)
-            .arg(QString::number(quote.askPrice[i], 'f', 2)));
+    QString changeText;
+    if (quote.changePercent >= 0) {
+        changeText = QString("+%1 (+%2%)")
+            .arg(QString::number(quote.changeAmount, 'f', 2))
+            .arg(QString::number(quote.changePercent, 'f', 2));
+        m_changeLabel->setStyleSheet(QString("color: %1; font-size: 14px;").arg(Tokens::Colors::Danger));
+    } else {
+        changeText = QString("%1 (%2%)")
+            .arg(QString::number(quote.changeAmount, 'f', 2))
+            .arg(QString::number(quote.changePercent, 'f', 2));
+        m_changeLabel->setStyleSheet(QString("color: %1; font-size: 14px;").arg(Tokens::Colors::Success));
     }
+    m_changeLabel->setText(changeText);
 
-    // 更新委比
-    m_orderRatioLabel->setText(QStringLiteral("委比: %1%  委差: %2")
-        .arg(QString::number(quote.orderRatio, 'f', 2))
-        .arg(QString::number(quote.orderDiff)));
+    // 更新五档（只显示价格）
+    for (int i = 0; i < 5; ++i) {
+        m_bidLabels[i]->setText(QString::number(quote.bidPrice[i], 'f', 2));
+        m_askLabels[i]->setText(QString::number(quote.askPrice[i], 'f', 2));
+    }
 }
 
 void StockInfoPanel::updateTickData(const QVector<TickData>& ticks)
@@ -155,9 +246,28 @@ void StockInfoPanel::updateTickData(const QVector<TickData>& ticks)
     m_tickTable->setRowCount(ticks.size());
     for (int i = 0; i < ticks.size(); ++i) {
         const auto& tick = ticks[i];
-        m_tickTable->setItem(i, 0, new QTableWidgetItem(tick.time.toString("hh:mm:ss")));
-        m_tickTable->setItem(i, 1, new QTableWidgetItem(QString::number(tick.price, 'f', 2)));
-        m_tickTable->setItem(i, 2, new QTableWidgetItem(QString::number(tick.volume)));
+        
+        // 时间
+        auto* timeItem = new QTableWidgetItem(tick.time.toString("hh:mm:ss"));
+        timeItem->setTextAlignment(Qt::AlignCenter);
+        timeItem->setForeground(QColor(Tokens::Colors::TextSecondary));
+        m_tickTable->setItem(i, 0, timeItem);
+        
+        // 价格（根据买卖方向显示颜色）
+        auto* priceItem = new QTableWidgetItem(QString::number(tick.price, 'f', 2));
+        priceItem->setTextAlignment(Qt::AlignCenter);
+        if (tick.direction == WealthPilot::TradeDirection::Buy) {
+            priceItem->setForeground(QColor(Tokens::Colors::Danger));
+        } else if (tick.direction == WealthPilot::TradeDirection::Sell) {
+            priceItem->setForeground(QColor(Tokens::Colors::Success));
+        }
+        m_tickTable->setItem(i, 1, priceItem);
+        
+        // 数量
+        auto* volumeItem = new QTableWidgetItem(QString::number(tick.volume));
+        volumeItem->setTextAlignment(Qt::AlignCenter);
+        volumeItem->setForeground(QColor(Tokens::Colors::TextPrimary));
+        m_tickTable->setItem(i, 2, volumeItem);
     }
 }
 

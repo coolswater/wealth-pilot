@@ -640,6 +640,8 @@ void StockKLinePage::loadFromNetwork()
         m_dataSource = new StockDataSource(StockDataSource::Source::Sina, this);
         connect(m_dataSource, &StockDataSource::kLineReceived, 
                 this, &StockKLinePage::onKLineReceived);
+        connect(m_dataSource, &StockDataSource::timeShareReceived,
+                this, &StockKLinePage::onTimeShareReceived);
     }
     
     // 请求K线数据
@@ -961,58 +963,8 @@ void StockKLinePage::onTimeShareReceived(const QString& symbol, const QVector<Ti
     
     // 更新分时图显示
     if (m_chartType == ChartType::TimeShare && !data.isEmpty()) {
-        // 绘制分时图
-        QPainter painter(m_timeShareWidget);
-        painter.setRenderHint(QPainter::Antialiasing);
-
-        QRect chartRect = m_timeShareWidget->rect().adjusted(60, 20, -20, -40);
-
-        // 绘制背景网格
-        painter.setPen(QPen(QColor(Tokens::Colors::Border), 1));
-        for (int i = 0; i <= 4; ++i)
-        {
-            int y = chartRect.top() + i * chartRect.height() / 4;
-            painter.drawLine(chartRect.left(), y, chartRect.right(), y);
-        }
-
-        // 计算价格范围
-        double minPrice = std::numeric_limits<double>::max();
-        double maxPrice = std::numeric_limits<double>::min();
-        for (const auto& point : data)
-        {
-            minPrice = qMin(minPrice, point.price);
-            maxPrice = qMax(maxPrice, point.price);
-        }
-
-        // 绘制分时线
-        if (maxPrice > minPrice)
-        {
-            painter.setPen(QPen(QColor(Tokens::Colors::Primary), 2));
-            QPainterPath path;
-
-            for (int i = 0; i < data.size(); ++i)
-            {
-                double x = chartRect.left() + i * chartRect.width() / (data.size() - 1);
-                double y = chartRect.bottom() - (data[i].price - minPrice) / (maxPrice - minPrice) * chartRect.height();
-
-                if (i == 0)
-                {
-                    path.moveTo(x, y);
-                }
-                else
-                {
-                    path.lineTo(x, y);
-                }
-            }
-
-            painter.drawPath(path);
-        }
-
-        // 绘制价格标签
-        painter.setPen(QColor(Tokens::Colors::TextPrimary));
-        painter.drawText(chartRect.left() - 50, chartRect.top(), QString::number(maxPrice, 'f', 2));
-        painter.drawText(chartRect.left() - 50, chartRect.bottom(), QString::number(minPrice, 'f', 2));
-
+        auto* timeShareChart = static_cast<TimeShareChart*>(m_timeShareWidget);
+        timeShareChart->setData(data);
         m_infoLabel->setText(QStringLiteral("分时数据已更新"));
     }
     
@@ -1042,6 +994,18 @@ void StockKLinePage::onRealtimeQuoteReceived(const QString& symbol, const StockQ
     // 更新右侧信息面板
     if (m_infoPanel) {
         m_infoPanel->updateQuote(quote);
+        
+        // 生成演示成交明细数据
+        QVector<TickData> ticks;
+        for (int i = 0; i < 10; ++i) {
+            TickData tick;
+            tick.time = QDateTime::currentDateTime().addSecs(-i * 3);
+            tick.price = quote.lastPrice + (QRandomGenerator::global()->bounded(100) - 50) / 100.0;
+            tick.volume = 100 + QRandomGenerator::global()->bounded(900);
+            tick.direction = tick.price >= quote.lastPrice ? WealthPilot::TradeDirection::Buy : WealthPilot::TradeDirection::Sell;
+            ticks.append(tick);
+        }
+        m_infoPanel->updateTickData(ticks);
     }
     
     LOG_DEBUG(QString("Realtime quote: %1 %2 %3%%").arg(symbol).arg(quote.lastPrice).arg(quote.changePercent));

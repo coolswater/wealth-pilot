@@ -313,7 +313,7 @@ QString StyleGenerator::getTrendColorInternational(double change)
 QString StyleGenerator::getRiskLevelColor(int level)
 {
     switch (level) {
-    case 0: return Colors::Success;       // 低风�?    case 1: return Colors::Warning;       // 中风�?    case 2: return Colors::WarningLight;  // 高风�?    case 3: return Colors::Danger;        // 极高风险
+    case 0: return Colors::Success;       // 低风�?    case 1: return Colors::Warning;       // 中风�?    case 2: return Colors::WarningLight;  // 高风�?    case 3: return Colors::Danger;        // 极高风险
     default: return Colors::TextSecondary;
     }
 }
@@ -321,9 +321,10 @@ QString StyleGenerator::getRiskLevelColor(int level)
 QString StyleGenerator::getSentimentColor(int sentiment)
 {
     switch (sentiment) {
-    case 1: return Colors::Success;  // 正面
-    case -1: return Colors::Danger;  // 负面
-    case 0: return Colors::TextSecondary; // 中�?    default: return Colors::TextSecondary;
+        case 1: return Colors::Success;  // 正面
+        case -1: return Colors::Danger;  // 负面
+        case 0: return Colors::TextSecondary; // 中�?    default: return Colors::TextSecondary;
+        default: return "";
     }
 }
 
