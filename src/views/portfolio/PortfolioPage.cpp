@@ -414,20 +414,13 @@ void PortfolioPage::setupUI()
     });
 
     d->mainLayout = new QVBoxLayout(this);
-    d->mainLayout->setContentsMargins(0, 0, 0, 0);
-    d->mainLayout->setSpacing(0);
+    d->mainLayout->setContentsMargins(16, 16, 16, 16);
+    d->mainLayout->setSpacing(16);
 
     // 1. 顶部工具栏
     setupHeader();
 
-    // 2. 主分割器
-    d->mainSplitter = new QSplitter(Qt::Vertical, this);
-    d->mainSplitter->setHandleWidth(1);
-    d->mainSplitter->setChildrenCollapsible(false);
-    d->mainSplitter->setStyleSheet(
-        QString("QSplitter::handle { background-color: %1; }").arg(Tokens::Colors::Border));
-
-    // 3. 汇总卡片区
+    // 2. 汇总卡片区
     setupSummaryCards();
     
     // 创建汇总卡片容器
@@ -439,22 +432,81 @@ void PortfolioPage::setupUI()
     if (d->dailyPnLCard) summaryLayout->addWidget(d->dailyPnLCard);
     if (d->returnCard) summaryLayout->addWidget(d->returnCard);
     if (d->riskCard) summaryLayout->addWidget(d->riskCard);
-    d->mainSplitter->addWidget(summaryFrame);
+    d->mainLayout->addWidget(summaryFrame);
+
+    // 3. 中间区域：资产配置 + 净值走势（水平分割）
+    QSplitter* chartSplitter = new QSplitter(Qt::Horizontal, this);
+    chartSplitter->setHandleWidth(1);
+    chartSplitter->setStyleSheet(QString("QSplitter::handle { background-color: %1; }").arg(Tokens::Colors::Border));
+
+    // 左侧：资产配置饼图
+    QFrame* leftPanel = new QFrame(chartSplitter);
+    leftPanel->setStyleSheet(QString("background-color: %1; border-radius: 8px;").arg(Tokens::Colors::BgElevated));
+    QVBoxLayout* leftLayout = new QVBoxLayout(leftPanel);
+    leftLayout->setContentsMargins(20, 20, 20, 20);
+    leftLayout->setSpacing(16);
+
+    QLabel* pieTitle = new QLabel(QStringLiteral("资产配置"), leftPanel);
+    pieTitle->setStyleSheet(QString("color: %1; font-size: 16px; font-weight: bold;").arg(Tokens::Colors::TextPrimary));
+    leftLayout->addWidget(pieTitle);
+
+    setupAssetAllocation();
+    if (d->pieChartView) leftLayout->addWidget(d->pieChartView);
+    if (d->allocationList) leftLayout->addWidget(d->allocationList);
+
+    chartSplitter->addWidget(leftPanel);
+
+    // 右侧：净值走势
+    QFrame* rightPanel = new QFrame(chartSplitter);
+    rightPanel->setStyleSheet(QString("background-color: %1; border-radius: 8px;").arg(Tokens::Colors::BgElevated));
+    QVBoxLayout* rightLayout = new QVBoxLayout(rightPanel);
+    rightLayout->setContentsMargins(20, 20, 20, 20);
+    rightLayout->setSpacing(16);
+
+    // 标题行
+    QHBoxLayout* chartHeader = new QHBoxLayout();
+    QLabel* chartTitle = new QLabel(QStringLiteral("资产净值走势"), rightPanel);
+    chartTitle->setStyleSheet(QString("color: %1; font-size: 16px; font-weight: bold;").arg(Tokens::Colors::TextPrimary));
+    chartHeader->addWidget(chartTitle);
+    chartHeader->addStretch();
+
+    // 时间范围切换
+    d->timeRangeCombo = new QComboBox(rightPanel);
+    d->timeRangeCombo->addItems({
+        QStringLiteral("1周"), QStringLiteral("1月"), QStringLiteral("3月"), QStringLiteral("1年"), QStringLiteral("全部")
+    });
+    d->timeRangeCombo->setCurrentIndex(1);
+    d->timeRangeCombo->setStyleSheet(QString(R"(
+        QComboBox {
+            background-color: %1;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 12px;
+            color: %2;
+            font-size: 12px;
+        }
+        QComboBox::drop-down { border: none; }
+        QComboBox QAbstractItemView {
+            background-color: %1;
+            color: %2;
+            selection-background-color: %3;
+        }
+    )").arg(Tokens::Colors::BgSurface, Tokens::Colors::TextPrimary, Tokens::Colors::Primary));
+    chartHeader->addWidget(d->timeRangeCombo);
+
+    rightLayout->addLayout(chartHeader);
+
+    setupNetValueChart();
+    if (d->lineChartView) rightLayout->addWidget(d->lineChartView, 1);
+
+    chartSplitter->addWidget(rightPanel);
+    chartSplitter->setSizes({300, 500});
+
+    d->mainLayout->addWidget(chartSplitter, 1);
 
     // 4. 持仓表格
     QFrame* tableFrame = setupPositionTable();
-    d->mainSplitter->addWidget(tableFrame);
-
-    // 5. 收益曲线
-    setupNetValueChart();
-    if (d->lineChartView) {
-        d->mainSplitter->addWidget(d->lineChartView);
-    }
-
-    // 设置分割比例
-    d->mainSplitter->setSizes({200, 300, 200});
-
-    d->mainLayout->addWidget(d->mainSplitter, 1);
+    d->mainLayout->addWidget(tableFrame, 1);
 }
 
 void PortfolioPage::setupHeader()
@@ -1020,6 +1072,12 @@ void PortfolioPage::updateSummaryDisplay()
 
 void PortfolioPage::updateAssetAllocation()
 {
+    // 检查饼图是否已初始化
+    if (!d->pieSeries) {
+        LOG_WARNING("[PortfolioPage] pieSeries not initialized, skipping updateAssetAllocation");
+        return;
+    }
+    
     // 清空旧数据
     d->pieSeries->clear();
 
@@ -1064,6 +1122,12 @@ void PortfolioPage::updateAssetAllocation()
 
 void PortfolioPage::updateNetValueChart(int days)
 {
+    // 检查图表是否已初始化
+    if (!d->profitSeries || !d->benchmarkSeries) {
+        LOG_WARNING("[PortfolioPage] chart series not initialized, skipping updateNetValueChart");
+        return;
+    }
+    
     d->profitSeries->clear();
     d->benchmarkSeries->clear();
 

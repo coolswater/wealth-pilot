@@ -266,7 +266,9 @@ private:
 /**
  * @brief 性能计时宏
  */
+#ifndef PERF_TIMER
 #define PERF_TIMER(name) PerformanceTimer _perf_timer_##name(#name)
+#endif
 
 /**
  * @brief 性能计时开始

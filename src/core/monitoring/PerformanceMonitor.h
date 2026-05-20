@@ -261,9 +261,9 @@ private:
     qint64 m_timerId;
 };
 
-// 性能计时宏
-#define PERF_TIMER(name) ScopedPerfTimer _perfTimer(name)
-#define PERF_TIMER_FUNC() ScopedPerfTimer _perfTimer(__FUNCTION__)
+// 性能计时宏 - 使用 PerformanceManager 的定义
+// #define PERF_TIMER(name) ScopedPerfTimer _perfTimer(name)
+// #define PERF_TIMER_FUNC() ScopedPerfTimer _perfTimer(__FUNCTION__)
 
 } // namespace WealthPilot
 

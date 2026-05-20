@@ -1670,12 +1670,26 @@ void DashboardPage::updateIndexDisplay()
         const IndexData& idx = d->indexData[i];
         d->indexPriceLabels[i]->setText(QString::number(idx.current, 'f', 2));
         
-        QString changeText = idx.change >= 0 
-            ? QString("+%1 (+%2%)").arg(idx.change, 0, 'f', 2).arg(idx.changePercent, 0, 'f', 2)
-            : QString("%1 (%2%)").arg(idx.change, 0, 'f', 2).arg(idx.changePercent, 0, 'f', 2);
+        // 涨跌显示：红涨绿跌
+        QString changeText;
+        QString color;
+        
+        if (idx.changePercent > 0) {
+            // 上涨 - 红色，显示+号
+            changeText = QString("+%1 (+%2%)").arg(idx.change, 0, 'f', 2).arg(idx.changePercent, 0, 'f', 2);
+            color = theme.danger;  // 红色
+        } else if (idx.changePercent < 0) {
+            // 下跌 - 绿色，负数自带-号
+            changeText = QString("%1 (%2%)").arg(idx.change, 0, 'f', 2).arg(idx.changePercent, 0, 'f', 2);
+            color = theme.success;  // 绿色
+        } else {
+            // 平盘 - 灰色
+            changeText = QString("0.00 (0.00%)");
+            color = theme.textSecondary;  // 灰色
+        }
+        
         d->indexChangeLabels[i]->setText(changeText);
-        d->indexChangeLabels[i]->setStyleSheet(
-            QString("color: %1; font-size: 13px;").arg(idx.change >= 0 ? theme.danger : theme.success));
+        d->indexChangeLabels[i]->setStyleSheet(QString("color: %1; font-size: 13px;").arg(color));
     }
 }
 
