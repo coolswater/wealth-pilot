@@ -8,11 +8,6 @@
  * - DataHub 数据订阅（自动生命周期管理）
  * - 实时数据更新
  *
- * @details 优化集成：
- * - PageTemplate 页面模板系统
- * - PerformanceMonitor 性能监控
- * - ErrorHandler 统一错误处理
- *
  * @author WealthPilot Team
  * @version 2.0.0
  */
@@ -20,9 +15,6 @@
 #include "StockQuotesPage.h"
 #include "core/config/Tokens.h"
 #include "ui/styles/ButtonStyles.h"
-#include "ui/components/PageTemplate.h"
-#include "core/monitoring/PerformanceMonitor.h"
-#include "core/base/ErrorHandler.h"
 #include "utils/Logger.h"
 
 #include <QVBoxLayout>
@@ -297,18 +289,16 @@ void StockQuotesPage::initializePage()
 
 void StockQuotesPage::setupUI()
 {
-    PERF_TIMER("StockQuotesPage::setupUI");
-    
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setSpacing(0);
     mainLayout->setContentsMargins(10, 10, 10, 10);
 
-    // ========== 工具栏 - 使用 PageTemplate 按钮样式 ==========
+    // ========== 工具栏 ==========
     auto* toolbarLayout = new QHBoxLayout;
     toolbarLayout->setSpacing(8);
 
     // 刷新按钮
-    m_refreshBtn->setStyleSheet(PageTemplate::standardButtonStyleSheet());
+    ButtonStyles::setRefresh(m_refreshBtn);
     toolbarLayout->addWidget(m_refreshBtn);
 
     // 筛选下拉框
@@ -338,7 +328,7 @@ void StockQuotesPage::setupUI()
     m_proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
     m_proxyModel->setSortRole(Qt::UserRole);  // 使用数值排序
 
-    // ========== 表格视图 - 使用 PageTemplate 样式 ==========
+    // ========== 表格视图 ==========
     m_tableView->setModel(m_proxyModel);
     m_tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     m_tableView->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
@@ -353,9 +343,6 @@ void StockQuotesPage::setupUI()
     m_tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
     m_tableView->horizontalHeader()->setDefaultAlignment(Qt::AlignCenter);
     m_tableView->setItemDelegate(new StockQuoteDelegate(this));
-
-    // 应用 PageTemplate 表格样式
-    PageTemplate::applyTableStyle(m_tableView);
 
     // 设置列宽
     m_tableView->setColumnWidth(StockQuoteModel::ColCode, 80);

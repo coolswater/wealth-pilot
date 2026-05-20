@@ -20,9 +20,8 @@
 #include <QString>
 #include <QHash>
 #include <QMutex>
-#include <optional>
-#include <variant>
-#include <type_traits>
+#include <QVector>
+#include <functional>
 
 namespace WealthPilot {
 
@@ -57,7 +56,7 @@ enum class ErrorCategory {
 /**
  * @brief 错误信息结构
  */
-struct Error {
+struct ErrorInfo {
     ErrorCategory category = ErrorCategory::Unknown;    ///< 错误分类
     ErrorLevel level = ErrorLevel::Error;               ///< 错误级别
     QString code;                                        ///< 错误码
@@ -66,160 +65,30 @@ struct Error {
     QString context;                                     ///< 错误上下文
     QString suggestion;                                  ///< 建议解决方案
     qint64 timestamp = 0;                                ///< 发生时间戳
-    
+
     /**
      * @brief 是否有效
      */
     bool isValid() const { return !code.isEmpty(); }
-    
+
     /**
      * @brief 是否需要用户干预
      */
     bool needsUserIntervention() const {
         return level >= ErrorLevel::Error;
     }
-    
+
     /**
      * @brief 是否可恢复
      */
     bool isRecoverable() const {
         return level < ErrorLevel::Fatal;
     }
-    
+
     /**
      * @brief 获取用户友好的错误描述
      */
     QString userFriendlyMessage() const;
-};
-
-/**
- * @brief Result 类型 - 函数返回值包装
- * @tparam T 成功时的返回值类型
- *
- * @details 用于替代异常机制，提供更安全的错误处理方式
- *
- * @example
- * @code
- * Result<double> divide(double a, double b) {
- *     if (b == 0) {
- *         return Error{ErrorCategory::UserInput, ErrorLevel::Error,
- *                      "DIV_ZERO", "Division by zero"};
- *     }
- *     return a / b;
- * }
- *
- * auto result = divide(10, 2);
- * if (result.isSuccess()) {
- *     qDebug() << "Result:" << result.value();
- * } else {
- *     qDebug() << "Error:" << result.error().message;
- * }
- * @endcode
- */
-template<typename T>
-class Result {
-public:
-    /**
-     * @brief 成功构造
-     */
-    Result(const T& value) : m_data(value), m_success(true) {}
-    Result(T&& value) : m_data(std::move(value)), m_success(true) {}
-    
-    /**
-     * @brief 失败构造
-     */
-    Result(const Error& error) : m_data(error), m_success(false) {}
-    Result(Error&& error) : m_data(std::move(error)), m_success(false) {}
-    
-    /**
-     * @brief 是否成功
-     */
-    bool isSuccess() const { return m_success; }
-    
-    /**
-     * @brief 是否失败
-     */
-    bool isFailure() const { return !m_success; }
-    
-    /**
-     * @brief 获取成功值（失败时抛出异常）
-     */
-    const T& value() const {
-        if (!m_success) {
-            throw std::runtime_error("Attempted to get value from failed Result");
-        }
-        return std::get<T>(m_data);
-    }
-    
-    /**
-     * @brief 获取成功值（可移动）
-     */
-    T&& takeValue() {
-        if (!m_success) {
-            throw std::runtime_error("Attempted to get value from failed Result");
-        }
-        return std::move(std::get<T>(m_data));
-    }
-    
-    /**
-     * @brief 获取错误信息（成功时返回空错误）
-     */
-    Error error() const {
-        if (m_success) {
-            return Error{};
-        }
-        return std::get<Error>(m_data);
-    }
-    
-    /**
-     * @brief 获取值或默认值
-     */
-    T valueOr(const T& defaultValue) const {
-        return m_success ? std::get<T>(m_data) : defaultValue;
-    }
-    
-    /**
-     * @brief 映射成功值
-     */
-    template<typename U, typename Func>
-    Result<U> map(Func&& func) const {
-        if (m_success) {
-            return Result<U>(func(std::get<T>(m_data)));
-        }
-        return Result<U>(std::get<Error>(m_data));
-    }
-    
-    /**
-     * @brief 链式操作
-     */
-    template<typename Func>
-    auto andThen(Func&& func) const -> decltype(func(std::get<T>(m_data))) {
-        if (m_success) {
-            return func(std::get<T>(m_data));
-        }
-        return decltype(func(std::get<T>(m_data)))::failure(std::get<Error>(m_data));
-    }
-    
-private:
-    std::variant<T, Error> m_data;
-    bool m_success;
-};
-
-/**
- * @brief Void Result 类型（无返回值的操作）
- */
-class VoidResult {
-public:
-    VoidResult() : m_success(true) {}
-    VoidResult(const Error& error) : m_error(error), m_success(false) {}
-    
-    bool isSuccess() const { return m_success; }
-    bool isFailure() const { return !m_success; }
-    Error error() const { return m_error; }
-    
-private:
-    Error m_error;
-    bool m_success;
 };
 
 /**
@@ -250,7 +119,7 @@ public:
      * @brief 处理错误
      * @param error 错误信息
      */
-    void handle(const Error& error);
+    void handle(const ErrorInfo& error);
 
     /**
      * @brief 处理错误（简化版）
@@ -267,7 +136,7 @@ public:
      * @param error 错误信息
      * @param showSuggestion 是否显示建议解决方案
      */
-    void showToUser(const Error& error, bool showSuggestion = true);
+    void showToUser(const ErrorInfo& error, bool showSuggestion = true);
 
     /**
      * @brief 注册错误码
@@ -287,7 +156,7 @@ public:
     /**
      * @brief 获取最近的错误
      */
-    Error lastError() const;
+    ErrorInfo lastError() const;
 
     /**
      * @brief 清除错误历史
@@ -297,7 +166,7 @@ public:
     /**
      * @brief 获取错误历史
      */
-    QVector<Error> errorHistory() const;
+    QVector<ErrorInfo> errorHistory() const;
 
     /**
      * @brief 设置错误处理回调
@@ -305,23 +174,23 @@ public:
      * @param callback 处理回调
      */
     void setErrorHandler(ErrorLevel level,
-                         std::function<void(const Error&)> callback);
+                         std::function<void(const ErrorInfo&)> callback);
 
 signals:
     /**
      * @brief 错误发生信号
      */
-    void errorOccurred(const Error& error);
+    void errorOccurred(const ErrorInfo& error);
 
     /**
      * @brief 严重错误信号（需要立即处理）
      */
-    void criticalError(const Error& error);
+    void criticalError(const ErrorInfo& error);
 
     /**
      * @brief 致命错误信号（程序需要退出）
      */
-    void fatalError(const Error& error);
+    void fatalError(const ErrorInfo& error);
 
 private:
     ErrorHandler();
@@ -329,23 +198,23 @@ private:
     ErrorHandler(const ErrorHandler&) = delete;
     ErrorHandler& operator=(const ErrorHandler&) = delete;
 
-    void logError(const Error& error);
-    void notifyUser(const Error& error);
-    void executeHandler(const Error& error);
+    void logError(const ErrorInfo& error);
+    void notifyUser(const ErrorInfo& error);
+    void executeHandler(const ErrorInfo& error);
 
     // 错误码注册表
     QHash<QString, QString> m_defaultMessages;
     QHash<QString, QString> m_defaultSuggestions;
 
     // 错误历史
-    QVector<Error> m_errorHistory;
+    QVector<ErrorInfo> m_errorHistory;
     mutable QMutex m_historyMutex;
 
     // 错误处理器
-    QHash<ErrorLevel, std::function<void(const Error&)>> m_handlers;
+    QHash<ErrorLevel, std::function<void(const ErrorInfo&)>> m_handlers;
 
     // 最近错误
-    Error m_lastError;
+    ErrorInfo m_lastError;
 };
 
 // ============================================================================

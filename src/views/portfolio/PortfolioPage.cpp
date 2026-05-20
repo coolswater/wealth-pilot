@@ -33,11 +33,11 @@
 using WealthPilot::StockQuote;
 using WealthPilot::KLineData;
 using WealthPilot::TimeShareData;
-using WealthPilot::PageTemplate;
-using WealthPilot::PerformanceMonitor;
 using WealthPilot::ErrorHandler;
 using WealthPilot::ErrorLevel;
-using WealthPilot::ErrorCodes;
+
+// PERF_TIMER 宏已经在 WealthPilot 命名空间中
+using WealthPilot::ScopedPerfTimer;
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -408,67 +408,53 @@ void PortfolioPage::setupDataHubSubscriptions()
 
 void PortfolioPage::setupUI()
 {
-    PERF_TIMER("PortfolioPage::setupUI");
-    
+    // 注册主题监听器
+    ThemeManager::instance()->registerThemeChangeListener(this, [this]() {
+        updateTheme();
+    });
+
     d->mainLayout = new QVBoxLayout(this);
     d->mainLayout->setContentsMargins(0, 0, 0, 0);
     d->mainLayout->setSpacing(0);
 
-    // 使用 PageTemplate 创建页面头部
-    auto* header = PageTemplate::createPageHeader(this, QStringLiteral("持仓管理"), true, true);
-    d->mainLayout->addWidget(header);
+    // 1. 顶部工具栏
+    setupHeader();
+
+    // 2. 主分割器
+    d->mainSplitter = new QSplitter(Qt::Vertical, this);
+    d->mainSplitter->setHandleWidth(1);
+    d->mainSplitter->setChildrenCollapsible(false);
+    d->mainSplitter->setStyleSheet(
+        QString("QSplitter::handle { background-color: %1; }").arg(Tokens::Colors::Border));
+
+    // 3. 汇总卡片区
+    setupSummaryCards();
     
-    // 获取搜索框和刷新按钮（从 header 中查找）
-    auto searchEdits = header->findChildren<QLineEdit*>();
-    if (!searchEdits.isEmpty()) {
-        d->searchEdit = searchEdits.first();
-        connect(d->searchEdit, &QLineEdit::textChanged, this, &PortfolioPage::filterPositions);
-    }
-    
-    auto refreshBtns = header->findChildren<QPushButton*>();
-    for (auto* btn : refreshBtns) {
-        if (btn->text() == QStringLiteral("刷新")) {
-            connect(btn, &QPushButton::clicked, this, &PortfolioPage::refreshData);
-        }
-    }
+    // 创建汇总卡片容器
+    QFrame* summaryFrame = new QFrame(this);
+    QHBoxLayout* summaryLayout = new QHBoxLayout(summaryFrame);
+    summaryLayout->setContentsMargins(0, 0, 0, 0);
+    summaryLayout->setSpacing(16);
+    if (d->totalAssetCard) summaryLayout->addWidget(d->totalAssetCard);
+    if (d->dailyPnLCard) summaryLayout->addWidget(d->dailyPnLCard);
+    if (d->returnCard) summaryLayout->addWidget(d->returnCard);
+    if (d->riskCard) summaryLayout->addWidget(d->riskCard);
+    d->mainSplitter->addWidget(summaryFrame);
 
-    // 内容区域
-    auto* contentWidget = new QWidget(this);
-    auto* contentLayout = new QVBoxLayout(contentWidget);
-    contentLayout->setContentsMargins(20, 20, 20, 20);
-    contentLayout->setSpacing(16);
-
-    // 使用 PageTemplate 创建汇总卡片行
-    QVector<QPair<QString, QString>> cardData = {
-        {QStringLiteral("总资产"), QStringLiteral("--")},
-        {QStringLiteral("今日盈亏"), QStringLiteral("--")},
-        {QStringLiteral("收益率"), QStringLiteral("--")},
-        {QStringLiteral("风险等级"), QStringLiteral("--")}
-    };
-    auto* cardsFrame = PageTemplate::createSummaryCardRow(contentWidget, cardData);
-    contentLayout->addWidget(cardsFrame);
-    
-    // 保存卡片引用以便后续更新
-    auto cards = cardsFrame->findChildren<QFrame*>(QStringLiteral("summaryCard"));
-    if (cards.size() >= 4) {
-        d->totalAssetCard = cards[0];
-        d->dailyPnLCard = cards[1];
-        d->returnCard = cards[2];
-        d->riskCard = cards[3];
-    }
-
-    // 主内容区
-    setupMainContent();
-    contentLayout->addWidget(d->mainSplitter, 1);
-
-    // 持仓表格
+    // 4. 持仓表格
     QFrame* tableFrame = setupPositionTable();
-    contentLayout->addWidget(tableFrame, 1);
+    d->mainSplitter->addWidget(tableFrame);
 
-    d->mainLayout->addWidget(contentWidget, 1);
+    // 5. 收益曲线
+    setupNetValueChart();
+    if (d->lineChartView) {
+        d->mainSplitter->addWidget(d->lineChartView);
+    }
 
-    // 应用主题样式
-    updateTheme();
+    // 设置分割比例
+    d->mainSplitter->setSizes({200, 300, 200});
+
+    d->mainLayout->addWidget(d->mainSplitter, 1);
 }
 
 void PortfolioPage::setupHeader()
@@ -1096,28 +1082,8 @@ void PortfolioPage::updateNetValueChart(int days)
 
 void PortfolioPage::refreshData()
 {
-    PERF_TIMER("PortfolioPage::refreshData");
     LOG_DEBUG("Refreshing portfolio data...");
-    
-    try {
-        // 刷新数据
-        loadDemoData();
-        
-        // 更新时间标签
-        if (d->updateTimeLabel) {
-            d->updateTimeLabel->setText(
-                QStringLiteral("更新于 ") + QDateTime::currentDateTime().toString("hh:mm:ss"));
-        }
-        
-    } catch (const std::exception& e) {
-        // 使用 ErrorHandler 处理错误
-        ErrorHandler::instance().handle(
-            ErrorLevel::Error,
-            ErrorCodes::DataNotFound,
-            QStringLiteral("刷新数据失败"),
-            QString::fromStdString(e.what())
-        );
-    }
+    loadDemoData();
 }
 
 void PortfolioPage::setAccountSummary(const AccountSummary& summary)

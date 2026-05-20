@@ -22,18 +22,10 @@
 #include "DashboardPage.h"
 #include "core/config/Tokens.h"
 #include "ui/ThemeManager.h"
-#include "ui/components/PageTemplate.h"
-#include "core/monitoring/PerformanceMonitor.h"
-#include "core/base/ErrorHandler.h"
 #include "market/StockDataSource.h"
 #include "data/DataStorageService.h"
 #include "core/cache/CacheManager.h"
 #include "utils/Logger.h"
-
-// 使用 WealthPilot 命名空间
-using WealthPilot::PageTemplate;
-using WealthPilot::PerformanceMonitor;
-using WealthPilot::PERF_TIMER;
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -680,8 +672,6 @@ DashboardPage::DashboardPage(QWidget* parent)
     : DataHubPageBase(parent)
     , d(std::make_unique<Impl>())
 {
-    PERF_TIMER("DashboardPage::DashboardPage");
-    
     setupUI();
     setObjectName("DashboardPage");
 
@@ -698,9 +688,6 @@ DashboardPage::DashboardPage(QWidget* parent)
     d->clockTimer = new QTimer(this);
     d->clockTimer->setInterval(1000);
     connect(d->clockTimer, &QTimer::timeout, this, &DashboardPage::updateTimeDisplay);
-    
-    // 启动性能监控（可选）
-    // PerformanceMonitor::instance().start(1000);
 }
 
 DashboardPage::~DashboardPage()
@@ -765,8 +752,6 @@ void DashboardPage::setupDataHubSubscriptions()
  */
 void DashboardPage::setupUI()
 {
-    PERF_TIMER("DashboardPage::setupUI");
-    
     // 注册主题监听器
     ThemeManager::instance()->registerThemeChangeListener(this, [this]() {
         updateTheme();
@@ -776,13 +761,15 @@ void DashboardPage::setupUI()
     d->mainLayout->setContentsMargins(0, 0, 0, 0);
     d->mainLayout->setSpacing(0);
 
-    // 1. 顶部工具栏 - 使用 PageTemplate
-    auto* header = PageTemplate::createPageHeader(this, QStringLiteral("市场看板"), true, true);
-    d->mainLayout->addWidget(header);
+    // 1. 顶部工具栏
+    setupHeader();
 
-    // 2. 主分割器 - 使用 PageTemplate
-    d->mainSplitter = PageTemplate::createVerticalSplitter(this);
-    d->mainSplitter->setChildrenCollapsible(false);
+    // 2. 主分割器
+    d->mainSplitter = new QSplitter(Qt::Vertical, this);
+    d->mainSplitter->setHandleWidth(1);
+    d->mainSplitter->setChildrenCollapsible(false);  // 禁止折叠
+    d->mainSplitter->setStyleSheet(
+        QString("QSplitter::handle { background-color: %1; }").arg(Tokens::Colors::Border));
 
     // 3. 指数面板（顶部）
     setupIndexPanel();

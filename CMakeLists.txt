@@ -185,6 +185,8 @@ set(CORE_TASK_SOURCES
 set(CORE_PERFORMANCE_SOURCES
         src/core/performance/PerformanceManager.h
         src/core/performance/PerformanceManager.cpp
+        src/core/monitoring/PerformanceMonitor.h
+        src/core/monitoring/PerformanceMonitor.cpp
 )
 
 # Core - Feedback 用户反馈
@@ -277,6 +279,8 @@ set(CORE_PLUGIN_SOURCES
 set(CORE_DI_SOURCES
         src/core/di/ServiceLocator.h
         src/core/di/ServiceLocator.cpp
+        src/core/di/ServiceRegistry.h
+        src/core/di/ServiceRegistry.cpp
 )
 
 # Core - Data 数据管理
@@ -529,6 +533,8 @@ set(UI_COMPONENT_SOURCES
         src/ui/components/BasePage.cpp
         src/ui/components/DataHubPageBase.h
         src/ui/components/DataHubPageBase.cpp
+        src/ui/components/PageTemplate.h
+        src/ui/components/PageTemplate.cpp
         src/ui/components/BasePage.cpp
         src/ui/components/SidebarWidget.h
         src/ui/components/SidebarWidget.cpp
