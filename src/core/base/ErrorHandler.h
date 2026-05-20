@@ -1,8 +1,13 @@
 /**
  * @file ErrorHandler.h
- * @brief 统一错误处理助手类
+ * @brief 统一错误处理系统
  *
- * @details 提供错误处理、日志记录、用户提示等功能
+ * @details 功能：
+ * - 统一错误码定义
+ * - 错误分级处理
+ * - 用户友好错误提示
+ * - 错误日志记录
+ * - 错误恢复机制
  *
  * @author WealthPilot Team
  * @version 1.0.0
@@ -11,120 +16,380 @@
 #ifndef ERRORHANDLER_H
 #define ERRORHANDLER_H
 
-#include "ErrorCode.h"
 #include <QObject>
 #include <QString>
-#include <functional>
+#include <QHash>
+#include <QMutex>
+#include <optional>
+#include <variant>
+#include <type_traits>
 
 namespace WealthPilot {
 
 /**
- * @brief 错误处理助手类
- *
- * 提供统一的错误处理机制：
- * - 错误日志记录
- * - 用户友好提示
- * - 错误恢复建议
+ * @brief 错误级别
  */
-class ErrorHandler : public QObject {
+enum class ErrorLevel {
+    Info,       ///< 信息级别，不需要特别处理
+    Warning,    ///< 警告级别，可能影响功能
+    Error,      ///< 错误级别，功能受影响但可继续
+    Critical,   ///< 严重错误，需要立即处理
+    Fatal       ///< 致命错误，程序无法继续
+};
+
+/**
+ * @brief 错误码分类
+ */
+enum class ErrorCategory {
+    Network,        ///< 网络错误
+    Database,       ///< 数据库错误
+    Trading,        ///< 交易错误
+    Data,           ///< 数据错误
+    Configuration,  ///< 配置错误
+    Permission,     ///< 权限错误
+    System,         ///< 系统错误
+    UserInput,      ///< 用户输入错误
+    Plugin,         ///< 插件错误
+    AI,             ///< AI服务错误
+    Unknown         ///< 未知错误
+};
+
+/**
+ * @brief 错误信息结构
+ */
+struct Error {
+    ErrorCategory category = ErrorCategory::Unknown;    ///< 错误分类
+    ErrorLevel level = ErrorLevel::Error;               ///< 错误级别
+    QString code;                                        ///< 错误码
+    QString message;                                     ///< 错误消息
+    QString detail;                                      ///< 详细信息
+    QString context;                                     ///< 错误上下文
+    QString suggestion;                                  ///< 建议解决方案
+    qint64 timestamp = 0;                                ///< 发生时间戳
+    
+    /**
+     * @brief 是否有效
+     */
+    bool isValid() const { return !code.isEmpty(); }
+    
+    /**
+     * @brief 是否需要用户干预
+     */
+    bool needsUserIntervention() const {
+        return level >= ErrorLevel::Error;
+    }
+    
+    /**
+     * @brief 是否可恢复
+     */
+    bool isRecoverable() const {
+        return level < ErrorLevel::Fatal;
+    }
+    
+    /**
+     * @brief 获取用户友好的错误描述
+     */
+    QString userFriendlyMessage() const;
+};
+
+/**
+ * @brief Result 类型 - 函数返回值包装
+ * @tparam T 成功时的返回值类型
+ *
+ * @details 用于替代异常机制，提供更安全的错误处理方式
+ *
+ * @example
+ * @code
+ * Result<double> divide(double a, double b) {
+ *     if (b == 0) {
+ *         return Error{ErrorCategory::UserInput, ErrorLevel::Error,
+ *                      "DIV_ZERO", "Division by zero"};
+ *     }
+ *     return a / b;
+ * }
+ *
+ * auto result = divide(10, 2);
+ * if (result.isSuccess()) {
+ *     qDebug() << "Result:" << result.value();
+ * } else {
+ *     qDebug() << "Error:" << result.error().message;
+ * }
+ * @endcode
+ */
+template<typename T>
+class Result {
+public:
+    /**
+     * @brief 成功构造
+     */
+    Result(const T& value) : m_data(value), m_success(true) {}
+    Result(T&& value) : m_data(std::move(value)), m_success(true) {}
+    
+    /**
+     * @brief 失败构造
+     */
+    Result(const Error& error) : m_data(error), m_success(false) {}
+    Result(Error&& error) : m_data(std::move(error)), m_success(false) {}
+    
+    /**
+     * @brief 是否成功
+     */
+    bool isSuccess() const { return m_success; }
+    
+    /**
+     * @brief 是否失败
+     */
+    bool isFailure() const { return !m_success; }
+    
+    /**
+     * @brief 获取成功值（失败时抛出异常）
+     */
+    const T& value() const {
+        if (!m_success) {
+            throw std::runtime_error("Attempted to get value from failed Result");
+        }
+        return std::get<T>(m_data);
+    }
+    
+    /**
+     * @brief 获取成功值（可移动）
+     */
+    T&& takeValue() {
+        if (!m_success) {
+            throw std::runtime_error("Attempted to get value from failed Result");
+        }
+        return std::move(std::get<T>(m_data));
+    }
+    
+    /**
+     * @brief 获取错误信息（成功时返回空错误）
+     */
+    Error error() const {
+        if (m_success) {
+            return Error{};
+        }
+        return std::get<Error>(m_data);
+    }
+    
+    /**
+     * @brief 获取值或默认值
+     */
+    T valueOr(const T& defaultValue) const {
+        return m_success ? std::get<T>(m_data) : defaultValue;
+    }
+    
+    /**
+     * @brief 映射成功值
+     */
+    template<typename U, typename Func>
+    Result<U> map(Func&& func) const {
+        if (m_success) {
+            return Result<U>(func(std::get<T>(m_data)));
+        }
+        return Result<U>(std::get<Error>(m_data));
+    }
+    
+    /**
+     * @brief 链式操作
+     */
+    template<typename Func>
+    auto andThen(Func&& func) const -> decltype(func(std::get<T>(m_data))) {
+        if (m_success) {
+            return func(std::get<T>(m_data));
+        }
+        return decltype(func(std::get<T>(m_data)))::failure(std::get<Error>(m_data));
+    }
+    
+private:
+    std::variant<T, Error> m_data;
+    bool m_success;
+};
+
+/**
+ * @brief Void Result 类型（无返回值的操作）
+ */
+class VoidResult {
+public:
+    VoidResult() : m_success(true) {}
+    VoidResult(const Error& error) : m_error(error), m_success(false) {}
+    
+    bool isSuccess() const { return m_success; }
+    bool isFailure() const { return !m_success; }
+    Error error() const { return m_error; }
+    
+private:
+    Error m_error;
+    bool m_success;
+};
+
+/**
+ * @brief 错误处理器 - 统一错误管理
+ *
+ * @details 功能：
+ * - 错误注册和查询
+ * - 错误处理策略
+ * - 错误日志记录
+ * - 用户通知
+ */
+class ErrorHandler : public QObject
+{
     Q_OBJECT
 
 public:
-    static ErrorHandler* instance();
+    /**
+     * @brief 获取单例
+     */
+    static ErrorHandler& instance();
+
+    /**
+     * @brief 初始化错误处理器
+     */
+    bool initialize();
 
     /**
      * @brief 处理错误
-     * @param error 错误对象
-     * @param showUser 是否显示给用户
+     * @param error 错误信息
      */
-    void handleError(const ErrorInfo& error, bool showUser = true);
+    void handle(const Error& error);
 
     /**
      * @brief 处理错误（简化版）
+     * @param level 错误级别
      * @param code 错误码
      * @param message 错误消息
-     * @param showUser 是否显示给用户
+     * @param context 错误上下文（可选）
      */
-    void handleError(ErrorCode code, const QString& message, bool showUser = true);
+    void handle(ErrorLevel level, const QString& code,
+                const QString& message, const QString& context = {});
 
     /**
-     * @brief 获取用户友好的错误提示
-     * @param error 错误对象
-     * @return 用户友好的提示文本
+     * @brief 显示错误给用户
+     * @param error 错误信息
+     * @param showSuggestion 是否显示建议解决方案
      */
-    QString getUserMessage(const ErrorInfo& error) const;
+    void showToUser(const Error& error, bool showSuggestion = true);
 
     /**
-     * @brief 获取错误恢复建议
-     * @param error 错误对象
-     * @return 恢复建议
+     * @brief 注册错误码
+     * @param code 错误码
+     * @param defaultMessage 默认消息
+     * @param defaultSuggestion 默认建议
      */
-    QString getRecoverySuggestion(const ErrorInfo& error) const;
+    void registerError(const QString& code,
+                       const QString& defaultMessage,
+                       const QString& defaultSuggestion = {});
 
     /**
-     * @brief 设置错误回调
-     * @param callback 错误处理回调函数
+     * @brief 获取错误码的默认消息
      */
-    void setErrorCallback(std::function<void(const ErrorInfo&)> callback);
+    QString getDefaultMessage(const QString& code) const;
+
+    /**
+     * @brief 获取最近的错误
+     */
+    Error lastError() const;
+
+    /**
+     * @brief 清除错误历史
+     */
+    void clearHistory();
+
+    /**
+     * @brief 获取错误历史
+     */
+    QVector<Error> errorHistory() const;
+
+    /**
+     * @brief 设置错误处理回调
+     * @param level 错误级别
+     * @param callback 处理回调
+     */
+    void setErrorHandler(ErrorLevel level,
+                         std::function<void(const Error&)> callback);
 
 signals:
     /**
      * @brief 错误发生信号
-     * @param error 错误对象
      */
-    void errorOccurred(const ErrorInfo& error);
+    void errorOccurred(const Error& error);
 
     /**
-     * @brief 需要显示给用户的错误提示
-     * @param title 标题
-     * @param message 消息
-     * @param suggestion 建议
+     * @brief 严重错误信号（需要立即处理）
      */
-    void showUserError(const QString& title, const QString& message, const QString& suggestion);
+    void criticalError(const Error& error);
+
+    /**
+     * @brief 致命错误信号（程序需要退出）
+     */
+    void fatalError(const Error& error);
 
 private:
-    explicit ErrorHandler(QObject* parent = nullptr);
-    ~ErrorHandler() override = default;
+    ErrorHandler();
+    ~ErrorHandler() = default;
+    ErrorHandler(const ErrorHandler&) = delete;
+    ErrorHandler& operator=(const ErrorHandler&) = delete;
 
-    std::function<void(const ErrorInfo&)> m_errorCallback;
+    void logError(const Error& error);
+    void notifyUser(const Error& error);
+    void executeHandler(const Error& error);
+
+    // 错误码注册表
+    QHash<QString, QString> m_defaultMessages;
+    QHash<QString, QString> m_defaultSuggestions;
+
+    // 错误历史
+    QVector<Error> m_errorHistory;
+    mutable QMutex m_historyMutex;
+
+    // 错误处理器
+    QHash<ErrorLevel, std::function<void(const Error&)>> m_handlers;
+
+    // 最近错误
+    Error m_lastError;
 };
 
-// ========== 便捷宏定义 ==========
+// ============================================================================
+// 错误码定义（常用错误）
+// ============================================================================
 
-/**
- * @brief 检查错误并返回
- */
-#define WP_CHECK_ERROR(error) \
-    if ((error).isError()) { \
-        WealthPilot::ErrorHandler::instance()->handleError(error); \
-        return error; \
-    }
+namespace ErrorCodes {
+    // 网络错误
+    inline const QString NetworkTimeout = "NET_TIMEOUT";
+    inline const QString NetworkConnectionFailed = "NET_CONN_FAILED";
+    inline const QString NetworkInvalidResponse = "NET_INVALID_RESP";
 
-/**
- * @brief 检查错误并返回默认值
- */
-#define WP_CHECK_ERROR_RET(error, defaultValue) \
-    if ((error).isError()) { \
-        WealthPilot::ErrorHandler::instance()->handleError(error); \
-        return defaultValue; \
-    }
+    // 数据库错误
+    inline const QString DatabaseConnectionFailed = "DB_CONN_FAILED";
+    inline const QString DatabaseQueryFailed = "DB_QUERY_FAILED";
+    inline const QString DatabaseWriteFailed = "DB_WRITE_FAILED";
 
-/**
- * @brief 检查错误并继续
- */
-#define WP_CHECK_ERROR_CONTINUE(error) \
-    if ((error).isError()) { \
-        WealthPilot::ErrorHandler::instance()->handleError(error); \
-        continue; \
-    }
+    // 交易错误
+    inline const QString OrderRejected = "TRD_ORDER_REJECTED";
+    inline const QString InsufficientFunds = "TRD_INSUFFICIENT_FUNDS";
+    inline const QString InvalidOrder = "TRD_INVALID_ORDER";
+    inline const QString RiskLimitExceeded = "TRD_RISK_LIMIT";
 
-/**
- * @brief 记录错误日志
- */
-#define WP_LOG_ERROR(error) \
-    if ((error).isError()) { \
-        WealthPilot::ErrorHandler::instance()->handleError(error, false); \
-    }
+    // 数据错误
+    inline const QString DataNotFound = "DATA_NOT_FOUND";
+    inline const QString DataInvalid = "DATA_INVALID";
+    inline const QString DataExpired = "DATA_EXPIRED";
+
+    // 配置错误
+    inline const QString ConfigNotFound = "CFG_NOT_FOUND";
+    inline const QString ConfigInvalid = "CFG_INVALID";
+
+    // 权限错误
+    inline const QString PermissionDenied = "PERM_DENIED";
+    inline const QString AuthenticationFailed = "AUTH_FAILED";
+
+    // 系统错误
+    inline const QString SystemOutOfMemory = "SYS_OOM";
+    inline const QString SystemCrash = "SYS_CRASH";
+
+    // 用户输入错误
+    inline const QString InvalidInput = "INPUT_INVALID";
+    inline const QString EmptyInput = "INPUT_EMPTY";
+}
 
 } // namespace WealthPilot
 

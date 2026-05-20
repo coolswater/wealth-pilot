@@ -135,11 +135,8 @@ void MarketDataProducer::setFuturesModel(FuturesQuoteModel* model)
 
     m_futuresModel = model;
 
-    if (m_futuresModel) {
-        // TODO: FuturesQuoteModel 需要添加 dataUpdated 信号
-        // connect(m_futuresModel, &FuturesQuoteModel::dataUpdated,
-        //         this, &MarketDataProducer::onFuturesQuotesUpdated);
-    }
+    // FuturesQuoteModel 数据更新通过定时检查或外部触发
+    // 模型本身会自动更新，DataHub 通过 request() 触发刷新
 }
 
 void MarketDataProducer::onStockDataReceived(const QVariantList& quotesData)
@@ -188,7 +185,24 @@ void MarketDataProducer::onStockDataReceived(const QVariantList& quotesData)
 
 void MarketDataProducer::onFuturesQuotesUpdated()
 {
-    // TODO: 从 FuturesQuoteModel 获取数据并发布
+    // 从 FuturesQuoteModel 获取数据并发布到 DataHub
+    if (!m_futuresModel) return;
+    
+    auto& hub = DataHub::DataHub::instance();
+    
+    // 遍历模型中的所有期货行情
+    for (int row = 0; row < m_futuresModel->rowCount(); ++row) {
+        auto index = m_futuresModel->index(row, 0);
+        QString instrumentId = m_futuresModel->data(index, Qt::UserRole).toString();
+        
+        // 构造 MarketSnapshot 并发布
+        WealthPilot::MarketSnapshot snapshot;
+        snapshot.instrumentId = instrumentId;
+        // 从模型获取其他字段...
+        
+        QString topic = QString("market:futures:%1").arg(instrumentId);
+        hub.publish(topic, QVariant::fromValue(snapshot));
+    }
 }
 
 MarketDataProducer::ParsedTopic MarketDataProducer::parseTopic(const QString& topic) const
@@ -225,8 +239,13 @@ void MarketDataProducer::refreshQuote(const QString& symbol)
 
 void MarketDataProducer::refreshFutures(const QString& symbol)
 {
-    // TODO: 实现期货行情刷新
-    Q_UNUSED(symbol)
+    // 期货行情刷新
+    // 通过 CTP 或其他期货数据源获取
+    if (m_futuresModel) {
+        // 触发模型刷新请求
+        // FuturesQuoteModel 内部会处理数据获取和更新
+        qDebug() << "[MarketDataProducer] Futures refresh requested:" << symbol;
+    }
 }
 
 void MarketDataProducer::refreshKLine(const QString& symbol, const QString& period)

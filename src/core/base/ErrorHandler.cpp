@@ -1,197 +1,308 @@
 /**
  * @file ErrorHandler.cpp
- * @brief 统一错误处理助手类实现
+ * @brief 统一错误处理系统实现
  */
 
 #include "ErrorHandler.h"
-#include "../../utils/Logger.h"
+#include "utils/Logger.h"
 #include <QMessageBox>
+#include <QDateTime>
+#include <QMutexLocker>
+#include <QApplication>
 
 namespace WealthPilot {
 
-ErrorHandler* ErrorHandler::instance()
+// ============================================================================
+// Error 实现
+// ============================================================================
+
+QString Error::userFriendlyMessage() const
 {
-    static ErrorHandler* inst = new ErrorHandler();
-    return inst;
+    QString friendly;
+
+    // 根据错误分类生成友好消息
+    switch (category) {
+        case ErrorCategory::Network:
+            friendly = QStringLiteral("网络连接出现问题，请检查网络设置");
+            break;
+        case ErrorCategory::Database:
+            friendly = QStringLiteral("数据存储出现问题，请稍后重试");
+            break;
+        case ErrorCategory::Trading:
+            friendly = QStringLiteral("交易操作失败，请检查订单信息");
+            break;
+        case ErrorCategory::Data:
+            friendly = QStringLiteral("数据加载出现问题");
+            break;
+        case ErrorCategory::Configuration:
+            friendly = QStringLiteral("配置加载失败，请检查配置文件");
+            break;
+        case ErrorCategory::Permission:
+            friendly = QStringLiteral("权限不足，无法执行此操作");
+            break;
+        case ErrorCategory::System:
+            friendly = QStringLiteral("系统出现问题，请重启程序");
+            break;
+        case ErrorCategory::UserInput:
+            friendly = QStringLiteral("输入信息有误，请检查后重试");
+            break;
+        case ErrorCategory::Plugin:
+            friendly = QStringLiteral("插件加载失败");
+            break;
+        case ErrorCategory::AI:
+            friendly = QStringLiteral("AI服务暂时不可用");
+            break;
+        default:
+            friendly = QStringLiteral("发生未知错误");
+            break;
+    }
+
+    // 添加具体消息
+    if (!message.isEmpty()) {
+        friendly += QStringLiteral("：") + message;
+    }
+
+    return friendly;
 }
 
-ErrorHandler::ErrorHandler(QObject* parent)
-    : QObject(parent)
+// ============================================================================
+// ErrorHandler 实现
+// ============================================================================
+
+ErrorHandler& ErrorHandler::instance()
+{
+    static ErrorHandler instance;
+    return instance;
+}
+
+ErrorHandler::ErrorHandler()
+{
+    // 注册默认错误码
+    registerError(ErrorCodes::NetworkTimeout,
+                  QStringLiteral("网络请求超时"),
+                  QStringLiteral("请检查网络连接后重试"));
+
+    registerError(ErrorCodes::NetworkConnectionFailed,
+                  QStringLiteral("无法连接到服务器"),
+                  QStringLiteral("请检查网络设置或联系技术支持"));
+
+    registerError(ErrorCodes::DatabaseConnectionFailed,
+                  QStringLiteral("数据库连接失败"),
+                  QStringLiteral("请检查数据库配置"));
+
+    registerError(ErrorCodes::OrderRejected,
+                  QStringLiteral("订单被拒绝"),
+                  QStringLiteral("请检查订单参数或联系客服"));
+
+    registerError(ErrorCodes::InsufficientFunds,
+                  QStringLiteral("资金不足"),
+                  QStringLiteral("请检查账户余额"));
+
+    registerError(ErrorCodes::RiskLimitExceeded,
+                  QStringLiteral("超出风控限制"),
+                  QStringLiteral("请调整持仓或联系风控部门"));
+
+    registerError(ErrorCodes::DataNotFound,
+                  QStringLiteral("数据不存在"),
+                  QStringLiteral("请刷新数据或检查查询条件"));
+
+    registerError(ErrorCodes::InvalidInput,
+                  QStringLiteral("输入无效"),
+                  QStringLiteral("请检查输入内容"));
+}
+
+ErrorHandler::~ErrorHandler()
 {
 }
 
-void ErrorHandler::handleError(const ErrorInfo& error, bool showUser)
+bool ErrorHandler::initialize()
 {
-    if (error.isOk()) return;
+    LOG_INFO("[ErrorHandler] Initialized");
+    return true;
+}
+
+void ErrorHandler::handle(const Error& error)
+{
+    if (!error.isValid()) {
+        return;
+    }
 
     // 记录日志
-    LOG_ERROR(QString("[%1] %2").arg(error.codeName(), error.message));
-    if (!error.detail.isEmpty()) {
-        LOG_ERROR(QString("Detail: %1").arg(error.detail));
+    logError(error);
+
+    // 记录历史
+    {
+        QMutexLocker locker(&m_historyMutex);
+        m_errorHistory.append(error);
+        if (m_errorHistory.size() > 100) {
+            m_errorHistory.removeFirst();
+        }
+        m_lastError = error;
     }
+
+    // 执行处理器
+    executeHandler(error);
 
     // 发送信号
     emit errorOccurred(error);
 
-    // 调用回调
-    if (m_errorCallback) {
-        m_errorCallback(error);
+    // 严重错误特殊处理
+    if (error.level >= ErrorLevel::Critical) {
+        emit criticalError(error);
     }
 
-    // 显示给用户
-    if (showUser) {
-        QString title = QStringLiteral("错误");
-        QString message = getUserMessage(error);
-        QString suggestion = getRecoverySuggestion(error);
-        emit showUserError(title, message, suggestion);
+    if (error.level == ErrorLevel::Fatal) {
+        emit fatalError(error);
     }
 }
 
-void ErrorHandler::handleError(ErrorCode code, const QString& message, bool showUser)
+void ErrorHandler::handle(ErrorLevel level, const QString& code,
+                          const QString& message, const QString& context)
 {
-    handleError(ErrorInfo(code, message), showUser);
+    Error error;
+    error.level = level;
+    error.code = code;
+    error.message = message;
+    error.context = context;
+    error.timestamp = QDateTime::currentMSecsSinceEpoch();
+
+    // 尝试获取默认消息和建议
+    if (message.isEmpty()) {
+        error.message = getDefaultMessage(code);
+    }
+
+    handle(error);
 }
 
-QString ErrorHandler::getUserMessage(const ErrorInfo& error) const
+void ErrorHandler::showToUser(const Error& error, bool showSuggestion)
 {
-    // 根据错误码返回用户友好的消息
-    int code = error.codeValue();
-
-    if (code >= 1000 && code < 2000) {
-        // 通用错误
-        switch (error.code) {
-            case ErrorCode::InvalidArgument:
-                return QStringLiteral("参数无效，请检查输入。");
-            case ErrorCode::Timeout:
-                return QStringLiteral("操作超时，请稍后重试。");
-            case ErrorCode::NotInitialized:
-                return QStringLiteral("系统未初始化，请重启应用。");
-            default:
-                return error.message.isEmpty() ? QStringLiteral("操作失败。") : error.message;
-        }
-    }
-    else if (code >= 2000 && code < 3000) {
-        // 网络错误
-        switch (error.code) {
-            case ErrorCode::NetworkTimeout:
-                return QStringLiteral("网络连接超时，请检查网络后重试。");
-            case ErrorCode::NetworkDisconnected:
-                return QStringLiteral("网络连接已断开，请检查网络设置。");
-            case ErrorCode::NetworkServerError:
-                return QStringLiteral("服务器错误，请稍后重试。");
-            case ErrorCode::NetworkUnauthorized:
-                return QStringLiteral("未授权访问，请检查登录状态。");
-            case ErrorCode::NetworkRateLimited:
-                return QStringLiteral("请求过于频繁，请稍后重试。");
-            default:
-                return QStringLiteral("网络错误，请检查网络连接。");
-        }
-    }
-    else if (code >= 3000 && code < 4000) {
-        // 数据库错误
-        switch (error.code) {
-            case ErrorCode::DatabaseOpenFailed:
-                return QStringLiteral("无法打开数据库，请检查文件权限。");
-            case ErrorCode::DatabaseQueryFailed:
-                return QStringLiteral("数据查询失败，请重试。");
-            case ErrorCode::DatabaseConnectionFailed:
-                return QStringLiteral("数据库连接失败，请检查配置。");
-            default:
-                return QStringLiteral("数据库错误，请重试或重启应用。");
-        }
-    }
-    else if (code >= 4000 && code < 5000) {
-        // CTP错误
-        switch (error.code) {
-            case ErrorCode::CtpConnectFailed:
-                return QStringLiteral("CTP连接失败，请检查网络和配置。");
-            case ErrorCode::CtpLoginFailed:
-                return QStringLiteral("CTP登录失败，请检查账号密码。");
-            case ErrorCode::CtpSubscribeFailed:
-                return QStringLiteral("行情订阅失败，请检查合约代码。");
-            case ErrorCode::CtpOrderFailed:
-                return QStringLiteral("下单失败，请检查委托参数。");
-            case ErrorCode::CtpNotConnected:
-                return QStringLiteral("CTP未连接，请先连接交易服务器。");
-            default:
-                return QStringLiteral("CTP交易错误，请检查连接状态。");
-        }
-    }
-    else if (code >= 5000 && code < 6000) {
-        // AI错误
-        switch (error.code) {
-            case ErrorCode::AiRequestFailed:
-                return QStringLiteral("AI请求失败，请稍后重试。");
-            case ErrorCode::AiRateLimited:
-                return QStringLiteral("AI请求过于频繁，请稍后重试。");
-            case ErrorCode::AiModelNotAvailable:
-                return QStringLiteral("AI模型不可用，请检查配置。");
-            case ErrorCode::AiContextTooLong:
-                return QStringLiteral("对话内容过长，请精简后重试。");
-            default:
-                return QStringLiteral("AI服务错误，请稍后重试。");
-        }
-    }
-    else if (code >= 6000 && code < 7000) {
-        // 配置错误
-        switch (error.code) {
-            case ErrorCode::ConfigFileNotFound:
-                return QStringLiteral("配置文件未找到，将使用默认配置。");
-            case ErrorCode::ConfigParseError:
-                return QStringLiteral("配置文件格式错误，请检查配置。");
-            case ErrorCode::ConfigInvalidValue:
-                return QStringLiteral("配置值无效，已使用默认值。");
-            default:
-                return QStringLiteral("配置错误，请检查设置。");
-        }
-    }
-    else if (code >= 7000 && code < 8000) {
-        // 缓存错误
-        return QStringLiteral("缓存错误，数据可能需要重新加载。");
-    }
-    else if (code >= 8000 && code < 9000) {
-        // 插件错误
-        switch (error.code) {
-            case ErrorCode::PluginLoadFailed:
-                return QStringLiteral("插件加载失败，请检查插件文件。");
-            case ErrorCode::PluginNotFound:
-                return QStringLiteral("插件未找到，请检查安装。");
-            case ErrorCode::PluginVersionMismatch:
-                return QStringLiteral("插件版本不匹配，请更新插件。");
-            default:
-                return QStringLiteral("插件错误，请检查插件状态。");
-        }
+    if (!error.isValid()) {
+        return;
     }
 
-    return error.message.isEmpty() ? QStringLiteral("未知错误。") : error.message;
+    // 根据错误级别选择对话框类型
+    QMessageBox::Icon icon;
+    QString title;
+
+    switch (error.level) {
+        case ErrorLevel::Info:
+            icon = QMessageBox::Information;
+            title = QStringLiteral("提示");
+            break;
+        case ErrorLevel::Warning:
+            icon = QMessageBox::Warning;
+            title = QStringLiteral("警告");
+            break;
+        case ErrorLevel::Error:
+            icon = QMessageBox::Critical;
+            title = QStringLiteral("错误");
+            break;
+        case ErrorLevel::Critical:
+            icon = QMessageBox::Critical;
+            title = QStringLiteral("严重错误");
+            break;
+        case ErrorLevel::Fatal:
+            icon = QMessageBox::Critical;
+            title = QStringLiteral("致命错误");
+            break;
+        default:
+            icon = QMessageBox::Warning;
+            title = QStringLiteral("提示");
+            break;
+    }
+
+    // 构造消息内容
+    QString text = error.userFriendlyMessage();
+
+    if (showSuggestion && !error.suggestion.isEmpty()) {
+        text += QStringLiteral("\n\n建议：") + error.suggestion;
+    }
+
+    // 显示对话框
+    QMessageBox box(icon, title, text, QMessageBox::Ok);
+    box.exec();
 }
 
-QString ErrorHandler::getRecoverySuggestion(const ErrorInfo& error) const
+void ErrorHandler::registerError(const QString& code,
+                                  const QString& defaultMessage,
+                                  const QString& defaultSuggestion)
 {
-    int code = error.codeValue();
-
-    if (code >= 2000 && code < 3000) {
-        return QStringLiteral("建议：检查网络连接，确认服务器地址正确，稍后重试。");
+    m_defaultMessages[code] = defaultMessage;
+    if (!defaultSuggestion.isEmpty()) {
+        m_defaultSuggestions[code] = defaultSuggestion;
     }
-    else if (code >= 3000 && code < 4000) {
-        return QStringLiteral("建议：检查数据库文件是否存在，确认有读写权限，重启应用。");
-    }
-    else if (code >= 4000 && code < 5000) {
-        return QStringLiteral("建议：检查CTP配置，确认账号密码正确，检查网络连接。");
-    }
-    else if (code >= 5000 && code < 6000) {
-        return QStringLiteral("建议：检查AI服务配置，确认API密钥有效，稍后重试。");
-    }
-    else if (code >= 6000 && code < 7000) {
-        return QStringLiteral("建议：检查配置文件格式，恢复默认配置或重新设置。");
-    }
-
-    return QString();
 }
 
-void ErrorHandler::setErrorCallback(std::function<void(const ErrorInfo&)> callback)
+QString ErrorHandler::getDefaultMessage(const QString& code) const
 {
-    m_errorCallback = std::move(callback);
+    return m_defaultMessages.value(code, QStringLiteral("未知错误"));
+}
+
+Error ErrorHandler::lastError() const
+{
+    QMutexLocker locker(&m_historyMutex);
+    return m_lastError;
+}
+
+void ErrorHandler::clearHistory()
+{
+    QMutexLocker locker(&m_historyMutex);
+    m_errorHistory.clear();
+    m_lastError = Error{};
+}
+
+QVector<Error> ErrorHandler::errorHistory() const
+{
+    QMutexLocker locker(&m_historyMutex);
+    return m_errorHistory;
+}
+
+void ErrorHandler::setErrorHandler(ErrorLevel level,
+                                    std::function<void(const Error&)> callback)
+{
+    m_handlers[level] = callback;
+}
+
+void ErrorHandler::logError(const Error& error)
+{
+    QString logMsg = QString("[%1] %2: %3")
+        .arg(error.code)
+        .arg(static_cast<int>(error.level))
+        .arg(error.message);
+
+    if (!error.context.isEmpty()) {
+        logMsg += QStringLiteral(" | Context: ") + error.context;
+    }
+
+    if (!error.detail.isEmpty()) {
+        logMsg += QStringLiteral(" | Detail: ") + error.detail;
+    }
+
+    switch (error.level) {
+        case ErrorLevel::Info:
+            LOG_INFO(logMsg);
+            break;
+        case ErrorLevel::Warning:
+            LOG_WARNING(logMsg);
+            break;
+        case ErrorLevel::Error:
+            LOG_ERROR(logMsg);
+            break;
+        case ErrorLevel::Critical:
+            LOG_CRITICAL(logMsg);
+            break;
+        case ErrorLevel::Fatal:
+            LOG_FATAL(logMsg);
+            break;
+    }
+}
+
+void ErrorHandler::executeHandler(const Error& error)
+{
+    auto it = m_handlers.find(error.level);
+    if (it != m_handlers.end()) {
+        it.value()(error);
+    }
 }
 
 } // namespace WealthPilot

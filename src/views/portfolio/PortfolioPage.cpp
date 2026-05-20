@@ -7,6 +7,7 @@
  * - 数据缓存和增量更新
  * - 延迟加载和按需刷新
  * - 使用 QHash 快速索引
+ * - 集成 PerformanceMonitor 性能监控
  *
  * @details 设计规范：
  * - 主背景：#1E1F24
@@ -19,7 +20,10 @@
 #include "ui/ThemeManager.h"
 #include "ui/components/StyleHelper.h"
 #include "ui/ThemeManager.h"
+#include "ui/components/PageTemplate.h"
 #include "core/config/Tokens.h"
+#include "core/monitoring/PerformanceMonitor.h"
+#include "core/base/ErrorHandler.h"
 #include "ui/styles/ButtonStyles.h"
 #include "views/trading/TradeHistoryPage.h"
 #include "views/trading/ConditionOrderPage.h"
@@ -29,6 +33,11 @@
 using WealthPilot::StockQuote;
 using WealthPilot::KLineData;
 using WealthPilot::TimeShareData;
+using WealthPilot::PageTemplate;
+using WealthPilot::PerformanceMonitor;
+using WealthPilot::ErrorHandler;
+using WealthPilot::ErrorLevel;
+using WealthPilot::ErrorCodes;
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -399,13 +408,29 @@ void PortfolioPage::setupDataHubSubscriptions()
 
 void PortfolioPage::setupUI()
 {
+    PERF_TIMER("PortfolioPage::setupUI");
+    
     d->mainLayout = new QVBoxLayout(this);
     d->mainLayout->setContentsMargins(0, 0, 0, 0);
     d->mainLayout->setSpacing(0);
 
-    // 页面头部
-    auto* header = StyleHelper::createPageHeader(this, QStringLiteral("持仓管理"));
+    // 使用 PageTemplate 创建页面头部
+    auto* header = PageTemplate::createPageHeader(this, QStringLiteral("持仓管理"), true, true);
     d->mainLayout->addWidget(header);
+    
+    // 获取搜索框和刷新按钮（从 header 中查找）
+    auto searchEdits = header->findChildren<QLineEdit*>();
+    if (!searchEdits.isEmpty()) {
+        d->searchEdit = searchEdits.first();
+        connect(d->searchEdit, &QLineEdit::textChanged, this, &PortfolioPage::filterPositions);
+    }
+    
+    auto refreshBtns = header->findChildren<QPushButton*>();
+    for (auto* btn : refreshBtns) {
+        if (btn->text() == QStringLiteral("刷新")) {
+            connect(btn, &QPushButton::clicked, this, &PortfolioPage::refreshData);
+        }
+    }
 
     // 内容区域
     auto* contentWidget = new QWidget(this);
@@ -413,25 +438,30 @@ void PortfolioPage::setupUI()
     contentLayout->setContentsMargins(20, 20, 20, 20);
     contentLayout->setSpacing(16);
 
-    // 1. 汇总卡片区域
-    auto* cardsFrame = new QFrame(this);
-    cardsFrame->setStyleSheet("background: transparent;");
-    auto* cardsLayout = new QHBoxLayout(cardsFrame);
-    cardsLayout->setContentsMargins(0, 0, 0, 0);
-    cardsLayout->setSpacing(16);
-
-    setupSummaryCards();
-    cardsLayout->addWidget(d->totalAssetCard, 1);
-    cardsLayout->addWidget(d->dailyPnLCard, 1);
-    cardsLayout->addWidget(d->returnCard, 1);
-    cardsLayout->addWidget(d->riskCard, 1);
+    // 使用 PageTemplate 创建汇总卡片行
+    QVector<QPair<QString, QString>> cardData = {
+        {QStringLiteral("总资产"), QStringLiteral("--")},
+        {QStringLiteral("今日盈亏"), QStringLiteral("--")},
+        {QStringLiteral("收益率"), QStringLiteral("--")},
+        {QStringLiteral("风险等级"), QStringLiteral("--")}
+    };
+    auto* cardsFrame = PageTemplate::createSummaryCardRow(contentWidget, cardData);
     contentLayout->addWidget(cardsFrame);
+    
+    // 保存卡片引用以便后续更新
+    auto cards = cardsFrame->findChildren<QFrame*>(QStringLiteral("summaryCard"));
+    if (cards.size() >= 4) {
+        d->totalAssetCard = cards[0];
+        d->dailyPnLCard = cards[1];
+        d->returnCard = cards[2];
+        d->riskCard = cards[3];
+    }
 
-    // 2. 主内容区
+    // 主内容区
     setupMainContent();
     contentLayout->addWidget(d->mainSplitter, 1);
 
-    // 3. 持仓表格 - 需要返回 tableFrame
+    // 持仓表格
     QFrame* tableFrame = setupPositionTable();
     contentLayout->addWidget(tableFrame, 1);
 
@@ -1066,8 +1096,28 @@ void PortfolioPage::updateNetValueChart(int days)
 
 void PortfolioPage::refreshData()
 {
+    PERF_TIMER("PortfolioPage::refreshData");
     LOG_DEBUG("Refreshing portfolio data...");
-    loadDemoData();
+    
+    try {
+        // 刷新数据
+        loadDemoData();
+        
+        // 更新时间标签
+        if (d->updateTimeLabel) {
+            d->updateTimeLabel->setText(
+                QStringLiteral("更新于 ") + QDateTime::currentDateTime().toString("hh:mm:ss"));
+        }
+        
+    } catch (const std::exception& e) {
+        // 使用 ErrorHandler 处理错误
+        ErrorHandler::instance().handle(
+            ErrorLevel::Error,
+            ErrorCodes::DataNotFound,
+            QStringLiteral("刷新数据失败"),
+            QString::fromStdString(e.what())
+        );
+    }
 }
 
 void PortfolioPage::setAccountSummary(const AccountSummary& summary)
