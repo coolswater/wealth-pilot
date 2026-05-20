@@ -21,9 +21,19 @@ endif ()
 
 # ==================== 构建选项 ====================
 option(WEALTHPILOT_ENABLE_LTO "Enable Link Time Optimization" OFF)
-option(WEALTHPILOT_ENABLE_UNITY_BUILD "Enable Unity Build for faster compilation" OFF)
+option(WEALTHPILOT_ENABLE_UNITY_BUILD "Enable Unity Build for faster compilation" ON)
 option(WEALTHPILOT_ENABLE_CCACHE "Enable ccache/sccache for compiler caching" ON)
 option(WEALTHPILOT_ENABLE_DEBUG_OUTPUT "Enable debug output" OFF)
+
+# 设置并行编译数（默认使用所有CPU核心）
+if (NOT DEFINED CMAKE_BUILD_PARALLEL_LEVEL)
+    include(ProcessorCount)
+    ProcessorCount(N)
+    if (NOT N EQUAL 0)
+        set(CMAKE_BUILD_PARALLEL_LEVEL ${N})
+        message(STATUS "Parallel build level: ${N}")
+    endif ()
+endif ()
 
 # ==================== 编译缓存 (增强PCH支持) ====================
 if (WEALTHPILOT_ENABLE_CCACHE)
