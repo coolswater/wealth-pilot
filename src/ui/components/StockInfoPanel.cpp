@@ -237,8 +237,10 @@ void StockInfoPanel::updateQuote(const StockQuote& quote)
     m_currentQuote = quote;
 
     // 更新价格
-    m_priceLabel->setText(QString::number(quote.lastPrice, 'f', 2));
-    updatePriceLabel(m_priceLabel, quote.lastPrice, quote.preClose);
+    if (m_priceLabel) {
+        m_priceLabel->setText(QString::number(quote.lastPrice, 'f', 2));
+        updatePriceLabel(m_priceLabel, quote.lastPrice, quote.preClose);
+    }
 
     // 更新涨跌额和涨跌幅（分开显示）
     QString changeAmountText;
@@ -255,20 +257,30 @@ void StockInfoPanel::updateQuote(const StockQuote& quote)
         changeColor = Tokens::Colors::Success;
     }
 
-    m_changeAmountLabel->setText(changeAmountText);
-    m_changeAmountLabel->setStyleSheet(QString("color: %1; font-size: 14px; font-weight: bold;").arg(changeColor));
+    if (m_changeAmountLabel) {
+        m_changeAmountLabel->setText(changeAmountText);
+        m_changeAmountLabel->setStyleSheet(QString("color: %1; font-size: 14px; font-weight: bold;").arg(changeColor));
+    }
 
-    m_changePercentLabel->setText(changePercentText);
-    m_changePercentLabel->setStyleSheet(QString("color: %1; font-size: 14px; font-weight: bold;").arg(changeColor));
+    if (m_changePercentLabel) {
+        m_changePercentLabel->setText(changePercentText);
+        m_changePercentLabel->setStyleSheet(QString("color: %1; font-size: 14px; font-weight: bold;").arg(changeColor));
+    }
 
     // 保留旧的 changeLabel 用于兼容
-    m_changeLabel->setText(QString("%1 (%2%)").arg(changeAmountText, changePercentText));
-    m_changeLabel->setStyleSheet(QString("color: %1; font-size: 14px;").arg(changeColor));
+    if (m_changeLabel) {
+        m_changeLabel->setText(QString("%1 (%2%)").arg(changeAmountText, changePercentText));
+        m_changeLabel->setStyleSheet(QString("color: %1; font-size: 14px;").arg(changeColor));
+    }
 
     // 更新五档（只显示价格）
     for (int i = 0; i < 5; ++i) {
-        m_bidLabels[i]->setText(QString::number(quote.bidPrice[i], 'f', 2));
-        m_askLabels[i]->setText(QString::number(quote.askPrice[i], 'f', 2));
+        if (m_bidLabels[i]) {
+            m_bidLabels[i]->setText(QString::number(quote.bidPrice[i], 'f', 2));
+        }
+        if (m_askLabels[i]) {
+            m_askLabels[i]->setText(QString::number(quote.askPrice[i], 'f', 2));
+        }
     }
 }
 

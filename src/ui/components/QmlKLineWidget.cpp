@@ -41,15 +41,23 @@ void QmlKLineWidget::setupUI()
     m_quickWidget->engine()->addImportPath("qrc:/qt-project.org/imports");
     m_quickWidget->engine()->addPluginPath("C:/Qt/6.10.2/mingw_64/qml");
 
-    // 获取数据模型
+    // 获取数据模型 - 添加空指针检查
     auto* bridge = QmlDataBridge::instance();
-    m_klineModel = bridge->klineModel();
-    m_timeShareModel = bridge->timeShareModel();
+    if (bridge) {
+        m_klineModel = bridge->klineModel();
+        m_timeShareModel = bridge->timeShareModel();
+    }
 
-    // 设置 QML 上下文属性
+    // 设置 QML 上下文属性 - 仅在模型有效时设置
     QQmlContext* context = m_quickWidget->rootContext();
-    context->setContextProperty("klineModel", m_klineModel);
-    context->setContextProperty("timeShareModel", m_timeShareModel);
+    if (context) {
+        if (m_klineModel) {
+            context->setContextProperty("klineModel", m_klineModel);
+        }
+        if (m_timeShareModel) {
+            context->setContextProperty("timeShareModel", m_timeShareModel);
+        }
+    }
 
     layout->addWidget(m_quickWidget);
 
@@ -98,16 +106,20 @@ void QmlKLineWidget::loadQmlSource()
 
 void QmlKLineWidget::setKLineData(const QVector<KLineData>& data)
 {
-    if (m_klineModel) {
-        m_klineModel->setData(data);
-        
-        // 确保 QML 组件已加载并绑定模型
-        if (m_qmlLoaded) {
-            updateQmlProperty("model", QVariant::fromValue(m_klineModel));
-            // 触发数据更新
-            if (auto* root = m_quickWidget->rootObject()) {
-                QMetaObject::invokeMethod(root, "updateData");
-            }
+    // 添加空指针检查
+    if (!m_klineModel) {
+        qWarning() << "QmlKLineWidget::setKLineData: m_klineModel is null";
+        return;
+    }
+    
+    m_klineModel->setData(data);
+    
+    // 确保 QML 组件已加载并绑定模型
+    if (m_qmlLoaded) {
+        updateQmlProperty("model", QVariant::fromValue(m_klineModel));
+        // 触发数据更新
+        if (auto* root = m_quickWidget->rootObject()) {
+            QMetaObject::invokeMethod(root, "updateData");
         }
     }
 }

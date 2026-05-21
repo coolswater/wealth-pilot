@@ -269,22 +269,32 @@ void StockKLinePage::setupUI()
     chartLayout->setContentsMargins(0, 0, 0, 0);
     chartLayout->setSpacing(0);
 
-    // K线图 (Widgets)
+    // K线图 (Widgets) - 添加空指针检查
     m_klineChart = new KLineChart(chartContainer);
+    if (!m_klineChart) {
+        LOG_ERROR("Failed to create KLineChart");
+        return;
+    }
     chartLayout->addWidget(m_klineChart);
     
-    // 初始化缠论分析集成
-    m_chanLun = new WealthPilot::ChanLun::ChanLunIntegration(m_klineChart, this);
+    // 初始化缠论分析集成 - 仅在 KLineChart 有效时创建
+    if (m_klineChart) {
+        m_chanLun = new WealthPilot::ChanLun::ChanLunIntegration(m_klineChart, this);
+    }
 
     // K线图 (QML) - 初始隐藏
     m_qmlKLineChart = new QmlKLineWidget(chartContainer);
-    m_qmlKLineChart->hide();
-    chartLayout->addWidget(m_qmlKLineChart);
+    if (m_qmlKLineChart) {
+        m_qmlKLineChart->hide();
+        chartLayout->addWidget(m_qmlKLineChart);
+    }
 
     // 分时图（初始隐藏）
     m_timeShareWidget = new TimeShareChart(chartContainer);
-    m_timeShareWidget->hide();
-    chartLayout->addWidget(m_timeShareWidget);
+    if (m_timeShareWidget) {
+        m_timeShareWidget->hide();
+        chartLayout->addWidget(m_timeShareWidget);
+    }
 
     // 右侧：股票信息面板
     m_infoPanel = new StockInfoPanel(chartSplitter);
@@ -378,30 +388,35 @@ void StockKLinePage::onChartTypeChanged(int index)
     m_chartType = static_cast<ChartType>(index);
     
     if (m_chartType == ChartType::KLine) {
-        m_timeShareWidget->hide();
+        // 安全隐藏分时图
+        if (m_timeShareWidget) {
+            m_timeShareWidget->hide();
+        }
         
         // 根据渲染引擎显示对应图表
         if (m_renderEngine == RenderEngine::QML) {
-            m_qmlKLineChart->show();
-            m_klineChart->hide();
+            if (m_qmlKLineChart) m_qmlKLineChart->show();
+            if (m_klineChart) m_klineChart->hide();
         } else {
-            m_klineChart->show();
-            m_qmlKLineChart->hide();
+            if (m_klineChart) m_klineChart->show();
+            if (m_qmlKLineChart) m_qmlKLineChart->hide();
         }
         
-        m_periodCombo->setEnabled(true);
-        m_mainIndicatorCombo->setEnabled(true);
-        m_subIndicatorCombo->setEnabled(true);
-        m_renderEngineCombo->setEnabled(true);
+        if (m_periodCombo) m_periodCombo->setEnabled(true);
+        if (m_mainIndicatorCombo) m_mainIndicatorCombo->setEnabled(true);
+        if (m_subIndicatorCombo) m_subIndicatorCombo->setEnabled(true);
+        if (m_renderEngineCombo) m_renderEngineCombo->setEnabled(true);
         loadDataWithFallback();
     } else {
-        m_klineChart->hide();
-        m_qmlKLineChart->hide();
-        m_timeShareWidget->show();
-        m_periodCombo->setEnabled(false);
-        m_mainIndicatorCombo->setEnabled(false);
-        m_subIndicatorCombo->setEnabled(false);
-        m_renderEngineCombo->setEnabled(false);
+        // 安全隐藏K线图
+        if (m_klineChart) m_klineChart->hide();
+        if (m_qmlKLineChart) m_qmlKLineChart->hide();
+        if (m_timeShareWidget) m_timeShareWidget->show();
+        
+        if (m_periodCombo) m_periodCombo->setEnabled(false);
+        if (m_mainIndicatorCombo) m_mainIndicatorCombo->setEnabled(false);
+        if (m_subIndicatorCombo) m_subIndicatorCombo->setEnabled(false);
+        if (m_renderEngineCombo) m_renderEngineCombo->setEnabled(false);
         loadTimeShareWithFallback();
     }
     
@@ -463,11 +478,15 @@ void StockKLinePage::onSubIndicatorChanged(int index)
 void StockKLinePage::onRefresh()
 {
     if (m_stockCode.isEmpty()) {
-        m_infoLabel->setText(QStringLiteral("请先选择股票"));
+        if (m_infoLabel) {
+            m_infoLabel->setText(QStringLiteral("请先选择股票"));
+        }
         return;
     }
     
-    m_infoLabel->setText(QStringLiteral("刷新中..."));
+    if (m_infoLabel) {
+        m_infoLabel->setText(QStringLiteral("刷新中..."));
+    }
     
     if (m_chartType == ChartType::KLine) {
         loadFromNetwork();
@@ -480,8 +499,10 @@ void StockKLinePage::onRefresh()
 
 void StockKLinePage::onCrosshairMoved(const QDateTime& time, double price)
 {
-    m_infoLabel->setText(QString("时间: %1 | 价格: %2")
-        .arg(time.toString("yyyy-MM-dd HH:mm"), QString::number(price, 'f', 2)));
+    if (m_infoLabel) {
+        m_infoLabel->setText(QString("时间: %1 | 价格: %2")
+            .arg(time.toString("yyyy-MM-dd HH:mm"), QString::number(price, 'f', 2)));
+    }
 }
 
 void StockKLinePage::onKLineInfoChanged(const KLineData& kline, int index)
@@ -495,7 +516,9 @@ void StockKLinePage::onKLineReceived(const QString& symbol, const QVector<KLineD
     if (symbol != m_stockCode) return;
     
     if (data.isEmpty()) {
-        m_infoLabel->setText(QStringLiteral("未获取到数据"));
+        if (m_infoLabel) {
+            m_infoLabel->setText(QStringLiteral("未获取到数据"));
+        }
         return;
     }
     
@@ -522,7 +545,9 @@ void StockKLinePage::onKLineReceived(const QString& symbol, const QVector<KLineD
     saveToCache();
     saveToDatabase();
     
-    m_infoLabel->setText(QStringLiteral("已加载 %1 条K线数据").arg(data.size()));
+    if (m_infoLabel) {
+        m_infoLabel->setText(QStringLiteral("已加载 %1 条K线数据").arg(data.size()));
+    }
     LOG_INFO(QString("KLine data received: %1 items for %2").arg(data.size()).arg(symbol));
 }
 
@@ -599,7 +624,9 @@ bool StockKLinePage::loadFromCache()
             m_klineChart->showLatest(60);
             m_klineChart->setMainIndicator(MainIndicator::MA);
             m_klineChart->setSubIndicator(SubIndicator::MACD);
-            m_infoLabel->setText(QStringLiteral("已从缓存加载 %1 条数据").arg(data.size()));
+            if (m_infoLabel) {
+                m_infoLabel->setText(QStringLiteral("已从缓存加载 %1 条数据").arg(data.size()));
+            }
             return true;
         }
     }
@@ -621,7 +648,9 @@ bool StockKLinePage::loadFromDatabase()
         m_klineChart->showLatest(60);
         m_klineChart->setMainIndicator(MainIndicator::MA);
         m_klineChart->setSubIndicator(SubIndicator::MACD);
-        m_infoLabel->setText(QStringLiteral("已从数据库加载 %1 条数据").arg(data.size()));
+        if (m_infoLabel) {
+            m_infoLabel->setText(QStringLiteral("已从数据库加载 %1 条数据").arg(data.size()));
+        }
         LOG_INFO(QString("KLine data loaded from database: %1 items").arg(data.size()));
         return true;
     }
@@ -648,7 +677,9 @@ void StockKLinePage::loadFromNetwork()
     KLinePeriod period = toKLinePeriod(m_period);
     m_dataSource->requestKLine(m_stockCode, period, 500);
     
-    m_infoLabel->setText(QStringLiteral("正在从网络获取数据..."));
+    if (m_infoLabel) {
+        m_infoLabel->setText(QStringLiteral("正在从网络获取数据..."));
+    }
 }
 
 void StockKLinePage::saveToCache()
@@ -683,10 +714,24 @@ void StockKLinePage::saveToDatabase()
 // 分时图数据加载
 // ============================================================================
 
+// 安全获取 TimeShareChart 指针的辅助方法
+namespace {
+TimeShareChart* safeGetTimeShareChart(QWidget* widget) {
+    if (!widget) return nullptr;
+    return qobject_cast<TimeShareChart*>(widget);
+}
+}
+
 void StockKLinePage::loadTimeShareWithFallback()
 {
     if (m_stockCode.isEmpty()) {
-        static_cast<TimeShareChart*>(m_timeShareWidget)->clearData();
+        // 安全的类型转换 - 添加空指针检查
+        if (m_timeShareWidget) {
+            auto* timeShareChart = qobject_cast<TimeShareChart*>(m_timeShareWidget);
+            if (timeShareChart) {
+                timeShareChart->clearData();
+            }
+        }
         return;
     }
     
@@ -762,9 +807,13 @@ bool StockKLinePage::loadTimeShareFromCache()
         }
         
         if (!prices.isEmpty()) {
-            auto* timeShareChart = static_cast<TimeShareChart*>(m_timeShareWidget);
-            timeShareChart->setData(prices, volumes, basePrice);
-            m_infoLabel->setText(QStringLiteral("已从缓存加载分时数据"));
+            auto* timeShareChart = safeGetTimeShareChart(m_timeShareWidget);
+            if (timeShareChart) {
+                timeShareChart->setData(prices, volumes, basePrice);
+            }
+            if (m_infoLabel) {
+                m_infoLabel->setText(QStringLiteral("已从缓存加载分时数据"));
+            }
             LOG_INFO(QString("TimeShare data loaded from cache: %1 points").arg(prices.size()));
             return true;
         }
@@ -791,9 +840,13 @@ bool StockKLinePage::loadTimeShareFromDatabase()
             volumes.append(point.volume);
         }
         
-        auto* timeShareChart = static_cast<TimeShareChart*>(m_timeShareWidget);
-        timeShareChart->setData(prices, volumes, basePrice);
-        m_infoLabel->setText(QStringLiteral("已从数据库加载分时数据"));
+        auto* timeShareChart = safeGetTimeShareChart(m_timeShareWidget);
+        if (timeShareChart) {
+            timeShareChart->setData(prices, volumes, basePrice);
+        }
+        if (m_infoLabel) {
+            m_infoLabel->setText(QStringLiteral("已从数据库加载分时数据"));
+        }
         LOG_INFO(QString("TimeShare data loaded from database: %1 points").arg(data.size()));
         return true;
     }
@@ -819,7 +872,8 @@ void StockKLinePage::loadTimeShareFromNetwork()
 
 void StockKLinePage::generateDemoTimeShareData()
 {
-    auto* timeShareChart = static_cast<TimeShareChart*>(m_timeShareWidget);
+    auto* timeShareChart = safeGetTimeShareChart(m_timeShareWidget);
+    if (!timeShareChart) return;
     
     QVector<QPair<QDateTime, double>> prices;
     QVector<qint64> volumes;
@@ -850,7 +904,9 @@ void StockKLinePage::generateDemoTimeShareData()
     }
     
     timeShareChart->setData(prices, volumes, basePrice);
-    m_infoLabel->setText(QStringLiteral("分时图已加载（演示数据）"));
+    if (m_infoLabel) {
+        m_infoLabel->setText(QStringLiteral("分时图已加载（演示数据）"));
+    }
     
     // 保存到缓存和数据库
     saveTimeShareToCache();
@@ -862,7 +918,9 @@ void StockKLinePage::saveTimeShareToCache()
     auto* cache = CacheManager::instance();
     QString key = timeShareCacheKey();
     
-    auto* timeShareChart = static_cast<TimeShareChart*>(m_timeShareWidget);
+    auto* timeShareChart = safeGetTimeShareChart(m_timeShareWidget);
+    if (!timeShareChart) return;
+    
     auto prices = timeShareChart->prices();
     auto volumes = timeShareChart->volumes();
     double basePrice = timeShareChart->basePrice();
@@ -880,7 +938,9 @@ void StockKLinePage::saveTimeShareToCache()
 
 void StockKLinePage::saveTimeShareToDatabase()
 {
-    auto* timeShareChart = static_cast<TimeShareChart*>(m_timeShareWidget);
+    auto* timeShareChart = safeGetTimeShareChart(m_timeShareWidget);
+    if (!timeShareChart) return;
+    
     auto prices = timeShareChart->prices();
     auto volumes = timeShareChart->volumes();
     double basePrice = timeShareChart->basePrice();
@@ -921,6 +981,8 @@ QString StockKLinePage::timeShareCacheKey() const
 
 void StockKLinePage::updateInfoLabel(const KLineData& kline)
 {
+    if (!m_infoLabel) return;
+    
     double change = kline.close - kline.open;
     double changePercent = (kline.open > 0) ? (change / kline.open * 100) : 0;
     
@@ -963,9 +1025,13 @@ void StockKLinePage::onTimeShareReceived(const QString& symbol, const QVector<Ti
     
     // 更新分时图显示
     if (m_chartType == ChartType::TimeShare && !data.isEmpty()) {
-        auto* timeShareChart = static_cast<TimeShareChart*>(m_timeShareWidget);
-        timeShareChart->setData(data);
-        m_infoLabel->setText(QStringLiteral("分时数据已更新"));
+        auto* timeShareChart = safeGetTimeShareChart(m_timeShareWidget);
+        if (timeShareChart) {
+            timeShareChart->setData(data);
+        }
+        if (m_infoLabel) {
+            m_infoLabel->setText(QStringLiteral("分时数据已更新"));
+        }
     }
     
     LOG_DEBUG(QString("TimeShare data received: %1 points for %2").arg(data.size()).arg(symbol));
@@ -1032,11 +1098,13 @@ void StockKLinePage::onRealtimeKLineUpdate(const QString& symbol, const Realtime
             m_klineChart->setData(currentData);
             
             // 更新信息标签
-            m_infoLabel->setText(QStringLiteral("实时更新: %1 (高:%2 低:%3 收:%4)")
-                .arg(QString::number(update.lastPrice, 'f', 2))
-                .arg(QString::number(lastKLine.high, 'f', 2))
-                .arg(QString::number(lastKLine.low, 'f', 2))
-                .arg(QString::number(lastKLine.close, 'f', 2)));
+            if (m_infoLabel) {
+                m_infoLabel->setText(QStringLiteral("实时更新: %1 (高:%2 低:%3 收:%4)")
+                    .arg(QString::number(update.lastPrice, 'f', 2))
+                    .arg(QString::number(lastKLine.high, 'f', 2))
+                    .arg(QString::number(lastKLine.low, 'f', 2))
+                    .arg(QString::number(lastKLine.close, 'f', 2)));
+            }
         }
     }
     
@@ -1063,7 +1131,9 @@ void StockKLinePage::startRealtimeUpdate()
     // 启动实时行情推送（3秒间隔）
     m_dataSource->startRealtimeQuotes(m_stockCode, 3000);
     
-    m_infoLabel->setText(QStringLiteral("实时更新已启动"));
+    if (m_infoLabel) {
+        m_infoLabel->setText(QStringLiteral("实时更新已启动"));
+    }
     LOG_INFO(QString("Started realtime update for %1").arg(m_stockCode));
 }
 
@@ -1073,7 +1143,9 @@ void StockKLinePage::stopRealtimeUpdate()
         m_dataSource->stopRealtimeQuotes();
     }
     
-    m_infoLabel->setText(QStringLiteral("实时更新已停止"));
+    if (m_infoLabel) {
+        m_infoLabel->setText(QStringLiteral("实时更新已停止"));
+    }
     LOG_INFO("Stopped realtime update");
 }
 
