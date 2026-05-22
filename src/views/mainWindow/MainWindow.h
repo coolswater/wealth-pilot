@@ -6,7 +6,7 @@
  * - 整体布局：标题栏、侧边栏、内容区、AI助手面板
  * - 集成ApplicationInitializer
  * - 集成ServiceLocator服务注册
- * - 集成ThemeEngine主题系统
+ * - 集成ThemeManager主题系统
  * - 性能优化：缓存、懒加载、异步初始化
  *
  * @author WealthPilot Team
@@ -19,9 +19,9 @@
 #include <QStackedWidget>
 #include <QLabel>
 #include <memory>
+#include "../../ui/ThemeManager.h"  // ThemeType 定义
 
 // 前向声明
-class ThemeEngine;
 class ApplicationInitializer;
 
 /**
@@ -72,7 +72,7 @@ private slots:
     /**
      * @brief 主题切换处理
      */
-    void onThemeChanged(const QString& themeName);
+    void onThemeChanged(ThemeType type);
 
     /**
      * @brief 初始化进度更新

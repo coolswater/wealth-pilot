@@ -68,7 +68,7 @@ void UserFeedbackManagerTest::testShowInfo() {
     int initialCount = m_manager->getHistory().size();
 
     // 显示信息
-    m_manager->showInfo("测试标题", "测试消息", UserFeedbackManager::FeedbackLevel::Toast, 1000);
+    m_manager->showInfo("测试标题", "测试消息", FeedbackLevel::Toast, 1000);
 
     // 验证历史记录增加
     QCOMPARE(m_manager->getHistory().size(), initialCount + 1);
@@ -83,7 +83,7 @@ void UserFeedbackManagerTest::testShowInfo() {
 void UserFeedbackManagerTest::testShowWarning() {
     int initialCount = m_manager->getHistory().size();
 
-    m_manager->showWarning("警告标题", "警告消息", UserFeedbackManager::FeedbackLevel::Toast);
+    m_manager->showWarning("警告标题", "警告消息", FeedbackLevel::Toast);
 
     QCOMPARE(m_manager->getHistory().size(), initialCount + 1);
 
@@ -94,7 +94,7 @@ void UserFeedbackManagerTest::testShowWarning() {
 void UserFeedbackManagerTest::testShowError() {
     int initialCount = m_manager->getHistory().size();
 
-    m_manager->showError("错误标题", "错误消息", UserFeedbackManager::FeedbackLevel::Toast);
+    m_manager->showError("错误标题", "错误消息", FeedbackLevel::Toast);
 
     QCOMPARE(m_manager->getHistory().size(), initialCount + 1);
 
@@ -105,7 +105,7 @@ void UserFeedbackManagerTest::testShowError() {
 void UserFeedbackManagerTest::testShowSuccess() {
     int initialCount = m_manager->getHistory().size();
 
-    m_manager->showSuccess("成功标题", "成功消息", UserFeedbackManager::FeedbackLevel::Toast, 1000);
+    m_manager->showSuccess("成功标题", "成功消息", FeedbackLevel::Toast, 1000);
 
     QCOMPARE(m_manager->getHistory().size(), initialCount + 1);
 
@@ -187,9 +187,9 @@ void UserFeedbackManagerTest::testRecordFeedback() {
     m_manager->clearHistory();
 
     // 添加多条记录
-    m_manager->showInfo("信息1", "消息1", UserFeedbackManager::FeedbackLevel::Toast, 1000);
-    m_manager->showWarning("警告1", "消息2", UserFeedbackManager::FeedbackLevel::Toast);
-    m_manager->showError("错误1", "消息3", UserFeedbackManager::FeedbackLevel::Toast);
+    m_manager->showInfo("信息1", "消息1", FeedbackLevel::Toast, 1000);
+    m_manager->showWarning("警告1", "消息2", FeedbackLevel::Toast);
+    m_manager->showError("错误1", "消息3", FeedbackLevel::Toast);
 
     QCOMPARE(m_manager->getHistory().size(), 3);
 }
@@ -200,7 +200,7 @@ void UserFeedbackManagerTest::testGetHistory() {
     // 添加记录
     for (int i = 0; i < 10; ++i) {
         m_manager->showInfo(QString("标题%1").arg(i), QString("消息%1").arg(i),
-                           UserFeedbackManager::FeedbackLevel::Toast, 1000);
+                           FeedbackLevel::Toast, 1000);
     }
 
     // 测试获取限制数量的历史
@@ -214,7 +214,7 @@ void UserFeedbackManagerTest::testGetHistory() {
 
 void UserFeedbackManagerTest::testClearHistory() {
     // 添加一些记录
-    m_manager->showInfo("测试", "测试", UserFeedbackManager::FeedbackLevel::Toast, 1000);
+    m_manager->showInfo("测试", "测试", FeedbackLevel::Toast, 1000);
     QVERIFY(m_manager->getHistory().size() > 0);
 
     // 清除历史
@@ -226,8 +226,8 @@ void UserFeedbackManagerTest::testExportHistory() {
     m_manager->clearHistory();
 
     // 添加记录
-    m_manager->showInfo("信息", "信息消息", UserFeedbackManager::FeedbackLevel::Toast, 1000);
-    m_manager->showWarning("警告", "警告消息", UserFeedbackManager::FeedbackLevel::Toast);
+    m_manager->showInfo("信息", "信息消息", FeedbackLevel::Toast, 1000);
+    m_manager->showWarning("警告", "警告消息", FeedbackLevel::Toast);
 
     // 导出为文本
     QString exported = m_manager->exportHistory("text");
@@ -240,11 +240,11 @@ void UserFeedbackManagerTest::testGetStats() {
     m_manager->clearHistory();
 
     // 添加不同类型的记录
-    m_manager->showInfo("信息", "信息", UserFeedbackManager::FeedbackLevel::Toast, 1000);
-    m_manager->showInfo("信息2", "信息2", UserFeedbackManager::FeedbackLevel::Toast, 1000);
-    m_manager->showWarning("警告", "警告", UserFeedbackManager::FeedbackLevel::Toast);
-    m_manager->showError("错误", "错误", UserFeedbackManager::FeedbackLevel::Toast);
-    m_manager->showSuccess("成功", "成功", UserFeedbackManager::FeedbackLevel::Toast, 1000);
+    m_manager->showInfo("信息", "信息", FeedbackLevel::Toast, 1000);
+    m_manager->showInfo("信息2", "信息2", FeedbackLevel::Toast, 1000);
+    m_manager->showWarning("警告", "警告", FeedbackLevel::Toast);
+    m_manager->showError("错误", "错误", FeedbackLevel::Toast);
+    m_manager->showSuccess("成功", "成功", FeedbackLevel::Toast, 1000);
 
     auto stats = m_manager->getStats();
     QCOMPARE(stats.totalCount, 5);

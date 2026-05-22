@@ -341,8 +341,6 @@ set(AI_SERVICE_SOURCES
         src/ai/service/RoboAdvisor.cpp
         src/ai/service/AIStockPicker.h
         src/ai/service/AIStockPicker.cpp
-        src/ai/service/SmartAlertService.h
-        src/ai/service/SmartAlertService.cpp
         src/ai/service/SentimentAnalysisService.h
         src/ai/service/SentimentAnalysisService.cpp
         src/ai/service/SmartReportService.h
@@ -512,8 +510,6 @@ set(ANALYSIS_SIGNAL_SOURCES
 # UI Components UI组件库
 set(UI_COMPONENT_SOURCES
         src/ui/components/UIComponents.h
-        src/ui/components/ThemeEngine.h
-        src/ui/components/ThemeEngine.cpp
         src/ui/components/ThemeColors.h
         src/ui/components/PageStyles.h
         src/ui/components/ChartStyles.h
@@ -730,12 +726,8 @@ set(TRADING_SOURCES
         src/trading/RiskController.cpp
         src/trading/TradingService.h
         src/trading/TradingService.cpp
-        src/trading/AccountSyncManager.h
-        src/trading/AccountSyncManager.cpp
         src/trading/ConditionOrderEngine.h
         src/trading/ConditionOrderEngine.cpp
-        src/trading/AlertManager.h
-        src/trading/AlertManager.cpp
 )
 
 # 合并所有源文件

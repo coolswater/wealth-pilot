@@ -11,7 +11,6 @@
 #include "../../core/navigation/PageNavigator.h"
 #include "../../ui/ThemeManager.h"
 #include "../../ui/components/StyleHelper.h"
-#include "../../ui/components/ThemeEngine.h"
 #include "../../ui/components/LayoutConstants.h"
 #include "../../ui/components/ChartStyles.h"
 #include "../../plugins/PluginLoader.h"
@@ -306,12 +305,12 @@ void MainWindow::onSidebarItemClicked(const QString& id)
 }
 
 /**
- * 触发应用主题事件
- * @param themeName
+ * @brief 主题切换处理
+ * @param type 主题类型
  */
-void MainWindow::onThemeChanged(const QString& themeName)
+void MainWindow::onThemeChanged(ThemeType type)
 {
-    LOG_INFO(QString("Theme changed to: %1").arg(themeName));
+    LOG_INFO(QString("Theme changed to: %1").arg(static_cast<int>(type)));
     applyTheme();
 }
 
@@ -522,7 +521,7 @@ void MainWindow::connectSignals()
             this, &MainWindow::onSidebarItemClicked);
 
     // 链接主题管理信号
-    connect(&ThemeEngine::instance(), &ThemeEngine::themeChanged,
+    connect(ThemeManager::instance(), &ThemeManager::themeChanged,
             this, &MainWindow::onThemeChanged);
     
     // 链接页面导航信号

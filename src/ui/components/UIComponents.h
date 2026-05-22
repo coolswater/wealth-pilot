@@ -3,7 +3,6 @@
  * @brief UI组件库 - 统一管理所有可复用UI组件
  *
  * @details 包含：
- * - 主题系统（ThemeEngine）
  * - 响应式布局组件（ResponsiveLayout）
  * - 基础组件（Button, Input, Table等）
  * - 高级组件（Chart, Form等）
@@ -22,7 +21,6 @@
 #include <QVariant>
 
 // 前置声明
-class ThemeEngine;
 class ResponsiveLayout;
 class Button;
 class InputField;
