@@ -15,7 +15,7 @@
 #define MARKETDATAPRODUCER_H
 
 #include "core/datahub/DataHub.h"
-#include "core/types/MarketTypes.h"  // 使用统一的类型定义
+#include "shared/types/MarketTypes.h"  // 使用统一的类型定义
 #include <QObject>
 #include <QHash>
 #include <QSet>

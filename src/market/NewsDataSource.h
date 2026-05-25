@@ -20,7 +20,7 @@
 #include <QTimer>
 #include <QMap>
 #include <QVector>
-#include "core/types/NewsTypes.h"
+#include "shared/types/NewsTypes.h"
 
 // 使用 WealthPilot 命名空间中的类型
 using WealthPilot::NewsItem;

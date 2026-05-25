@@ -28,8 +28,8 @@
 #define DASHBOARDPAGE_H
 
 #include <ui/components/DataHubPageBase.h>
-#include "core/types/MarketTypes.h"
-#include "core/types/NewsTypes.h"
+#include "shared/types/MarketTypes.h"
+#include "shared/types/NewsTypes.h"
 
 // 使用 WealthPilot 命名空间中的类型
 using WealthPilot::TimeShareData;

@@ -16,8 +16,8 @@
  * EventBus::instance().unsubscribe("market_update", this);
  */
 
-#ifndef WEALTHPILOT_CORE_EVENTBUS_H
-#define WEALTHPILOT_CORE_EVENTBUS_H
+#ifndef WEALTHPILOT_SHARED_UTILS_EVENTBUS_H
+#define WEALTHPILOT_SHARED_UTILS_EVENTBUS_H
 
 #include <QObject>
 #include <QMap>
@@ -338,4 +338,4 @@ namespace EventTypes {
 
 } // namespace WealthPilot
 
-#endif // WEALTHPILOT_CORE_EVENTBUS_H
+#endif // WEALTHPILOT_SHARED_UTILS_EVENTBUS_H

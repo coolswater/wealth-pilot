@@ -23,18 +23,15 @@
 #include "ui/components/PageTemplate.h"
 #include "core/config/Tokens.h"
 #include "core/monitoring/PerformanceMonitor.h"
-#include "core/base/ErrorHandler.h"
 #include "ui/styles/ButtonStyles.h"
 #include "views/trading/TradeHistoryPage.h"
 #include "views/trading/ConditionOrderPage.h"
-#include "core/types/MarketTypes.h"
+#include "shared/types/MarketTypes.h"
 
 // 使用 WealthPilot 命名空间中的类型
 using WealthPilot::StockQuote;
 using WealthPilot::KLineData;
 using WealthPilot::TimeShareData;
-using WealthPilot::ErrorHandler;
-using WealthPilot::ErrorLevel;
 
 // PERF_TIMER 宏已经在 WealthPilot 命名空间中
 using WealthPilot::ScopedPerfTimer;

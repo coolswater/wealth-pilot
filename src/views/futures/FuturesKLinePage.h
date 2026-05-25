@@ -30,7 +30,7 @@
 #define FUTURES_KLINE_PAGE_H
 
 #include "ui/components/DataHubPageBase.h"
-#include "core/types/MarketTypes.h"
+#include "shared/types/MarketTypes.h"
 #include "ui/components/KLineChart.h"
 #include "ui/components/ChartToolBar.h"
 #include "ui/components/MarketDepthWidget.h"

@@ -16,7 +16,7 @@
 
 #include "ui/components/BasePage.h"
 #include "core/datahub/DataHub.h"
-#include "core/types/MarketTypes.h"  // 直接包含类型定义
+#include "shared/types/MarketTypes.h"  // 直接包含类型定义
 #include <QVariant>
 #include <optional>
 

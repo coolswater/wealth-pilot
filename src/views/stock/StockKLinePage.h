@@ -25,7 +25,7 @@
 #include "ui/components/KLineChart.h"
 #include "ui/components/StockInfoPanel.h"
 #include "market/StockDataSource.h"
-#include "core/types/MarketTypes.h"
+#include "shared/types/MarketTypes.h"
 #include "analysis/chanlun/ChanLunIntegration.h"
 #include <QWidget>
 #include <QVector>

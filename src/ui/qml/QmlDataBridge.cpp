@@ -13,7 +13,7 @@
  */
 
 #include "QmlDataBridge.h"
-#include "../../core/types/MarketTypes.h"
+#include "../../shared/types/MarketTypes.h"
 #include <QQmlEngine>
 #include <QJSEngine>
 #include <QVariantMap>

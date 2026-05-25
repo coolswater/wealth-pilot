@@ -10,7 +10,7 @@
 
 #include "analysis/chanlun/ChanLunAnalyzer.h"
 #include "analysis/chanlun/ChanLunIndicator.h"
-#include "core/types/MarketTypes.h"
+#include "shared/types/MarketTypes.h"
 #include <QObject>
 #include <QVector>
 #include <memory>

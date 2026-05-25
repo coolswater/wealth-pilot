@@ -132,15 +132,17 @@ set(CORE_BASE_SOURCES
         src/core/base/Singleton.h
         src/core/base/ErrorCode.h
         src/core/base/NamespaceGuide.h
-        src/core/base/ErrorHandler.h
-        src/core/base/ErrorHandler.cpp
         src/core/base/Result.h
-        src/core/types/MarketTypes.h
 )
 
-# Core - Events 事件系统
-set(CORE_EVENTS_SOURCES
-        src/core/events/EventBus.h
+# Shared - 共享模块 (统一类型定义和工具)
+set(SHARED_SOURCES
+        src/shared/types/NewsTypes.h
+        src/shared/types/NewsTypes.cpp
+        src/shared/types/MarketTypes.h
+        src/shared/utils/EventBus.h
+        src/shared/utils/ErrorHandler.h
+        src/shared/utils/ErrorHandler.cpp
 )
 
 # Core - Config 配置管理
@@ -428,12 +430,6 @@ set(NEWS_ANALYSIS_SOURCES
         src/core/analysis/NewsSentimentAnalyzer.cpp
         src/market/NewsDataSource.h
         src/market/NewsDataSource.cpp
-)
-
-# CoreTypes 核心类型定义
-set(CORE_TYPES_SOURCES
-        src/core/types/NewsTypes.h
-        src/core/types/NewsTypes.cpp
 )
 
 # Layout 布局管理
@@ -778,6 +774,7 @@ set(SOURCES
         ${ALERT_SOURCES}
         ${NEWS_ANALYSIS_SOURCES}
         ${CORE_TYPES_SOURCES}
+        ${SHARED_SOURCES}
         ${PLUGIN_SOURCES}
         ${LAYOUT_SOURCES}
         ${NETWORK_SOURCES}
@@ -792,6 +789,8 @@ set(SOURCES
         ${VIEW_SOURCES}
         ${TRADING_SOURCES}
         ${QML_RESOURCES}
+        src/shared/types/NewsTypes.h
+        src/shared/types/NewsTypes.cpp
 )
 
 # 创建可执行文件

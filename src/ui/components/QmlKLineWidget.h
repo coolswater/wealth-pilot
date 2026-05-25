@@ -18,7 +18,7 @@
 #include <QWidget>
 #include <QQuickWidget>
 #include <QVector>
-#include "core/types/MarketTypes.h"  // 包含完整类型定义
+#include "shared/types/MarketTypes.h"  // 包含完整类型定义
 
 // 使用 WealthPilot 命名空间中的类型
 using WealthPilot::KLineData;

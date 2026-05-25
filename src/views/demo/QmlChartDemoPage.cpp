@@ -5,7 +5,7 @@
 
 #include "QmlChartDemoPage.h"
 #include "ui/components/QmlKLineWidget.h"
-#include "core/types/MarketTypes.h"
+#include "shared/types/MarketTypes.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QComboBox>

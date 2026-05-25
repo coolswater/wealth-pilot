@@ -21,7 +21,7 @@
 #include <QMutex>
 #include <QTimer>
 #include <memory>
-#include "core/types/MarketTypes.h"
+#include "shared/types/MarketTypes.h"
 
 // 使用 WealthPilot 命名空间中的类型
 using WealthPilot::MarketSnapshot;

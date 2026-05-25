@@ -26,7 +26,7 @@
 #include <QDateTime>
 #include <memory>
 #include <functional>
-#include "core/types/MarketTypes.h"  // 使用完整的类型定义
+#include "shared/types/MarketTypes.h"  // 使用完整的类型定义
 
 // 使用 WealthPilot 命名空间中的类型
 using WealthPilot::StockQuote;

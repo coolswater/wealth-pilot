@@ -25,7 +25,7 @@
 #include <QUuid>
 
 // 包含市场类型定义，避免重复定义
-#include "core/types/MarketTypes.h"
+#include "shared/types/MarketTypes.h"
 
 // 使用 WealthPilot 命名空间中的类型
 using WealthPilot::TradeDirection;

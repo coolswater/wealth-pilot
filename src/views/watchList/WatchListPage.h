@@ -21,7 +21,7 @@
 #include <memory>
 #include "ui/components/DataHubPageBase.h"
 #include "market/StockDataSource.h"
-#include "core/types/MarketTypes.h"
+#include "shared/types/MarketTypes.h"
 
 // 使用 WealthPilot 命名空间中的类型
 using WealthPilot::StockQuote;
