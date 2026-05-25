@@ -10,6 +10,7 @@
 #include <QGraphicsDropShadowEffect>
 #include <QProgressBar>
 #include <QStandardItemModel>
+#include <QHeaderView>
 
 namespace WealthPilot {
 namespace UI {

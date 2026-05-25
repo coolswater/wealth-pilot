@@ -20,7 +20,7 @@
 #include <QMap>
 #include <QPainter>
 #include <QToolTip>
-#include "analysis/AnalysisTypes.h"
+#include "core/domain/analysis/legacy/AnalysisTypes.h"
 
 namespace WealthPilot {
 namespace UI {

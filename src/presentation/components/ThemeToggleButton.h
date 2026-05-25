@@ -9,7 +9,7 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include <QPainterPath>
-#include "src/ui/ThemeManager.h"
+#include "presentation/styles/ThemeManager.h"
 
 /**
  * @brief 动态主题切换按钮控件

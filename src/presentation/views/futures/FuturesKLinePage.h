@@ -36,7 +36,7 @@
 #include "presentation/components/MarketDepthWidget.h"
 #include "presentation/components/TickTableView.h"
 #include "presentation/components/ChartStatusBar.h"
-#include "plugins/ICTPPlugin.h"
+#include "infrastructure/plugins/ICTPPlugin.h"
 
 #include <QSplitter>
 #include <QDateTime>

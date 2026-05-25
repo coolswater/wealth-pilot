@@ -11,7 +11,7 @@
  */
 
 #include "FuturesKLinePage.h"
-#include "core/navigation/PageFactoryRegistry.h"
+#include "core/services/navigation/PageFactoryRegistry.h"
 #include "shared/utils/Logger.h"
 
 namespace WealthPilot {

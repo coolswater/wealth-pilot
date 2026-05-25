@@ -24,7 +24,7 @@
 #include <QTableWidget>
 #include <QGroupBox>
 #include <memory>
-#include "../../ctp/config/CTPConfigManager.h"
+#include "infrastructure/ctp/config/CTPConfigManager.h"
 
 namespace CTP {
 

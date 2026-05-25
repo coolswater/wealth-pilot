@@ -25,7 +25,7 @@
 #include <memory>
 
 // 使用现有的 TimeShareData 定义
-#include "../../market/StockDataSource.h"
+#include "data/market/StockDataSource.h"
 
 /**
  * @brief 分时图样式配置

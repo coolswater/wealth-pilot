@@ -27,19 +27,19 @@
  * @version 1.0.0
  * @date 2026
  */
-#include "src/views/mainWindow/MainWindow.h"
-#include "src/utils/Logger.h"
-#include "src/core/database/DatabaseManager.h"
-#include "src/viewmodels/ViewModelRegistration.h"
+#include "presentation/views/mainWindow/MainWindow.h"
+#include "shared/utils/Logger.h"
+#include "infrastructure/database/DatabaseManager.h"
+#include "src/presentation/viewmodels/ViewModelRegistration.h"
 #include <QApplication>
 #include <QFontDatabase>
 #include <QLocale>
 #include <QTranslator>
-#include <src/ui/ThemeManager.h>
+#include <presentation/styles/ThemeManager.h>
 #include <QQmlEngine>
 #include <QtCharts/QChart>
 
-#include "FeatureIntegration.h"
+#include "app/FeatureIntegration.h"
 
 // 导入 Qt Charts QML 插件
 #ifdef QT_CHARTS_LIB

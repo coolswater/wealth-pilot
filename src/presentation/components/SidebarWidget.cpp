@@ -1,6 +1,6 @@
 #include "SidebarWidget.h"
 #include "shared/utils/Logger.h"
-#include "../ThemeManager.h"
+#include "presentation/styles/ThemeManager.h"
 #include "presentation/components/StyleHelper.h"
 
 #include <QPushButton>

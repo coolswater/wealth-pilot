@@ -19,7 +19,7 @@
 #include <QStackedWidget>
 #include <QLabel>
 #include <memory>
-#include "../../ui/ThemeManager.h"  // ThemeType 定义
+#include "presentation//styles/ThemeManager.h"  // ThemeType 定义
 
 // 前向声明
 class ApplicationInitializer;

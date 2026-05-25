@@ -4,7 +4,7 @@
  */
 
 #include "NetworkCache.h"
-#include "../utils/Logger.h"
+#include "shared/utils/Logger.h"
 #include <QNetworkReply>
 #include <QJsonDocument>
 #include <QJsonObject>

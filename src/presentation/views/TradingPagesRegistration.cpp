@@ -4,9 +4,9 @@
  */
 
 #include "account/AccountPage.h"
-#include "core/trading/TradeHistoryPage.h"
-#include "core/trading/ConditionOrderPage.h"
-#include "core/navigation/PageFactoryRegistry.h"
+#include "presentation/views/trading/TradeHistoryPage.h"
+#include "presentation/views/trading/ConditionOrderPage.h"
+#include "core/services/navigation/PageFactoryRegistry.h"
 #include "shared/utils/Logger.h"
 
 namespace WealthPilot {

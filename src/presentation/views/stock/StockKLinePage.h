@@ -26,7 +26,7 @@
 #include "presentation/components/StockInfoPanel.h"
 #include "data/market/StockDataSource.h"
 #include "shared/types/MarketTypes.h"
-#include "analysis/chanlun/ChanLunIntegration.h"
+#include "core/domain/analysis/legacy/chanlun/ChanLunIntegration.h"
 #include <QWidget>
 #include <QVector>
 #include <QDateTime>
