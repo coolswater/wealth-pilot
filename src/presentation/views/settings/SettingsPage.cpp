@@ -24,9 +24,9 @@
 #include <QGroupBox>
 #include <QSettings>
 
-#include <core/config/ConfigManager.h>
-#include <presentation/ThemeManager.h>
-#include <core/config/Tokens.h>
+#include "infrastructure/config/ConfigManager.h"
+#include "presentation/styles/ThemeManager.h"
+#include "infrastructure/config/Tokens.h"
 
 using namespace Tokens;
 

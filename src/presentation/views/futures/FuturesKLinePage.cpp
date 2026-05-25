@@ -13,17 +13,17 @@
 
 #include "FuturesKLinePage.h"
 #include "presentation/components/ChartStyles.h"
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QSplitter>
 #include <QTimer>
 #include <QResizeEvent>
 
-#include "core/navigation/PageNavigator.h"
-#include "core/di/ServiceLocator.h"
-#include "core/cache/CacheManager.h"
-#include "plugins/IAIPlugin.h"
+#include "core/services/navigation/PageNavigator.h"
+#include "core/services/di/ServiceLocator.h"
+#include "core/services/cache/CacheManager.h"
+#include "infrastructure/plugins/IAIPlugin.h"
 #include "shared/utils/Logger.h"
 #include "shared/utils/TechnicalIndicators.h"
 #include "infrastructure/ctp/service/CTPService.h"

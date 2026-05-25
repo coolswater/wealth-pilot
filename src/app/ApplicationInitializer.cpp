@@ -10,17 +10,17 @@
  */
 
 #include "ApplicationInitializer.h"
-#include "../core/config/EnvironmentConfig.h"
-#include "../core/cache/CacheManager.h"
-#include "../core/datahub/DataHubBootstrap.h"
-#include "../core/di/ServiceLocator.h"
-#include "../core/database/DatabaseManager.h"
-#include "../core/task/AsyncTaskManager.h"
-#include "../plugins/PluginLoader.h"
-#include "../plugins/CTPPlugin.h"
-#include "../ai/plugin/AIPlugin.h"
-#include "../ui/ThemeManager.h"
-#include "../utils/Logger.h"
+#include "infrastructure/config/EnvironmentConfig.h"
+#include "core/services/cache/CacheManager.h"
+#include "data/datahub/DataHubBootstrap.h"
+#include "core/services/di/ServiceLocator.h"
+#include "infrastructure/database/DatabaseManager.h"
+#include "core/services/task/AsyncTaskManager.h"
+#include "infrastructure/plugins/PluginLoader.h"
+#include "infrastructure/plugins/CTPPlugin.h"
+#include "infrastructure/ai/plugin/AIPlugin.h"
+#include "presentation/styles/ThemeManager.h"
+#include "shared/utils/Logger.h"
 
 #include <QElapsedTimer>
 #include <QCoreApplication>

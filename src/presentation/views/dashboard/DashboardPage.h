@@ -38,7 +38,7 @@ using WealthPilot::NewsItem;
 #include <QTableView>
 #include <QAbstractTableModel>
 #include <memory>
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include "data/market/StockDataSource.h"
 #include "data/market/NewsDataSource.h"
 

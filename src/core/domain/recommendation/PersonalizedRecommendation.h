@@ -20,7 +20,7 @@
 #include <QVector>
 #include <QDateTime>
 #include "data/market/StockDataSource.h"
-#include "core/risk/RiskWarningSystem.h"  // 包含RiskLevel定义
+#include "core/domain/risk/RiskWarningSystem.h"  // 包含RiskLevel定义
 
 /**
  * @brief 用户偏好类型

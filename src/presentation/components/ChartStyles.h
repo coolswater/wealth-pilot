@@ -19,7 +19,7 @@
 
 #include <QColor>
 #include <QString>
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 
 /**
  * @brief 图表样式命名空间

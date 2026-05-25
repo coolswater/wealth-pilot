@@ -26,7 +26,7 @@
 #include <QCryptographicHash>
 #include <QMessageAuthenticationCode>
 #include <QRandomGenerator>
-#include "../core/base/Result.h"
+#include "shared/base/Result.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>

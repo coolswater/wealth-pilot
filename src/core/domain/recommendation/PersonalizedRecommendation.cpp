@@ -4,7 +4,7 @@
  */
 
 #include "PersonalizedRecommendation.h"
-#include "core/risk/RiskWarningSystem.h"
+#include "core/domain/risk/RiskWarningSystem.h"
 #include "shared/utils/Logger.h"
 #include <QRandomGenerator>
 #include <algorithm>

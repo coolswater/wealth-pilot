@@ -4,17 +4,17 @@
  */
 
 #include "MainWindow.h"
-#include "../../app/ApplicationInitializer.h"
-#include "../../core/di/ServiceLocator.h"
-#include "../../core/config/EnvironmentConfig.h"
-#include "../../core/config/Tokens.h"
-#include "../../core/navigation/PageNavigator.h"
-#include "../../ui/ThemeManager.h"
-#include "../../ui/components/StyleHelper.h"
-#include "../../ui/components/LayoutConstants.h"
-#include "../../ui/components/ChartStyles.h"
-#include "../../plugins/PluginLoader.h"
-#include "../../utils/Logger.h"
+#include "app/ApplicationInitializer.h"
+#include "core/services/di/ServiceLocator.h"
+#include "infrastructure/config/EnvironmentConfig.h"
+#include "infrastructure/config/Tokens.h"
+#include "core/services/navigation/PageNavigator.h"
+#include "presentation/styles/ThemeManager.h"
+#include "presentation/components/StyleHelper.h"
+#include "presentation/components/LayoutConstants.h"
+#include "presentation/components/ChartStyles.h"
+#include "infrastructure/plugins/PluginLoader.h"
+#include "shared/utils/Logger.h"
 #include "presentation/components/SidebarWidget.h"
 #include "presentation/components/TitleBarWidget.h"
 #include "presentation/components/StatusBarWidget.h"
@@ -36,8 +36,8 @@
 #include "../stock/StockKLinePage.h"
 #include "../futures/FuturesKLinePage.h"
 #include "../feedback/FeedbackDialog.h"
-#include "../../core/feedback/FeedbackSystem.h"
-#include "../../ui/components/BasePage.h"
+#include "core/services/feedback/FeedbackSystem.h"
+#include "presentation/components/BasePage.h"
 
 // 使用 WealthPilot 命名空间中的类
 using WealthPilot::BasePage;
@@ -64,8 +64,8 @@ using WealthPilot::CryptoPage;
 #include <QTextEdit>
 #include <QPlainTextEdit>
 
-#include "plugins/IAIPlugin.h"
-#include "plugins/ICTPPlugin.h"
+#include "infrastructure/plugins/IAIPlugin.h"
+#include "infrastructure/plugins/ICTPPlugin.h"
 #include "presentation/views/aboutus/AboutUSPage.h"
 #include "presentation/views/news/NewsPage.h"
 #include "presentation/views/portfolio/PortfolioPage.h"

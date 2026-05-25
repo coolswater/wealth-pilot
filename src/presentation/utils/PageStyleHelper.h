@@ -16,7 +16,7 @@
 #define PAGESTYLEHELPER_H
 
 #include <QString>
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 
 /**
  * @brief 页面样式辅助类

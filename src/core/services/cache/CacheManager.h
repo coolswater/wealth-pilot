@@ -16,7 +16,7 @@
 #ifndef CACHEMANAGER_H
 #define CACHEMANAGER_H
 
-#include "../base/Singleton.h"
+#include "shared/base/Singleton.h"
 #include <QObject>
 #include <QHash>
 #include <QMap>

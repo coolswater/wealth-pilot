@@ -4,7 +4,7 @@
  */
 
 #include "PluginLoader.h"
-#include "../utils/Logger.h"
+#include "shared/utils/Logger.h"
 #include <QDir>
 #include <QFileInfo>
 #include <QElapsedTimer>

@@ -5,7 +5,7 @@
 
 #include "CTPService.h"
 #include "../config/CTPConfigManager.h"
-#include "../../utils/Logger.h"
+#include "shared/utils/Logger.h"
 #include <QtCore/QThread>
 #include <QtCore/QDebug>
 #include <QtCore/QDir>

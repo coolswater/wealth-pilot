@@ -19,7 +19,7 @@
 #include <QStyleOptionViewItem>
 #include <QModelIndex>
 
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 
 namespace WealthPilot {
 

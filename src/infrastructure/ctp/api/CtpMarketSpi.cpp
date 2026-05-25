@@ -7,7 +7,7 @@
 #include "CtpDataBuffer.h"
 #include "CtpMarketSpi.h"
 #include "CtpApiLoader.h"  // 动态加载器
-#include "../../utils/Logger.h"
+#include "shared/utils/Logger.h"
 
 #include <QtCore/QString>
 #include <QtCore/QDateTime>

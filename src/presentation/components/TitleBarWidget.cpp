@@ -10,7 +10,7 @@
 #include <QGraphicsDropShadowEffect>
 #include <QFile>
 
-#include <presentation/ThemeManager.h>
+#include "presentation/styles/ThemeManager.h"
 
 struct TitleBarWidget::Impl {
     // UI组件

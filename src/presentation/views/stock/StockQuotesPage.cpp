@@ -13,7 +13,7 @@
  */
 
 #include "StockQuotesPage.h"
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include "presentation/styles/ButtonStyles.h"
 #include "shared/utils/Logger.h"
 

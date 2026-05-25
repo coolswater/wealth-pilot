@@ -4,9 +4,9 @@
  */
 
 #include "AIPlugin.h"
-#include "../../core/config/EnvironmentConfig.h"
-#include "../../core/cache/CacheManager.h"
-#include "../../utils/Logger.h"
+#include "infrastructure/config/EnvironmentConfig.h"
+#include "core/services/cache/CacheManager.h"
+#include "shared/utils/Logger.h"
 #include <QNetworkReply>
 #include <QJsonDocument>
 #include <QJsonObject>

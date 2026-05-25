@@ -17,7 +17,7 @@
 #include <QString>
 #include <QColor>
 #include <QWidget>
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 
 /**
  * @brief 样式生成工具类

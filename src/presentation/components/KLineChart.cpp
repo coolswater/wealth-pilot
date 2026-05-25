@@ -15,7 +15,7 @@
  */
 
 #include "KLineChart.h"
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include <QPainter>
 #include <QMouseEvent>
 #include <QWheelEvent>
@@ -23,7 +23,7 @@
 #include <QElapsedTimer>
 #include <QtMath>
 
-#include "../../utils/Logger.h"
+#include "shared/utils/Logger.h"
 
 // ========== PIMPL实现 ==========
 

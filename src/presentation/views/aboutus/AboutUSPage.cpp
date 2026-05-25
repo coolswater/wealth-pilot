@@ -5,8 +5,8 @@
 
 #include "AboutUSPage.h"
 #include "presentation/components/StyleHelper.h"
-#include "presentation/ThemeManager.h"
-#include "core/config/Tokens.h"
+#include "presentation/styles/ThemeManager.h"
+#include "infrastructure/config/Tokens.h"
 #include "shared/utils/Logger.h"
 
 #include <QVBoxLayout>

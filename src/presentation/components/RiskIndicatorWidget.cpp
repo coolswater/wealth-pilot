@@ -4,7 +4,7 @@
  */
 
 #include "RiskIndicatorWidget.h"
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include "presentation/components/StyleHelper.h"
 #include <QHeaderView>
 #include <QDateTime>

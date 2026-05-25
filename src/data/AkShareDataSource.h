@@ -9,7 +9,7 @@
 #define WEALTHPILOT_AKSHARE_DATA_SOURCE_H
 
 #include "DataSourceInterface.h"
-#include "../core/python/PythonRunner.h"
+#include "infrastructure/python/PythonRunner.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>

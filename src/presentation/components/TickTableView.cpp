@@ -4,7 +4,7 @@
  */
 
 #include "TickTableView.h"
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include <QTableWidgetItem>
 #include <QScrollBar>
 #include <QHeaderView>

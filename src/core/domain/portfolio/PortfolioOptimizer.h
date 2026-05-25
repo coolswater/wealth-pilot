@@ -19,7 +19,7 @@
 #include <QMap>
 #include <QVector>
 #include <QDateTime>
-#include "core/recommendation/PersonalizedRecommendation.h"  // 包含InvestmentStyle定义
+#include "core/domain/recommendation/PersonalizedRecommendation.h"  // 包含InvestmentStyle定义
 
 /**
  * @brief 资产类型

@@ -4,7 +4,7 @@
  */
 
 #include "DatabaseManager.h"
-#include "../../utils/Logger.h"
+#include "shared/utils/Logger.h"
 #include <QSqlRecord>
 #include <QFile>
 #include <QDir>

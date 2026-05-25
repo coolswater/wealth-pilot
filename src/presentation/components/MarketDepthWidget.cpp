@@ -4,11 +4,11 @@
  */
 
 #include "MarketDepthWidget.h"
-#include "core/config/Tokens.h"
-#include "presentation/ThemeManager.h"
+#include "infrastructure/config/Tokens.h"
+#include "presentation/styles/ThemeManager.h"
 #include "presentation/components/StyleHelper.h"
 #include "presentation/utils/PageStyleHelper.h"
-#include "plugins/ICTPPlugin.h"
+#include "infrastructure/plugins/ICTPPlugin.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>

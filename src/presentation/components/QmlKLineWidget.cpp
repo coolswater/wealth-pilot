@@ -5,7 +5,7 @@
 
 #include "QmlKLineWidget.h"
 #include "presentation/qml/QmlDataBridge.h"
-#include "presentation/ThemeManager.h"
+#include "presentation/styles/ThemeManager.h"
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickItem>

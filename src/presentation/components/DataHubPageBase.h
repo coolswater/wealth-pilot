@@ -15,7 +15,7 @@
 #define DATAHUBPAGEBASE_H
 
 #include "presentation/components/BasePage.h"
-#include "core/datahub/DataHub.h"
+#include "data/datahub/DataHub.h"
 #include "shared/types/MarketTypes.h"  // 直接包含类型定义
 #include <QVariant>
 #include <optional>

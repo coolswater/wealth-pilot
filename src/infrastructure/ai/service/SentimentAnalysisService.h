@@ -26,7 +26,7 @@
 #include <functional>
 
 // 使用统一的类型定义
-#include "../../shared/types/NewsTypes.h"
+#include "shared/types/NewsTypes.h"
 
 namespace WealthPilot
 {

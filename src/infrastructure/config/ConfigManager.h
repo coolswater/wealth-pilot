@@ -11,7 +11,7 @@
 #ifndef CONFIGMANAGER_H
 #define CONFIGMANAGER_H
 
-#include "../base/Singleton.h"
+#include "shared/base/Singleton.h"
 #include <QString>
 #include <QVariant>
 #include <QSettings>

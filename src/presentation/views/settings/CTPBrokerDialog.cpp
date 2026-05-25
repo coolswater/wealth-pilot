@@ -4,8 +4,8 @@
  */
 
 #include "CTPBrokerDialog.h"
-#include "../../ctp/config/CTPConfigManager.h"
-#include "../../utils/Logger.h"
+#include "infrastructure/ctp/config/CTPConfigManager.h"
+#include "shared/utils/Logger.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>

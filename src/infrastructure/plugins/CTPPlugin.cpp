@@ -4,8 +4,8 @@
  */
 
 #include "CTPPlugin.h"
-#include "../core/config/EnvironmentConfig.h"
-#include "../utils/Logger.h"
+#include "infrastructure/config/EnvironmentConfig.h"
+#include "shared/utils/Logger.h"
 #include <QTimer>
 #include <QDateTime>
 #include <QMutexLocker>

@@ -4,7 +4,7 @@
  */
 
 #include "PortfolioOptimizationDialog.h"
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include "presentation/components/StyleHelper.h"
 #include <QDateTimeEdit>
 #include <QMessageBox>

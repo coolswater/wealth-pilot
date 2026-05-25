@@ -1,7 +1,7 @@
 #include "SvgIconWidget.h"
 #include "SvgIconEngine.h"
-#include "src/ui/ThemeManager.h"
-#include "core/config/Tokens.h"
+#include "presentation/styles/ThemeManager.h"
+#include "infrastructure/config/Tokens.h"
 
 QIcon SvgIconWidget::icon(const QString& path, const QColor& color)
 {

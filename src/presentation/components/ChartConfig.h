@@ -18,7 +18,7 @@
 #include <QObject>
 #include <QColor>
 #include <QSettings>
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include <QMap>
 #include <QString>
 #include <memory>

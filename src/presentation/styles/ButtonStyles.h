@@ -21,7 +21,7 @@
 #include <QToolButton>
 #include <QString>
 #include <QIcon>
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 
 /**
  * @brief 按钮类型枚举

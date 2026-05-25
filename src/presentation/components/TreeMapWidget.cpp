@@ -1,6 +1,6 @@
 #include "TreeMapWidget.h"
-#include "core/config/Tokens.h"
-#include "presentation/ThemeManager.h"
+#include "infrastructure/config/Tokens.h"
+#include "presentation/styles/ThemeManager.h"
 #include <QPainter>
 #include <QFontMetrics>
 #include <QMouseEvent>

@@ -3,7 +3,7 @@
 #include <QStyleOptionViewItem>
 #include <QModelIndex>
 #include "FuturesQuoteItem.h"
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 
 FuturesQuoteDelegate::FuturesQuoteDelegate(QObject *parent) : QStyledItemDelegate(parent) {}
 

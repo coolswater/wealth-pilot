@@ -4,7 +4,7 @@
  */
 
 #include "NewsPanelWidget.h"
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include <QHeaderView>
 #include <QDateTime>
 #include <QStyle>

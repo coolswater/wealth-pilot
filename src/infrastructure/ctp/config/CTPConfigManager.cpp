@@ -4,8 +4,8 @@
  */
 
 #include "CTPConfigManager.h"
-#include "../../core/config/ConfigManager.h"
-#include "../../utils/Logger.h"
+#include "infrastructure/config/ConfigManager.h"
+#include "shared/utils/Logger.h"
 #include <QFile>
 #include <QDir>
 #include <QJsonDocument>

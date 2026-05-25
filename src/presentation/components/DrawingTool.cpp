@@ -5,7 +5,7 @@
 
 #include "DrawingTool.h"
 #include "KLineChart.h"
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include <QPainter>
 #include <QPainterPath>
 #include <QMouseEvent>

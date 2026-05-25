@@ -22,7 +22,7 @@
 #include <functional>
 #include <memory>
 
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 
 /**
  * @brief 组件工厂类

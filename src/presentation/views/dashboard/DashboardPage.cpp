@@ -20,11 +20,11 @@
  */
 
 #include "DashboardPage.h"
-#include "core/config/Tokens.h"
-#include "presentation/ThemeManager.h"
+#include "infrastructure/config/Tokens.h"
+#include "presentation/styles/ThemeManager.h"
 #include "data/market/StockDataSource.h"
 #include "data/DataStorageService.h"
-#include "core/cache/CacheManager.h"
+#include "core/services/cache/CacheManager.h"
 #include "shared/utils/Logger.h"
 
 #include <QVBoxLayout>

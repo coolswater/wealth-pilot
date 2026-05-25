@@ -26,7 +26,7 @@
 #include <QDateTime>
 #include <QMap>
 #include <memory>
-#include "../core/base/Result.h"
+#include "shared/base/Result.h"
 
 namespace WealthPilot {
 

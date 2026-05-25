@@ -4,7 +4,7 @@
  */
 
 #include "EnvironmentConfig.h"
-#include "../../utils/Logger.h"
+#include "shared/utils/Logger.h"
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>

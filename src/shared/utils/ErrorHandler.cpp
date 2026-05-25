@@ -5,7 +5,7 @@
  */
 
 #include "ErrorHandler.h"
-#include "../../utils/Logger.h"
+#include "Logger.h"
 #include <QMessageBox>
 #include <QApplication>
 #include <algorithm>

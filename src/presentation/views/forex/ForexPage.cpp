@@ -8,7 +8,7 @@
 
 #include "ForexPage.h"
 #include "presentation/components/KLineChart.h"
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include "presentation/components/StyleHelper.h"
 #include "presentation/delegates/ColorDelegates.h"
 #include "data/market/ForexDataSource.h"

@@ -22,7 +22,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QProgressBar>
-#include "core/risk/RiskWarningSystem.h"
+#include "core/domain/risk/RiskWarningSystem.h"
 
 /**
  * @brief 风险指示器组件

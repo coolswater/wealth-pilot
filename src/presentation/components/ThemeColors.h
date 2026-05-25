@@ -12,7 +12,7 @@
 #ifndef THEMECOLORS_H
 #define THEMECOLORS_H
 
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 
 /**
  * @brief 颜色命名空间（引用 Tokens）

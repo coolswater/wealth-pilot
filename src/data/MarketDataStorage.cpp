@@ -4,8 +4,8 @@
  */
 
 #include "MarketDataStorage.h"
-#include "core/database/DatabaseManager.h"
-#include "core/cache/DataCacheManager.h"
+#include "infrastructure/database/DatabaseManager.h"
+#include "core/services/cache/DataCacheManager.h"
 #include "data/market/StockDataSource.h"
 #include "data/market/ForexDataSource.h"
 #include "data/market/CryptoDataSource.h"

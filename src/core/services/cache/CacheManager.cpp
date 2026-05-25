@@ -6,7 +6,7 @@
  */
 
 #include "CacheManager.h"
-#include "../../utils/Logger.h"
+#include "shared/utils/Logger.h"
 #include <QFile>
 #include <QDir>
 #include <QDataStream>

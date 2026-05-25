@@ -4,7 +4,7 @@
  */
 
 #include "EquityCurveWidget.h"
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include <QPainter>
 #include <QPainterPath>
 #include <QMouseEvent>

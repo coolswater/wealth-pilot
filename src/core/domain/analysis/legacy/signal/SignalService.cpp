@@ -7,7 +7,7 @@
  */
 
 #include "SignalService.h"
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include <QDebug>
 #include <QTimer>
 

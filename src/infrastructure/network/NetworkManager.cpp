@@ -4,8 +4,8 @@
  */
 
 #include "NetworkManager.h"
-#include "../utils/Logger.h"
-#include "../core/config/ConfigManager.h"
+#include "shared/utils/Logger.h"
+#include "infrastructure/config/ConfigManager.h"
 
 #include <QNetworkInformation>
 #include <QTimer>

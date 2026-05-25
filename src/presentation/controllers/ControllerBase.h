@@ -19,7 +19,7 @@
 #include <QHash>
 #include <QString>
 #include <QtConcurrent>
-#include "core/di/ServiceLocator.h"
+#include "core/services/di/ServiceLocator.h"
 #include <functional>
 #include <memory>
 

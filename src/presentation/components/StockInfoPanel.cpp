@@ -4,9 +4,9 @@
  */
 
 #include "StockInfoPanel.h"
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include "presentation/components/StyleHelper.h"
-#include "core/cache/CacheManager.h"
+#include "core/services/cache/CacheManager.h"
 #include "data/DataStorageService.h"
 #include "shared/utils/Logger.h"
 #include <QVBoxLayout>

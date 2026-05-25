@@ -18,7 +18,7 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include <QResizeEvent>
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QTimer>

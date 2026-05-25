@@ -12,8 +12,8 @@
  */
 
 #include "WatchListPage.h"
-#include "core/config/Tokens.h"
-#include "core/datahub/DataHub.h"
+#include "infrastructure/config/Tokens.h"
+#include "data/datahub/DataHub.h"
 #include "presentation/components/StyleHelper.h"
 #include "presentation/styles/ButtonStyles.h"
 #include "shared/utils/Logger.h"

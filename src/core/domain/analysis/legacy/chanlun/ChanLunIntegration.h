@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "analysis/chanlun/ChanLunAnalyzer.h"
-#include "analysis/chanlun/ChanLunIndicator.h"
+#include "core/domain/analysis/legacy/chanlun/ChanLunAnalyzer.h"
+#include "core/domain/analysis/legacy/chanlun/ChanLunIndicator.h"
 #include "shared/types/MarketTypes.h"
 #include <QObject>
 #include <QVector>

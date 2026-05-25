@@ -16,7 +16,7 @@
 #ifndef DATABASEMANAGER_H
 #define DATABASEMANAGER_H
 
-#include "../base/Singleton.h"
+#include "shared/base/Singleton.h"
 #include <QObject>
 #include <QSqlDatabase>
 #include <QSqlQuery>

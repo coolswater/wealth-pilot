@@ -4,7 +4,7 @@
  */
 
 #include "NewsPage.h"
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 #include "data/market/NewsDataSource.h"
 #include "presentation/styles/ButtonStyles.h"
 #include "shared/utils/Logger.h"

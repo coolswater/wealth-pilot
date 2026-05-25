@@ -4,7 +4,7 @@
  */
 
 #include "FeedbackDialog.h"
-#include "core/feedback/FeedbackSystem.h"
+#include "core/services/feedback/FeedbackSystem.h"
 #include "shared/utils/Logger.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>

@@ -20,7 +20,7 @@
 #include <QFormLayout>
 #include <QSettings>
 #include <QMessageBox>
-#include "../../utils/Logger.h"
+#include "shared/utils/Logger.h"
 
 RiskSettingsPage::RiskSettingsPage(QWidget *parent)
     : BasePage(parent)

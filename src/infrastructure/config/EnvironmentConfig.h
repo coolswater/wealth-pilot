@@ -15,7 +15,7 @@
 #ifndef ENVIRONMENTCONFIG_H
 #define ENVIRONMENTCONFIG_H
 
-#include "../base/Singleton.h"
+#include "shared/base/Singleton.h"
 #include <QObject>
 #include <QString>
 #include <QVariant>

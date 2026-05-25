@@ -4,8 +4,8 @@
  */
 
 #include "StockKLinePage.h"
-#include "core/config/Tokens.h"
-#include "core/cache/CacheManager.h"
+#include "infrastructure/config/Tokens.h"
+#include "core/services/cache/CacheManager.h"
 #include "data/DataStorageService.h"
 #include "shared/utils/Logger.h"
 #include "presentation/components/StockInfoPanel.h"

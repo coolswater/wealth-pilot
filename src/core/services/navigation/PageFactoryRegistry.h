@@ -1,7 +1,7 @@
 ﻿#ifndef PAGEFACTORYREGISTRY_H
 #define PAGEFACTORYREGISTRY_H
 
-#include "../../ui/components/BasePage.h"
+#include "presentation/components/BasePage.h"
 #include <QMutex>
 #include <QReadWriteLock>
 #include <functional>

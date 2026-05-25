@@ -17,7 +17,7 @@
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include "core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 
 /**
  * @brief 样式辅助工具类

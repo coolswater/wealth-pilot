@@ -12,8 +12,8 @@
 #ifndef NETWORKMANAGER_H
 #define NETWORKMANAGER_H
 
-#include "../core/base/Singleton.h"
-#include "../core/base/Result.h"
+#include "shared/base/Singleton.h"
+#include "shared/base/Result.h"
 
 // 简化 Result 类型使用
 template<typename T>

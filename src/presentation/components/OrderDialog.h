@@ -18,7 +18,7 @@
 #include <QMap>
 #include <QString>
 #include "core/trading/TradingTypes.h"
-#include "../../core/config/Tokens.h"
+#include "infrastructure/config/Tokens.h"
 
 // Use types from TradingTypes.h
 // OrderType, PositionDirection, OpenCloseFlag are already defined there

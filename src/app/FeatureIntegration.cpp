@@ -5,30 +5,30 @@
 
 #include "FeatureIntegration.h"
 #include "shared/utils/Logger.h"
-#include "core/navigation/PageNavigator.h"
+#include "core/services/navigation/PageNavigator.h"
 
 // 短期规划功能
-#include "core/network/WebSocketManager.h"
-#include "core/ui/ShortcutManager.h"
-#include "core/layout/LayoutManager.h"
-#include "core/analysis/StockScreener.h"
-#include "core/backtest/BacktestEngine.h"
-#include "core/analysis/RiskAnalyzer.h"
+#include "infrastructure/network/core/WebSocketManager.h"
+#include "presentation/shortcuts/ShortcutManager.h"
+#include "presentation/layout/LayoutManager.h"
+#include "core/domain/analysis/StockScreener.h"
+#include "core/domain/backtest/BacktestEngine.h"
+#include "core/domain/analysis/RiskAnalyzer.h"
 
 // 中期规划功能
-#include "core/social/StrategyShareManager.h"
-#include "core/chart/DrawingToolManager.h"
-#include "core/quant/QuantTradingEngine.h"
+#include "core/services/social/StrategyShareManager.h"
+#include "presentation/chart/DrawingToolManager.h"
+#include "core/domain/quant/QuantTradingEngine.h"
 
 // 长期规划功能
-#include "core/ai/AIAssistant.h"
-#include "core/account/MultiAccountManager.h"
-#include "core/security/PermissionManager.h"
-#include "core/api/DataAPIManager.h"
-#include "core/plugin/PluginMarketManager.h"
+#include "infrastructure/ai/core/AIAssistant.h"
+#include "core/services/account/MultiAccountManager.h"
+#include "core/services/security/PermissionManager.h"
+#include "infrastructure/api/DataAPIManager.h"
+#include "infrastructure/plugins/core/PluginMarketManager.h"
 
 // 性能管理
-#include "core/performance/PerformanceManager.h"
+#include "core/services/performance/PerformanceManager.h"
 
 #include <QMainWindow>
 

@@ -3,12 +3,12 @@
  * @file AIAssistantPanel.cpp
  * @brief AI 助理面板实现 - 使用属性选择器替代硬编码样式
  */
-#include "../../ui/animation/AnimationManager.h"
-#include "../../ui/ThemeManager.h"
-#include "../../core/config/Tokens.h"
-#include "../../core/config/ConfigManager.h"
-#include "../../utils/Logger.h"
-#include "../../core/navigation/PageNavigator.h"
+#include "presentation/animation/AnimationManager.h"
+#include "presentation/styles/ThemeManager.h"
+#include "infrastructure/config/Tokens.h"
+#include "infrastructure/config/ConfigManager.h"
+#include "shared/utils/Logger.h"
+#include "core/services/navigation/PageNavigator.h"
 
 #include <QHBoxLayout>
 #include <QLabel>

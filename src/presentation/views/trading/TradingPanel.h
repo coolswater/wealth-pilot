@@ -29,7 +29,7 @@
 #include <QHBoxLayout>
 #include "core/trading/TradingTypes.h"
 #include "presentation/components/OrderDialog.h"
-#include "core/datahub/DataHub.h"
+#include "data/datahub/DataHub.h"
 
 // 使用 DataHub 命名空间
 namespace DataHubNS = WealthPilot::DataHub;

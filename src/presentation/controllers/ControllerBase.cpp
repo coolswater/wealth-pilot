@@ -7,7 +7,7 @@
  */
 
 #include "ControllerBase.h"
-#include "core/di/ServiceLocator.h"
+#include "core/services/di/ServiceLocator.h"
 #include "shared/utils/Logger.h"
 
 namespace WealthPilot

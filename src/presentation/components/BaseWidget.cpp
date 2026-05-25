@@ -1,6 +1,6 @@
 ﻿#include "BaseWidget.h"
-#include "../../ui/animation/AnimationManager.h"
-#include "../../utils/Logger.h"
+#include "presentation/animation/AnimationManager.h"
+#include "shared/utils/Logger.h"
 
 #include <QPainter>
 #include <QGraphicsOpacityEffect>

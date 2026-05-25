@@ -4,7 +4,7 @@
  */
 
 #include "MarketDataWebSocket.h"
-#include "../utils/Logger.h"
+#include "shared/utils/Logger.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>

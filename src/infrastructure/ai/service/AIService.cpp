@@ -18,8 +18,8 @@
 
 #include "AIService.h"
 #include "../../network/NetworkManager.h"
-#include "../../core/config/ConfigManager.h"
-#include "../../utils/Logger.h"
+#include "infrastructure/config/ConfigManager.h"
+#include "shared/utils/Logger.h"
 
 #include <QJsonDocument>
 #include <QJsonArray>
