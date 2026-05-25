@@ -19,7 +19,7 @@
 #include <QMap>
 #include <QTimer>
 #include <QMutex>
-#include "core/types/MarketTypes.h"
+#include "shared/types/MarketTypes.h"
 #include "analysis/AnalysisTypes.h"
 
 namespace WealthPilot {
