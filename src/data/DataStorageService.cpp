@@ -18,7 +18,7 @@
  */
 
 #include "DataStorageService.h"
-#include "utils/Logger.h"
+#include "shared/utils/Logger.h"
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QSqlRecord>

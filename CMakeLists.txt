@@ -1,3 +1,6 @@
+# ==================== WealthPilot 根目录 CMakeLists.txt ====================
+# 模块化构建配置 - 主入口
+
 cmake_minimum_required(VERSION 3.16)
 project(WealthPilot VERSION 1.0.0 LANGUAGES CXX)
 
@@ -24,6 +27,7 @@ option(WEALTHPILOT_ENABLE_LTO "Enable Link Time Optimization" OFF)
 option(WEALTHPILOT_ENABLE_UNITY_BUILD "Enable Unity Build for faster compilation" ON)
 option(WEALTHPILOT_ENABLE_CCACHE "Enable ccache/sccache for compiler caching" ON)
 option(WEALTHPILOT_ENABLE_DEBUG_OUTPUT "Enable debug output" OFF)
+option(BUILD_TESTS "Build unit tests" ON)
 
 # 设置并行编译数（默认使用所有CPU核心）
 if (NOT DEFINED CMAKE_BUILD_PARALLEL_LEVEL)
@@ -99,7 +103,7 @@ set(CMAKE_AUTOUIC ON)
 # 导出 compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# 查找Qt6组件
+# ==================== 查找Qt6组件 ====================
 find_package(Qt6 REQUIRED COMPONENTS
         Core
         Widgets
@@ -117,684 +121,35 @@ find_package(Qt6 REQUIRED COMPONENTS
         Qml
 )
 
-# ==================== 源文件分组 ====================
-
-# App 应用层
-set(APP_SOURCES
-        src/app/ApplicationInitializer.h
-        src/app/ApplicationInitializer.cpp
-        src/FeatureIntegration.h
-        src/FeatureIntegration.cpp
+# ==================== 全局包含目录 ====================
+set(WEALTHPILOT_INCLUDE_DIRS
+        ${CMAKE_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/external
+        ${CMAKE_SOURCE_DIR}/src
 )
 
-# Core - Base 基础类
-set(CORE_BASE_SOURCES
-        src/core/base/Singleton.h
-        src/core/base/ErrorCode.h
-        src/core/base/NamespaceGuide.h
-        src/core/base/Result.h
-)
+# ==================== 添加子目录 ====================
+add_subdirectory(src/shared)
+add_subdirectory(src/core)
+add_subdirectory(src/data)
+add_subdirectory(src/infrastructure)
+add_subdirectory(src/presentation)
+add_subdirectory(src/app)
 
-# Shared - 共享模块 (统一类型定义和工具)
-set(SHARED_SOURCES
-        src/shared/types/NewsTypes.h
-        src/shared/types/NewsTypes.cpp
-        src/shared/types/MarketTypes.h
-        src/shared/utils/EventBus.h
-        src/shared/utils/ErrorHandler.h
-        src/shared/utils/ErrorHandler.cpp
-)
-
-# Core - Config 配置管理
-set(CORE_CONFIG_SOURCES
-        src/core/config/ConfigManager.h
-        src/core/config/ConfigManager.cpp
-        src/core/config/EnvironmentConfig.h
-        src/core/config/EnvironmentConfig.cpp
-        src/core/config/Tokens.h
-)
-
-# Core - Cache 缓存系统
-set(CORE_CACHE_SOURCES
-        src/core/cache/CacheManager.h
-        src/core/cache/CacheManager.cpp
-        src/core/cache/DataCacheManager.h
-        src/core/cache/DataCacheManager.cpp
-)
-
-# Core - DataHub 数据中心 (新增)
-set(CORE_DATAHUB_SOURCES
-        src/core/datahub/DataHub.h
-        src/core/datahub/DataHub.cpp
-        src/core/datahub/MarketDataProducer.h
-        src/core/datahub/MarketDataProducer.cpp
-        src/core/datahub/DataHubBootstrap.h
-        src/core/datahub/DataHubBootstrap.cpp
-        src/core/datahub/DataHubMonitor.h
-        src/core/datahub/DataHubMonitor.cpp
-)
-
-# Core - Database 数据库
-set(CORE_DATABASE_SOURCES
-        src/core/database/DatabaseManager.h
-        src/core/database/DatabaseManager.cpp
-        src/data/DataStorage.h
-        src/data/DataStorage.cpp
-        src/data/DataStorageService.h
-        src/data/DataStorageService.cpp
-        src/data/MarketDataStorage.h
-        src/data/MarketDataStorage.cpp
-)
-
-# Core - Task 异步任务
-set(CORE_TASK_SOURCES
-        src/core/task/AsyncTaskManager.h
-        src/core/task/AsyncTaskManager.cpp
-)
-
-set(CORE_PERFORMANCE_SOURCES
-        src/core/performance/PerformanceManager.h
-        src/core/performance/PerformanceManager.cpp
-        src/core/monitoring/PerformanceMonitor.h
-        src/core/monitoring/PerformanceMonitor.cpp
-)
-
-# Core - Feedback 用户反馈
-set(CORE_FEEDBACK_SOURCES
-        src/core/feedback/UserFeedbackManager.h
-        src/core/feedback/UserFeedbackManager.cpp
-        src/core/feedback/FeedbackTranslations.h
-        src/core/feedback/FeedbackSystem.h
-        src/core/feedback/FeedbackSystem.cpp
-)
-
-# Core - Network 网络
-set(CORE_NETWORK_SOURCES
-        src/core/network/WebSocketManager.h
-        src/core/network/WebSocketManager.cpp
-)
-
-# Core - UI UI管理
-set(CORE_UI_SOURCES
-        src/core/ui/ShortcutManager.h
-        src/core/ui/ShortcutManager.cpp
-)
-
-# Core - Analysis 分析
-set(CORE_ANALYSIS_SOURCES
-        src/core/analysis/StockScreener.h
-        src/core/analysis/StockScreener.cpp
-        src/core/analysis/ExampleStrategies.h
-        src/core/analysis/RiskAnalyzer.h
-        src/core/analysis/RiskAnalyzer.cpp
-)
-
-# Core - Backtest 回测
-set(CORE_BACKTEST_SOURCES
-        src/core/backtest/BacktestEngine.h
-        src/core/backtest/BacktestEngine.cpp
-)
-
-# Core - Social 社交交易
-set(CORE_SOCIAL_SOURCES
-        src/core/social/StrategyShareManager.h
-        src/core/social/StrategyShareManager.cpp
-)
-
-# Core - Chart 图表工具
-set(CORE_CHART_SOURCES
-        src/core/chart/DrawingToolManager.h
-        src/core/chart/DrawingToolManager.cpp
-)
-
-# Core - Quant 量化交易
-set(CORE_QUANT_SOURCES
-        src/core/quant/QuantTradingEngine.h
-        src/core/quant/QuantTradingEngine.cpp
-)
-
-# Core - AI 智能助手
-set(CORE_AI_SOURCES
-        src/core/ai/AIAssistant.h
-        src/core/ai/AIAssistant.cpp
-)
-
-# Core - Account 多账户
-set(CORE_ACCOUNT_SOURCES
-        src/core/account/MultiAccountManager.h
-        src/core/account/MultiAccountManager.cpp
-)
-
-# Core - Security 权限管理
-set(CORE_SECURITY_SOURCES
-        src/core/security/PermissionManager.h
-        src/core/security/PermissionManager.cpp
-)
-
-# Core - API 数据API
-set(CORE_API_SOURCES
-        src/core/api/DataAPIManager.h
-        src/core/api/DataAPIManager.cpp
-)
-
-# Core - Plugin 插件市场
-set(CORE_PLUGIN_SOURCES
-        src/core/plugin/PluginMarketManager.h
-        src/core/plugin/PluginMarketManager.cpp
-        src/core/plugin/PluginSystem.h
-        src/core/plugin/PluginSystem.cpp
-)
-
-# Core - DI 依赖注入
-set(CORE_DI_SOURCES
-        src/core/di/ServiceLocator.h
-        src/core/di/ServiceLocator.cpp
-        src/core/di/ServiceRegistry.h
-        src/core/di/ServiceRegistry.cpp
-)
-
-# Core - Data 数据管理
-set(CORE_DATA_SOURCES
-        src/core/data/DataSourceManager.h
-        src/core/data/DataSourceManager.cpp
-)
-
-# Core - Navigation 页面导航
-set(CORE_NAVIGATION_SOURCES
-        src/core/navigation/PageNavigator.h
-        src/core/navigation/PageNavigator.cpp
-        src/core/navigation/PageNavigatorManager.h
-        src/core/navigation/PageNavigatorManager.cpp
-        src/core/navigation/PageFactoryRegistry.h
-        src/core/navigation/PageFactoryRegistry.cpp
-)
-
-# CTP - API
-set(CTP_API_SOURCES
-        src/ctp/api/CtpApiLoader.h
-        src/ctp/api/CtpDataBuffer.h
-        src/ctp/api/CtpMarketSpi.h
-        src/ctp/api/CtpMarketSpi.cpp
-        src/ctp/api/CtpTradingSpi.h
-        src/ctp/api/CtpTradingSpi.cpp
-)
-
-# CTP - Config
-set(CTP_CONFIG_SOURCES
-        src/ctp/config/CTPConfigManager.h
-        src/ctp/config/CTPConfigManager.cpp
-)
-
-# CTP - Service
-set(CTP_SERVICE_SOURCES
-        src/ctp/service/CTPService.h
-        src/ctp/service/CTPService.cpp
-)
-
-# AI - Service
-set(AI_SERVICE_SOURCES
-        src/ai/service/AIService.h
-        src/ai/service/AIService.cpp
-        src/ai/service/AIConversationManager.h
-        src/ai/service/AIConversationManager.cpp
-        src/ai/service/RoboAdvisor.h
-        src/ai/service/RoboAdvisor.cpp
-        src/ai/service/AIStockPicker.h
-        src/ai/service/AIStockPicker.cpp
-        src/ai/service/SentimentAnalysisService.h
-        src/ai/service/SentimentAnalysisService.cpp
-        src/ai/service/SmartReportService.h
-        src/ai/service/SmartReportService.cpp
-)
-
-# AI - Plugin
-set(AI_PLUGIN_SOURCES
-        src/ai/plugin/AIPlugin.h
-        src/ai/plugin/AIPlugin.cpp
-)
-
-# Market 行情数据
-set(MARKET_SOURCES
-        src/market/QuoteDataManager.h
-        src/market/QuoteDataManager.cpp
-        src/market/FavoritesManager.h
-        src/market/FavoritesManager.cpp
-        src/market/MarketDataHub.h
-        src/market/MarketDataHub.cpp
-        src/market/StockDataSource.h
-        src/market/MarketDataWebSocket.cpp
-        src/market/StockDataSource.cpp
-        src/market/ForexDataSource.h
-        src/market/ForexDataSource.cpp
-        src/market/CryptoDataSource.h
-        src/market/CryptoDataSource.cpp
-        src/market/FundDataSource.h
-        src/market/FundDataSource.cpp
-        src/market/NewsDataSource.h
-        src/market/NewsDataSource.cpp
-)
-
-# Models 数据模型
-set(MODEL_SOURCES
-        src/models/FuturesQuoteItem.h
-        src/models/FuturesQuoteModel.h
-        src/models/FuturesQuoteModel.cpp
-        src/models/FuturesQuoteDelegate.h
-        src/models/FuturesQuoteDelegate.cpp
-        src/models/StockQuoteItem.h
-        src/models/StockQuoteItem.cpp
-        # src/models/StockQuoteModel.h  # 已在 StockQuotesPage 中定义
-        # src/models/StockQuoteModel.cpp
-        src/models/QuoteModelBase.h
-        src/models/QuoteModelBase.cpp
-)
-
-# Utils 工具
-set(UTIL_SOURCES
-        src/utils/DataExporter.cpp
-        src/utils/Logger.cpp
-        src/utils/Logger.h
-        src/utils/FuturesMockDataGenerator.h
-        src/utils/FuturesMockDataGenerator.cpp
-        src/utils/TechnicalIndicators.h
-        src/utils/TechnicalIndicators.cpp
-        src/utils/StressTest.h
-        src/utils/StressTest.cpp
-        src/utils/ExcelExporter.h
-        src/utils/ExcelExporter.cpp
-        src/utils/ReportGenerator.h
-        src/utils/ReportGenerator.cpp
-)
-
-# Risk 风险管理
-set(RISK_SOURCES
-        src/core/risk/RiskWarningSystem.h
-        src/core/risk/RiskWarningSystem.cpp
-)
-
-# Recommendation 推荐
-set(RECOMMENDATION_SOURCES
-        src/core/recommendation/PersonalizedRecommendation.h
-        src/core/recommendation/PersonalizedRecommendation.cpp
-)
-
-# Alert 预警系统
-set(ALERT_SOURCES
-        src/core/alert/SmartAlertSystem.h
-        src/core/alert/SmartAlertSystem.cpp
-)
-
-# NewsAnalysis 新闻分析
-set(NEWS_ANALYSIS_SOURCES
-        src/core/analysis/NewsSentimentAnalyzer.h
-        src/core/analysis/NewsSentimentAnalyzer.cpp
-        src/market/NewsDataSource.h
-        src/market/NewsDataSource.cpp
-)
-
-# Layout 布局管理
-set(LAYOUT_SOURCES
-        src/core/layout/LayoutManager.h
-        src/core/layout/LayoutManager.cpp
-)
-
-# Portfolio 组合
-set(PORTFOLIO_SOURCES
-        src/core/portfolio/PortfolioOptimizer.h
-        src/core/portfolio/PortfolioOptimizer.cpp
-)
-
-# Network 网络
-set(NETWORK_SOURCES
-        src/network/NetworkManager.cpp
-        src/network/NetworkManager.h
-        src/network/NetworkCache.h
-        src/network/NetworkCache.cpp
-)
-
-# Plugins 插件框架
-set(PLUGIN_SOURCES
-        src/plugins/IPlugin.h
-        src/plugins/PluginLoader.h
-        src/plugins/PluginLoader.cpp
-        src/plugins/ICTPPlugin.h
-        src/plugins/IAIPlugin.h
-        src/plugins/CTPPlugin.h
-        src/plugins/CTPPlugin.cpp
-)
-
-# Analysis - ChanLun 缠论分析模块
-set(ANALYSIS_CHANLUN_SOURCES
-        src/analysis/chanlun/ChanLunTypes.h
-        src/analysis/chanlun/ChanLunAnalyzer.h
-        src/analysis/chanlun/ChanLunAnalyzer.cpp
-        src/analysis/chanlun/ChanLunIndicator.h
-        src/analysis/chanlun/ChanLunIndicator.cpp
-        src/analysis/chanlun/ChanLunIntegration.h
-        src/analysis/chanlun/ChanLunIntegration.cpp
-)
-
-# Analysis - ElliottWave 波浪理论分析模块
-set(ANALYSIS_ELLIOTTWAVE_SOURCES
-        src/analysis/elliottwave/ElliottWaveTypes.h
-        src/analysis/elliottwave/ElliottWaveAnalyzer.h
-        src/analysis/elliottwave/ElliottWaveAnalyzer.cpp
-)
-
-# Analysis - DowTheory 道氏理论分析模块
-set(ANALYSIS_DOWTHEORY_SOURCES
-        src/analysis/dowtheory/DowTheoryTypes.h
-        src/analysis/dowtheory/DowTheoryAnalyzer.h
-        src/analysis/dowtheory/DowTheoryAnalyzer.cpp
-)
-
-# Analysis - VolumePattern 量价形态分析模块
-set(ANALYSIS_VOLUMEPATTERN_SOURCES
-        src/analysis/volumepattern/VolumePatternTypes.h
-        src/analysis/volumepattern/VolumePatternAnalyzer.h
-        src/analysis/volumepattern/VolumePatternAnalyzer.cpp
-)
-
-# Analysis - Signal 信号系统
-set(ANALYSIS_SIGNAL_SOURCES
-        src/analysis/AnalysisTypes.h
-        src/analysis/IAnalyzer.h
-        src/analysis/AnalysisManager.h
-        src/analysis/AnalysisManager.cpp
-        src/analysis/signal/SignalFilter.h
-        src/analysis/signal/SignalFilter.cpp
-        src/analysis/signal/SignalService.h
-        src/analysis/signal/SignalService.cpp
-)
-
-# UI Components UI组件库
-set(UI_COMPONENT_SOURCES
-        src/ui/components/UIComponents.h
-        src/ui/components/ThemeColors.h
-        src/ui/components/PageStyles.h
-        src/ui/components/ChartStyles.h
-        src/ui/components/LayoutConstants.h
-        src/ui/components/BaseChartWidget.h
-        src/ui/components/BaseChartWidget.cpp
-        src/ui/components/ComponentFactory.h
-        src/ui/components/ComponentFactory.cpp
-        src/ui/components/ChartConfig.h
-        src/ui/components/ChartConfig.cpp
-        src/ui/components/KLineChart.h
-        src/ui/components/EquityCurveWidget.cpp
-        src/ui/components/DrawingTool.cpp
-        src/ui/components/TimeShareChart.cpp
-        src/ui/components/KLineChart.cpp
-        src/ui/components/ChartToolBar.h
-        src/ui/components/ChartToolBar.cpp
-        src/ui/components/MarketDepthWidget.h
-        src/ui/components/MarketDepthWidget.cpp
-        src/ui/components/TickTableView.h
-        src/ui/components/TickTableView.cpp
-        src/ui/components/ChartStatusBar.h
-        src/ui/components/ChartStatusBar.cpp
-        src/ui/components/BaseWidget.h
-        src/ui/components/BaseWidget.cpp
-        src/ui/components/BasePage.h
-        src/ui/components/BasePage.cpp
-        src/ui/components/DataHubPageBase.h
-        src/ui/components/DataHubPageBase.cpp
-        src/ui/components/PageTemplate.h
-        src/ui/components/PageTemplate.cpp
-        src/ui/components/BasePage.cpp
-        src/ui/components/SidebarWidget.h
-        src/ui/components/SidebarWidget.cpp
-        src/ui/components/SvgIconEngine.h
-        src/ui/components/SvgIconEngine.cpp
-        src/ui/components/SvgIconWidget.h
-        src/ui/components/SvgIconWidget.cpp
-        src/ui/components/TitleBarWidget.h
-        src/ui/components/TitleBarWidget.cpp
-        src/ui/components/ThemeToggleButton.h
-        src/ui/components/ThemeToggleButton.cpp
-        src/ui/components/CardWidget.h
-        src/ui/components/CardWidget.cpp
-        src/ui/components/StatusBarWidget.h
-        src/ui/components/StatusBarWidget.cpp
-        src/ui/components/ToastWidget.h
-        src/ui/components/ToastWidget.cpp
-        src/ui/components/AssetCardWidget.h
-        src/ui/components/AssetCardWidget.cpp
-        src/ui/components/AssetPieChart.h
-        src/ui/components/AssetPieChart.cpp
-        src/ui/components/AIAssistantPanelWidget.cpp
-        src/ui/components/AIAssistantPanelWidget.h
-        src/ui/components/NetworkIndicator.cpp
-        src/ui/components/NetworkIndicator.h
-        src/ui/components/TreeMapWidget.cpp
-        src/ui/components/TreeMapWidget.h
-        src/ui/components/AddSymbolDialog.cpp
-        src/ui/components/AddSymbolDialog.h
-        src/ui/components/DividerWidget.h
-        src/ui/components/DividerWidget.cpp
-        src/ui/components/OrderDialog.h
-        src/ui/components/OrderDialog.cpp
-        src/ui/components/SignalMarker.h
-        src/ui/components/SignalMarker.cpp
-        src/ui/components/SignalDetailPanel.h
-        src/ui/components/SignalDetailPanel.cpp
-        src/ui/components/KLineChartWithSignals.h
-        src/ui/components/KLineChartWithSignals.cpp
-        src/ui/components/StockInfoPanel.h
-        src/ui/components/StockInfoPanel.cpp
-        src/ui/components/RiskIndicatorWidget.h
-        src/ui/components/RiskIndicatorWidget.cpp
-        src/ui/components/RecommendationListWidget.h
-        src/ui/components/RecommendationListWidget.cpp
-        src/ui/components/PortfolioOptimizationDialog.h
-        src/ui/components/PortfolioOptimizationDialog.cpp
-        src/ui/components/NewsPanelWidget.h
-        src/ui/components/NewsPanelWidget.cpp
-        src/ui/components/AlertSettingDialog.h
-        src/ui/components/AlertSettingDialog.cpp
-        src/ui/components/LoadingOverlay.h
-        src/ui/components/LoadingOverlay.cpp
-        src/ui/components/QmlKLineWidget.h
-        src/ui/components/QmlKLineWidget.cpp
-        src/ui/qml/QmlDataBridge.h
-        src/ui/qml/QmlDataBridge.cpp
-        src/ui/ThemeManager.h
-        src/ui/ThemeManager.cpp
-        src/ui/delegates/ColorDelegates.h
-        src/ui/delegates/DelegateHelper.h
-)
-
-# QML Resources
-set(QML_RESOURCES
-        qml/qml.qrc
-)
-
-# UI Animation 动画系统
-set(UI_ANIMATION_SOURCES
-        src/ui/animation/AnimationManager.h
-        src/ui/animation/AnimationManager.cpp
-)
-
-# UI Utils 样式工具
-set(UI_UTILS_SOURCES
-        src/ui/utils/StyleGenerator.h
-        src/ui/utils/StyleGenerator.cpp
-        src/ui/utils/PageStyleHelper.h
-        src/ui/utils/PageStyleHelper.cpp
-        src/ui/styles/ButtonStyles.h
-        src/ui/styles/ButtonStyles.cpp
-)
-
-# ViewModels MVVM 架构
-set(VIEWMODEL_SOURCES
-        src/viewmodels/ViewModelBase.h
-        src/viewmodels/ViewModelBase.cpp
-        src/viewmodels/TradingViewModel.h
-        src/viewmodels/TradingViewModel.cpp
-        src/viewmodels/OrderViewModel.h
-        src/viewmodels/OrderViewModel.cpp
-        src/viewmodels/BacktestViewModel.h
-        src/viewmodels/BacktestViewModel.cpp
-        src/viewmodels/ViewModelRegistration.h
-)
-
-# Controllers MVP 架构
-set(CONTROLLER_SOURCES
-        src/controllers/ControllerBase.h
-        src/controllers/ControllerBase.cpp
-        # src/controllers/StockQuotesController.h  # 暂时禁用，StockQuoteModel 冲突
-        # src/controllers/StockQuotesController.cpp
-)
-
-# Views 视图
-set(VIEW_SOURCES
-        src/views/mainWindow/MainWindow.cpp
-        src/views/mainWindow/MainWindow.h
-        src/views/dashboard/DashboardPage.h
-        src/views/dashboard/DashboardPage.cpp
-        src/views/watchList/WatchListPage.h
-        src/views/watchList/WatchListPage.cpp
-        src/views/signalCenter/SignalCenterPage.h
-        src/views/signalCenter/SignalCenterPage.cpp
-        src/views/news/NewsPage.h
-        src/views/news/NewsPage.cpp
-        src/views/portfolio/PortfolioPage.h
-        src/views/portfolio/PortfolioPage.cpp
-        src/views/futures/FuturesQuotesPage.h
-        src/views/futures/FuturesQuotesPage.cpp
-        src/views/futures/FuturesKLinePage.h
-        src/views/futures/FuturesKLinePage.cpp
-        src/views/futures/FuturesPageIntegration.h
-        src/views/futures/FuturesPageIntegration.cpp
-        src/views/futures/FuturesPagesRegistration.cpp
-        src/views/quotes/QuotesPage.h
-        src/views/quotes/QuotesPage.cpp
-        src/views/stock/StockQuotesPage.h
-        src/views/stock/StockQuotesPage.cpp
-        src/views/stock/StockKLinePage.h
-        src/views/stock/StockKLinePage.cpp
-        src/views/feedback/FeedbackDialog.h
-        src/views/feedback/FeedbackDialog.cpp
-        src/views/settings/SettingsPage.h
-        src/views/settings/SettingsPage.cpp
-        src/views/settings/CTPBrokerDialog.h
-        src/views/settings/CTPBrokerDialog.cpp
-        src/views/settings/RiskSettingsPage.h
-        src/views/settings/RiskSettingsPage.cpp
-        src/views/warning/WarningPage.h
-        src/views/warning/WarningPage.cpp
-        src/views/aboutus/AboutUSPage.h
-        src/views/aboutus/AboutUSPage.cpp
-        src/views/account/AccountPage.h
-        src/views/account/AccountPage.cpp
-        src/views/trading/TradeHistoryPage.h
-        src/views/trading/TradeHistoryPage.cpp
-        src/views/trading/ConditionOrderPage.h
-        src/views/trading/ConditionOrderPage.cpp
-        src/views/trading/TradingIntegration.h
-        src/views/trading/TradingIntegration.cpp
-        src/views/trading/TradingPanel.h
-        src/views/trading/TradingPanel.cpp
-        src/views/trading/TradingQmlPage.h
-        src/views/trading/TradingQmlPage.cpp
-        src/views/TradingPagesRegistration.cpp
-        # 新增模块
-        src/views/fund/FundPage.h
-        src/views/fund/FundPage.cpp
-        src/views/forex/ForexPage.h
-        src/views/forex/ForexPage.cpp
-        src/views/crypto/CryptoPage.h
-        src/views/crypto/CryptoPage.cpp
-        src/views/backtest/BacktestPage.h
-        src/views/backtest/BacktestPage.cpp
-        src/views/alert/AlertCenterPage.h
-        src/views/alert/AlertCenterPage.cpp
-        src/views/demo/QmlChartDemoPage.h
-        src/views/demo/QmlChartDemoPage.cpp
-        src/utils/DataExporter.h
-        src/utils/DataExporter.cpp
-)
-
-# Trading 交易系统
-set(TRADING_SOURCES
-        src/trading/TradingTypes.h
-        src/trading/OrderManager.h
-        src/trading/OrderManager.cpp
-        src/trading/PositionManager.h
-        src/trading/PositionManager.cpp
-        src/trading/RiskController.h
-        src/trading/RiskController.cpp
-        src/trading/TradingService.h
-        src/trading/TradingService.cpp
-        src/trading/ConditionOrderEngine.h
-        src/trading/ConditionOrderEngine.cpp
-)
-
-# 合并所有源文件
-set(SOURCES
+# ==================== 主可执行文件 ====================
+add_executable(WealthPilot WIN32 MACOSX_BUNDLE
         main.cpp
-        ${APP_SOURCES}
-        ${CORE_BASE_SOURCES}
-        ${CORE_EVENTS_SOURCES}
-        ${CORE_CONFIG_SOURCES}
-        ${CORE_CACHE_SOURCES}
-        ${CORE_DATAHUB_SOURCES}
-        ${CORE_DATABASE_SOURCES}
-        ${CORE_TASK_SOURCES}
-        ${CORE_PERFORMANCE_SOURCES}
-        ${CORE_FEEDBACK_SOURCES}
-        ${CORE_NETWORK_SOURCES}
-        ${CORE_UI_SOURCES}
-        ${CORE_ANALYSIS_SOURCES}
-        ${CORE_BACKTEST_SOURCES}
-        ${CORE_SOCIAL_SOURCES}
-        ${CORE_CHART_SOURCES}
-        ${CORE_QUANT_SOURCES}
-        ${CORE_AI_SOURCES}
-        ${CORE_ACCOUNT_SOURCES}
-        ${VIEWMODEL_SOURCES}
-        ${CONTROLLER_SOURCES}
-        ${CORE_SECURITY_SOURCES}
-        ${CORE_API_SOURCES}
-        ${CORE_PLUGIN_SOURCES}
-        ${CORE_DI_SOURCES}
-        ${CORE_DATA_SOURCES}
-        ${CORE_NAVIGATION_SOURCES}
-        ${CTP_API_SOURCES}
-        ${CTP_CONFIG_SOURCES}
-        ${CTP_SERVICE_SOURCES}
-        ${AI_SERVICE_SOURCES}
-        ${AI_PLUGIN_SOURCES}
-        ${MARKET_SOURCES}
-        ${MODEL_SOURCES}
-        ${UTIL_SOURCES}
-        ${RISK_SOURCES}
-        ${RECOMMENDATION_SOURCES}
-        ${PORTFOLIO_SOURCES}
-        ${ALERT_SOURCES}
-        ${NEWS_ANALYSIS_SOURCES}
-        ${CORE_TYPES_SOURCES}
-        ${SHARED_SOURCES}
-        ${PLUGIN_SOURCES}
-        ${LAYOUT_SOURCES}
-        ${NETWORK_SOURCES}
-        ${ANALYSIS_CHANLUN_SOURCES}
-        ${ANALYSIS_ELLIOTTWAVE_SOURCES}
-        ${ANALYSIS_DOWTHEORY_SOURCES}
-        ${ANALYSIS_VOLUMEPATTERN_SOURCES}
-        ${ANALYSIS_SIGNAL_SOURCES}
-        ${UI_COMPONENT_SOURCES}
-        ${UI_ANIMATION_SOURCES}
-        ${UI_UTILS_SOURCES}
-        ${VIEW_SOURCES}
-        ${TRADING_SOURCES}
-        ${QML_RESOURCES}
-        src/shared/types/NewsTypes.h
-        src/shared/types/NewsTypes.cpp
 )
 
-# 创建可执行文件
-add_executable(WealthPilot WIN32 MACOSX_BUNDLE ${SOURCES})
+# 链接所有模块
+target_link_libraries(WealthPilot PRIVATE
+        WealthPilot::App
+        WealthPilot::Core
+        WealthPilot::Data
+        WealthPilot::Infrastructure
+        WealthPilot::Presentation
+        WealthPilot::Shared
+)
 
 # 预编译头 (CMake 3.16+)
 if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.16")
@@ -806,26 +161,7 @@ endif()
 
 # 包含目录
 target_include_directories(WealthPilot PRIVATE
-        ${CMAKE_SOURCE_DIR}
-        ${CMAKE_SOURCE_DIR}/external
-        ${CMAKE_SOURCE_DIR}/src
-)
-
-# 链接Qt库
-target_link_libraries(WealthPilot PRIVATE
-        Qt6::Core
-        Qt6::Widgets
-        Qt6::Network
-        Qt6::WebSockets
-        Qt6::Sql
-        Qt6::TextToSpeech
-        Qt6::Charts
-        Qt6::Concurrent
-        Qt6::Svg
-        Qt6::StateMachine
-        Qt6::Quick
-        Qt6::QuickWidgets
-        Qt6::Qml
+        ${WEALTHPILOT_INCLUDE_DIRS}
 )
 
 # QML 模块导入路径
@@ -836,20 +172,13 @@ if(WIN32)
     )
 endif()
 
-
 # Windows 平台特定库
 if (WIN32)
     target_link_libraries(WealthPilot PRIVATE
             crypt32
             Qt6::Core5Compat
     )
-
-    # CTP 使用动态加载（解决 MinGW 与 MSVC DLL 名称修饰不兼容问题）
-    # 不需要静态链接库，只需要确保 DLL 在运行时可用
-
-    # 定义 CTP DLL 导入宏 (使用 DLL 需要 dllimport)
     target_compile_definitions(WealthPilot PRIVATE ISLIB)
-
     message(STATUS "CTP API will be loaded dynamically at runtime")
 endif ()
 
@@ -857,8 +186,10 @@ endif ()
 qt6_add_resources(WealthPilot_RESOURCES resources/resources.qrc)
 target_sources(WealthPilot PRIVATE ${WealthPilot_RESOURCES})
 
-# ==================== 编译选项 ====================
+# QML 资源
+target_sources(WealthPilot PRIVATE qml/qml.qrc)
 
+# ==================== 编译选项 ====================
 if (MSVC)
     target_compile_options(WealthPilot PRIVATE /W4 /WX-)
     target_compile_definitions(WealthPilot PRIVATE _CRT_SECURE_NO_WARNINGS)
@@ -886,7 +217,6 @@ add_custom_command(TARGET WealthPilot POST_BUILD
 
 # 复制 CTP DLL 文件到构建目录
 if (WIN32)
-    # 复制 external/ctp 目录下的 DLL
     add_custom_command(TARGET WealthPilot POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/external/ctp/thostmduserapi_se.dll"
@@ -899,7 +229,6 @@ if (WIN32)
 endif ()
 
 # ==================== 安装配置 ====================
-
 install(TARGETS WealthPilot
         RUNTIME DESTINATION bin
         BUNDLE DESTINATION .
@@ -908,7 +237,6 @@ install(TARGETS WealthPilot
 install(DIRECTORY resources DESTINATION .)
 
 # ==================== 打包配置（Windows）====================
-
 if (WIN32)
     set(CMAKE_WIN32_EXECUTABLE TRUE)
 
@@ -929,72 +257,14 @@ if (WIN32)
 endif ()
 
 # ==================== 输出信息 ====================
-
 message(STATUS "WealthPilot Version: ${PROJECT_VERSION}")
 message(STATUS "Qt6 Version: ${Qt6Core_VERSION}")
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
 
 # ==================== 测试配置 ====================
-
-option(BUILD_TESTS "Build unit tests" ON)
-
 if(BUILD_TESTS)
     enable_testing()
-    
-    # 查找 Qt Test 模块
-    find_package(Qt6 REQUIRED COMPONENTS Test)
-
-    # 通用测试源文件（共享的核心模块）
-    set(TEST_COMMON_SOURCES
-            src/core/cache/CacheManager.cpp
-            src/core/di/ServiceLocator.cpp
-            src/utils/Logger.cpp
-    )
-
-    # ==================== 独立测试可执行文件 ====================
-
-    # 1. ServiceLocator 测试
-    add_executable(TestServiceLocator tests/TestServiceLocator.cpp ${TEST_COMMON_SOURCES})
-    target_link_libraries(TestServiceLocator PRIVATE Qt6::Core Qt6::Test)
-    target_include_directories(TestServiceLocator PRIVATE ${CMAKE_SOURCE_DIR}/src)
-    add_test(NAME ServiceLocatorTest COMMAND TestServiceLocator)
-
-    # 2. CacheManager 测试
-    add_executable(TestCacheManager tests/TestCacheManager.cpp ${TEST_COMMON_SOURCES})
-    target_link_libraries(TestCacheManager PRIVATE Qt6::Core Qt6::Test Qt6::Sql Qt6::Network)
-    target_include_directories(TestCacheManager PRIVATE ${CMAKE_SOURCE_DIR}/src)
-    add_test(NAME CacheManagerTest COMMAND TestCacheManager)
-
-    # 3. PluginLoader 测试
-    add_executable(TestPluginLoader tests/TestPluginLoader.cpp)
-    target_link_libraries(TestPluginLoader PRIVATE Qt6::Core Qt6::Test)
-    target_include_directories(TestPluginLoader PRIVATE ${CMAKE_SOURCE_DIR}/src)
-    add_test(NAME PluginLoaderTest COMMAND TestPluginLoader)
-
-    # 4. ApplicationInitializer 测试
-    add_executable(TestApplicationInitializer tests/TestApplicationInitializer.cpp)
-    target_link_libraries(TestApplicationInitializer PRIVATE Qt6::Core Qt6::Test)
-    target_include_directories(TestApplicationInitializer PRIVATE ${CMAKE_SOURCE_DIR}/src)
-    add_test(NAME ApplicationInitializerTest COMMAND TestApplicationInitializer)
-
-    # 5. Performance 测试
-    add_executable(PerformanceTest tests/PerformanceTest.cpp)
-    target_link_libraries(PerformanceTest PRIVATE Qt6::Core Qt6::Test)
-    target_include_directories(PerformanceTest PRIVATE ${CMAKE_SOURCE_DIR}/src)
-    add_test(NAME PerformanceTest COMMAND PerformanceTest)
-
-    # 6. Analysis 测试
-    add_executable(AnalysisTest tests/AnalysisTest.cpp)
-    target_link_libraries(AnalysisTest PRIVATE Qt6::Core Qt6::Test)
-    target_include_directories(AnalysisTest PRIVATE ${CMAKE_SOURCE_DIR}/src)
-    add_test(NAME AnalysisTest COMMAND AnalysisTest)
-
-    # 7. UserFeedbackManager 测试
-    add_executable(UserFeedbackManagerTest tests/UserFeedbackManagerTest.cpp)
-    target_link_libraries(UserFeedbackManagerTest PRIVATE Qt6::Core Qt6::Test Qt6::Widgets)
-    target_include_directories(UserFeedbackManagerTest PRIVATE ${CMAKE_SOURCE_DIR}/src)
-    add_test(NAME UserFeedbackManagerTest COMMAND UserFeedbackManagerTest)
-    
+    add_subdirectory(tests)
     message(STATUS "Tests enabled")
 endif()

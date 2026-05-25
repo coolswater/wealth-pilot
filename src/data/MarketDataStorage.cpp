@@ -6,11 +6,11 @@
 #include "MarketDataStorage.h"
 #include "core/database/DatabaseManager.h"
 #include "core/cache/DataCacheManager.h"
-#include "market/StockDataSource.h"
-#include "market/ForexDataSource.h"
-#include "market/CryptoDataSource.h"
-#include "market/FundDataSource.h"
-#include "utils/Logger.h"
+#include "data/market/StockDataSource.h"
+#include "data/market/ForexDataSource.h"
+#include "data/market/CryptoDataSource.h"
+#include "data/market/FundDataSource.h"
+#include "shared/utils/Logger.h"
 
 #include <QSqlQuery>
 #include <QSqlError>
