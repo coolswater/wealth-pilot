@@ -54,9 +54,9 @@ enum class ErrorCategory {
 };
 
 /**
- * @brief 错误信息结构
+ * @brief 详细错误信息结构（用于错误处理器）
  */
-struct ErrorInfo {
+struct DetailedErrorInfo {
     ErrorCategory category = ErrorCategory::Unknown;    ///< 错误分类
     ErrorLevel level = ErrorLevel::Error;               ///< 错误级别
     QString code;                                        ///< 错误码
@@ -119,7 +119,7 @@ public:
      * @brief 处理错误
      * @param error 错误信息
      */
-    void handle(const ErrorInfo& error);
+    void handle(const DetailedErrorInfo& error);
 
     /**
      * @brief 处理错误（简化版）
@@ -136,7 +136,7 @@ public:
      * @param error 错误信息
      * @param showSuggestion 是否显示建议解决方案
      */
-    void showToUser(const ErrorInfo& error, bool showSuggestion = true);
+    void showToUser(const DetailedErrorInfo& error, bool showSuggestion = true);
 
     /**
      * @brief 注册错误码
@@ -156,7 +156,7 @@ public:
     /**
      * @brief 获取最近的错误
      */
-    ErrorInfo lastError() const;
+    DetailedErrorInfo lastError() const;
 
     /**
      * @brief 清除错误历史
@@ -166,7 +166,7 @@ public:
     /**
      * @brief 获取错误历史
      */
-    QVector<ErrorInfo> errorHistory() const;
+    QVector<DetailedErrorInfo> errorHistory() const;
 
     /**
      * @brief 设置错误处理回调
@@ -174,23 +174,23 @@ public:
      * @param callback 处理回调
      */
     void setErrorHandler(ErrorLevel level,
-                         std::function<void(const ErrorInfo&)> callback);
+                         std::function<void(const DetailedErrorInfo&)> callback);
 
 signals:
     /**
      * @brief 错误发生信号
      */
-    void errorOccurred(const ErrorInfo& error);
+    void errorOccurred(const DetailedErrorInfo& error);
 
     /**
      * @brief 严重错误信号（需要立即处理）
      */
-    void criticalError(const ErrorInfo& error);
+    void criticalError(const DetailedErrorInfo& error);
 
     /**
      * @brief 致命错误信号（程序需要退出）
      */
-    void fatalError(const ErrorInfo& error);
+    void fatalError(const DetailedErrorInfo& error);
 
 private:
     ErrorHandler();
@@ -198,23 +198,23 @@ private:
     ErrorHandler(const ErrorHandler&) = delete;
     ErrorHandler& operator=(const ErrorHandler&) = delete;
 
-    void logError(const ErrorInfo& error);
-    void notifyUser(const ErrorInfo& error);
-    void executeHandler(const ErrorInfo& error);
+    void logError(const DetailedErrorInfo& error);
+    void notifyUser(const DetailedErrorInfo& error);
+    void executeHandler(const DetailedErrorInfo& error);
 
     // 错误码注册表
     QHash<QString, QString> m_defaultMessages;
     QHash<QString, QString> m_defaultSuggestions;
 
     // 错误历史
-    QVector<ErrorInfo> m_errorHistory;
+    QVector<DetailedErrorInfo> m_errorHistory;
     mutable QMutex m_historyMutex;
 
     // 错误处理器
-    QHash<ErrorLevel, std::function<void(const ErrorInfo&)>> m_handlers;
+    QHash<ErrorLevel, std::function<void(const DetailedErrorInfo&)>> m_handlers;
 
     // 最近错误
-    ErrorInfo m_lastError;
+    DetailedErrorInfo m_lastError;
 };
 
 // ============================================================================

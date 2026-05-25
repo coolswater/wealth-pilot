@@ -20,7 +20,13 @@
 #include <QTimer>
 #include <QMap>
 #include <QVector>
-#include "core/analysis/NewsSentimentAnalyzer.h"
+#include "core/types/NewsTypes.h"
+
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::NewsItem;
+using WealthPilot::SocialHeatData;
+using WealthPilot::NewsSentimentResult;
+using WealthPilot::SentimentType;
 
 /**
  * @brief 新闻数据源

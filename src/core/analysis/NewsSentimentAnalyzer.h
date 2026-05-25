@@ -20,58 +20,16 @@
 #include <QVector>
 #include <QMap>
 #include <QDateTime>
+#include "core/types/NewsTypes.h"
 
-/**
- * @brief 情感类型
- */
-enum class SentimentType {
-    Positive,   ///< 正面
-    Negative,   ///< 负面
-    Neutral     ///< 中性
-};
+// 使用 WealthPilot 命名空间中的类型
+using WealthPilot::NewsItem;
+using WealthPilot::SentimentType;
+using WealthPilot::NewsSentimentResult;
+using WealthPilot::SocialHeatData;
 
-/**
- * @brief 新闻情感分析结果
- */
-struct SentimentResult {
-    SentimentType sentiment = SentimentType::Neutral;  ///< 情感类型
-    double confidence = 0.0;                           ///< 置信度（0-1）
-    double impactScore = 0.0;                          ///< 影响力分数（-10到+10）
-    QVector<QString> keywords;                         ///< 关键词
-    QString summary;                                   ///< 摘要
-    QString riskHint;                                  ///< 风险提示
-};
-
-/**
- * @brief 新闻条目
- */
-struct NewsItem {
-    QString id;                    ///< 新闻ID
-    QString title;                 ///< 标题
-    QString content;               ///< 内容
-    QString source;                ///< 来源
-    QDateTime publishTime;         ///< 发布时间
-    QString category;              ///< 分类（新闻/公告/财报/研报）
-    QVector<QString> relatedSymbols; ///< 相关股票代码
-    SentimentResult sentiment;     ///< 情感分析结果
-    int readCount = 0;             ///< 阅读量
-    int commentCount = 0;          ///< 评论数
-    bool isRead = false;           ///< 是否已读
-    bool isImportant = false;      ///< 是否重要
-};
-
-/**
- * @brief 社交媒体热度
- */
-struct SocialHeatData {
-    QString symbol;                ///< 股票代码
-    QString platform;              ///< 平台（雪球/微博/东方财富）
-    int mentionCount = 0;          ///< 提及量
-    int previousCount = 0;         ///< 上次提及量
-    double changePercent = 0.0;    ///< 变化百分比
-    double sentimentScore = 0.0;   ///< 情感分数
-    QDateTime updateTime;          ///< 更新时间
-};
+// 为了兼容旧代码，保留 NewsSentimentType 别名
+using NewsSentimentType = SentimentType;
 
 /**
  * @brief 新闻情感分析器
@@ -88,15 +46,15 @@ public:
      */
     bool initialize();
 
-    /**
+/**
      * @brief 分析新闻情感
      */
-    SentimentResult analyzeSentiment(const QString& text);
+    NewsSentimentResult analyzeSentiment(const QString& text);
 
     /**
      * @brief 批量分析新闻
      */
-    QVector<SentimentResult> analyzeBatch(const QVector<QString>& texts);
+    QVector<NewsSentimentResult> analyzeBatch(const QVector<QString>& texts);
 
     /**
      * @brief 提取关键词
@@ -111,15 +69,15 @@ public:
     /**
      * @brief 生成风险提示
      */
-    QString generateRiskHint(const SentimentResult& sentiment, const QString& symbol);
+    QString generateRiskHint(const NewsSentimentResult& sentiment, const QString& symbol);
 
     /**
      * @brief 计算影响力分数
      */
-    double calculateImpactScore(const SentimentResult& sentiment, const NewsItem& news);
+    double calculateImpactScore(const NewsSentimentResult& sentiment, const NewsItem& news);
 
 signals:
-    void analysisCompleted(const QString& newsId, const SentimentResult& result);
+    void analysisCompleted(const QString& newsId, const NewsSentimentResult& result);
 
 private:
     explicit NewsSentimentAnalyzer(QObject* parent = nullptr);

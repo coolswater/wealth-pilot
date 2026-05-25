@@ -134,8 +134,6 @@ set(CORE_BASE_SOURCES
         src/core/base/NamespaceGuide.h
         src/core/base/ErrorHandler.h
         src/core/base/ErrorHandler.cpp
-        src/core/base/ApplicationBootstrap.h
-        src/core/base/ApplicationBootstrap.cpp
         src/core/base/Result.h
         src/core/types/MarketTypes.h
 )
@@ -430,6 +428,12 @@ set(NEWS_ANALYSIS_SOURCES
         src/core/analysis/NewsSentimentAnalyzer.cpp
         src/market/NewsDataSource.h
         src/market/NewsDataSource.cpp
+)
+
+# CoreTypes 核心类型定义
+set(CORE_TYPES_SOURCES
+        src/core/types/NewsTypes.h
+        src/core/types/NewsTypes.cpp
 )
 
 # Layout 布局管理
@@ -773,6 +777,7 @@ set(SOURCES
         ${PORTFOLIO_SOURCES}
         ${ALERT_SOURCES}
         ${NEWS_ANALYSIS_SOURCES}
+        ${CORE_TYPES_SOURCES}
         ${PLUGIN_SOURCES}
         ${LAYOUT_SOURCES}
         ${NETWORK_SOURCES}

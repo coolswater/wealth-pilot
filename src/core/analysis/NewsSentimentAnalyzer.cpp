@@ -103,9 +103,9 @@ bool NewsSentimentAnalyzer::initialize()
     return true;
 }
 
-SentimentResult NewsSentimentAnalyzer::analyzeSentiment(const QString& text)
+NewsSentimentResult NewsSentimentAnalyzer::analyzeSentiment(const QString& text)
 {
-    SentimentResult result;
+    NewsSentimentResult result;
 
     if (text.isEmpty()) {
         return result;
@@ -138,13 +138,13 @@ SentimentResult NewsSentimentAnalyzer::analyzeSentiment(const QString& text)
 
     // 确定情感类型
     if (totalScore > 0.5) {
-        result.sentiment = SentimentType::Positive;
+        result.sentiment = NewsSentimentType::Positive;
         result.impactScore = qMin(totalScore, 10.0);
     } else if (totalScore < -0.5) {
-        result.sentiment = SentimentType::Negative;
+        result.sentiment = NewsSentimentType::Negative;
         result.impactScore = qMax(totalScore, -10.0);
     } else {
-        result.sentiment = SentimentType::Neutral;
+        result.sentiment = NewsSentimentType::Neutral;
         result.impactScore = totalScore;
     }
 
@@ -167,9 +167,9 @@ SentimentResult NewsSentimentAnalyzer::analyzeSentiment(const QString& text)
     return result;
 }
 
-QVector<SentimentResult> NewsSentimentAnalyzer::analyzeBatch(const QVector<QString>& texts)
+QVector<NewsSentimentResult> NewsSentimentAnalyzer::analyzeBatch(const QVector<QString>& texts)
 {
-    QVector<SentimentResult> results;
+    QVector<NewsSentimentResult> results;
     results.reserve(texts.size());
 
     for (const QString& text : texts) {
@@ -243,11 +243,11 @@ QString NewsSentimentAnalyzer::generateSummary(const QString& text, int maxLengt
     return summary;
 }
 
-QString NewsSentimentAnalyzer::generateRiskHint(const SentimentResult& sentiment, const QString& symbol)
+QString NewsSentimentAnalyzer::generateRiskHint(const NewsSentimentResult& sentiment, const QString& symbol)
 {
     QString hint;
 
-    if (sentiment.sentiment == SentimentType::Negative) {
+    if (sentiment.sentiment == NewsSentimentType::Negative) {
         if (sentiment.impactScore < -5.0) {
             hint = QStringLiteral("【高风险】%1 相关新闻呈现强烈负面情绪，建议密切关注。").arg(symbol);
         } else if (sentiment.impactScore < -2.0) {
@@ -255,7 +255,7 @@ QString NewsSentimentAnalyzer::generateRiskHint(const SentimentResult& sentiment
         } else {
             hint = QStringLiteral("【提示】%1 相关新闻略有负面情绪。").arg(symbol);
         }
-    } else if (sentiment.sentiment == SentimentType::Positive) {
+    } else if (sentiment.sentiment == NewsSentimentType::Positive) {
         if (sentiment.impactScore > 5.0) {
             hint = QStringLiteral("【利好】%1 相关新闻呈现强烈正面情绪，可关注机会。").arg(symbol);
         } else {
@@ -268,7 +268,7 @@ QString NewsSentimentAnalyzer::generateRiskHint(const SentimentResult& sentiment
     return hint;
 }
 
-double NewsSentimentAnalyzer::calculateImpactScore(const SentimentResult& sentiment, const NewsItem& news)
+double NewsSentimentAnalyzer::calculateImpactScore(const NewsSentimentResult& sentiment, const NewsItem& news)
 {
     double baseScore = sentiment.impactScore;
 

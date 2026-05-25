@@ -20,10 +20,11 @@
 #include <QDateTime>
 #include <memory>
 #include "core/database/DatabaseManager.h"
-#include "market/NewsDataSource.h"  // 使用已有的 NewsItem 定义
-#include "core/types/MarketTypes.h" // KLineData 定义
+#include "core/types/NewsTypes.h"     // NewsItem 定义
+#include "core/types/MarketTypes.h"   // KLineData 定义
 
 // 使用 WealthPilot 命名空间中的类型
+using WealthPilot::NewsItem;
 using WealthPilot::KLineData;
 using WealthPilot::TimeShareData;
 using WealthPilot::StockQuote;

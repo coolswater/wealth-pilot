@@ -12,10 +12,10 @@
 namespace WealthPilot {
 
 // ============================================================================
-// ErrorInfo 实现
+// DetailedErrorInfo 实现
 // ============================================================================
 
-QString ErrorInfo::userFriendlyMessage() const
+QString DetailedErrorInfo::userFriendlyMessage() const
 {
     if (!suggestion.isEmpty()) {
         return QString("%1\n建议：%2").arg(message, suggestion);
@@ -91,7 +91,7 @@ bool ErrorHandler::initialize()
     return true;
 }
 
-void ErrorHandler::handle(const ErrorInfo& error)
+void ErrorHandler::handle(const DetailedErrorInfo& error)
 {
     if (!error.isValid()) {
         return;
@@ -127,7 +127,7 @@ void ErrorHandler::handle(const ErrorInfo& error)
 void ErrorHandler::handle(ErrorLevel level, const QString& code,
                           const QString& message, const QString& context)
 {
-    ErrorInfo error;
+    DetailedErrorInfo error;
     error.level = level;
     error.code = code;
     error.message = message;
@@ -142,7 +142,7 @@ void ErrorHandler::handle(ErrorLevel level, const QString& code,
     handle(error);
 }
 
-void ErrorHandler::showToUser(const ErrorInfo& error, bool showSuggestion)
+void ErrorHandler::showToUser(const DetailedErrorInfo& error, bool showSuggestion)
 {
     QString title;
     QMessageBox::Icon icon;
@@ -193,7 +193,7 @@ QString ErrorHandler::getDefaultMessage(const QString& code) const
     return m_defaultMessages.value(code, QStringLiteral("未知错误"));
 }
 
-ErrorInfo ErrorHandler::lastError() const
+DetailedErrorInfo ErrorHandler::lastError() const
 {
     QMutexLocker locker(&m_historyMutex);
     return m_lastError;
@@ -203,22 +203,22 @@ void ErrorHandler::clearHistory()
 {
     QMutexLocker locker(&m_historyMutex);
     m_errorHistory.clear();
-    m_lastError = ErrorInfo();
+    m_lastError = DetailedErrorInfo();
 }
 
-QVector<ErrorInfo> ErrorHandler::errorHistory() const
+QVector<DetailedErrorInfo> ErrorHandler::errorHistory() const
 {
     QMutexLocker locker(&m_historyMutex);
     return m_errorHistory;
 }
 
 void ErrorHandler::setErrorHandler(ErrorLevel level,
-                                    std::function<void(const ErrorInfo&)> callback)
+                                    std::function<void(const DetailedErrorInfo&)> callback)
 {
     m_handlers[level] = callback;
 }
 
-void ErrorHandler::logError(const ErrorInfo& error)
+void ErrorHandler::logError(const DetailedErrorInfo& error)
 {
     QString logMsg = QString("[%1] %2: %3")
         .arg(error.code, error.context, error.message);
@@ -242,14 +242,14 @@ void ErrorHandler::logError(const ErrorInfo& error)
     }
 }
 
-void ErrorHandler::notifyUser(const ErrorInfo& error)
+void ErrorHandler::notifyUser(const DetailedErrorInfo& error)
 {
     if (error.needsUserIntervention()) {
         showToUser(error);
     }
 }
 
-void ErrorHandler::executeHandler(const ErrorInfo& error)
+void ErrorHandler::executeHandler(const DetailedErrorInfo& error)
 {
     auto it = m_handlers.find(error.level);
     if (it != m_handlers.end()) {

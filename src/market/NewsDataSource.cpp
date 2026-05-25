@@ -4,6 +4,7 @@
  */
 
 #include "NewsDataSource.h"
+#include "core/analysis/NewsSentimentAnalyzer.h"
 #include "utils/Logger.h"
 #include <QNetworkReply>
 #include <QJsonDocument>
@@ -67,7 +68,7 @@ void NewsDataSource::requestNews(const QString& symbol, int count)
 
     // 分析情感
     item1.sentiment = NewsSentimentAnalyzer::instance()->analyzeSentiment(item1.title + item1.content);
-    item1.isImportant = item1.sentiment.impactScore > 3.0;
+    item1.isImportant = item1.impactScore > 3.0;
 
     newsList.append(item1);
 
@@ -83,7 +84,7 @@ void NewsDataSource::requestNews(const QString& symbol, int count)
     item2.commentCount = 89;
 
     item2.sentiment = NewsSentimentAnalyzer::instance()->analyzeSentiment(item2.title + item2.content);
-    item2.isImportant = item2.sentiment.impactScore > 3.0;
+    item2.isImportant = item2.impactScore > 3.0;
 
     newsList.append(item2);
 
@@ -408,7 +409,7 @@ SocialHeatData NewsDataSource::parseSocialHeatResponse(const QByteArray& data)
 
 void NewsDataSource::checkAndPushImportantNews(const NewsItem& news)
 {
-    if (news.isImportant && news.sentiment.impactScore > 5.0) {
+    if (news.isImportant && news.impactScore > 5.0) {
         emit importantNewsPush(news);
     }
 }

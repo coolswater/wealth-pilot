@@ -29,12 +29,12 @@
 
 #include <ui/components/DataHubPageBase.h>
 #include "core/types/MarketTypes.h"
+#include "core/types/NewsTypes.h"
 
 // 使用 WealthPilot 命名空间中的类型
-using WealthPilot::StockQuote;
-using WealthPilot::KLineData;
 using WealthPilot::TimeShareData;
 using WealthPilot::MarketSnapshot;
+using WealthPilot::NewsItem;
 #include <QTableView>
 #include <QAbstractTableModel>
 #include <memory>
