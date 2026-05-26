@@ -312,6 +312,12 @@ private:
     
     // 检查是否需要加载更多数据
     void checkAndRequestMoreData();
+    
+    // LOD (Level of Detail) 渲染
+    enum class LODLevel { Full, Medium, Low, Minimal };
+    LODLevel currentLODLevel() const;
+    void setLODLevel(LODLevel level);
+    int getLODCandleWidth() const;
 
     struct Impl;
     std::unique_ptr<Impl> d;

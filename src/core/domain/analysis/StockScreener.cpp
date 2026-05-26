@@ -5,6 +5,8 @@
 
 #include "StockScreener.h"
 #include "shared/utils/Logger.h"
+#include "core/services/cache/CacheManager.h"
+#include "data/DataStorageService.h"
 #include <QSettings>
 #include <QtConcurrent>
 #include <algorithm>
@@ -232,7 +234,7 @@ void StockScreener::setupGrowthStrategy()
 
 bool StockScreener::evaluateCondition(const QString& symbol, const ScreenerCondition& condition)
 {
-    // TODO: 从数据源获取实际数据
+    // 从缓存和数据源获取实际数据
     QVariantMap data = getStockData(symbol);
 
     if (!data.contains(condition.field)) {
@@ -279,21 +281,60 @@ double StockScreener::calculateScore(const QString& symbol,
 
 QVariantMap StockScreener::getStockData(const QString& symbol)
 {
-    // TODO: 从数据源获取实际数据
-    // 这里返回模拟数据
+    // 从缓存和数据源获取实际数据
     QVariantMap data;
     data["symbol"] = symbol;
-    data["name"] = symbol;
-    data["price"] = 100.0;
-    data["changePercent"] = 0.0;
-    data["volume"] = 1000000;
-    data["ma5"] = 99.0;
-    data["ma10"] = 98.0;
-    data["ma20"] = 97.0;
-    data["rsi14"] = 50.0;
-    data["pe"] = 15.0;
-    data["pb"] = 1.5;
-    data["roe"] = 18.0;
-
+    
+    // 1. 尝试从 CacheManager 获取实时行情
+    auto* cache = CacheManager::instance();
+    QString quoteKey = QString("quote:%1").arg(symbol);
+    
+    if (cache->contains(quoteKey)) {
+        QVariant quoteVariant = cache->get(quoteKey);
+        if (quoteVariant.canConvert<QVariantMap>()) {
+            QVariantMap quote = quoteVariant.toMap();
+            data["price"] = quote["lastPrice"];
+            data["changePercent"] = quote["changePercent"];
+            data["volume"] = quote["volume"];
+            data["name"] = quote["name"];
+        }
+    }
+    
+    // 2. 尝试从 DataStorageService 获取缓存行情
+    if (!data.contains("price")) {
+        auto* storage = DataStorageService::instance();
+        CachedQuoteData cachedQuote = storage->getQuoteCache(symbol);
+        if (!cachedQuote.symbol.isEmpty()) {
+            data["price"] = cachedQuote.lastPrice;
+            data["changePercent"] = cachedQuote.changePercent;
+            data["volume"] = cachedQuote.volume;
+            data["name"] = cachedQuote.name;
+        }
+    }
+    
+    // 3. 尝试从缓存获取技术指标
+    QString indicatorKey = QString("indicators:%1").arg(symbol);
+    if (cache->contains(indicatorKey)) {
+        QVariant indicatorVariant = cache->get(indicatorKey);
+        if (indicatorVariant.canConvert<QVariantMap>()) {
+            QVariantMap indicators = indicatorVariant.toMap();
+            data["ma5"] = indicators["ma5"];
+            data["ma10"] = indicators["ma10"];
+            data["ma20"] = indicators["ma20"];
+            data["rsi14"] = indicators["rsi14"];
+        }
+    }
+    
+    // 4. 如果数据不完整，填充默认值
+    if (!data.contains("price")) {
+        data["price"] = 0.0;
+    }
+    if (!data.contains("pe")) {
+        data["pe"] = 0.0;
+    }
+    if (!data.contains("ma5")) {
+        data["ma5"] = 0.0;
+    }
+    
     return data;
 }

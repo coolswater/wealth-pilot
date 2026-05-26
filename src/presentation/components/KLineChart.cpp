@@ -74,6 +74,54 @@ struct KLineChart::Impl {
     QVector<KLineData> compressedData;
     int compressionLevel = 1;
     
+    // LOD (Level of Detail) 渲染参数
+    enum class LODLevel {
+        Full,       // 完整渲染（可见数量 < 200）
+        Medium,     // 中等细节（可见数量 200-500）
+        Low,        // 低细节（可见数量 500-1000）
+        Minimal     // 最小细节（可见数量 > 1000）
+    };
+    LODLevel currentLOD = LODLevel::Full;
+    
+    /**
+     * @brief 根据可见数量自动选择 LOD 级别
+     */
+    void updateLODLevel() {
+        if (visibleCount < 200) {
+            currentLOD = LODLevel::Full;
+        } else if (visibleCount < 500) {
+            currentLOD = LODLevel::Medium;
+        } else if (visibleCount < 1000) {
+            currentLOD = LODLevel::Low;
+        } else {
+            currentLOD = LODLevel::Minimal;
+        }
+    }
+    
+    /**
+     * @brief 获取当前 LOD 级别应渲染的蜡烛宽度
+     */
+    int getLODCandleWidth() const {
+        switch (currentLOD) {
+            case LODLevel::Full:
+                return style.candleWidth;
+            case LODLevel::Medium:
+                return qMax(3, style.candleWidth - 2);
+            case LODLevel::Low:
+                return qMax(2, style.candleWidth - 4);
+            case LODLevel::Minimal:
+                return 1;  // 最小宽度，仅显示线条
+        }
+        return style.candleWidth;
+    }
+    
+    /**
+     * @brief 判断是否应该跳过某些绘制细节
+     */
+    bool shouldSkipDetail() const {
+        return currentLOD >= LODLevel::Low;
+    }
+    
     // 鼠标交互
     bool isDragging = false;
     int lastMouseX = 0;
@@ -106,6 +154,9 @@ struct KLineChart::Impl {
         // 确保范围有效
         visibleStart = qBound(0, visibleStart, data.size() - 1);
         visibleCount = qBound(10, visibleCount, data.size() - visibleStart);
+        
+        // 更新 LOD 级别（根据可见数量）
+        updateLODLevel();
         
         // 计算价格范围
         minPrice = std::numeric_limits<double>::max();

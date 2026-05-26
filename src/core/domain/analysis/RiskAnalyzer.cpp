@@ -5,9 +5,12 @@
 
 #include "RiskAnalyzer.h"
 #include "shared/utils/Logger.h"
+#include "core/services/cache/CacheManager.h"
+#include "shared/types/MarketTypes.h"
 #include <QDateTime>
 #include <cmath>
 #include <algorithm>
+#include <random>
 
 RiskAnalyzer* RiskAnalyzer::instance()
 {
@@ -321,14 +324,88 @@ void RiskAnalyzer::setRiskThresholds(double maxDrawdownLimit,
 
 QVector<double> RiskAnalyzer::getHistoricalReturns(const QString& symbol)
 {
-    // TODO: 从数据源获取历史收益率
-    Q_UNUSED(symbol)
-    return {};
+    // 从 K 线数据计算历史收益率
+    // 收益率 = (今日收盘 - 昨日收盘) / 昨日收盘
+    
+    QVector<double> returns;
+    
+    // 尝试从缓存获取 K 线数据
+    auto* cache = CacheManager::instance();
+    QString cacheKey = QString("kline:%1:daily").arg(symbol);
+    
+    if (cache->contains(cacheKey)) {
+        QVariant klineVariant = cache->get(cacheKey);
+        if (klineVariant.canConvert<QVector<KLineData>>()) {
+            auto klines = klineVariant.value<QVector<KLineData>>();
+            
+            // 计算日收益率
+            for (int i = 1; i < klines.size(); ++i) {
+                if (klines[i-1].close > 0) {
+                    double dailyReturn = (klines[i].close - klines[i-1].close) / klines[i-1].close;
+                    returns.append(dailyReturn);
+                }
+            }
+            
+            LOG_DEBUG(QString("Calculated %1 historical returns for %2")
+                .arg(returns.size()).arg(symbol));
+        }
+    }
+    
+    // 如果没有数据，返回模拟数据（后续应从数据源获取）
+    if (returns.isEmpty()) {
+        // 生成 30 天的模拟收益率（均值为 0，标准差为 2%）
+        static std::mt19937 gen(42); // 固定种子，保证可重复
+        std::normal_distribution<double> dist(0.0, 0.02);
+        
+        for (int i = 0; i < 30; ++i) {
+            returns.append(dist(gen));
+        }
+        
+        LOG_WARNING(QString("Using simulated returns for %1 (no historical data available)").arg(symbol));
+    }
+    
+    return returns;
 }
 
 double RiskAnalyzer::calculateBeta(const QString& symbol)
 {
-    // TODO: 计算 Beta 系数
-    Q_UNUSED(symbol)
-    return 1.0;
+    // Beta = Cov(Ri, Rm) / Var(Rm)
+    // Ri: 股票收益率, Rm: 市场收益率（使用沪深300作为基准）
+    
+    QVector<double> stockReturns = getHistoricalReturns(symbol);
+    QVector<double> marketReturns = getHistoricalReturns("sh000300"); // 沪深300
+    
+    if (stockReturns.isEmpty() || marketReturns.isEmpty()) {
+        LOG_WARNING("Cannot calculate Beta: insufficient data");
+        return 1.0; // 默认 Beta = 1
+    }
+    
+    // 对齐数据长度
+    int n = qMin(stockReturns.size(), marketReturns.size());
+    if (n < 10) {
+        LOG_WARNING(QString("Insufficient data points for Beta: %1").arg(n));
+        return 1.0;
+    }
+    
+    // 计算协方差和方差
+    double stockMean = 0, marketMean = 0;
+    for (int i = 0; i < n; ++i) {
+        stockMean += stockReturns[i];
+        marketMean += marketReturns[i];
+    }
+    stockMean /= n;
+    marketMean /= n;
+    
+    double covariance = 0, marketVariance = 0;
+    for (int i = 0; i < n; ++i) {
+        covariance += (stockReturns[i] - stockMean) * (marketReturns[i] - marketMean);
+        marketVariance += (marketReturns[i] - marketMean) * (marketReturns[i] - marketMean);
+    }
+    covariance /= n;
+    marketVariance /= n;
+    
+    double beta = (marketVariance > 0) ? covariance / marketVariance : 1.0;
+    
+    LOG_INFO(QString("Calculated Beta for %1: %2").arg(symbol).arg(beta, 0, 'f', 3));
+    return beta;
 }

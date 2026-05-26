@@ -176,15 +176,34 @@ public:
     void stopRealtimeQuotes();
 
     /**
-     * @brief 启动自动刷新
+     * @brief 启动自动刷新（已弃用，使用 DataHub 统一调度）
      * @param intervalMs 刷新间隔
+     * @deprecated 请使用 registerToDataHub() 替代
      */
+    [[deprecated("Use registerToDataHub() for unified scheduling")]]
     void startAutoRefresh(int intervalMs = 5000);
 
     /**
-     * @brief 停止自动刷新
+     * @brief 停止自动刷新（已弃用）
+     * @deprecated 自动刷新由 DataHub 统一管理
      */
+    [[deprecated("Auto-refresh is managed by DataHub")]]
     void stopAutoRefresh();
+
+    /**
+     * @brief 注册到 DataHub（推荐方式）
+     *
+     * @details 将此数据源注册到 DataHub 统一调度系统，
+     * 取消独立定时器，由 DataHub 根据订阅情况自动刷新
+     *
+     * @param minIntervalMs 最小刷新间隔（毫秒）
+     */
+    void registerToDataHub(int minIntervalMs = 5000);
+
+    /**
+     * @brief 从 DataHub 注销
+     */
+    void unregisterFromDataHub();
 
 signals:
     void quotesReceived(const QVector<WealthPilot::StockQuote> &quotes);

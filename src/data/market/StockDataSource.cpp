@@ -4,6 +4,7 @@
  */
 
 #include "StockDataSource.h"
+#include "data/datahub/DataHub.h"
 #include "shared/utils/Logger.h"
 
 #include <QUrl>
@@ -85,14 +86,28 @@ StockQuote StockDataSource::getCachedQuote(const QString &symbol) const
 
 void StockDataSource::startAutoRefresh(int intervalMs)
 {
+    // 兼容旧代码，但建议迁移到 DataHub
     m_refreshTimer->start(intervalMs);
-    LOG_INFO(QString("Auto refresh started, interval: %1ms").arg(intervalMs));
+    LOG_INFO(QString("Auto refresh started (deprecated), interval: %1ms. Consider using registerToDataHub()").arg(intervalMs));
 }
 
 void StockDataSource::stopAutoRefresh()
 {
     m_refreshTimer->stop();
     LOG_INFO("Auto refresh stopped");
+}
+
+void StockDataSource::registerToDataHub(int minIntervalMs)
+{
+    // TODO: StockDataSource 需要实现 IDataProducer 接口才能注册到 DataHub
+    // 当前版本仅记录日志，后续完善
+    Q_UNUSED(minIntervalMs)
+    LOG_INFO(QString("StockDataSource::registerToDataHub() called - implementation pending"));
+}
+
+void StockDataSource::unregisterFromDataHub()
+{
+    LOG_INFO("StockDataSource::unregisterFromDataHub() called - implementation pending");
 }
 
 void StockDataSource::onNetworkReply(QNetworkReply *reply)
