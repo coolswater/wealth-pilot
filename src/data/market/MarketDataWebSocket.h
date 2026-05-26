@@ -56,6 +56,42 @@ enum class MarketSubscribeType
 };
 
 /**
+ * @brief WebSocket K线数据结构
+ */
+struct WebSocketKLine
+{
+    QString symbol; ///< 证券代码
+    double open = 0.0; ///< 开盘价
+    double high = 0.0; ///< 最高价
+    double low = 0.0; ///< 最低价
+    double close = 0.0; ///< 收盘价
+    qint64 volume = 0; ///< 成交量
+    double amount = 0.0; ///< 成交额
+    QDateTime timestamp; ///< 时间戳
+    int period = 0; ///< 周期（对应 KLinePeriod）
+};
+
+/**
+ * @brief 盘口深度层级
+ */
+struct DepthLevel
+{
+    double price = 0.0; ///< 价格
+    qint64 volume = 0; ///< 数量
+};
+
+/**
+ * @brief 盘口深度数据
+ */
+struct DepthData
+{
+    QString symbol; ///< 证券代码
+    QDateTime timestamp; ///< 时间戳
+    QVector<DepthLevel> bids; ///< 买盘（价格从高到低）
+    QVector<DepthLevel> asks; ///< 卖盘（价格从低到高）
+};
+
+/**
  * @brief 实时行情 WebSocket 类
  */
 class MarketDataWebSocket : public QObject
@@ -103,6 +139,16 @@ public:
      * @brief 收到 Tick 数据信号
      */
     void tickReceived(const MarketTick& tick);
+
+    /**
+     * @brief 收到 K线数据信号
+     */
+    void klineReceived(const WebSocketKLine& kline);
+
+    /**
+     * @brief 收到盘口深度数据信号
+     */
+    void depthReceived(const DepthData& depth);
 
     /**
      * @brief 订阅成功信号

@@ -57,6 +57,10 @@ MarketDataStorage::~MarketDataStorage()
 
 bool MarketDataStorage::initialize(const QString& dbPath)
 {
+    // 使用默认路径或指定路径
+    QString actualPath = dbPath.isEmpty() 
+        ? QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/market_data.db"
+        : dbPath;
     QMutexLocker locker(&d->mutex);
     
     if (d->initialized) {

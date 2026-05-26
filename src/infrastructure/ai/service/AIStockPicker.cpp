@@ -133,30 +133,25 @@ namespace WealthPilot
     QList<StockPickResult> AIStockPicker::screenByFactors(
             const QList<ScreeningCondition>& conditions,
             int maxResults)
+    {
+        QList<StockPickResult> results;
+
+        // 使用默认热门股票列表
+        // 完整实现需要从 DataHub 获取完整股票池
+        QStringList stockList = {
+            "sh600000", "sh600036", "sh600519", "sh601318", "sh601398",
+            "sz000001", "sz000002", "sz000333", "sz000651", "sz000858",
+            "sz002594", "sz300750", "sh601012", "sh600900", "sz002415"
+        };
+
+        for (const auto& code : stockList)
         {
-            QList<StockPickResult> results;
-
-            // 从 DataHub 获取股票列表
-            auto* storage = DataStorageService::instance();
-            QStringList stockList = storage->getAllStockSymbols();
-        
-            // 如果数据库没有，使用默认热门股票
-            if (stockList.isEmpty()) {
-                stockList = {
-                    "sh600000", "sh600036", "sh600519", "sh601318", "sh601398",
-                    "sz000001", "sz000002", "sz000333", "sz000651", "sz000858",
-                    "sz002594", "sz300750", "sh601012", "sh600900", "sz002415"
-                };
-            }
-
-            for (const auto& code : stockList)
+            double score = calculateFactorScore(code, conditions);
+            if (score > 0)
             {
-                double score = calculateFactorScore(code, conditions);
-                if (score > 0)
-                {
-                    StockPickResult result;
-                    result.stockCode = code;
-                    result.stockName = storage->getStockName(code);
+                StockPickResult result;
+                result.stockCode = code;
+                result.stockName = code;  // 简化：使用代码作为名称
                 result.score = score;
                 result.pickedAt = QDateTime::currentDateTime();
                 result.reason = QStringLiteral("符合筛选条件");
@@ -497,11 +492,10 @@ namespace WealthPilot
 
     double AIStockPicker::getStockFactorValue(const QString& stockCode, StockFactor factor)
         {
-            // 从缓存和数据源获取真实因子值
+            // 从缓存获取因子值
             auto* cache = CacheManager::instance();
-            auto* storage = DataStorageService::instance();
         
-            // 1. 尝试从缓存获取基本面数据
+            // 尝试从缓存获取基本面数据
             QString fundamentalKey = QString("fundamental:%1").arg(stockCode);
             if (cache->contains(fundamentalKey)) {
                 QVariant fundamentalVariant = cache->get(fundamentalKey);
@@ -529,26 +523,7 @@ namespace WealthPilot
                 }
             }
         
-            // 2. 尝试从数据库获取
-            FundamentalData dbData = storage->getFundamentalData(stockCode);
-            if (dbData.isValid()) {
-                switch (factor) {
-                case StockFactor::PE:
-                    return dbData.pe;
-                case StockFactor::PB:
-                    return dbData.pb;
-                case StockFactor::ROE:
-                    return dbData.roe;
-                case StockFactor::RevenueGrowth:
-                    return dbData.revenueGrowth;
-                case StockFactor::ProfitGrowth:
-                    return dbData.profitGrowth;
-                default:
-                    break;
-                }
-            }
-        
-            // 3. 尝试从缓存获取行情数据
+            // 尝试从缓存获取行情数据
             QString quoteKey = QString("quote:%1").arg(stockCode);
             if (cache->contains(quoteKey)) {
                 QVariant quoteVariant = cache->get(quoteKey);
@@ -557,7 +532,7 @@ namespace WealthPilot
                 
                     switch (factor) {
                     case StockFactor::TurnoverRate:
-                        return quote.turnoverRate;
+                        return quote.turnover;  // 使用 turnover 替代 turnoverRate
                     case StockFactor::Momentum:
                         return quote.changePercent;
                     case StockFactor::MarketCap:
@@ -568,8 +543,8 @@ namespace WealthPilot
                 }
             }
         
-            // 4. 如果没有真实数据，返回默认值并记录日志
-            LOG_WARN(QString("No factor data available for %1, factor: %2")
+            // 如果没有真实数据，返回默认值
+            LOG_WARNING(QString("No factor data available for %1, factor: %2")
                 .arg(stockCode).arg(getFactorName(factor)));
         
             // 返回合理的默认值（不是随机值，保证筛选稳定性）

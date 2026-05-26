@@ -9,8 +9,13 @@
 #include <QtCore/QObject>
 #include <QtCore/QThread>
 #include <QtCore/QScopedPointer>
+
+// CTP SDK 使用未命名参数作为虚函数占位符，禁用警告
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <external/ctp/ThostFtdcUserApiStruct.h>
 #include <external/ctp/ThostFtdcMdApi.h>
+#pragma GCC diagnostic pop
 
 namespace CTP {
 

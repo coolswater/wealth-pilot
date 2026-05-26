@@ -11,7 +11,12 @@
 #include <QtCore/QHash>
 #include <QtCore/QDateTime>
 #include "../service/CTPService.h"
+
+// CTP SDK 使用未命名参数作为虚函数占位符，禁用警告
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "external/ctp/ThostFtdcTraderApi.h"
+#pragma GCC diagnostic pop
 
 // 关键前向声明CTP结构体（避免头文件污染）
 struct CThostFtdcInvestorPositionField;

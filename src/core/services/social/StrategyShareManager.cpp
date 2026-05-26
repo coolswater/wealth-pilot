@@ -304,21 +304,24 @@ StrategyRating StrategyShareManager::getUserRating(const QString& strategyId,
 // ========== 跟单交易 ==========
 
 void StrategyShareManager::setFollowConfig(const QString& strategyId,
-                                           bool enabled,
+                                           bool follow,
                                            double ratio,
                                            double maxAmount)
 {
+    Q_UNUSED(maxAmount)  // 限制最大跟投金额，当前版本暂未实现
+    
+    m_followConfigs[strategyId] = { follow, ratio };
+    
     for (Subscription& sub : m_mySubscriptions) {
         if (sub.strategyId == strategyId) {
-            sub.autoFollow = enabled;
+            sub.autoFollow = follow;
             sub.followRatio = ratio;
-            // maxAmount 暂不使用
             break;
         }
     }
 
     LOG_INFO(QString("Follow config updated: %1, enabled=%2, ratio=%3")
-        .arg(strategyId).arg(enabled).arg(ratio));
+        .arg(strategyId).arg(follow).arg(ratio));
 }
 
 void StrategyShareManager::processSignal(const StrategyTradeSignal& signal)

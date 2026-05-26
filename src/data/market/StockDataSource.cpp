@@ -29,7 +29,11 @@ StockDataSource::StockDataSource(Source source, QObject *parent)
 
 StockDataSource::~StockDataSource()
 {
-    stopAutoRefresh();
+    // 注意：stopAutoRefresh() 已标记为 deprecated，使用 registerToDataHub() 替代
+    // 但为了向后兼容，析构时仍需停止定时器
+    if (m_refreshTimer) {
+        m_refreshTimer->stop();
+    }
     stopRealtimeQuotes();
 }
 

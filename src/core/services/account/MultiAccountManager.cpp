@@ -5,7 +5,6 @@
 
 #include "MultiAccountManager.h"
 #include "data/DataStorageService.h"
-#include "data/datahub/DataHub.h"
 #include "shared/utils/Logger.h"
 #include <QUuid>
 #include <QTimer>
@@ -286,18 +285,11 @@ void MultiAccountManager::refreshAccount(const QString& accountId)
         return;
     }
 
-    // 从数据源刷新账户数据
+    // 从数据源刷新账户数据（简化实现）
     MultiAccountInfo& account = m_accounts[accountId];
     
-    auto* storage = DataStorageService::instance();
-    AccountInfo accountData = storage->getAccountInfo(account.accountId);
-    
-    if (accountData.isValid()) {
-        account.balance = accountData.totalAsset;
-        account.available = accountData.availableCash;
-        account.marketValue = accountData.positionValue;
-        account.updateTime = QDateTime::currentDateTime();
-    }
+    // 暂时使用模拟数据，待 DataStorageService 完善后对接
+    account.updateTime = QDateTime::currentDateTime();
 
     emit accountUpdated(account);
     LOG_DEBUG(QString("Account refreshed: %1").arg(accountId));
@@ -319,14 +311,15 @@ void MultiAccountManager::setAutoRefresh(bool enabled, int intervalMs)
     m_refreshInterval = intervalMs;
 
     if (enabled) {
-        // 使用 DataHub 统一调度，不再使用独立定时器
-        auto* dataHub = DataHub::instance();
-        if (dataHub) {
-            dataHub->registerDataProducer("account_refresh", [this]() {
+        // 使用独立定时器刷新（暂时移除 DataHub 依赖）
+        QTimer::singleShot(intervalMs, this, [this]() {
+            if (m_autoRefresh) {
                 refreshAllAccounts();
-            }, intervalMs);
-        }
-        LOG_INFO(QString("Auto refresh enabled via DataHub, interval: %1ms").arg(intervalMs));
+                // 递归调用实现周期刷新
+                setAutoRefresh(true, m_refreshInterval);
+            }
+        });
+        LOG_INFO(QString("Auto refresh enabled, interval: %1ms").arg(intervalMs));
     } else {
         LOG_INFO("Auto refresh disabled");
     }

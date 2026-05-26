@@ -91,7 +91,7 @@ QMetaObject::Connection DataHub::subscribe(
 QMetaObject::Connection DataHub::subscribePattern(
     QObject* owner,
     const QString& pattern,
-    std::function<void(const QString&, const QVariant&)> slot)
+    [[maybe_unused]] std::function<void(const QString&, const QVariant&)> slot)
 {
     if (!owner || pattern.isEmpty()) {
         return QMetaObject::Connection();
@@ -194,10 +194,6 @@ void DataHub::publish(const QString& topic, const QVariant& value,
                     for (const auto& sub : it.value()) {
                         if (sub.isPattern && sub.pattern == patternIt.key()) {
                             // 模式订阅需要传递topic
-                            auto patternSlot = std::function<void(const QString&, const QVariant&)>(
-                                [](const QString& t, const QVariant& v) {}
-                            );
-                            // 这里需要存储原始的pattern slot
                             sub.slot(value);
                         }
                     }

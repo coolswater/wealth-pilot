@@ -2,7 +2,12 @@
 ///@file CtpMarketSpi.cpp
 ///@brief Market SPI implementation - PIMPL细节
 /////////////////////////////////////////////////////////////////////////
+
+// CTP SDK 使用未命名参数作为虚函数占位符，禁用警告
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "external/ctp/ThostFtdcMdApi.h"
+#pragma GCC diagnostic pop
 #include "../service/CTPService.h"
 #include "CtpDataBuffer.h"
 #include "CtpMarketSpi.h"

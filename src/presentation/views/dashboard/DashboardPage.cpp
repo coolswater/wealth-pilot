@@ -25,6 +25,7 @@
 #include "data/market/StockDataSource.h"
 #include "data/DataStorageService.h"
 #include "data/datahub/DataHub.h"
+#include "shared/utils/Logger.h"
 #include "core/services/cache/CacheManager.h"
 #include "shared/utils/Logger.h"
 
@@ -1450,29 +1451,14 @@ void DashboardPage::loadRealData()
     d->rankDataSource->requestQuotes(d->hotStockSymbols);
     
     // 请求自选股数据
-    d->watchlistDataSource->requestQuotes(d->watchlistSymbols);
+        d->watchlistDataSource->requestQuotes(d->watchlistSymbols);
     
-    // 使用 DataHub 统一调度，替代独立 startAutoRefresh
-    // 注册数据源到 DataHub，由 DataHub 统一管理刷新频率
-    auto* dataHub = DataHub::instance();
-    if (dataHub) {
-        // 注册指数数据源
-        d->indexDataSource->registerToDataHub(dataHub, 5000);
-        
-        // 注册排行榜数据源
-        d->rankDataSource->registerToDataHub(dataHub, 5000);
-        
-        // 注册自选股数据源
-        d->watchlistDataSource->registerToDataHub(dataHub, 5000);
-        
+        // 使用 DataHub 统一调度（数据源内部自动获取 DataHub 实例）
+        d->indexDataSource->registerToDataHub(5000);
+        d->rankDataSource->registerToDataHub(5000);
+        d->watchlistDataSource->registerToDataHub(5000);
+    
         LOG_INFO("DashboardPage: Data producers registered to DataHub");
-    } else {
-        // Fallback：如果 DataHub 不可用，使用传统方式
-        d->indexDataSource->startAutoRefresh(5000);
-        d->rankDataSource->startAutoRefresh(5000);
-        d->watchlistDataSource->startAutoRefresh(5000);
-        LOG_WARN("DashboardPage: DataHub not available, using legacy auto-refresh");
-    }
     
     // 加载其他数据（新闻、资金流向等暂时用模拟数据）
     loadNewsData();
@@ -2585,29 +2571,22 @@ void DashboardPage::loadFromNetwork()
         d->rankDataSource->requestQuotes(d->hotStockSymbols);
     
         // 请求自选股数据
-        d->watchlistDataSource->requestQuotes(d->watchlistSymbols);
+                d->watchlistDataSource->requestQuotes(d->watchlistSymbols);
     
-        // 使用 DataHub 统一调度，替代独立 startAutoRefresh
-        auto* dataHub = DataHub::instance();
-        if (dataHub) {
-            d->indexDataSource->registerToDataHub(dataHub, 5000);
-            d->rankDataSource->registerToDataHub(dataHub, 5000);
-            d->watchlistDataSource->registerToDataHub(dataHub, 5000);
-            LOG_INFO("DashboardPage: Data producers registered to DataHub (fallback load)");
-        } else {
-            d->indexDataSource->startAutoRefresh(5000);
-            d->rankDataSource->startAutoRefresh(5000);
-            d->watchlistDataSource->startAutoRefresh(5000);
-        }
+                // 使用 DataHub 统一调度（数据源内部自动获取 DataHub 实例）
+                                d->indexDataSource->registerToDataHub(5000);
+                                d->rankDataSource->registerToDataHub(5000);
+                                d->watchlistDataSource->registerToDataHub(5000);
+                                LOG_INFO("DashboardPage: Data producers registered to DataHub (fallback load)");
     
         // 加载其他数据（新闻、资金流向等暂时用模拟数据）
         loadNewsData();
         loadMoneyFlowData();
         loadSectorData();
     
-    updateTimeDisplay();
-    d->statusLabel->setText(QStringLiteral("正在从网络获取数据..."));
-}
+        updateTimeDisplay();
+        d->statusLabel->setText(QStringLiteral("正在从网络获取数据..."));
+    }
 
 /**
  * @brief 保存数据到缓存

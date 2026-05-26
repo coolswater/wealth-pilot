@@ -506,10 +506,7 @@ QPointF DrawingToolManager::screenToChart(const QPoint& screenPos) const
     // 阶段性实现：需要与 KLineChart 集成后实现真实坐标转换
     // 当前假设图表区域与屏幕坐标直接映射
     // 完整实现：KLineChart::screenToPrice() + screenToTime()
-    if (m_chartWidget) {
-        // 调用图表控件的坐标转换
-        // return m_chartWidget->screenToChart(screenPos);
-    }
+    // TODO: 集成 KLineChart 后实现真实坐标转换
     return QPointF(screenPos.x(), screenPos.y());
 }
 
@@ -517,10 +514,7 @@ QPoint DrawingToolManager::chartToScreen(const QPointF& chartPos) const
 {
     // 阶段性实现：需要与 KLineChart 集成后实现真实坐标转换
     // 完整实现：KLineChart::priceToScreen() + timeToScreen()
-    if (m_chartWidget) {
-        // 调用图表控件的坐标转换
-        // return m_chartWidget->chartToScreen(chartPos);
-    }
+    // TODO: 集成 KLineChart 后实现真实坐标转换
     return QPoint(chartPos.x(), chartPos.y());
 }
 

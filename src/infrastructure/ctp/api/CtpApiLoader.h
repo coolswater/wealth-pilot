@@ -12,9 +12,12 @@
 #include <functional>
 #include <memory>
 
-// CTP 头文件
+// CTP SDK 使用未命名参数作为虚函数占位符，禁用警告
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "external/ctp/ThostFtdcMdApi.h"
 #include "external/ctp/ThostFtdcTraderApi.h"
+#pragma GCC diagnostic pop
 #include "shared/utils/Logger.h"
 
 namespace CTP {

@@ -28,8 +28,8 @@ bool DataHubBootstrap::initialize()
 
     qDebug() << "[DataHubBootstrap] Initializing DataHub...";
 
-    // 获取 DataHub 实例
-    auto& hub = DataHub::DataHub::instance();
+    // 获取 DataHub 实例（确保初始化）
+    [[maybe_unused]] auto& hub = DataHub::DataHub::instance();
 
     // 创建 Producer
     m_marketProducer = new Producers::MarketDataProducer(this);

@@ -118,7 +118,7 @@ bool ThemeManager::saveCustomTheme(const QString& filePath)
 
 void ThemeManager::applyTheme()
 {
-    // 性能优化：使用 RAII 计时器
+    // 性能优化：计时器
     QElapsedTimer timer;
     timer.start();
     
@@ -126,16 +126,13 @@ void ThemeManager::applyTheme()
     QString styleSheet;
     {
         QMutexLocker locker(&m_cacheMutex);
-        if (m_styleCache.contains(m_currentType))
-        {
+        if (m_styleCache.contains(m_currentType)) {
             styleSheet = m_styleCache[m_currentType];
-            LOG_DEBUG("Using cached stylesheet for theme");
         }
     }
-
+    
     // 如果没有缓存，编译样式表
-    if (styleSheet.isEmpty())
-    {
+    if (styleSheet.isEmpty()) {
         // 加载基础样式
         styleSheet = loadBaseQss();
 
@@ -146,15 +143,12 @@ void ThemeManager::applyTheme()
         styleSheet = replaceColorVariables(styleSheet, m_currentTheme);
 
         // 缓存编译后的样式表
-        {
-            QMutexLocker locker(&m_cacheMutex);
-            m_styleCache[m_currentType] = styleSheet;
-        }
+        QMutexLocker locker(&m_cacheMutex);
+        m_styleCache[m_currentType] = styleSheet;
     }
 
     // 应用QPalette
     QPalette palette;
-
     palette.setColor(QPalette::Window, QColor(m_currentTheme.bgPrimary));
     palette.setColor(QPalette::WindowText, QColor(m_currentTheme.textPrimary));
     palette.setColor(QPalette::Base, QColor(m_currentTheme.bgSecondary));
@@ -168,14 +162,10 @@ void ThemeManager::applyTheme()
     palette.setColor(QPalette::Highlight, QColor(m_currentTheme.primary));
     palette.setColor(QPalette::HighlightedText, QStringLiteral("#FFFFFF"));
 
-    // 性能优化：批量更新，减少重绘次数
-    qApp->setUpdatesEnabled(false);
-    
     qApp->setPalette(palette);
     qApp->setStyleSheet(styleSheet);
 
     // 性能优化：异步通知监听器，避免阻塞主线程
-    // 使用 QTimer::singleShot 延迟执行，让 UI 先更新
     QTimer::singleShot(0, this, [this]() {
         for (const auto& listener : m_listeners) {
             if (listener.first) {
@@ -184,14 +174,12 @@ void ThemeManager::applyTheme()
         }
     });
     
-    // 性能优化：使用 update() 替代 repaint()，允许 Qt 合并重绘请求
+    // 性能优化：使用 update() 替代 repaint()
     for (QWidget* widget : qApp->topLevelWidgets()) {
         if (widget) {
             widget->update();
         }
     }
-    
-    qApp->setUpdatesEnabled(true);
     
     LOG_INFO(QString("Theme applied: %1 (%2ms)")
         .arg(m_currentTheme.name)

@@ -4,6 +4,7 @@
  */
 
 #include "MarketDataWebSocket.h"
+#include "shared/types/MarketTypes.h"
 #include "shared/utils/Logger.h"
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -319,7 +320,7 @@ void MarketDataWebSocket::parseTickData(const QJsonObject& json)
 void MarketDataWebSocket::parseKLineData(const QJsonObject& json)
 {
     // 解析 K 线数据
-    KLine kline;
+    WebSocketKLine kline;
     kline.symbol = json["symbol"].toString();
     kline.open = json["open"].toDouble();
     kline.high = json["high"].toDouble();
@@ -328,16 +329,18 @@ void MarketDataWebSocket::parseKLineData(const QJsonObject& json)
     kline.volume = json["volume"].toVariant().toLongLong();
     kline.amount = json["amount"].toDouble();
     
+    // 周期映射（使用 WealthPilot::KLinePeriod）
     QString period = json["period"].toString();
-    if (period == "1m") kline.period = KLinePeriod::Min1;
-    else if (period == "5m") kline.period = KLinePeriod::Min5;
-    else if (period == "15m") kline.period = KLinePeriod::Min15;
-    else if (period == "30m") kline.period = KLinePeriod::Min30;
-    else if (period == "60m") kline.period = KLinePeriod::Min60;
-    else if (period == "day" || period == "1d") kline.period = KLinePeriod::Day;
-    else if (period == "week") kline.period = KLinePeriod::Week;
-    else if (period == "month") kline.period = KLinePeriod::Month;
-    else kline.period = KLinePeriod::Day;
+    using WealthPilot::KLinePeriod;
+    if (period == "1m") kline.period = static_cast<int>(KLinePeriod::Minute1);
+    else if (period == "5m") kline.period = static_cast<int>(KLinePeriod::Minute5);
+    else if (period == "15m") kline.period = static_cast<int>(KLinePeriod::Minute15);
+    else if (period == "30m") kline.period = static_cast<int>(KLinePeriod::Minute30);
+    else if (period == "60m") kline.period = static_cast<int>(KLinePeriod::Hour1);
+    else if (period == "day" || period == "1d") kline.period = static_cast<int>(KLinePeriod::Day1);
+    else if (period == "week") kline.period = static_cast<int>(KLinePeriod::Week1);
+    else if (period == "month") kline.period = static_cast<int>(KLinePeriod::Month1);
+    else kline.period = static_cast<int>(KLinePeriod::Day1);
     
     kline.timestamp = QDateTime::fromString(json["datetime"].toString(), Qt::ISODate);
     
@@ -358,7 +361,7 @@ void MarketDataWebSocket::parseDepthData(const QJsonObject& json)
         if (item.size() >= 2) {
             DepthLevel level;
             level.price = item[0].toDouble();
-            level.volume = item[1].toDouble();
+            level.volume = item[1].toVariant().toLongLong();
             depth.bids.append(level);
         }
     }
@@ -370,7 +373,7 @@ void MarketDataWebSocket::parseDepthData(const QJsonObject& json)
         if (item.size() >= 2) {
             DepthLevel level;
             level.price = item[0].toDouble();
-            level.volume = item[1].toDouble();
+            level.volume = item[1].toVariant().toLongLong();
             depth.asks.append(level);
         }
     }

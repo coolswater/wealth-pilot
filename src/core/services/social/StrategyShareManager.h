@@ -81,6 +81,15 @@ struct StrategyRating {
 };
 
 /**
+ * @brief 跟单配置
+ */
+struct FollowConfig {
+    bool enabled = false;       ///< 是否启用跟单
+    double ratio = 1.0;         ///< 跟单比例
+    double maxAmount = 0.0;     ///< 最大跟投金额
+};
+
+/**
  * @brief 策略分享管理器
  *
  * 提供社交交易功能：
@@ -226,6 +235,7 @@ private:
     QHash<QString, QVector<StrategyRating>> m_ratings;
     QVector<Subscription> m_mySubscriptions;
     QVector<StrategyTradeSignal> m_followRecords;
+    QHash<QString, FollowConfig> m_followConfigs;  ///< 跟单配置
 
     QString m_currentUserId;
 };
