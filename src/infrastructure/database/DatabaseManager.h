@@ -216,6 +216,9 @@ private:
     // Create table structure
     void createTables();
     
+    // Create indexes for performance
+    void createIndexes();
+    
     // Apply optimizations
     void applyOptimizations();
 

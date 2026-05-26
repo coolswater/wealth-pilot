@@ -31,6 +31,12 @@ struct KLineChart::Impl {
     // K线数据
     QVector<KLineData> data;
     
+    // 懒加载支持
+    bool lazyLoadEnabled = false;       // 是否启用懒加载
+    int totalDataSize = 0;              // 总数据量（用于进度显示）
+    int loadThreshold = 20;             // 滚动到边缘时触发加载的阈值
+    bool isLoadingData = false;         // 是否正在加载数据
+    
     // 样式配置
     KLineStyle style;
     
@@ -451,6 +457,9 @@ void KLineChart::pan(int dx)
     d->calculateVisibleRange();
     update();
     emit visibleRangeChanged(d->visibleStart, d->visibleCount);
+    
+    // 检查是否需要加载更多历史数据
+    checkAndRequestMoreData();
 }
 
 /**
@@ -1644,4 +1653,103 @@ void KLineChart::compressData()
 int KLineChart::timeToX(int index) const
 {
     return d->timeToX(index);
+}
+
+// ==================== 分片加载功能 ====================
+
+void KLineChart::setDataWithLazyLoad(const QVector<KLineData>& initialData, int totalCount)
+{
+    d->lazyLoadEnabled = true;
+    d->totalDataSize = totalCount;
+    d->data = initialData;
+    
+    // 性能优化：数据压缩
+    compressData();
+    
+    // 显示最新数据
+    d->visibleCount = qMin(100, d->data.size());
+    d->visibleStart = d->data.size() - d->visibleCount;
+    d->calculateVisibleRange();
+    
+    // 计算默认指标
+    if (!initialData.isEmpty()) {
+        if (d->mainIndicatorLines.isEmpty()) {
+            setMainIndicator(d->currentMainIndicator);
+        }
+        if (d->subIndicatorLines.isEmpty()) {
+            setSubIndicator(d->currentSubIndicator);
+        }
+    }
+    
+    update();
+    emit dataLoadProgress(initialData.size(), totalCount);
+    
+    LOG_DEBUG(QString("KLine data set with lazy load: %1/%2 items")
+              .arg(initialData.size()).arg(totalCount));
+}
+
+void KLineChart::prependHistoricalData(const QVector<KLineData>& historicalData)
+{
+    if (historicalData.isEmpty()) return;
+    
+    d->isLoadingData = false;
+    
+    // 计算新增数据后的起始位置偏移
+    int addedCount = historicalData.size();
+    int oldSize = d->data.size();
+    
+    // 预分配空间
+    d->data.reserve(oldSize + addedCount);
+    
+    // 在前面插入历史数据
+    QVector<KLineData> newData;
+    newData.reserve(oldSize + addedCount);
+    newData.append(historicalData);
+    newData.append(d->data);
+    d->data = std::move(newData);
+    
+    // 调整可见起始位置（保持当前视图不变）
+    d->visibleStart += addedCount;
+    
+    // 重新计算指标
+    setMainIndicator(d->currentMainIndicator);
+    setSubIndicator(d->currentSubIndicator);
+    
+    // 性能优化：数据压缩
+    compressData();
+    d->calculateVisibleRange();
+    
+    update();
+    emit dataLoadProgress(d->data.size(), d->totalDataSize);
+    
+    LOG_DEBUG(QString("Prepended %1 historical KLine items, total: %2")
+              .arg(addedCount).arg(d->data.size()));
+}
+
+void KLineChart::checkAndRequestMoreData()
+{
+    if (!d->lazyLoadEnabled || d->isLoadingData) return;
+    
+    // 检查是否滚动到左侧边缘
+    if (d->visibleStart <= d->loadThreshold) {
+        // 请求加载更多历史数据
+        int requestedCount = 200;  // 每次加载200条
+        d->isLoadingData = true;
+        emit historicalDataRequested(d->data.size(), requestedCount);
+    }
+}
+
+int KLineChart::dataSize() const
+{
+    return d->data.size();
+}
+
+bool KLineChart::isLazyLoadEnabled() const
+{
+    return d->lazyLoadEnabled;
+}
+
+void KLineChart::setLazyLoadEnabled(bool enabled)
+{
+    d->lazyLoadEnabled = enabled;
 }

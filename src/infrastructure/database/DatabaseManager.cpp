@@ -643,7 +643,59 @@ void DatabaseManager::createTables()
         )
     )");
     
+    // K线数据表（高频查询）
+    executeQuery(R"(
+        CREATE TABLE IF NOT EXISTS kline_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            symbol TEXT NOT NULL,
+            period TEXT NOT NULL,
+            time TIMESTAMP NOT NULL,
+            open REAL NOT NULL,
+            high REAL NOT NULL,
+            low REAL NOT NULL,
+            close REAL NOT NULL,
+            volume INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(symbol, period, time)
+        )
+    )");
+    
+    // 创建索引
+    createIndexes();
+    
     LOG_DEBUG("Database tables created");
+}
+
+void DatabaseManager::createIndexes()
+{
+    LOG_DEBUG("Creating database indexes...");
+    
+    // user_config 表索引
+    executeQuery("CREATE INDEX IF NOT EXISTS idx_user_config_key ON user_config(key)");
+    executeQuery("CREATE INDEX IF NOT EXISTS idx_user_config_updated ON user_config(updated_at)");
+    
+    // favorites 表索引
+    executeQuery("CREATE INDEX IF NOT EXISTS idx_favorites_symbol ON favorites(symbol)");
+    executeQuery("CREATE INDEX IF NOT EXISTS idx_favorites_exchange ON favorites(exchange)");
+    
+    // trade_history 表索引（高频查询）
+    executeQuery("CREATE INDEX IF NOT EXISTS idx_trade_symbol ON trade_history(symbol)");
+    executeQuery("CREATE INDEX IF NOT EXISTS idx_trade_time ON trade_history(trade_time)");
+    executeQuery("CREATE INDEX IF NOT EXISTS idx_trade_symbol_time ON trade_history(symbol, trade_time)");
+    
+    // positions 表索引
+    executeQuery("CREATE INDEX IF NOT EXISTS idx_positions_symbol ON positions(symbol)");
+    executeQuery("CREATE INDEX IF NOT EXISTS idx_positions_updated ON positions(updated_at)");
+    
+    // cache 表索引
+    executeQuery("CREATE INDEX IF NOT EXISTS idx_cache_expire ON cache(expire_time)");
+    
+    // kline_data 表索引（最高频查询，需要复合索引）
+    executeQuery("CREATE INDEX IF NOT EXISTS idx_kline_symbol_period ON kline_data(symbol, period)");
+    executeQuery("CREATE INDEX IF NOT EXISTS idx_kline_symbol_time ON kline_data(symbol, time)");
+    executeQuery("CREATE INDEX IF NOT EXISTS idx_kline_symbol_period_time ON kline_data(symbol, period, time)");
+    
+    LOG_DEBUG("Database indexes created");
 }
 
 void DatabaseManager::applyOptimizations()

@@ -8,11 +8,12 @@
  * - 技术指标叠加
  * - 十字光标
  * - 缩放和平移
- * - 性能优化：双缓冲绘制、数据压缩
+ * - 性能优化：双缓冲绘制、数据压缩、分片加载
  *
  * @author WealthPilot Team
- * @version 2.0.0
+ * @version 2.1.0
  */
+
 #ifndef KLINECHART_H
 #define KLINECHART_H
 
@@ -95,6 +96,21 @@ public:
     void setData(const QVector<KLineData>& data);
 
     /**
+     * @brief 设置K线数据（分片加载模式）
+     * @param initialData 初始数据（最近N条）
+     * @param totalCount 总数据量（用于预加载指示）
+     * @details 适用于大数据量场景，先加载可见区域数据
+     */
+    void setDataWithLazyLoad(const QVector<KLineData>& initialData, int totalCount);
+
+    /**
+     * @brief 添加历史数据（向前扩展）
+     * @param historicalData 历史K线数据
+     * @details 用于滚动到左侧时动态加载更多历史数据
+     */
+    void prependHistoricalData(const QVector<KLineData>& historicalData);
+
+    /**
      * @brief 添加K线数据
      */
     void addData(const KLineData& data);
@@ -113,6 +129,21 @@ public:
      * @brief 获取数据
      */
     QVector<KLineData> data() const;
+    
+    /**
+     * @brief 获取数据总数
+     */
+    int dataSize() const;
+    
+    /**
+     * @brief 是否支持懒加载
+     */
+    bool isLazyLoadEnabled() const;
+    
+    /**
+     * @brief 设置懒加载模式
+     */
+    void setLazyLoadEnabled(bool enabled);
 
     // ========== 样式设置 ==========
 
@@ -222,6 +253,18 @@ signals:
      * @brief 可见范围变化信号（用于主图副图联动）
      */
     void visibleRangeChanged(int startIndex, int count);
+    
+    /**
+     * @brief 请求加载历史数据信号
+     * @param loadedCount 已加载数量
+     * @param requestedCount 请求数量
+     */
+    void historicalDataRequested(int loadedCount, int requestedCount);
+    
+    /**
+     * @brief 数据加载进度信号
+     */
+    void dataLoadProgress(int current, int total);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -266,6 +309,9 @@ private:
     
     // 计算可见范围
     void calculateVisibleRange();
+    
+    // 检查是否需要加载更多数据
+    void checkAndRequestMoreData();
 
     struct Impl;
     std::unique_ptr<Impl> d;

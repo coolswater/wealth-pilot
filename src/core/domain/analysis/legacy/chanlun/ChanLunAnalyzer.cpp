@@ -28,6 +28,7 @@
 #include "shared/utils/Logger.h"
 #include <algorithm>
 #include <cmath>
+#include <QtConcurrent>
 
 namespace WealthPilot {
 namespace ChanLun {
@@ -1001,7 +1002,32 @@ QVector<Analysis::UnifiedSignal> ChanLunAnalyzer::currentSignals() const
         unifiedSignal.description = signal.description;
         signalList.append(unifiedSignal);
     }
-    return signalList;
+return signalList;
+}
+
+// ============================================================================
+// 异步分析实现
+// ============================================================================
+
+void ChanLunAnalyzer::analyzeAsync(const QVector<RawKLine>& klines)
+{
+    emit analysisStarted();
+    
+    // 使用 Qt Concurrent 在后台线程执行分析
+    QtConcurrent::run([this, klines]() {
+        ChanLunResult result = analyze(klines);
+        
+        // 结果需要在主线程中发射信号
+        QMetaObject::invokeMethod(this, [this, result]() {
+            emit analysisCompleted(result);
+        }, Qt::QueuedConnection);
+    });
+}
+
+void ChanLunAnalyzer::cancelAnalysis()
+{
+    // 取消当前的异步任务（如果需要更复杂的取消逻辑，可以添加状态标志）
+    LOG_DEBUG("Analysis cancellation requested");
 }
 
 } // namespace ChanLun

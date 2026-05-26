@@ -177,14 +177,8 @@ MainWindow::~MainWindow()
     {
         saveSettings();
 
-        // 清理页面缓存
-        for (auto page : d->pageCache)
-        {
-            if (page)
-            {
-                page->deleteLater();
-            }
-        }
+        // 页面已设置父对象为 this，Qt 会自动清理
+        // 只需清空缓存引用，避免悬空指针
         d->pageCache.clear();
     }
 

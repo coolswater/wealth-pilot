@@ -50,12 +50,14 @@ struct StockQuoteData
 };
 
 /**
- * @brief 股票行情表格模型
+ * @brief 股票行情表格模型 - 高性能虚拟滚动版本
  * 
  * @details 提供股票数据的表格展示：
  * - 支持排序（使用 Qt::UserRole 存储原始数值）
  * - 涨跌颜色显示（通过委托实现）
  * - 数据更新时自动刷新视图
+ * - 虚拟滚动优化：只渲染可见区域
+ * - 增量更新：避免全量重置
  */
 class StockQuoteModel : public QAbstractTableModel
 {
@@ -90,10 +92,17 @@ public:
     // ========== 数据操作 ==========
     
     /**
-     * @brief 设置数据（批量更新）
+     * @brief 设置数据（批量更新）- 使用增量更新优化
      * @param quotes 股票行情数据列表
      */
     void setData(const QVector<StockQuoteData>& quotes);
+
+    /**
+     * @brief 增量更新数据（高性能）
+     * @param quotes 新的股票行情数据列表
+     * @details 只更新变化的行，避免全量重置
+     */
+    void updateDataIncremental(const QVector<StockQuoteData>& quotes);
 
     /**
      * @brief 更新单只股票数据
@@ -101,6 +110,12 @@ public:
      * @param quote 新的行情数据
      */
     void updateQuote(const QString& symbol, const StockQuoteData& quote);
+
+    /**
+     * @brief 批量更新多只股票（高性能）
+     * @param updates 股票代码到行情数据的映射
+     */
+    void batchUpdateQuotes(const QHash<QString, StockQuoteData>& updates);
 
     /**
      * @brief 清空数据
@@ -118,14 +133,38 @@ public:
      */
     int findRowBySymbol(const QString& symbol) const;
 
+    /**
+     * @brief 获取数据总数
+     */
+    int size() const { return m_data.size(); }
+
+    /**
+     * @brief 预留容量（避免频繁内存分配）
+     */
+    void reserve(int size);
+
+signals:
+    /**
+     * @brief 数据更新完成信号
+     */
+    void dataUpdateCompleted(int updatedCount);
+
 private:
     QVector<StockQuoteData> m_data; ///< 数据存储
     QHash<QString, int> m_symbolIndex; ///< 代码到行索引的映射（加速查找）
+    
+    // 性能优化：缓存上次更新的数据，用于增量比较
+    QHash<QString, StockQuoteData> m_lastDataSnapshot;
 
     /**
      * @brief 格式化成交量/成交额
      */
     static QString formatVolume(qint64 volume);
+    
+    /**
+     * @brief 检查两个行情数据是否有实质变化
+     */
+    static bool hasSignificantChange(const StockQuoteData& oldData, const StockQuoteData& newData);
 };
 
 /**

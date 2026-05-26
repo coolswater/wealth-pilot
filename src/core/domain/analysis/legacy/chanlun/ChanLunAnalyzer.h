@@ -22,6 +22,7 @@
 #include "ChanLunTypes.h"
 #include <QObject>
 #include <QVector>
+#include <QFutureWatcher>
 #include <memory>
 
 namespace WealthPilot {
@@ -154,6 +155,29 @@ signals:
      * @brief 发现买卖点信号
      */
     void signalFound(const TradeSignal& signal);
+    
+    /**
+     * @brief 异步分析进度信号
+     */
+    void analysisProgress(int current, int total);
+    
+    /**
+     * @brief 异步分析开始信号
+     */
+    void analysisStarted();
+
+public slots:
+    /**
+     * @brief 异步分析K线数据（不阻塞UI线程）
+     * @param klines 原始K线数据
+     * @details 在后台线程执行分析，完成后发射 analysisCompleted 信号
+     */
+    void analyzeAsync(const QVector<RawKLine>& klines);
+    
+    /**
+     * @brief 取消正在进行的异步分析
+     */
+    void cancelAnalysis();
 
 private:
     // ========== 内部方法 ==========

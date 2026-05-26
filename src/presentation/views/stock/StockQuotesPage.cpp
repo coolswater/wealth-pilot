@@ -192,16 +192,135 @@ QVariant StockQuoteModel::headerData(int section, Qt::Orientation orientation, i
 
 void StockQuoteModel::setData(const QVector<StockQuoteData>& quotes)
 {
-    beginResetModel();
-    m_data = quotes;
+    // 性能优化：使用增量更新代替全量重置
+    if (m_data.isEmpty()) {
+        // 首次加载，直接设置
+        beginResetModel();
+        m_data = quotes;
+        
+        // 预分配索引空间
+        m_symbolIndex.reserve(quotes.size() + 100);
+        for (int i = 0; i < m_data.size(); ++i) {
+            m_symbolIndex[m_data[i].symbol] = i;
+        }
+        
+        // 缓存数据快照
+        m_lastDataSnapshot.clear();
+        m_lastDataSnapshot.reserve(quotes.size());
+        for (const auto& quote : quotes) {
+            m_lastDataSnapshot[quote.symbol] = quote;
+        }
+        
+        endResetModel();
+    } else {
+        // 后续更新，使用增量更新
+        updateDataIncremental(quotes);
+    }
+}
+
+void StockQuoteModel::updateDataIncremental(const QVector<StockQuoteData>& quotes)
+{
+    // 高性能增量更新：只更新变化的行
+    QVector<int> changedRows;
+    changedRows.reserve(quotes.size());
     
-    // 重建索引
-    m_symbolIndex.clear();
-    for (int i = 0; i < m_data.size(); ++i) {
-        m_symbolIndex[m_data[i].symbol] = i;
+    for (const auto& quote : quotes) {
+        int row = findRowBySymbol(quote.symbol);
+        if (row >= 0) {
+            // 检查是否有实质变化
+            auto it = m_lastDataSnapshot.find(quote.symbol);
+            if (it != m_lastDataSnapshot.end()) {
+                if (!hasSignificantChange(it.value(), quote)) {
+                    continue;  // 无变化，跳过
+                }
+            }
+            
+            m_data[row] = quote;
+            m_lastDataSnapshot[quote.symbol] = quote;
+            changedRows.append(row);
+        }
     }
     
-    endResetModel();
+    // 批量通知视图更新（减少信号发射次数）
+    if (!changedRows.isEmpty()) {
+        // 找出连续变化的行范围，合并通知
+        int minRow = changedRows.first();
+        int maxRow = changedRows.last();
+        
+        // 发射数据变化信号（一次性通知所有变化行）
+        emit dataChanged(index(minRow, 0), index(maxRow, ColCount - 1));
+    }
+    
+    emit dataUpdateCompleted(changedRows.size());
+}
+
+void StockQuoteModel::batchUpdateQuotes(const QHash<QString, StockQuoteData>& updates)
+{
+    // 批量更新：适用于实时行情推送场景
+    QVector<int> changedRows;
+    changedRows.reserve(updates.size());
+    
+    for (auto it = updates.begin(); it != updates.end(); ++it) {
+        const QString& symbol = it.key();
+        const StockQuoteData& quote = it.value();
+        
+        int row = findRowBySymbol(symbol);
+        if (row >= 0) {
+            // 检查是否有实质变化
+            auto lastIt = m_lastDataSnapshot.find(symbol);
+            if (lastIt != m_lastDataSnapshot.end()) {
+                if (!hasSignificantChange(lastIt.value(), quote)) {
+                    continue;
+                }
+            }
+            
+            m_data[row] = quote;
+            m_lastDataSnapshot[symbol] = quote;
+            changedRows.append(row);
+        }
+    }
+    
+    if (!changedRows.isEmpty()) {
+        int minRow = changedRows.first();
+        int maxRow = changedRows.last();
+        emit dataChanged(index(minRow, 0), index(maxRow, ColCount - 1));
+    }
+    
+    emit dataUpdateCompleted(changedRows.size());
+}
+
+void StockQuoteModel::reserve(int size)
+{
+    m_data.reserve(size);
+    m_symbolIndex.reserve(size);
+    m_lastDataSnapshot.reserve(size);
+}
+
+bool StockQuoteModel::hasSignificantChange(const StockQuoteData& oldData, const StockQuoteData& newData)
+{
+    // 定义显著变化的阈值
+    constexpr double PRICE_THRESHOLD = 0.001;  // 价格变化 0.1%
+    constexpr qint64 VOLUME_THRESHOLD = 100;   // 成交量变化 100 手
+    
+    // 价格变化
+    if (oldData.price > 0 && newData.price > 0) {
+        double priceChange = std::abs(newData.price - oldData.price) / oldData.price;
+        if (priceChange > PRICE_THRESHOLD) {
+            return true;
+        }
+    }
+    
+    // 成交量变化
+    if (std::abs(newData.volume - oldData.volume) > VOLUME_THRESHOLD) {
+        return true;
+    }
+    
+    // 涨跌幅变化
+    if (std::abs(newData.changePercent - oldData.changePercent) > PRICE_THRESHOLD) {
+        return true;
+    }
+    
+    return false;
 }
 
 void StockQuoteModel::updateQuote(const QString& symbol, const StockQuoteData& quote)
