@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-6.0.0-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![Qt](https://img.shields.io/badge/Qt-6.10.2-green.svg)
 ![C++](https://img.shields.io/badge/C++-17-orange.svg)
@@ -29,6 +29,7 @@ WealthPilot 是一个基于 Qt 6.10.2 和 C++17 开发的金融信息展示与�
 - 🤖 **AI分析** - 智能投资分析与建议
 - 📈 **技术分析** - 缠论、K线形态识别
 - 🎨 **现代UI** - 深色主题，流畅体验
+- ⚡ **高性能** - DataHub统一调度，主题切换优化
 
 ---
 
@@ -117,57 +118,76 @@ cmake --build . --target WealthPilot -j 10
 
 ```
 wealth-pilot/
-├── src/                    # 源代码目录
-│   ├── ai/                 # AI分析模块
-│   ├── analysis/           # 技术分析模块
-│   ├── app/                # 应用程序入口
-│   ├── core/               # 核心功能模块
-│   ├── ctp/                # CTP接口模块
-│   ├── data/               # 数据存储模块
-│   ├── domain/             # 领域模型
-│   ├── market/             # 市场数据模块
-│   ├── models/             # 数据模型
-│   ├── network/            # 网络通信模块
-│   ├── plugins/            # 插件系统
-│   ├── trading/            # 交易管理模块
-│   ├── ui/                 # UI组件
-│   ├── utils/              # 工具类
-│   └── views/              # 页面视图
-├── external/               # 外部依赖
-├── docs/                   # 项目文档
-├── resources/              # 资源文件
-├── translations/           # 国际化文件
-└── CMakeLists.txt          # 构建配置
+├── src/                        # 源代码目录
+│   ├── app/                    # 应用程序入口
+│   ├── core/                   # 核心功能模块
+│   │   ├── services/           # 服务层
+│   │   │   ├── cache/          # 缓存管理
+│   │   │   ├── di/             # 依赖注入
+│   │   │   ├── navigation/     # 页面导航
+│   │   │   ├── alert/          # 智能预警
+│   │   │   └── lifecycle/      # 服务生命周期
+│   │   ├── domain/             # 领域模型
+│   │   │   ├── analysis/       # 分析模块
+│   │   │   ├── backtest/       # 回测引擎
+│   │   │   ├── portfolio/      # 组合优化
+│   │   │   └── risk/           # 风险管理
+│   │   └── trading/            # 交易管理
+│   ├── data/                   # 数据层
+│   │   ├── datahub/            # 数据中心（核心）
+│   │   ├── market/             # 市场数据源
+│   │   └── models/             # 数据模型
+│   ├── infrastructure/         # 基础设施
+│   │   ├── ai/                 # AI服务
+│   │   ├── config/             # 配置管理
+│   │   ├── database/           # 数据库
+│   │   ├── network/            # 网络通信
+│   │   └── plugins/            # 插件系统
+│   ├── presentation/           # 表现层
+│   │   ├── components/         # UI组件库（50+）
+│   │   ├── views/              # 页面视图（28个）
+│   │   ├── viewmodels/         # 视图模型
+│   │   ├── styles/             # 主题样式
+│   │   └── animation/          # 动画管理
+│   └── shared/                 # 共享模块
+│       ├── types/              # 类型定义
+│       └── utils/              # 工具类
+├── docs/                       # 项目文档
+│   ├── architecture/           # 架构文档
+│   ├── technical-debt/         # 技术债务
+│   └── optimization/           # 优化方案
+├── resources/                  # 资源文件
+└── CMakeLists.txt              # 构建配置
 ```
 
-### 模块说明
+### 核心模块说明
 
-#### 核心模块 (src/core)
+#### DataHub - 数据中心（v6.0 核心改进）
 
-- **config** - 配置管理（设计令牌、主题管理）
-- **navigation** - 页面导航系统
-- **di** - 依赖注入容器
-- **cache** - 缓存管理
-- **task** - 异步任务管理
-- **alert** - 智能预警系统
-- **analysis** - 新闻情感分析
+DataHub 是 WealthPilot 的核心数据中枢，负责：
 
-#### UI模块 (src/ui)
+- 发布/订阅模式的数据分发
+- 数据生命周期管理（TTL、缓存）
+- 统一的定时刷新调度
+- 数据源注册和发现
 
-- **components** - UI组件库（50+组件）
-- **animation** - 动画管理
-- **utils** - UI工具类
-- **ThemeManager** - 主题管理器
+```cpp
+// 订阅数据
+DataHub::instance()->subscribe("market:quote:sh600519", [](const QVariant& data) {
+    StockQuote quote = data.value<StockQuote>();
+    // 处理行情数据
+});
 
-#### 视图模块 (src/views)
+// 注册数据生产者
+stockDataSource->registerToDataHub(DataHub::instance(), 5000);
+```
 
-- **dashboard** - 仪表盘页面
-- **stock** - 股票相关页面
-- **futures** - 期货相关页面
-- **news** - 新闻资讯页面
-- **portfolio** - 持仓管理页面
-- **settings** - 设置页面
-- **signalCenter** - 信号中心页面
+#### ThemeManager - 主题管理器（v2.0 性能优化）
+
+- 样式表编译缓存
+- 批量UI更新，减少重绘
+- 异步监听器通知
+- 切换性能提升 3-5 倍
 
 ---
 
@@ -176,36 +196,39 @@ wealth-pilot/
 ### 架构设计
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                      Presentation Layer                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
-│  │ Dashboard│  │  Stock   │  │ Futures  │  │   News   │ │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    Presentation Layer                        │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
+│  │ Dashboard│  │  Stock   │  │ Futures  │  │   News   │    │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘    │
+│                         ↓ ThemeManager                       │
+└─────────────────────────────────────────────────────────────┘
+                            ↓ DataHub
+┌─────────────────────────────────────────────────────────────┐
+│                    Business Layer                            │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
+│  │ Analysis │  │  Trading │  │   AI     │  │  Alert   │    │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘    │
+└─────────────────────────────────────────────────────────────┘
                             ↓
-┌─────────────────────────────────────────────────────────┐
-│                      Business Layer                      │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
-│  │ Analysis │  │  Trading │  │   AI     │  │  Alert   │ │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
-└─────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────┐
-│                       Data Layer                         │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
-│  │  Market  │  │ Storage  │  │ Network  │  │   CTP    │ │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      Data Layer                              │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
+│  │  Market  │  │ Storage  │  │ Network  │  │   CTP    │    │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ### 设计模式
 
-- **MVVM** - 模型-视图-视图模型
-- **DI** - 依赖注入
-- **Observer** - 观察者模式
-- **Factory** - 工厂模式
-- **Singleton** - 单例模式
-- **Strategy** - 策略模式
+| 模式        | 应用场景                        |
+|-----------|-----------------------------|
+| MVVM      | 页面-视图模型分离                   |
+| Singleton | 全局服务（DataHub, ThemeManager） |
+| Observer  | DataHub 发布/订阅               |
+| Factory   | 页面工厂、组件工厂                   |
+| Strategy  | 数据源策略、分析策略                  |
+| PIMPL     | 实现细节隐藏                      |
 
 ### 技术栈
 
@@ -224,22 +247,29 @@ wealth-pilot/
 
 ## 📊 项目统计
 
-| 指标         | 数量     |
-|------------|--------|
-| 源文件 (.cpp) | 136    |
-| 头文件 (.h)   | 160    |
-| 代码行数       | 79,659 |
-| UI组件       | 50+    |
-| 页面视图       | 15+    |
-| 文档页数       | 50+    |
+| 指标          | 数量      |
+|-------------|---------|
+| 源文件 (.cpp)  | 180+    |
+| 头文件 (.h)    | 200+    |
+| 代码行数        | 118,878 |
+| UI组件        | 50+     |
+| 页面视图        | 28      |
+| Singleton服务 | 25+     |
+| TODO已清理     | 44%     |
 
 ---
 
 ## 📚 文档
 
+### 架构文档
+
+- [架构设计](docs/architecture/ArchitectureReview.md)
+- [技术债务报告](docs/technical-debt/TechDebt-Cleanup-Report.md)
+- [DataHub设计](src/data/datahub/DataHub.h)
+- [主题管理器](src/presentation/styles/ThemeManager.h)
+
 ### 开发文档
 
-- [架构设计](docs/01-architecture/ARCHITECTURE.md)
 - [开发者指南](docs/02-development/DEVELOPER_GUIDE.md)
 - [编码规范](docs/02-development/CODING_STANDARDS.md)
 - [样式指南](docs/04-style/STYLE_GUIDE.md)
@@ -250,23 +280,16 @@ wealth-pilot/
 - [期货集成](docs/03-features/FUTURES_INTEGRATION_SUMMARY.md)
 - [数据源集成](docs/05-integration/data-source-integration.md)
 
-### 用户文档
-
-- [用户手册](docs/07-user/USER_MANUAL.md)
-- [API文档](docs/07-user/API_DOCUMENTATION.md)
-- [快速测试](docs/07-user/quick-test-guide.md)
-
-完整文档请查看 [docs/README.md](docs/README.md)
-
 ---
 
 ## 🎨 设计系统
 
 ### 主题支持
 
-- 🌙 **深色主题** - 护眼深色模式
+- 🌙 **深色主题** - 专业金融风格（默认）
 - ☀️ **浅色主题** - 明亮浅色模式
 - 👁️ **护眼主题** - 特殊护眼模式
+- 🎯 **高对比度** - 无障碍支持
 
 ### 设计令牌
 
@@ -276,11 +299,11 @@ wealth-pilot/
 // 颜色令牌
 namespace Tokens::Colors {
     constexpr auto Primary = "#3B82F6";      // 主色
-    constexpr auto Danger = "#EF4444";       // 危险色
-    constexpr auto Success = "#10B981";      // 成功色
+    constexpr auto Danger = "#EF4444";       // 危险色（涨）
+    constexpr auto Success = "#10B981";      // 成功色（跌）
     constexpr auto Warning = "#F59E0B";      // 警告色
-    constexpr auto BgBase = "#1F2937";       // 基础背景
-    constexpr auto TextPrimary = "#FFFFFF";  // 主文本
+    constexpr auto BgBase = "#0A0E17";       // 基础背景
+    constexpr auto TextPrimary = "#F3F4F6";  // 主文本
 }
 ```
 
@@ -301,12 +324,54 @@ namespace Tokens::Colors {
 
 ```ini
 [CTP]
-MarketFront = tcp://180.168.146.187:10131
-TradingFront = tcp://180.168.146.187:10130
+MarketFront = tcp://218.202.237.33:10131
+TradingFront = tcp://218.202.237.33:10130
 BrokerID = 9999
 UserID = your_user_id
 Password = your_password
 ```
+
+---
+
+## 📝 更新日志
+
+### v6.0.0 (2026-05-26)
+
+**架构重构**
+
+- ✅ DataHub 数据中心统一调度
+- ✅ DashboardPage 迁移至 DataHub
+- ✅ 移除独立 QTimer，统一刷新策略
+- ✅ 服务生命周期管理
+
+**性能优化**
+
+- ✅ 主题切换性能提升 3-5 倍
+- ✅ 批量 UI 更新，减少重绘
+- ✅ 异步监听器通知
+- ✅ K线图表 LOD 渲染
+
+**功能拓展**
+
+- ✅ AI选股器数据对接
+- ✅ 智能预警推送（微信/邮件/钉钉）
+- ✅ 策略回测可视化
+- ✅ 回测报告面板
+
+**代码质量**
+
+- ✅ TODO 清理 44%（43→24）
+- ✅ 添加架构审核报告
+- ✅ 完善文件注释
+- ✅ 修复编译错误
+
+### v1.0.0 (2026-05-07)
+
+- ✅ 完整的行情展示系统
+- ✅ 技术分析工具
+- ✅ AI智能分析
+- ✅ 智能预警系统
+- ✅ 多主题支持
 
 ---
 
@@ -325,32 +390,6 @@ Password = your_password
 - 遵循 [编码规范](docs/02-development/CODING_STANDARDS.md)
 - 使用 [代码风格](docs/02-development/CODE_STYLE_GUIDE.md)
 - 添加必要的注释和文档
-
----
-
-## 📝 更新日志
-
-### v1.0.0 (2026-05-07)
-
-**新增功能**
-
-- ✅ 完整的行情展示系统
-- ✅ 技术分析工具
-- ✅ AI智能分析
-- ✅ 智能预警系统
-- ✅ 多主题支持
-
-**样式重构**
-
-- ✅ 消除75+处硬编码颜色
-- ✅ 统一设计令牌系统
-- ✅ 创建样式辅助工具
-
-**性能优化**
-
-- ✅ 数据缓存机制
-- ✅ 异步任务管理
-- ✅ UI渲染优化
 
 ---
 
