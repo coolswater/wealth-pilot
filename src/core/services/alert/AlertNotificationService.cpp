@@ -13,8 +13,8 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QUrlQuery>
-#include <QSmtpClient>
 #include <QSystemTrayIcon>
+#include <QTimer>
 
 namespace WealthPilot {
 
@@ -133,7 +133,7 @@ bool AlertNotificationService::sendViaWeChat(const AlertMessage& message,
     params.addQueryItem("title", message.title);
     params.addQueryItem("desp", message.content);
     
-    QNetworkRequest request(QUrl(url));
+    QNetworkRequest request{QUrl(url)};
     request.setHeader(QNetworkRequest::ContentTypeHeader, 
                       "application/x-www-form-urlencoded");
     
@@ -168,7 +168,7 @@ bool AlertNotificationService::sendViaWeChatWork(const AlertMessage& message,
     body["msgtype"] = "markdown";
     body["markdown"] = markdown;
     
-    QNetworkRequest request(QUrl(config.wechatWorkWebhook));
+    QNetworkRequest request{QUrl(config.wechatWorkWebhook)};
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     
     QNetworkReply* reply = d->networkManager->post(request,
@@ -232,7 +232,7 @@ bool AlertNotificationService::sendViaWebhook(const AlertMessage& message,
     body["priority"] = message.priority;
     body["timestamp"] = message.timestamp.toString(Qt::ISODate);
     
-    QNetworkRequest request(QUrl(config.webhookUrl));
+    QNetworkRequest request{QUrl(config.webhookUrl)};
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     if (!config.webhookToken.isEmpty()) {
         request.setRawHeader("Authorization", 
@@ -267,7 +267,7 @@ bool AlertNotificationService::sendViaDingTalk(const AlertMessage& message,
     body["msgtype"] = "text";
     body["text"] = text;
     
-    QNetworkRequest request(QUrl(config.dingTalkWebhook));
+    QNetworkRequest request{QUrl(config.dingTalkWebhook)};
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     
     QNetworkReply* reply = d->networkManager->post(request,

@@ -38,6 +38,7 @@ struct BacktestDataPoint {
  */
 struct TradeMarker {
     QDateTime date;             ///< 日期
+    QString symbol;             ///< 标的代码
     QString action;             ///< 动作（buy/sell）
     double price;               ///< 价格
     int quantity;               ///< 数量
@@ -53,7 +54,7 @@ class BacktestChartWidget : public QWidget {
 
 public:
     explicit BacktestChartWidget(QWidget* parent = nullptr);
-    ~BacktestChartWidget() override = default;
+    ~BacktestChartWidget() override;  // 在 cpp 中定义
 
     /**
      * @brief 设置回测数据

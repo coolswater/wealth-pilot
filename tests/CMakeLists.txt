@@ -7,28 +7,31 @@ find_package(Qt6 REQUIRED COMPONENTS Test)
 # ========== 核心模块测试 ==========
 
 add_executable(CacheManagerTest core/CacheManagerTest.cpp)
+target_include_directories(CacheManagerTest PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(CacheManagerTest
         PRIVATE
         Qt6::Test
-        core_services
+        WealthPilot::Core
 )
 add_test(NAME CacheManagerTest COMMAND CacheManagerTest)
 
 add_executable(DataHubTest core/DataHubTest.cpp)
+target_include_directories(DataHubTest PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(DataHubTest
         PRIVATE
         Qt6::Test
-        data_datahub
+        WealthPilot::Data
 )
 add_test(NAME DataHubTest COMMAND DataHubTest)
 
 # ========== UI 模块测试 ==========
 
 add_executable(ThemeManagerTest presentation/ThemeManagerTest.cpp)
+target_include_directories(ThemeManagerTest PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(ThemeManagerTest
         PRIVATE
         Qt6::Test
-        presentation_styles
+        WealthPilot::Presentation
 )
 add_test(NAME ThemeManagerTest COMMAND ThemeManagerTest)
 

@@ -41,6 +41,8 @@ BacktestReportWidget::BacktestReportWidget(QWidget* parent)
     setupUI();
 }
 
+BacktestReportWidget::~BacktestReportWidget() = default;
+
 void BacktestReportWidget::setupUI()
 {
     auto* mainLayout = new QVBoxLayout(this);

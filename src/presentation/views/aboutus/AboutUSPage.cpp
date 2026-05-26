@@ -8,6 +8,8 @@
 #include "presentation/styles/ThemeManager.h"
 #include "infrastructure/config/Tokens.h"
 #include "shared/utils/Logger.h"
+#include "presentation/views/feedback/FeedbackDialog.h"
+#include "core/services/feedback/FeedbackSystem.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -30,6 +32,7 @@ struct AboutUSPage::Impl {
     QPushButton* checkUpdateBtn = nullptr;
     QPushButton* visitWebsiteBtn = nullptr;
     QPushButton* viewLicenseBtn = nullptr;
+    QPushButton* submitFeedbackBtn = nullptr;  // 提交反馈按钮
 };
 
 AboutUSPage::AboutUSPage(QWidget* parent)
@@ -240,6 +243,12 @@ void AboutUSPage::setupUI()
     connect(d->viewLicenseBtn, &QPushButton::clicked, this, &AboutUSPage::onViewLicenseClicked);
     btnLayout->addWidget(d->viewLicenseBtn);
     
+    d->submitFeedbackBtn = new QPushButton(QStringLiteral("提交反馈"), this);
+    StyleHelper::setSecondaryButton(d->submitFeedbackBtn);
+    d->submitFeedbackBtn->setFixedWidth(100);
+    connect(d->submitFeedbackBtn, &QPushButton::clicked, this, &AboutUSPage::onSubmitFeedbackClicked);
+    btnLayout->addWidget(d->submitFeedbackBtn);
+    
     btnLayout->addStretch();
     supportLayout->addLayout(btnLayout);
     
@@ -276,4 +285,18 @@ void AboutUSPage::onViewLicenseClicked()
         "<li><b>OpenSSL</b> - Apache 2.0</li>"
         "</ul>"
         "<p>本项目采用 MIT 许可证开源。</p>"));
+}
+
+void AboutUSPage::onSubmitFeedbackClicked()
+{
+    // 初始化反馈系统
+    static bool initialized = false;
+    if (!initialized) {
+        WealthPilot::FeedbackSystem::instance().initialize("data/feedback");
+        initialized = true;
+    }
+    
+    // 显示反馈对话框
+    WealthPilot::FeedbackDialog dialog(this);
+    dialog.exec();
 }

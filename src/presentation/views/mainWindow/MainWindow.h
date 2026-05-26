@@ -94,11 +94,6 @@ private slots:
      */
     void onNavigateToStockKLinePage(const QString& symbol, const QString& name);
 
-    /**
-     * @brief 显示反馈对话框
-     */
-    void showFeedbackDialog();
-
 private:
     /**
      * @brief 构建UI布局

@@ -72,8 +72,8 @@ endif ()
 # ==================== Unity Build ====================
 if (WEALTHPILOT_ENABLE_UNITY_BUILD)
     set(CMAKE_UNITY_BUILD ON)
-    set(CMAKE_UNITY_BUILD_BATCH_SIZE 14)
-    message(STATUS "Unity Build enabled with batch size 14")
+    set(CMAKE_UNITY_BUILD_BATCH_SIZE 8)  # 减小 batch size 避免编译器 section 限制
+    message(STATUS "Unity Build enabled with batch size 8")
 endif ()
 
 # 设置Qt6路径（如果未设置）

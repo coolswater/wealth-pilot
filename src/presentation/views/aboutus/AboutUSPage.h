@@ -55,6 +55,7 @@ private slots:
     void onCheckUpdateClicked();
     void onVisitWebsiteClicked();
     void onViewLicenseClicked();
+    void onSubmitFeedbackClicked();  // 提交反馈
 
 private:
     // ========== UI 初始化 ==========

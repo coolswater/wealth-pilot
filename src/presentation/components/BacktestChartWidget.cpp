@@ -50,6 +50,8 @@ BacktestChartWidget::BacktestChartWidget(QWidget* parent)
     setBackgroundRole(QPalette::Base);
 }
 
+BacktestChartWidget::~BacktestChartWidget() = default;
+
 void BacktestChartWidget::setData(const QVector<BacktestDataPoint>& equityCurve,
                                    const QVector<TradeMarker>& trades)
 {

@@ -22,6 +22,7 @@
 #include <memory>
 
 #include "BacktestChartWidget.h"
+#include "core/domain/backtest/BacktestEngine.h"
 
 namespace WealthPilot {
 
@@ -33,7 +34,7 @@ class BacktestReportWidget : public QWidget {
 
 public:
     explicit BacktestReportWidget(QWidget* parent = nullptr);
-    ~BacktestReportWidget() override = default;
+    ~BacktestReportWidget() override;  // 在 cpp 中定义
 
     /**
      * @brief 设置回测结果

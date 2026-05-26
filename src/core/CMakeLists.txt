@@ -102,6 +102,8 @@ target_sources(Core PRIVATE
 target_sources(Core PRIVATE
         services/alert/SmartAlertSystem.h
         services/alert/SmartAlertSystem.cpp
+        services/alert/AlertNotificationService.h
+        services/alert/AlertNotificationService.cpp
 )
 
 # Cache 缓存系统
@@ -127,6 +129,12 @@ target_sources(Core PRIVATE
         services/feedback/FeedbackTranslations.h
         services/feedback/FeedbackSystem.h
         services/feedback/FeedbackSystem.cpp
+)
+
+# Lifecycle 服务生命周期
+target_sources(Core PRIVATE
+        services/lifecycle/ServiceLifecycle.h
+        services/lifecycle/ServiceLifecycle.cpp
 )
 
 # Monitoring 性能监控

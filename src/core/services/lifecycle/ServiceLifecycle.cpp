@@ -39,7 +39,7 @@ void ServiceLifecycle::registerService(const ServiceDescriptor& descriptor)
     QMutexLocker locker(&d->mutex);
     
     if (d->serviceIndex.contains(descriptor.name)) {
-        LOG_WARN(QString("Service already registered: %1").arg(descriptor.name));
+        LOG_WARNING(QString("Service already registered: %1").arg(descriptor.name));
         return;
     }
     
@@ -181,7 +181,7 @@ bool ServiceLifecycle::checkDependencies(const QString& serviceName) const
     
     for (const QString& dep : service.dependencies) {
         if (!d->serviceIndex.contains(dep)) {
-            LOG_WARN(QString("Dependency not registered: %1 -> %2")
+            LOG_WARNING(QString("Dependency not registered: %1 -> %2")
                 .arg(serviceName).arg(dep));
             return false;
         }

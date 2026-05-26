@@ -91,6 +91,10 @@ target_sources(Presentation PRIVATE
         components/LoadingOverlay.cpp
         components/QmlKLineWidget.h
         components/QmlKLineWidget.cpp
+        components/BacktestChartWidget.h
+        components/BacktestChartWidget.cpp
+        components/BacktestReportWidget.h
+        components/BacktestReportWidget.cpp
 )
 
 # ==================== Views 视图 ====================

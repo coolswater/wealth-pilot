@@ -18,8 +18,8 @@
 
 #include <QObject>
 #include <QtTest/QtTest>
-#include "core/datahub/DataHub.h"
-#include "core/datahub/MarketDataProducer.h"
+#include "data/datahub/DataHub.h"
+#include "data/datahub/MarketDataProducer.h"
 
 /**
  * @brief DataHub 单元测试类
