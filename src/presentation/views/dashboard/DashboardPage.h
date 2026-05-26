@@ -20,8 +20,13 @@
  * - 自动生命周期管理
  * - 统一数据刷新策略
  *
+ * 迁移说明 (v6.0.0)：
+ * - startAutoRefresh() → registerToDataHub()
+ * - 独立 QTimer → DataHub 统一调度
+ * - 保留 fallback 兼容旧代码
+ *
  * @author WealthPilot Team
- * @version 5.0.0
+ * @version 6.0.0
  */
 
 #ifndef DASHBOARDPAGE_H

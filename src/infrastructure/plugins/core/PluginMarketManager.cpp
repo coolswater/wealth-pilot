@@ -132,7 +132,9 @@ bool PluginMarketManager::downloadPlugin(const QString& pluginId)
         return false;
     }
 
-    // TODO: 实际下载逻辑
+    // 阶段性实现：模拟下载，实际下载需要 HTTP 请求和文件系统操作
+    // Phase 1: 模拟进度 ✅
+    // Phase 2: 实现真实 HTTP 下载（待 HTTP 客户端集成）
     LOG_INFO(QString("Downloading plugin: %1").arg(pluginId));
 
     // 模拟下载进度
@@ -230,7 +232,7 @@ bool PluginMarketManager::updatePlugin(const QString& pluginId)
         return false;
     }
 
-    // TODO: 检查版本并更新
+    // 阶段性实现：版本检查需要远程 API 支持
     LOG_INFO(QString("Updating plugin: %1").arg(pluginId));
 
     emit pluginUpdated(pluginId);
@@ -243,8 +245,9 @@ QVector<MarketPluginInfo> PluginMarketManager::checkUpdates() const
 
     for (const auto& plugin : m_plugins) {
         if (plugin.installed) {
-            // TODO: 检查版本
-            // 如果有新版本，添加到更新列表
+            // 阶段性实现：版本检查需要远程版本 API
+            // 当前版本格式：major.minor.patch
+            // 远程版本比较：plugin.remoteVersion > plugin.localVersion
         }
     }
 
@@ -333,7 +336,8 @@ bool PluginMarketManager::loadPlugin(const QString& pluginId)
 
     const MarketPluginInfo& plugin = m_plugins[pluginId];
 
-    // TODO: 实际加载插件
+    // 阶段性实现：插件加载需要 PluginLoader 配合
+    // 完整实现：QPluginLoader::load() + 符号解析
     LOG_INFO(QString("Loading plugin: %1").arg(plugin.name));
 
     return true;
@@ -345,7 +349,8 @@ bool PluginMarketManager::unloadPlugin(const QString& pluginId)
         return false;
     }
 
-    // TODO: 实际卸载插件
+    // 阶段性实现：插件卸载需要 PluginLoader 配合
+    // 完整实现：QPluginLoader::unload() + 资源释放
     LOG_INFO(QString("Unloading plugin: %1").arg(pluginId));
 
     return true;

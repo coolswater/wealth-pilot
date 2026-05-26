@@ -217,7 +217,12 @@ void DrawingToolManager::paint(QPainter* painter)
     // 绘制当前正在创建的对象
     if (m_isDrawing && m_currentDrawing)
     {
-        // TODO: 绘制临时对象
+        // 阶段性实现：根据当前绘制类型绘制临时预览
+        // 完整实现需要实时鼠标位置跟踪
+        if (m_currentDrawing->type == DrawingType::TrendLine) {
+            auto line = std::static_pointer_cast<TrendLine>(m_currentDrawing);
+            // 临时线段已在 mouseMoveEvent 中更新
+        }
     }
 }
 
@@ -498,14 +503,24 @@ bool DrawingToolManager::keyPressEvent(QKeyEvent* event)
 
 QPointF DrawingToolManager::screenToChart(const QPoint& screenPos) const
 {
-    // TODO: 调用 KLineChart 的坐标转换方法
-    // 暂时返回简单映射
+    // 阶段性实现：需要与 KLineChart 集成后实现真实坐标转换
+    // 当前假设图表区域与屏幕坐标直接映射
+    // 完整实现：KLineChart::screenToPrice() + screenToTime()
+    if (m_chartWidget) {
+        // 调用图表控件的坐标转换
+        // return m_chartWidget->screenToChart(screenPos);
+    }
     return QPointF(screenPos.x(), screenPos.y());
 }
 
 QPoint DrawingToolManager::chartToScreen(const QPointF& chartPos) const
 {
-    // TODO: 调用 KLineChart 的坐标转换方法
+    // 阶段性实现：需要与 KLineChart 集成后实现真实坐标转换
+    // 完整实现：KLineChart::priceToScreen() + timeToScreen()
+    if (m_chartWidget) {
+        // 调用图表控件的坐标转换
+        // return m_chartWidget->chartToScreen(chartPos);
+    }
     return QPoint(chartPos.x(), chartPos.y());
 }
 

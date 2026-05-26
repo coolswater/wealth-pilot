@@ -1,3 +1,42 @@
+/**
+ * @file DataHub.h
+ * @brief 数据中心 - 统一数据分发和调度
+ *
+ * @details DataHub 是 WealthPilot 的核心数据中枢，负责：
+ * - 发布/订阅模式的数据分发
+ * - 数据生命周期管理（TTL、缓存）
+ * - 统一的定时刷新调度
+ * - 数据源注册和发现
+ *
+ * @details 架构设计：
+ * - 单例模式，全局唯一实例
+ * - 生产者-消费者模型
+ * - 支持通配符订阅（如 "market:quote:*"）
+ * - 自动去重和合并高频更新
+ *
+ * @details 使用示例：
+ * @code
+ * // 订阅数据
+ * DataHub::instance()->subscribe("market:quote:sh600519", [](const QVariant& data) {
+ *     StockQuote quote = data.value<StockQuote>();
+ *     // 处理行情数据
+ * });
+ *
+ * // 发布数据
+ * DataHub::instance()->publish("market:quote:sh600519", QVariant::fromValue(quote));
+ *
+ * // 注册数据生产者
+ * stockDataSource->registerToDataHub(DataHub::instance(), 5000);
+ * @endcode
+ *
+ * @details 与传统 QTimer 方式对比：
+ * - 传统：每个数据源独立定时器，资源浪费，刷新时间分散
+ * - DataHub：统一调度，合并请求，智能缓存，性能更优
+ *
+ * @author WealthPilot Team
+ * @version 1.0.0
+ */
+
 #ifndef WEALTHPILOT_DATAHUB_H
 #define WEALTHPILOT_DATAHUB_H
 

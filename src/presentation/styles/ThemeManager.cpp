@@ -11,6 +11,8 @@
 #include <QPalette>
 #include <QWidget>
 #include <QMutexLocker>
+#include <QElapsedTimer>
+#include <QTimer>
 
 ThemeManager* ThemeManager::instance()
 {
@@ -116,6 +118,10 @@ bool ThemeManager::saveCustomTheme(const QString& filePath)
 
 void ThemeManager::applyTheme()
 {
+    // 性能优化：使用 RAII 计时器
+    QElapsedTimer timer;
+    timer.start();
+    
     // 检查缓存
     QString styleSheet;
     {
@@ -162,28 +168,34 @@ void ThemeManager::applyTheme()
     palette.setColor(QPalette::Highlight, QColor(m_currentTheme.primary));
     palette.setColor(QPalette::HighlightedText, QStringLiteral("#FFFFFF"));
 
+    // 性能优化：批量更新，减少重绘次数
+    qApp->setUpdatesEnabled(false);
+    
     qApp->setPalette(palette);
-
-    // 应用样式表
     qApp->setStyleSheet(styleSheet);
 
-    // 通知所有监听器
-    for (const auto& listener : m_listeners) {
-        if (listener.first) {
-            listener.second();
+    // 性能优化：异步通知监听器，避免阻塞主线程
+    // 使用 QTimer::singleShot 延迟执行，让 UI 先更新
+    QTimer::singleShot(0, this, [this]() {
+        for (const auto& listener : m_listeners) {
+            if (listener.first) {
+                listener.second();
+            }
         }
-    }
+    });
     
-    // 强制刷新所有顶级窗口
+    // 性能优化：使用 update() 替代 repaint()，允许 Qt 合并重绘请求
     for (QWidget* widget : qApp->topLevelWidgets()) {
         if (widget) {
-            widget->setStyleSheet(widget->styleSheet());
             widget->update();
-            widget->repaint();
         }
     }
     
-    LOG_INFO(QString("Theme applied: %1").arg(m_currentTheme.name));
+    qApp->setUpdatesEnabled(true);
+    
+    LOG_INFO(QString("Theme applied: %1 (%2ms)")
+        .arg(m_currentTheme.name)
+        .arg(timer.elapsed()));
 }
 
 QString ThemeManager::getThemeStyleSheet() const

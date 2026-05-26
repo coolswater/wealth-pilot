@@ -8,6 +8,9 @@
 
 #include "AIStockPicker.h"
 #include "AIService.h"
+#include "core/services/cache/CacheManager.h"
+#include "data/DataStorageService.h"
+#include "shared/types/MarketTypes.h"
 #include "shared/utils/Logger.h"
 
 #include <QJsonDocument>
@@ -128,26 +131,32 @@ namespace WealthPilot
     }
 
     QList<StockPickResult> AIStockPicker::screenByFactors(
-        const QList<ScreeningCondition>& conditions,
-        int maxResults)
-    {
-        QList<StockPickResult> results;
-
-        // TODO: 从数据源获取股票列表并筛选
-        // 这里使用模拟数据进行演示
-        QStringList mockStocks = {
-            "sh600000", "sh600036", "sh600519", "sh601318", "sh601398",
-            "sz000001", "sz000002", "sz000333", "sz000651", "sz000858"
-        };
-
-        for (const auto& code : mockStocks)
+            const QList<ScreeningCondition>& conditions,
+            int maxResults)
         {
-            double score = calculateFactorScore(code, conditions);
-            if (score > 0)
+            QList<StockPickResult> results;
+
+            // 从 DataHub 获取股票列表
+            auto* storage = DataStorageService::instance();
+            QStringList stockList = storage->getAllStockSymbols();
+        
+            // 如果数据库没有，使用默认热门股票
+            if (stockList.isEmpty()) {
+                stockList = {
+                    "sh600000", "sh600036", "sh600519", "sh601318", "sh601398",
+                    "sz000001", "sz000002", "sz000333", "sz000651", "sz000858",
+                    "sz002594", "sz300750", "sh601012", "sh600900", "sz002415"
+                };
+            }
+
+            for (const auto& code : stockList)
             {
-                StockPickResult result;
-                result.stockCode = code;
-                result.stockName = code; // TODO: 获取真实名称
+                double score = calculateFactorScore(code, conditions);
+                if (score > 0)
+                {
+                    StockPickResult result;
+                    result.stockCode = code;
+                    result.stockName = storage->getStockName(code);
                 result.score = score;
                 result.pickedAt = QDateTime::currentDateTime();
                 result.reason = QStringLiteral("符合筛选条件");
@@ -487,37 +496,96 @@ namespace WealthPilot
     }
 
     double AIStockPicker::getStockFactorValue(const QString& stockCode, StockFactor factor)
-    {
-        // TODO: 从数据源获取真实因子值
-        // 这里使用模拟数据
-        Q_UNUSED(stockCode)
-
-        switch (factor)
         {
-        case StockFactor::PE:
-            return 10 + QRandomGenerator::global()->bounded(30);
-        case StockFactor::PB:
-            return 1 + QRandomGenerator::global()->bounded(5);
-        case StockFactor::ROE:
-            return 5 + QRandomGenerator::global()->bounded(25);
-        case StockFactor::RevenueGrowth:
-            return QRandomGenerator::global()->bounded(50);
-        case StockFactor::ProfitGrowth:
-            return QRandomGenerator::global()->bounded(50);
-        case StockFactor::DebtRatio:
-            return 20 + QRandomGenerator::global()->bounded(50);
-        case StockFactor::TurnoverRate:
-            return QRandomGenerator::global()->bounded(10);
-        case StockFactor::MarketCap:
-            return 100 + QRandomGenerator::global()->bounded(10000);
-        case StockFactor::DividendYield:
-            return QRandomGenerator::global()->bounded(8);
-        case StockFactor::Momentum:
-            return -20 + QRandomGenerator::global()->bounded(40);
-        case StockFactor::Volatility:
-            return 10 + QRandomGenerator::global()->bounded(30);
-        default:
-            return 0;
+            // 从缓存和数据源获取真实因子值
+            auto* cache = CacheManager::instance();
+            auto* storage = DataStorageService::instance();
+        
+            // 1. 尝试从缓存获取基本面数据
+            QString fundamentalKey = QString("fundamental:%1").arg(stockCode);
+            if (cache->contains(fundamentalKey)) {
+                QVariant fundamentalVariant = cache->get(fundamentalKey);
+                if (fundamentalVariant.canConvert<QVariantMap>()) {
+                    QVariantMap fundamental = fundamentalVariant.toMap();
+                
+                    switch (factor) {
+                    case StockFactor::PE:
+                        return fundamental["pe"].toDouble();
+                    case StockFactor::PB:
+                        return fundamental["pb"].toDouble();
+                    case StockFactor::ROE:
+                        return fundamental["roe"].toDouble();
+                    case StockFactor::RevenueGrowth:
+                        return fundamental["revenueGrowth"].toDouble();
+                    case StockFactor::ProfitGrowth:
+                        return fundamental["profitGrowth"].toDouble();
+                    case StockFactor::DebtRatio:
+                        return fundamental["debtRatio"].toDouble();
+                    case StockFactor::DividendYield:
+                        return fundamental["dividendYield"].toDouble();
+                    default:
+                        break;
+                    }
+                }
+            }
+        
+            // 2. 尝试从数据库获取
+            FundamentalData dbData = storage->getFundamentalData(stockCode);
+            if (dbData.isValid()) {
+                switch (factor) {
+                case StockFactor::PE:
+                    return dbData.pe;
+                case StockFactor::PB:
+                    return dbData.pb;
+                case StockFactor::ROE:
+                    return dbData.roe;
+                case StockFactor::RevenueGrowth:
+                    return dbData.revenueGrowth;
+                case StockFactor::ProfitGrowth:
+                    return dbData.profitGrowth;
+                default:
+                    break;
+                }
+            }
+        
+            // 3. 尝试从缓存获取行情数据
+            QString quoteKey = QString("quote:%1").arg(stockCode);
+            if (cache->contains(quoteKey)) {
+                QVariant quoteVariant = cache->get(quoteKey);
+                if (quoteVariant.canConvert<StockQuote>()) {
+                    StockQuote quote = quoteVariant.value<StockQuote>();
+                
+                    switch (factor) {
+                    case StockFactor::TurnoverRate:
+                        return quote.turnoverRate;
+                    case StockFactor::Momentum:
+                        return quote.changePercent;
+                    case StockFactor::MarketCap:
+                        return quote.amount * 100; // 估算市值
+                    default:
+                        break;
+                    }
+                }
+            }
+        
+            // 4. 如果没有真实数据，返回默认值并记录日志
+            LOG_WARN(QString("No factor data available for %1, factor: %2")
+                .arg(stockCode).arg(getFactorName(factor)));
+        
+            // 返回合理的默认值（不是随机值，保证筛选稳定性）
+            switch (factor) {
+            case StockFactor::PE: return 15.0;
+            case StockFactor::PB: return 2.0;
+            case StockFactor::ROE: return 10.0;
+            case StockFactor::RevenueGrowth: return 5.0;
+            case StockFactor::ProfitGrowth: return 5.0;
+            case StockFactor::DebtRatio: return 40.0;
+            case StockFactor::TurnoverRate: return 3.0;
+            case StockFactor::MarketCap: return 500.0;
+            case StockFactor::DividendYield: return 2.0;
+            case StockFactor::Momentum: return 0.0;
+            case StockFactor::Volatility: return 20.0;
+            default: return 0.0;
+            }
         }
-    }
-} // namespace WealthPilot
+    } // namespace WealthPilot

@@ -1,75 +1,72 @@
-# WealthPilot 测试套件
+# 单元测试规划
 
-## 测试结构
+## 1. 测试框架
+
+使用 Qt Test 框架，支持：
+
+- 单元测试
+- 集成测试
+- 性能基准测试
+- GUI 测试
+
+## 2. 测试目录结构
 
 ```
 tests/
-├── core/                   # 核心模块测试
-│   ├── DataHubTest.cpp     # 数据中心测试
-│   ├── ConfigManagerTest.cpp
-│   └── CacheManagerTest.cpp
-├── trading/                # 交易模块测试
-│   ├── OrderManagerTest.cpp
-│   ├── TradingServiceTest.cpp
-│   └── RiskControllerTest.cpp
-├── market/                 # 行情模块测试
-│   ├── QuoteDataManagerTest.cpp
-│   └── DataSourceTest.cpp
-└── ui/                     # UI 模块测试
-    ├── ThemeManagerTest.cpp
-    └── PageTest.cpp
+├── CMakeLists.txt
+├── core/
+│   ├── CacheManagerTest.cpp
+│   ├── DataHubTest.cpp
+│   └── ServiceLifecycleTest.cpp
+├── data/
+│   ├── DataStorageServiceTest.cpp
+│   └── StockDataSourceTest.cpp
+├── presentation/
+│   ├── ThemeManagerTest.cpp
+│   ├── KLineRendererTest.cpp
+│   └── AnimationTest.cpp
+└── utils/
+    └── LoggerTest.cpp
 ```
 
-## 运行测试
+## 3. 关键模块测试覆盖
 
-### 运行所有测试
+### 3.1 核心模块（高优先级）
+
+- CacheManager：缓存读写、TTL、淘汰策略
+- DataHub：发布订阅、数据分发、生命周期
+- ServiceLifecycle：服务启动顺序、依赖检查、优雅关闭
+
+### 3.2 数据模块（中优先级）
+
+- DataStorageService：CRUD 操作、事务、并发
+- StockDataSource：数据获取、解析、错误处理
+
+### 3.3 UI 模块（低优先级）
+
+- ThemeManager：主题切换、样式缓存、监听器管理
+- KLineRenderer：渲染输出、坐标转换
+- Animation：动画状态、时间控制
+
+## 4. 测试目标
+
+| 模块            | 目标覆盖率 | 当前状态 |
+|---------------|-------|------|
+| CacheManager  | 80%   | 待实现  |
+| DataHub       | 70%   | 待实现  |
+| ThemeManager  | 60%   | 待实现  |
+| KLineRenderer | 50%   | 待实现  |
+
+## 5. 运行测试
 
 ```bash
-cd build
-ctest --output-on-failure
-```
-
-### 运行单个测试
-
-```bash
-./tests/core/DataHubTest
-./tests/trading/OrderManagerTest
-```
-
-### 生成测试覆盖率报告
-
-```bash
-cmake -DENABLE_COVERAGE=ON ..
+# 构建测试
+cmake -DBUILD_TESTS=ON ..
 make
-make test
-gcovr -r .. --html --html-details -o coverage.html
-```
 
-## 测试覆盖率目标
+# 运行所有测试
+ctest --output-on-failure
 
-| 模块           | 当前覆盖率  | 目标覆盖率   |
-|--------------|--------|---------|
-| core/datahub | 0%     | 80%     |
-| trading      | 0%     | 75%     |
-| market       | 0%     | 70%     |
-| ui           | 0%     | 60%     |
-| **总计**       | **3%** | **70%** |
-
-## 测试原则
-
-1. **独立性**: 每个测试用例独立运行，不依赖其他测试
-2. **可重复性**: 测试结果稳定可重复
-3. **快速性**: 单元测试应在毫秒级完成
-4. **完整性**: 覆盖正常流程、边界条件和异常情况
-
-## Mock 对象
-
-对于依赖外部系统的模块（如 CTP、网络），使用 Mock 对象：
-
-```cpp
-class MockCTPService : public CTP::CTPService {
-public:
-    MOCK_METHOD(void, connect, (), (override));
-    MOCK_METHOD(void, subscribe, (const QString&), (override));
-};
+# 运行特定测试
+./tests/core/CacheManagerTest
 ```

@@ -318,10 +318,62 @@ void MarketDataWebSocket::parseTickData(const QJsonObject& json)
 
 void MarketDataWebSocket::parseKLineData(const QJsonObject& json)
 {
-    // TODO: 解析K线数据
+    // 解析 K 线数据
+    KLine kline;
+    kline.symbol = json["symbol"].toString();
+    kline.open = json["open"].toDouble();
+    kline.high = json["high"].toDouble();
+    kline.low = json["low"].toDouble();
+    kline.close = json["close"].toDouble();
+    kline.volume = json["volume"].toVariant().toLongLong();
+    kline.amount = json["amount"].toDouble();
+    
+    QString period = json["period"].toString();
+    if (period == "1m") kline.period = KLinePeriod::Min1;
+    else if (period == "5m") kline.period = KLinePeriod::Min5;
+    else if (period == "15m") kline.period = KLinePeriod::Min15;
+    else if (period == "30m") kline.period = KLinePeriod::Min30;
+    else if (period == "60m") kline.period = KLinePeriod::Min60;
+    else if (period == "day" || period == "1d") kline.period = KLinePeriod::Day;
+    else if (period == "week") kline.period = KLinePeriod::Week;
+    else if (period == "month") kline.period = KLinePeriod::Month;
+    else kline.period = KLinePeriod::Day;
+    
+    kline.timestamp = QDateTime::fromString(json["datetime"].toString(), Qt::ISODate);
+    
+    emit klineReceived(kline);
 }
 
 void MarketDataWebSocket::parseDepthData(const QJsonObject& json)
 {
-    // TODO: 解析盘口深度数据
+    // 解析盘口深度数据
+    DepthData depth;
+    depth.symbol = json["symbol"].toString();
+    depth.timestamp = QDateTime::currentDateTime();
+    
+    // 解析买盘
+    QJsonArray bids = json["bids"].toArray();
+    for (const auto& bid : bids) {
+        QJsonArray item = bid.toArray();
+        if (item.size() >= 2) {
+            DepthLevel level;
+            level.price = item[0].toDouble();
+            level.volume = item[1].toDouble();
+            depth.bids.append(level);
+        }
+    }
+    
+    // 解析卖盘
+    QJsonArray asks = json["asks"].toArray();
+    for (const auto& ask : asks) {
+        QJsonArray item = ask.toArray();
+        if (item.size() >= 2) {
+            DepthLevel level;
+            level.price = item[0].toDouble();
+            level.volume = item[1].toDouble();
+            depth.asks.append(level);
+        }
+    }
+    
+    emit depthReceived(depth);
 }

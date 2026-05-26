@@ -3,14 +3,35 @@
  * @brief 主题管理器 - 多主题支持
  *
  * @details 提供主题管理功能：
- * - 深色主题
+ * - 深色主题（默认，专业金融风格）
  * - 浅色主题
  * - 高对比度主题
- * - 自定义主题
- * - QSS样式表加载
+ * - 护眼主题
+ * - 自定义主题（JSON 配置）
+ * - QSS 样式表动态加载和缓存
+ *
+ * @details 性能优化（v2.0.0）：
+ * - 样式表编译缓存，避免重复解析
+ * - 批量 UI 更新，减少重绘次数
+ * - 异步监听器通知，避免阻塞主线程
+ * - 使用 update() 替代 repaint()，允许 Qt 合并重绘请求
+ *
+ * @details 使用示例：
+ * @code
+ * // 切换主题
+ * ThemeManager::instance()->setTheme(ThemeType::Light);
+ *
+ * // 注册主题变化监听器
+ * ThemeManager::instance()->registerThemeChangeListener(this, [this]() {
+ *     updateMyWidgetStyle();
+ * });
+ *
+ * // 获取当前主题配色
+ * ThemeColors colors = ThemeManager::instance()->currentTheme();
+ * @endcode
  *
  * @author WealthPilot Team
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 #ifndef THEMEMANAGER_H
