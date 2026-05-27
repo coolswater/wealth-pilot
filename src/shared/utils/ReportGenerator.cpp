@@ -5,7 +5,8 @@
 
 #include "ReportGenerator.h"
 #include "ExcelExporter.h"
-#include "core/services/storage/DataStorageService.h"
+#include "data/DataStorage.h"
+#include "data/DataStorageService.h"
 #include "core/trading/TradingService.h"
 #include "core/trading/PositionManager.h"
 #include "shared/utils/Logger.h"
@@ -49,7 +50,7 @@ ReportData ReportGenerator::generateDailyReport(const QDate &date)
     report.endTime = end;
 
     // 获取交易记录
-    report.tradeDetails = DataStorage::instance()->loadTradeRecords(start, end);
+    report.tradeDetails = DataStorage::instance().loadTradeRecords(start, end);
 
     calculateStatistics(report);
     calculateRiskMetrics(report);
@@ -76,7 +77,7 @@ ReportData ReportGenerator::generateWeeklyReport(const QDate &weekStart)
     report.startTime = start;
     report.endTime = end;
 
-    report.tradeDetails = DataStorage::instance()->loadTradeRecords(start, end);
+    report.tradeDetails = DataStorage::instance().loadTradeRecords(start, end);
 
     calculateStatistics(report);
     calculateRiskMetrics(report);
@@ -98,7 +99,7 @@ ReportData ReportGenerator::generateMonthlyReport(int year, int month)
     report.startTime = start;
     report.endTime = end;
 
-    report.tradeDetails = DataStorage::instance()->loadTradeRecords(start, end);
+    report.tradeDetails = DataStorage::instance().loadTradeRecords(start, end);
 
     calculateStatistics(report);
     calculateRiskMetrics(report);
@@ -119,7 +120,7 @@ ReportData ReportGenerator::generateCustomReport(const QDateTime &start, const Q
     report.startTime = start;
     report.endTime = end;
 
-    report.tradeDetails = DataStorage::instance()->loadTradeRecords(start, end);
+    report.tradeDetails = DataStorage::instance().loadTradeRecords(start, end);
 
     calculateStatistics(report);
     calculateRiskMetrics(report);
@@ -317,7 +318,7 @@ QVector<QPair<QDateTime, double>> ReportGenerator::getEquityCurve(const QDateTim
 {
     QVector<QPair<QDateTime, double>> curve;
 
-    auto trades = DataStorage::instance()->loadTradeRecords(start, end);
+    auto trades = DataStorage::instance().loadTradeRecords(start, end);
     if (trades.isEmpty()) {
         return curve;
     }

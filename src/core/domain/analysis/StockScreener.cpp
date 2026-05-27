@@ -6,7 +6,7 @@
 #include "StockScreener.h"
 #include "shared/utils/Logger.h"
 #include "core/services/cache/CacheManager.h"
-#include "core/services/storage/DataStorageService.h"
+#include "data/DataStorageService.h"
 #include <QSettings>
 #include <QtConcurrent>
 #include <algorithm>
