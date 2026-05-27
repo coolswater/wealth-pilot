@@ -7,7 +7,7 @@
  */
 
 #include "UserFeedbackManager.h"
-#include "presentation/ui/ToastManager.h"
+#include "presentation/components/ToastWidget.h"
 #include <QApplication>
 #include <QInputDialog>
 #include <QUuid>

@@ -100,10 +100,6 @@ target_sources(Presentation PRIVATE
         components/BacktestReportWidget.cpp
 )
 
-# UI 工具类
-target_sources(Presentation PRIVATE
-        ui/ToastManager.h
-)
 
 # ==================== Views 视图 ====================
 target_sources(Presentation PRIVATE
