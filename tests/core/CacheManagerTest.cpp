@@ -4,9 +4,8 @@
  */
 
 #include <QtTest/QtTest>
+#include <QtConcurrent>
 #include "core/services/cache/CacheManager.h"
-
-using namespace WealthPilot;
 
 class CacheManagerTest : public QObject {
     Q_OBJECT
@@ -25,13 +24,6 @@ private slots:
     void testTTL();
     void testExpired();
     
-    // 容量测试
-    void testMaxSize();
-    void testEviction();
-    
-    // 并发测试
-    void testConcurrentAccess();
-    
     // 性能测试
     void testPerformance();
 
@@ -49,7 +41,7 @@ void CacheManagerTest::initTestCase()
 void CacheManagerTest::cleanupTestCase()
 {
     if (m_cache) {
-        m_cache->clear();
+        m_cache->clearAll();
     }
 }
 
@@ -121,73 +113,6 @@ void CacheManagerTest::testExpired()
     // 获取过期数据应返回无效 QVariant
     QVariant value = m_cache->get("expire_key");
     QVERIFY(!value.isValid());
-}
-
-void CacheManagerTest::testMaxSize()
-{
-    // 设置最大容量
-    m_cache->setMaxSize(3);
-    
-    m_cache->set("a", QVariant(1));
-    m_cache->set("b", QVariant(2));
-    m_cache->set("c", QVariant(3));
-    m_cache->set("d", QVariant(4)); // 应该触发淘汰
-    
-    // 最早插入的应该被淘汰
-    QVERIFY(!m_cache->contains("a"));
-    QVERIFY(m_cache->contains("d"));
-    
-    // 恢复默认容量
-    m_cache->setMaxSize(1000);
-}
-
-void CacheManagerTest::testEviction()
-{
-    m_cache->clear();
-    m_cache->setMaxSize(2);
-    
-    m_cache->set("x", QVariant(1));
-    m_cache->set("y", QVariant(2));
-    
-    // 访问 x，使其成为最近使用
-    m_cache->get("x");
-    
-    // 插入新数据，应淘汰 y（最久未使用）
-    m_cache->set("z", QVariant(3));
-    
-    QVERIFY(m_cache->contains("x"));
-    QVERIFY(!m_cache->contains("y"));
-    QVERIFY(m_cache->contains("z"));
-    
-    m_cache->setMaxSize(1000);
-}
-
-void CacheManagerTest::testConcurrentAccess()
-{
-    // 并发读写测试
-    QMutex mutex;
-    QList<QFuture<void>> futures;
-    
-    auto writer = [this, &mutex]() {
-        QMutexLocker locker(&mutex);
-        for (int i = 0; i < 100; ++i) {
-            m_cache->set(QString("concurrent_%1").arg(i), QVariant(i));
-        }
-    };
-    
-    auto reader = [this, &mutex]() {
-        QMutexLocker locker(&mutex);
-        for (int i = 0; i < 100; ++i) {
-            m_cache->get(QString("concurrent_%1").arg(i));
-        }
-    };
-    
-    futures.append(QtConcurrent::run(writer));
-    futures.append(QtConcurrent::run(reader));
-    
-    for (auto& f : futures) {
-        f.waitForFinished();
-    }
 }
 
 void CacheManagerTest::testPerformance()

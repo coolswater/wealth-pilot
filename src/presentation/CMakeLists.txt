@@ -21,6 +21,9 @@ target_sources(Presentation PRIVATE
         components/DrawingTool.cpp
         components/TimeShareChart.cpp
         components/KLineChart.cpp
+        components/KLineChartRendering.cpp
+        components/KLineChartIndicators.cpp
+        components/KLineChartEvents.cpp
         components/ChartToolBar.h
         components/ChartToolBar.cpp
         components/MarketDepthWidget.h
@@ -95,6 +98,11 @@ target_sources(Presentation PRIVATE
         components/BacktestChartWidget.cpp
         components/BacktestReportWidget.h
         components/BacktestReportWidget.cpp
+)
+
+# UI 工具类
+target_sources(Presentation PRIVATE
+        ui/ToastManager.h
 )
 
 # ==================== Views 视图 ====================

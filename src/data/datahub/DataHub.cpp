@@ -6,6 +6,38 @@
 namespace WealthPilot {
 namespace DataHub {
 
+// ========== 生命周期管理 ==========
+
+void DataHub::shutdown()
+{
+    qDebug() << "[DataHub] Explicit shutdown called";
+    
+    // 停止调度器
+    if (m_schedulerTimer) {
+        m_schedulerTimer->stop();
+    }
+    
+    // 清理所有订阅
+    m_ownerSubscriptions.clear();
+    m_patternSubscriptions.clear();
+    
+    // 通知 Producer 停止
+    for (auto* producer : m_producers) {
+        if (producer) {
+            for (auto it = m_topics.begin(); it != m_topics.end(); ++it) {
+                if (it->producer == producer) {
+                    producer->onTopicIdle(it.key());
+                }
+            }
+        }
+    }
+    
+    m_topics.clear();
+    m_producers.clear();
+    
+    qDebug() << "[DataHub] Shutdown complete";
+}
+
 // ========== 单例实现 ==========
 
 DataHub& DataHub::instance()
@@ -29,8 +61,37 @@ DataHub::DataHub()
 
 DataHub::~DataHub()
 {
-    m_schedulerTimer->stop();
-    qDebug() << "[DataHub] Shutdown";
+    qDebug() << "[DataHub] Shutdown starting...";
+    
+    // 1. 先停止调度器（最重要！）
+    if (m_schedulerTimer) {
+        m_schedulerTimer->stop();
+        // 确保定时器事件处理完毕
+        m_schedulerTimer->deleteLater();
+        m_schedulerTimer = nullptr;
+    }
+    
+    // 2. 清理所有订阅（避免回调到已销毁的对象）
+    m_ownerSubscriptions.clear();
+    m_patternSubscriptions.clear();
+    
+    // 3. 通知所有 Producer 停止
+    for (auto* producer : m_producers) {
+        if (producer) {
+            // 通知所有活跃 topic 变为空闲
+            for (auto it = m_topics.begin(); it != m_topics.end(); ++it) {
+                if (it->producer == producer && !it->subscribers.isEmpty()) {
+                    producer->onTopicIdle(it.key());
+                }
+            }
+        }
+    }
+    m_producers.clear();
+    
+    // 4. 清理 topic 状态
+    m_topics.clear();
+    
+    qDebug() << "[DataHub] Shutdown complete";
 }
 
 // ========== 订阅实现 ==========

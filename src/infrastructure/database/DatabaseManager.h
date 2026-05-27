@@ -18,6 +18,7 @@
 
 #include "shared/base/Singleton.h"
 #include <QObject>
+#include <atomic>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
@@ -102,6 +103,7 @@ public:
     void executeQuery(const QString& queryId, const QString& sql, const QMap<QString, QVariant>& params = QMap<QString, QVariant>());
     void executeBatch(const QString& queryId, const QString& sql, const QVector<QMap<QString, QVariant>>& batchData);
     void stop();  ///< 停止线程
+    void invalidatePool(); ///< 标记 pool 无效（shutdown 时调用）
 
 signals:
     void queryCompleted(const QString& queryId, const QueryResult& result);
@@ -119,10 +121,11 @@ private:
     };
     
     ConnectionPool* m_pool;
+    std::atomic<bool> m_poolValid{true}; ///< pool 有效性标志
     QQueue<QueryTask> m_taskQueue;
     mutable QMutex m_mutex;
     QWaitCondition m_condition;
-    bool m_running = false;
+    std::atomic<bool> m_running{false};
 };
 
 /**

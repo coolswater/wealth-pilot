@@ -40,7 +40,30 @@ CTPService::CTPService(QObject *parent)
 }
 
 CTPService::~CTPService() {
+    LOG_INFO("CTPService destructor - cleaning up...");
+    
+    // 1. 断开信号连接
     disconnect();
+    
+    // 2. 释放行情 SPI（析构函数会停止内部线程）
+    if (d->marketSpi) {
+        LOG_INFO("Releasing market SPI...");
+        d->marketSpi->release();  // 释放 CTP API
+        delete d->marketSpi;
+        d->marketSpi = nullptr;
+        LOG_INFO("Market SPI released");
+    }
+    
+    // 3. 释放交易 SPI
+    if (d->tradingSpi) {
+        LOG_INFO("Releasing trading SPI...");
+        d->tradingSpi->release();
+        delete d->tradingSpi;
+        d->tradingSpi = nullptr;
+        LOG_INFO("Trading SPI released");
+    }
+    
+    LOG_INFO("CTPService destructor complete");
 }
 
 void CTPService::setMarketFrontAddress(const QString& frontAddr) {

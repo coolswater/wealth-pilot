@@ -11,10 +11,12 @@
 #include <QVariantMap>
 #include "core/trading/TradingTypes.h"
 
-// Forward declarations only - no incomplete type usage
-class AccountPage;
-class TradeHistoryPage;
-class ConditionOrderPage;
+// Forward declarations in WealthPilot namespace
+namespace WealthPilot {
+    class AccountPage;
+    class TradeHistoryPage;
+    class ConditionOrderPage;
+}
 
 namespace Trading {
 
@@ -37,17 +39,17 @@ public:
     /**
      * @brief 注册账户页面
      */
-    void registerAccountPage(AccountPage* page);
+    void registerAccountPage(WealthPilot::AccountPage* page);
 
     /**
      * @brief 注册成交记录页面
      */
-    void registerTradeHistoryPage(TradeHistoryPage* page);
+    void registerTradeHistoryPage(WealthPilot::TradeHistoryPage* page);
 
     /**
      * @brief 注册条件单页面
      */
-    void registerConditionOrderPage(ConditionOrderPage* page);
+    void registerConditionOrderPage(WealthPilot::ConditionOrderPage* page);
 
     /**
      * @brief 处理下单提交
@@ -88,9 +90,9 @@ private:
     void connectTradingService();
     void updateAccountPage();
 
-    AccountPage* m_accountPage = nullptr;
-    TradeHistoryPage* m_tradeHistoryPage = nullptr;
-    ConditionOrderPage* m_conditionOrderPage = nullptr;
+    WealthPilot::AccountPage* m_accountPage = nullptr;
+        WealthPilot::TradeHistoryPage* m_tradeHistoryPage = nullptr;
+        WealthPilot::ConditionOrderPage* m_conditionOrderPage = nullptr;
 };
 
 } // namespace Trading

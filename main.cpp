@@ -33,7 +33,10 @@
 #include "src/presentation/viewmodels/ViewModelRegistration.h"
 #include "core/services/lifecycle/ServiceLifecycle.h"
 #include "core/services/alert/AlertNotificationService.h"
+#include "app/ApplicationInitializer.h"
+#include "data/datahub/DataHub.h"
 #include <QApplication>
+#include <QThreadPool>
 #include <QFontDatabase>
 #include <QLocale>
 #include <QTranslator>
@@ -49,14 +52,32 @@
 #endif
 
 /**
- * @brief 清理所有服务 - 使用 ServiceLifecycle 优雅关闭
+ * @brief 清理所有服务 - 优雅关闭
+ * 
+ * @details 关闭顺序（严格按依赖逆序）：
+ * 1. 停止所有数据订阅（DashboardPage 等）
+ * 2. 停止 DataHub 和 Producer（显式调用，避免静态析构问题）
+ * 3. 停止插件（CTP/AI）
+ * 4. 等待线程池完成
+ * 5. 关闭数据库连接池
+ * 6. 清理服务定位器
  */
 void cleanupServices()
 {
     LOG_INFO("========================================");
     LOG_INFO("Cleaning up services...");
 
-    // 使用 ServiceLifecycle 关闭所有服务（按依赖逆序）
+    // 1. ApplicationInitializer 按逆序关闭所有模块（含插件）
+    ApplicationInitializer::instance().shutdown();
+
+    // 2. 显式关闭 DataHub（关键！必须在 QApplication 退出前）
+    //    避免静态单例析构时 QTimer 已无效的问题
+    WealthPilot::DataHub::DataHub::instance().shutdown();
+
+    // 3. 等待线程池完成（最多 30 秒）
+    QThreadPool::globalInstance()->waitForDone(30000);
+
+    // 4. ServiceLifecycle 按逆序关闭注册服务（含数据库连接池）
     WealthPilot::ServiceLifecycle::instance()->shutdownAll();
 
     LOG_INFO("All services cleaned up");

@@ -42,48 +42,67 @@ void ConnectionPool::initialize()
 
 void ConnectionPool::cleanup()
 {
-    LOG_INFO("ConnectionPool cleanup starting...");
+    LOG_INFO("[QWaitCondition] ConnectionPool::cleanup - starting...");
     
-    // 标记正在关闭
+    // 1. 先标记正在关闭（阻止新的连接请求）
+    QMutexLocker locker(&m_mutex);
     m_shuttingDown = true;
-    m_condition.wakeAll();
+    m_condition.wakeAll();  // 唤醒所有等待连接的线程
     
-    // 等待所有连接返回
+    // 2. 等待所有使用中的连接返回（最多等待 5 秒）
     QElapsedTimer waitTimer;
     waitTimer.start();
     
-    while (!m_usedConnections.isEmpty() && waitTimer.elapsed() < 5000) {
-        LOG_DEBUG(QString("Waiting for %1 connections to return...")
-            .arg(m_usedConnections.size()));
+    while (waitTimer.elapsed() < 5000) {
+        {
+            QMutexLocker locker(&m_mutex);
+            if (m_usedConnections.isEmpty())
+                break;
+        }
         QThread::msleep(100);
     }
-    
-    // 强制关闭所有连接
-    QMutexLocker locker(&m_mutex);
-    
-    // 先关闭可用连接
-    while (!m_availableConnections.isEmpty()) {
-        QSqlDatabase db = m_availableConnections.dequeue();
-        if (db.isOpen()) {
-            QString connectionName = db.connectionName();
-            db.close();
-            QSqlDatabase::removeDatabase(connectionName);
-        }
+
+    if (!m_usedConnections.isEmpty()) {
+        LOG_WARNING(QString("Force closing %1 connections that are still in use")
+                    .arg(m_usedConnections.size()));
     }
     
-    // 强制关闭使用中的连接
-    for (auto it = m_usedConnections.begin(); it != m_usedConnections.end(); ) {
-        QString connectionName = it.key();
-        QSqlDatabase db = it.value();
-        if (db.isOpen()) {
-            db.close();
-        }
-        QSqlDatabase::removeDatabase(connectionName);
-        it = m_usedConnections.erase(it);
-    }
-    m_usedConnections.clear();
+    // 3. 收集所有连接名称，先关闭连接，再移除
+    QStringList connectionNames;
     
-    LOG_INFO("ConnectionPool cleaned up successfully");
+    {
+        QMutexLocker locker(&m_mutex);
+        
+        // 收集可用连接名称
+        while (!m_availableConnections.isEmpty()) {
+            QSqlDatabase db = m_availableConnections.dequeue();
+            if (db.isOpen()) {
+                connectionNames << db.connectionName();
+                db.close();
+            }
+            // db 对象在此作用域结束时析构
+        }
+        
+        // 收集使用中连接名称
+        for (auto it = m_usedConnections.begin(); it != m_usedConnections.end(); ) {
+            QString connName = it.key();
+            QSqlDatabase db = it.value();
+            if (db.isOpen()) {
+                connectionNames << connName;
+                db.close();
+            }
+            it = m_usedConnections.erase(it);
+            // db 对象在此作用域结束时析构
+        }
+        m_usedConnections.clear();
+    }
+    
+    // 4. 所有 QSqlDatabase 对象已析构，现在可以安全移除连接
+    for (const QString& connName : connectionNames) {
+        QSqlDatabase::removeDatabase(connName);
+    }
+    
+    LOG_INFO("[QWaitCondition] ConnectionPool cleaned up successfully, m_condition will be destroyed");
 }
 
 QSqlDatabase ConnectionPool::getConnection()
@@ -141,8 +160,16 @@ void ConnectionPool::returnConnection(QSqlDatabase connection)
     if (m_availableConnections.size() < m_config.maxConnections) {
         m_availableConnections.enqueue(connection);
     } else {
+        // Qt 要求：先让 QSqlDatabase 对象析构，再调用 removeDatabase
         connection.close();
+        locker.unlock();  // 释放锁，避免死锁
+        // connection 对象在此作用域结束后析构
+        {
+            QSqlDatabase tempConn;
+            tempConn = std::move(connection);  // 转移所有权
+        }  // tempConn 析构
         QSqlDatabase::removeDatabase(connectionName);
+        locker.relock();
     }
     
     m_condition.wakeOne();
@@ -258,13 +285,20 @@ void AsyncQueryThread::executeBatch(const QString& queryId, const QString& sql, 
 
 void AsyncQueryThread::stop()
 {
-    QMutexLocker locker(&m_mutex);
     m_running = false;
     m_condition.wakeAll();
 }
 
+void AsyncQueryThread::invalidatePool()
+{
+    m_poolValid = false;
+}
+
 void AsyncQueryThread::run()
 {
+    LOG_INFO(QString("[Thread] AsyncQueryThread started, tid=%1")
+        .arg((qint64)QThread::currentThreadId()));
+    
     while (m_running) {
         QueryTask task;
         
@@ -287,13 +321,33 @@ void AsyncQueryThread::run()
             continue;
         }
         
+        // 检查 pool 是否有效（shutdown 时标记为无效）
+        if (!m_poolValid || !m_pool) {
+            LOG_WARNING("AsyncQueryThread: ConnectionPool is invalid, skipping query");
+            break;
+        }
+        
+        // 再次检查运行状态（可能在等待连接时被停止）
+        if (!m_running) {
+            LOG_DEBUG("AsyncQueryThread: Stopped during query execution");
+            break;
+        }
+        
         // Execute query
         QSqlDatabase db = m_pool->getConnection();
+        
+        // 检查是否获取到有效连接（shutdown 时返回空连接）
+        if (!db.isValid() || !db.isOpen()) {
+            LOG_WARNING("AsyncQueryThread: Failed to get valid connection, skipping query");
+            continue;
+        }
+        
         QueryResult result;
         
         QElapsedTimer timer;
         timer.start();
         
+    // 继续执行查询...
         if (task.isBatch) {
             // Batch operation
             QSqlQuery query(db);
@@ -335,10 +389,15 @@ void AsyncQueryThread::run()
         
         result.executionTime = timer.elapsed() * 1000; // Convert to microseconds
         
-        m_pool->returnConnection(db);
+        // 安全返回连接（检查 pool 是否仍然有效）
+        if (m_poolValid && m_pool) {
+            m_pool->returnConnection(db);
+        }
         
         emit queryCompleted(task.queryId, result);
     }
+    
+    LOG_INFO("[Thread] AsyncQueryThread exiting");
 }
 
 // ========== DatabaseManager Implementation ==========
@@ -355,19 +414,8 @@ DatabaseManager::~DatabaseManager()
 {
     // 如果没有调用 shutdown，在这里清理
     if (m_asyncThread || m_connectionPool) {
-        // 停止异步线程
-        if (m_asyncThread) {
-            m_asyncThread->stop();
-            m_asyncThread->quit();
-            m_asyncThread->wait();
-            m_asyncThread.reset();
-        }
-        
-        // 清理连接池
-        if (m_connectionPool) {
-            m_connectionPool->cleanup();
-            m_connectionPool.reset();
-        }
+        LOG_INFO("DatabaseManager destructor - calling shutdown...");
+        shutdown();
     }
     
     LOG_DEBUG("DatabaseManager destroyed");
@@ -753,21 +801,52 @@ void DatabaseManager::shutdown()
 {
     QMutexLocker locker(&m_mutex);
     
-    LOG_INFO("Shutting down DatabaseManager...");
+    LOG_INFO("========================================");
+    LOG_INFO("[Thread] DatabaseManager::shutdown - starting...");
+    LOG_INFO(QString("[Thread] AsyncQueryThread running: %1")
+        .arg(m_asyncThread && m_asyncThread->isRunning() ? "yes" : "no"));
     
-    // 停止异步线程
-    if (m_asyncThread) {
+    // 1. 先停止异步线程（必须先停止，避免线程还在等待时销毁 QWaitCondition）
+    if (m_asyncThread && m_asyncThread->isRunning()) {
+        LOG_INFO("[Thread] Stopping AsyncQueryThread...");
+        
+        // 先标记 pool 无效，防止线程访问已销毁的 pool
+        m_asyncThread->invalidatePool();
+        
+        // 先通知线程停止
         m_asyncThread->stop();
+        
+        // 唤醒等待中的线程
+        // 注意：AsyncQueryThread 内部有自己的 m_condition，stop() 已经调用了 wakeAll()
+        
+        // 释放锁，让线程有机会退出
+        locker.unlock();
+        
+        LOG_INFO("[Thread] AsyncQueryThread - quit() called");
+        // 等待线程退出（最多 5 秒）
         m_asyncThread->quit();
-        m_asyncThread->wait();
+        
+        LOG_INFO("[Thread] AsyncQueryThread - wait(5000) starting...");
+        if (!m_asyncThread->wait(5000)) {
+            LOG_WARNING("[Thread] AsyncQueryThread did not stop gracefully, terminating...");
+            m_asyncThread->terminate();
+            m_asyncThread->wait();
+        }
+        LOG_INFO("[Thread] AsyncQueryThread stopped");
+        
+        locker.relock();
         m_asyncThread.reset();
+        LOG_INFO("[Thread] AsyncQueryThread reset complete");
     }
     
-    // 清理连接池
+    // 2. 清理连接池（此时线程已停止，不会有新的连接请求）
     if (m_connectionPool) {
+        LOG_INFO("[QWaitCondition] Cleaning up ConnectionPool...");
         m_connectionPool->cleanup();
         m_connectionPool.reset();
+        LOG_INFO("[QWaitCondition] ConnectionPool cleaned up");
     }
     
-    LOG_INFO("DatabaseManager shutdown complete");
+    LOG_INFO("[Thread] DatabaseManager shutdown complete");
+    LOG_INFO("========================================");
 }

@@ -99,27 +99,27 @@ void ApplicationInitializer::shutdown()
 
     // ============================================================
     // 关闭顺序：反向释放资源
-    // UI -> Plugins -> Services -> Core
+    // UI -> DataHub -> Plugins -> Services -> Core -> ThreadPool
     // ============================================================
     
-    // 0. 先等待全局线程池完成所有任务
-    LOG_INFO("Waiting for thread pool to complete...");
-    QThreadPool* globalPool = QThreadPool::globalInstance();
-    if (globalPool) {
-        globalPool->waitForDone(30000);  // 等待最多30秒
-        LOG_INFO(QString("Thread pool completed, active threads: %1")
-            .arg(globalPool->activeThreadCount()));
-    }
-    
-    // 1. 关闭 UI 层
+    // 1. 关闭 UI 层（先停止所有数据订阅）
+    LOG_INFO("Shutting down UI layer...");
     emit phaseStarted(InitPhase::UI);
     for (const auto& module : m_modules[InitPhase::UI]) {
         if (module.shutdownFunc) {
             module.shutdownFunc();
         }
     }
+    
+    // 2. 关闭 DataHub（关键：在关闭插件和数据库之前，停止所有数据生产）
+    if (m_dataHubBootstrap) {
+        LOG_INFO("Shutting down DataHub...");
+        m_dataHubBootstrap->shutdown();
+        m_dataHubBootstrap.reset();
+        LOG_INFO("DataHub shutdown complete");
+    }
 
-    // 2. 关闭插件系统
+    // 3. 关闭插件系统
     emit phaseStarted(InitPhase::Plugins);
     for (const auto& module : m_modules[InitPhase::Plugins]) {
         if (module.shutdownFunc) {
@@ -127,7 +127,7 @@ void ApplicationInitializer::shutdown()
         }
     }
 
-    // 3. 关闭服务层（包括 DatabaseManager）
+    // 4. 关闭服务层（包括 DatabaseManager）
     emit phaseStarted(InitPhase::Services);
     for (const auto& module : m_modules[InitPhase::Services]) {
         if (module.shutdownFunc) {
@@ -135,7 +135,7 @@ void ApplicationInitializer::shutdown()
         }
     }
 
-    // 4. 关闭核心模块
+    // 5. 关闭核心模块
     emit phaseStarted(InitPhase::Core);
     for (const auto& module : m_modules[InitPhase::Core]) {
         if (module.shutdownFunc) {
@@ -143,11 +143,16 @@ void ApplicationInitializer::shutdown()
         }
     }
 
-    // 5. 关闭 DataHub（新增）
-    // DataHub 会在 ServiceLocator::clear() 之前自动清理
-    LOG_INFO("DataHub will be cleaned up automatically");
+    // 6. 最后等待全局线程池完成所有任务（确保所有异步操作已结束）
+    LOG_INFO("Waiting for thread pool to complete...");
+    QThreadPool* globalPool = QThreadPool::globalInstance();
+    if (globalPool) {
+        globalPool->waitForDone(30000);  // 等待最多30秒
+        LOG_INFO(QString("Thread pool completed, active threads: %1")
+            .arg(globalPool->activeThreadCount()));
+    }
 
-    // 6. 清理服务定位器
+    // 7. 清理服务定位器
     ServiceLocator::instance().clear();
 
     m_initialized = false;
@@ -234,12 +239,11 @@ bool ApplicationInitializer::initializeCore()
     // 3. 初始化 DataHub 数据中心（新增）
     // ============================================================
     timer.restart();
-    // 使用静态实例避免局部变量析构导致 DataHub 被关闭
-    static WealthPilot::DataHubBootstrap* s_dataHubBootstrap = nullptr;
-    if (!s_dataHubBootstrap) {
-        s_dataHubBootstrap = new WealthPilot::DataHubBootstrap();
+    // DataHubBootstrap 作为成员变量，确保析构时正确关闭
+    if (!m_dataHubBootstrap) {
+        m_dataHubBootstrap = std::make_unique<WealthPilot::DataHubBootstrap>();
     }
-    bool dataHubResult = s_dataHubBootstrap->initialize();
+    bool dataHubResult = m_dataHubBootstrap->initialize();
     emit moduleInitialized("DataHub", dataHubResult, timer.elapsed());
     emit progressUpdated(++current, total, "DataHub");
 

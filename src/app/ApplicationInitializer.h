@@ -19,6 +19,11 @@
 #include <QMap>
 #include <QString>
 #include <functional>
+#include <memory>
+
+namespace WealthPilot {
+    class DataHubBootstrap;
+}
 
 /**
  * @brief 初始化阶段
@@ -137,6 +142,9 @@ private:
     QMap<QString, InitResult> m_results;          ///< 初始化结果
     InitPhase m_currentPhase;                      ///< 当前阶段
     bool m_initialized;                            ///< 是否已初始化
+    
+    // DataHub 管理器（智能指针确保析构时关闭）
+    std::unique_ptr<WealthPilot::DataHubBootstrap> m_dataHubBootstrap;
 };
 
 #endif // APPLICATIONINITIALIZER_H

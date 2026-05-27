@@ -31,7 +31,25 @@ ServiceLifecycle::ServiceLifecycle(QObject* parent)
 
 ServiceLifecycle::~ServiceLifecycle()
 {
-    shutdownAll();
+    // 注意：如果程序正常退出，cleanupServices() 会被 aboutToQuit 信号触发
+    // 这里只处理异常情况下的清理
+    if (d && !d->services.isEmpty()) {
+        // 检查是否有服务还在运行
+        bool hasRunningServices = false;
+        for (const auto& service : d->services) {
+            if (service.state == ServiceState::Running) {
+                hasRunningServices = true;
+                break;
+            }
+        }
+        
+        // 只有在有运行中的服务时才调用 shutdownAll
+        // 避免 shutdownAll 被调用两次
+        if (hasRunningServices) {
+            LOG_INFO("ServiceLifecycle destructor - shutting down remaining services");
+            shutdownAll();
+        }
+    }
 }
 
 void ServiceLifecycle::registerService(const ServiceDescriptor& descriptor)
@@ -104,37 +122,41 @@ bool ServiceLifecycle::initializeAll()
 
 void ServiceLifecycle::shutdownAll()
 {
-    QMutexLocker locker(&d->mutex);
+    // 先获取需要关闭的服务列表（避免长时间持有锁）
+    QVector<ServiceDescriptor*> servicesToShutdown;
+    {
+        QMutexLocker locker(&d->mutex);
+        
+        for (int i = d->services.size() - 1; i >= 0; --i) {
+            if (d->services[i].state == ServiceState::Running) {
+                servicesToShutdown.append(&d->services[i]);
+            }
+        }
+    }
     
     // 按逆序关闭（先关闭依赖者，再关闭被依赖者）
-    int total = d->services.size();
+    int total = servicesToShutdown.size();
     int completed = 0;
     
-    for (int i = d->services.size() - 1; i >= 0; --i) {
-        auto& service = d->services[i];
+    for (auto* service : servicesToShutdown) {
+        service->state = ServiceState::Stopping;
+        emit serviceStateChanged(service->name, service->state);
+        emit shutdownProgress(service->name, completed, total);
         
-        if (service.state != ServiceState::Running) {
-            continue;
-        }
-        
-        service.state = ServiceState::Stopping;
-        emit serviceStateChanged(service.name, service.state);
-        emit shutdownProgress(service.name, completed, total);
-        
-        // 执行关闭
-        if (service.shutdown) {
+        // 执行关闭（不持有锁，避免死锁）
+        if (service->shutdown) {
             try {
-                service.shutdown();
+                service->shutdown();
             } catch (const std::exception& e) {
                 LOG_ERROR(QString("Service shutdown failed: %1 - %2")
-                    .arg(service.name).arg(e.what()));
+                    .arg(service->name).arg(e.what()));
             }
         }
         
-        service.state = ServiceState::Stopped;
-        LOG_INFO(QString("Service stopped: %1").arg(service.name));
+        service->state = ServiceState::Stopped;
+        LOG_INFO(QString("Service stopped: %1").arg(service->name));
         
-        emit serviceStateChanged(service.name, service.state);
+        emit serviceStateChanged(service->name, service->state);
         completed++;
     }
 }

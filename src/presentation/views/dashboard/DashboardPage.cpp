@@ -694,8 +694,24 @@ DashboardPage::DashboardPage(QWidget* parent)
 
 DashboardPage::~DashboardPage()
 {
+    // 先停止所有定时器
     if (d->updateTimer) d->updateTimer->stop();
     if (d->clockTimer) d->clockTimer->stop();
+    
+    // 取消 DataHub 订阅（避免回调到已销毁的对象）
+    auto& hub = WealthPilot::DataHub::DataHub::instance();
+    hub.unsubscribe(this);
+    
+    // 停止数据源的 DataHub 注册
+    if (d->indexDataSource) {
+        d->indexDataSource->stopAutoRefresh();
+    }
+    if (d->rankDataSource) {
+        d->rankDataSource->stopAutoRefresh();
+    }
+    if (d->watchlistDataSource) {
+        d->watchlistDataSource->stopAutoRefresh();
+    }
 }
 
 void DashboardPage::initializePage()

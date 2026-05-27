@@ -54,13 +54,16 @@ void DataHubBootstrap::shutdown()
 
     qDebug() << "[DataHubBootstrap] Shutting down DataHub...";
 
-    // 注销 Producer
+    // 1. 先注销 Producer（停止数据生产）
     auto& hub = DataHub::DataHub::instance();
     if (m_marketProducer) {
         hub.unregisterProducer(m_marketProducer);
-        delete m_marketProducer;
+        m_marketProducer->deleteLater();  // 安全删除
         m_marketProducer = nullptr;
     }
+
+    // 2. 调用 DataHub 的显式 shutdown（关键！）
+    hub.shutdown();
 
     m_initialized = false;
     qDebug() << "[DataHubBootstrap] DataHub shutdown complete";

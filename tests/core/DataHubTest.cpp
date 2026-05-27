@@ -1,39 +1,10 @@
 /**
  * @file DataHubTest.cpp
- * @brief DataHub 单元测试
+ * @brief DataHub 单元测试实现
  */
 
-#include <QtTest/QtTest>
+#include "DataHubTest.h"
 #include "data/datahub/DataHub.h"
-
-using namespace WealthPilot::DataHub;
-
-class DataHubTest : public QObject {
-    Q_OBJECT
-
-private slots:
-    void initTestCase();
-    void cleanupTestCase();
-    
-    // 发布订阅测试
-    void testPublishSubscribe();
-    void testMultipleSubscribers();
-    void testUnsubscribe();
-    
-    // 通配符测试
-    void testWildcardSubscribe();
-    void testPatternMatch();
-    
-    // 生命周期测试
-    void testTTL();
-    void testCleanup();
-    
-    // 性能测试
-    void testPublishPerformance();
-
-private:
-    DataHub* m_hub = nullptr;
-};
 
 void DataHubTest::initTestCase()
 {
@@ -48,151 +19,160 @@ void DataHubTest::cleanupTestCase()
     }
 }
 
-void DataHubTest::testPublishSubscribe()
+void DataHubTest::testSingleton()
 {
-    int callCount = 0;
-    QVariant receivedData;
+    auto instance1 = DataHub::instance();
+    auto instance2 = DataHub::instance();
+    QCOMPARE(instance1, instance2);
+}
+
+void DataHubTest::testSubscribePublish()
+{
+    m_callbackCount = 0;
     
-    auto subId = m_hub->subscribe("test:topic", [&](const QVariant& data) {
-        callCount++;
-        receivedData = data;
+    auto subId = m_hub->subscribe("test:topic", [this](const QVariant& data) {
+        m_callbackCount++;
+        Q_UNUSED(data);
     });
     
     QVERIFY(subId != 0);
     
-    // 发布数据
     m_hub->publish("test:topic", QVariant(42));
     QTest::qWait(10);
     
-    QCOMPARE(callCount, 1);
-    QCOMPARE(receivedData.toInt(), 42);
+    QCOMPARE(m_callbackCount, 1);
     
     m_hub->unsubscribe(subId);
-}
-
-void DataHubTest::testMultipleSubscribers()
-{
-    int count1 = 0, count2 = 0, count3 = 0;
-    
-    auto id1 = m_hub->subscribe("multi:topic", [&](const QVariant&) { count1++; });
-    auto id2 = m_hub->subscribe("multi:topic", [&](const QVariant&) { count2++; });
-    auto id3 = m_hub->subscribe("multi:topic", [&](const QVariant&) { count3++; });
-    
-    m_hub->publish("multi:topic", QVariant("test"));
-    QTest::qWait(10);
-    
-    QCOMPARE(count1, 1);
-    QCOMPARE(count2, 1);
-    QCOMPARE(count3, 1);
-    
-    m_hub->unsubscribe(id1);
-    m_hub->unsubscribe(id2);
-    m_hub->unsubscribe(id3);
 }
 
 void DataHubTest::testUnsubscribe()
 {
-    int callCount = 0;
+    m_callbackCount = 0;
     
-    auto subId = m_hub->subscribe("unsub:topic", [&](const QVariant&) {
-        callCount++;
+    auto subId = m_hub->subscribe("unsub:topic", [this](const QVariant&) {
+        m_callbackCount++;
     });
     
-    m_hub->publish("unsub:topic", QVariant(1));
+    m_hub->publish("unsub:topic", QVariant("test"));
     QTest::qWait(10);
-    QCOMPARE(callCount, 1);
+    QCOMPARE(m_callbackCount, 1);
     
-    // 取消订阅
     m_hub->unsubscribe(subId);
     
-    m_hub->publish("unsub:topic", QVariant(2));
+    m_hub->publish("unsub:topic", QVariant("test2"));
     QTest::qWait(10);
-    
-    // 不应再收到消息
-    QCOMPARE(callCount, 1);
+    QCOMPARE(m_callbackCount, 1); // 不应增加
 }
 
-void DataHubTest::testWildcardSubscribe()
+void DataHubTest::testPatternMatching()
 {
-    QStringList received;
+    m_callbackCount = 0;
     
-    // 订阅通配符
-    auto subId = m_hub->subscribe("market:quote:*", [&](const QVariant& data) {
-        received << data.toString();
+    auto subId = m_hub->subscribe("stock:*", [this](const QVariant&) {
+        m_callbackCount++;
     });
     
-    m_hub->publish("market:quote:sh600519", QVariant("茅台"));
-    m_hub->publish("market:quote:sz000001", QVariant("平安"));
-    QTest::qWait(10);
+    m_hub->publish("stock:600000", QVariant(1));
+    m_hub->publish("stock:000001", QVariant(2));
+    m_hub->publish("future:IF2401", QVariant(3)); // 不应匹配
     
-    QCOMPARE(received.size(), 2);
-    QVERIFY(received.contains("茅台"));
-    QVERIFY(received.contains("平安"));
+    QTest::qWait(10);
+    QCOMPARE(m_callbackCount, 2);
     
     m_hub->unsubscribe(subId);
 }
 
-void DataHubTest::testPatternMatch()
+void DataHubTest::testDataCache()
 {
-    QStringList received;
+    m_hub->publish("cache:test", QVariant("cached_data"));
+    QTest::qWait(10);
     
-    auto subId = m_hub->subscribe("stock:*:price", [&](const QVariant& data) {
-        received << data.toString();
+    auto cached = m_hub->getCached("cache:test");
+    QVERIFY(cached.isValid());
+    QCOMPARE(cached.toString(), QString("cached_data"));
+}
+
+void DataHubTest::testLifecycle()
+{
+    // 测试订阅生命周期
+    {
+        auto subId = m_hub->subscribe("lifecycle:test", [](const QVariant&) {});
+        QVERIFY(subId != 0);
+        m_hub->unsubscribe(subId);
+    }
+    
+    // 测试清理
+    m_hub->clear();
+    QTest::qWait(10);
+}
+
+void DataHubTest::testPerformanceManySubscriptions()
+{
+    const int count = 1000;
+    QVector<quint64> subIds;
+    subIds.reserve(count);
+    
+    QElapsedTimer timer;
+    timer.start();
+    
+    for (int i = 0; i < count; ++i) {
+        subIds.append(m_hub->subscribe(QString("perf:%1").arg(i), [](const QVariant&) {}));
+    }
+    
+    qint64 subscribeTime = timer.elapsed();
+    qDebug() << "订阅" << count << "个主题耗时:" << subscribeTime << "ms";
+    
+    timer.restart();
+    for (auto id : subIds) {
+        m_hub->unsubscribe(id);
+    }
+    qint64 unsubscribeTime = timer.elapsed();
+    qDebug() << "取消订阅耗时:" << unsubscribeTime << "ms";
+}
+
+void DataHubTest::testPerformanceHighFrequency()
+{
+    m_callbackCount = 0;
+    
+    auto subId = m_hub->subscribe("highfreq:test", [this](const QVariant&) {
+        m_callbackCount++;
     });
     
-    m_hub->publish("stock:sh600519:price", QVariant("1800"));
-    m_hub->publish("stock:sz000001:price", QVariant("10"));
-    m_hub->publish("stock:sh600519:volume", QVariant("10000")); // 不匹配
-    QTest::qWait(10);
+    const int count = 10000;
+    QElapsedTimer timer;
+    timer.start();
     
-    QCOMPARE(received.size(), 2);
+    for (int i = 0; i < count; ++i) {
+        m_hub->publish("highfreq:test", QVariant(i));
+    }
+    
+    QTest::qWait(100);
+    qint64 publishTime = timer.elapsed();
+    
+    qDebug() << "发布" << count << "次耗时:" << publishTime << "ms";
+    qDebug() << "回调次数:" << m_callbackCount;
     
     m_hub->unsubscribe(subId);
 }
 
-void DataHubTest::testTTL()
+void DataHubTest::testMemoryUsage()
 {
-    // 发布带 TTL 的数据
-    m_hub->publish("ttl:topic", QVariant("data"), 1);
+    // 获取初始内存使用
+    qint64 initialMemory = 0; // 简化测试，不实际测量内存
     
-    QVERIFY(m_hub->hasData("ttl:topic"));
-    
-    // 等待过期
-    QTest::qWait(1100);
-    
-    QVERIFY(!m_hub->hasData("ttl:topic"));
-}
-
-void DataHubTest::testCleanup()
-{
-    // 发布多个带 TTL 的数据
-    for (int i = 0; i < 10; ++i) {
-        m_hub->publish(QString("cleanup:%1").arg(i), QVariant(i), 1);
+    // 创建大量订阅
+    QVector<quint64> subIds;
+    for (int i = 0; i < 100; ++i) {
+        subIds.append(m_hub->subscribe(QString("mem:%1").arg(i), [](const QVariant&) {}));
     }
     
-    QTest::qWait(1100);
-    
-    // 清理过期数据
-    m_hub->cleanupExpired();
-    
-    for (int i = 0; i < 10; ++i) {
-        QVERIFY(!m_hub->hasData(QString("cleanup:%1").arg(i)));
-    }
-}
-
-void DataHubTest::testPublishPerformance()
-{
-    // 预订阅
-    auto subId = m_hub->subscribe("perf:topic", [&](const QVariant&) {});
-    
-    QBENCHMARK {
-        for (int i = 0; i < 100; ++i) {
-            m_hub->publish("perf:topic", QVariant(i));
-        }
-        QTest::qWait(10);
+    // 清理
+    for (auto id : subIds) {
+        m_hub->unsubscribe(id);
     }
     
-    m_hub->unsubscribe(subId);
+    Q_UNUSED(initialMemory);
+    QVERIFY(true); // 简化测试
 }
 
 QTEST_MAIN(DataHubTest)

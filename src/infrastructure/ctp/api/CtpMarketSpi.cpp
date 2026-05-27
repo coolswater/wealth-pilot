@@ -55,7 +55,35 @@ CtpMarketSpi::CtpMarketSpi(QObject *parent)
     });
 }
 
-CtpMarketSpi::~CtpMarketSpi() = default;  // C++17 默认析构
+CtpMarketSpi::~CtpMarketSpi() {
+    LOG_INFO("CtpMarketSpi destructor - stopping worker thread...");
+    
+    // 停止 MarketWorker 线程（如果正在运行）
+    if (d->worker && d->worker->isRunning()) {
+        LOG_INFO("Stopping MarketWorker thread...");
+        d->worker->quit();  // 退出事件循环
+        
+        if (!d->worker->wait(5000)) {  // 等待最多5秒
+            LOG_WARNING("MarketWorker did not stop gracefully, terminating...");
+            d->worker->terminate();  // 强制终止
+            d->worker->wait();  // 等待终止完成
+        }
+        
+        LOG_INFO("MarketWorker thread stopped");
+    }
+    
+    // 释放 CTP API（如果存在）
+    if (d->api) {
+        LOG_INFO("Releasing CTP Market API...");
+        d->api->RegisterSpi(nullptr);
+        d->api->Release();
+        d->api = nullptr;
+        LOG_INFO("CTP Market API released");
+    }
+    
+    // QScopedPointer 会自动清理
+    LOG_INFO("CtpMarketSpi destructor complete");
+}
 
 void CtpMarketSpi::createApi(const QString& flowPath, bool isUdp, bool isMulticast) {
     QMutexLocker locker(&d->apiMutex);

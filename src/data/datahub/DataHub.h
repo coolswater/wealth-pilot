@@ -147,6 +147,15 @@ public:
     static DataHub& instance();
     
     /**
+     * @brief 显式关闭（在 QApplication 退出前调用）
+     * 
+     * @details 必须在 QApplication::aboutToQuit 信号中调用此方法，
+     *          而不是依赖析构函数。因为静态单例析构晚于 QApplication，
+     *          此时 QTimer 已无法正常工作。
+     */
+    void shutdown();
+    
+    /**
      * @brief 订阅topic
      * @param owner 订阅者对象，销毁时自动取消订阅
      * @param topic 要订阅的topic

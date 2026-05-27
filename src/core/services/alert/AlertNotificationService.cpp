@@ -44,11 +44,8 @@ AlertNotificationService::AlertNotificationService(QObject* parent)
 {
     d->networkManager = new QNetworkAccessManager(this);
     
-    // 初始化系统托盘图标
-    d->trayIcon = new QSystemTrayIcon(this);
-    d->trayIcon->setIcon(QIcon(":/icons/app.png"));
-    d->trayIcon->show();
-    
+    // 延迟初始化系统托盘图标（避免在构造函数中崩溃）
+    // trayIcon 将在第一次调用 showNotification 时创建
     LOG_DEBUG("AlertNotificationService created");
 }
 
@@ -207,8 +204,11 @@ bool AlertNotificationService::sendViaEmail(const AlertMessage& message,
 
 bool AlertNotificationService::sendViaSystemNotify(const AlertMessage& message)
 {
+    // 延迟初始化系统托盘图标
     if (!d->trayIcon) {
-        return false;
+        d->trayIcon = new QSystemTrayIcon(this);
+        d->trayIcon->setIcon(QIcon(":/images/app_icon.png"));  // 使用正确的资源路径
+        d->trayIcon->show();
     }
     
     d->trayIcon->showMessage(

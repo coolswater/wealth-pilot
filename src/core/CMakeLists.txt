@@ -137,6 +137,16 @@ target_sources(Core PRIVATE
         services/lifecycle/ServiceLifecycle.cpp
 )
 
+# Storage 数据存储（占位实现）
+target_sources(Core PRIVATE
+        services/storage/DataStorageService.h
+)
+
+# CTP 交易接口（占位实现）
+target_sources(Core PRIVATE
+        trading/ctp/CTPService.h
+)
+
 # Monitoring 性能监控
 target_sources(Core PRIVATE
         services/monitoring/PerformanceMonitor.h

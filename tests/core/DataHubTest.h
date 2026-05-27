@@ -18,8 +18,9 @@
 
 #include <QObject>
 #include <QtTest/QtTest>
-#include "data/datahub/DataHub.h"
-#include "data/datahub/MarketDataProducer.h"
+
+// 前向声明
+class DataHub;
 
 /**
  * @brief DataHub 单元测试类

@@ -6,8 +6,6 @@
 #include <QtTest/QtTest>
 #include "presentation/styles/ThemeManager.h"
 
-using namespace WealthPilot;
-
 class ThemeManagerTest : public QObject {
     Q_OBJECT
 

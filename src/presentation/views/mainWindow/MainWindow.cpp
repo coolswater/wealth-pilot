@@ -208,12 +208,13 @@ void MainWindow::closeEvent(QCloseEvent* event)
 {
     saveSettings();
 
-    // 关闭应用
-    ApplicationInitializer::instance().shutdown();
+    // 注意：不要在这里调用 ApplicationInitializer::shutdown()
+    // shutdown() 会在 main.cpp 的 aboutToQuit 信号中统一调用
+    // 这样可以确保所有服务的关闭顺序正确
 
     event->accept();
 
-    LOG_INFO("Application closed");
+    LOG_INFO("MainWindow closed");
 }
 
 void MainWindow::keyPressEvent(QKeyEvent* event)

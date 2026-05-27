@@ -44,18 +44,18 @@ void TradingIntegration::connectTradingService()
             this, &TradingIntegration::onProfitUpdated);
 }
 
-void TradingIntegration::registerAccountPage(AccountPage* page)
+void TradingIntegration::registerAccountPage(WealthPilot::AccountPage* page)
 {
     m_accountPage = page;
     updateAccountPage();
 }
 
-void TradingIntegration::registerTradeHistoryPage(TradeHistoryPage* page)
+void TradingIntegration::registerTradeHistoryPage(WealthPilot::TradeHistoryPage* page)
 {
     m_tradeHistoryPage = page;
 }
 
-void TradingIntegration::registerConditionOrderPage(ConditionOrderPage* page)
+void TradingIntegration::registerConditionOrderPage(WealthPilot::ConditionOrderPage* page)
 {
     m_conditionOrderPage = page;
 }
