@@ -2672,9 +2672,6 @@ void DashboardPage::onNewsItemClicked(QListWidgetItem* item)
     
     LOG_INFO(QString("News clicked: %1").arg(newsTitle));
     
-    // 从数据库获取新闻详情
-    auto* storage = DataStorageService::instance();
-    
     // 创建弹窗
     QDialog* dialog = new QDialog(this);
     dialog->setWindowTitle(QStringLiteral("新闻详情"));

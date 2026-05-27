@@ -471,7 +471,7 @@ namespace WealthPilot
         LOG_INFO(QString("Order submitted: %1").arg(orderId));
     }
 
-    void TradingViewModel::onOrderFilled(const QString& orderId, const TradeRecord& trade)
+    void TradingViewModel::onOrderFilled(const QString& orderId, const TradeRecord& /*trade*/)
     {
         LOG_INFO(QString("Order filled: %1").arg(orderId));
         clearStatus();

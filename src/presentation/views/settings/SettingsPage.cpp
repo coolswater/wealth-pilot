@@ -355,6 +355,45 @@ void SettingsPage::setupUI()
     
     contentLayout->addWidget(aiGroup);
     
+    // ========== 智能预警推送 ==========
+    QGroupBox* alertGroup = new QGroupBox(QStringLiteral("智能预警推送"), this);
+    QVBoxLayout* alertLayout = new QVBoxLayout(alertGroup);
+    alertLayout->setSpacing(8);
+    
+    // 预警说明
+    QLabel* alertDesc = new QLabel(QStringLiteral("配置预警消息推送渠道，支持微信、邮件、钉钉等方式"), this);
+    StyleHelper::setLabelText(alertDesc);
+    alertLayout->addWidget(alertDesc);
+    
+    // 推送渠道快捷开关
+    QHBoxLayout* channelLayout = new QHBoxLayout();
+    
+    QCheckBox* wechatCheck = new QCheckBox(QStringLiteral("微信"), this);
+    QCheckBox* emailCheck = new QCheckBox(QStringLiteral("邮件"), this);
+    QCheckBox* dingtalkCheck = new QCheckBox(QStringLiteral("钉钉"), this);
+    QCheckBox* webworkCheck = new QCheckBox(QStringLiteral("企业微信"), this);
+    
+    channelLayout->addWidget(wechatCheck);
+    channelLayout->addWidget(emailCheck);
+    channelLayout->addWidget(dingtalkCheck);
+    channelLayout->addWidget(webworkCheck);
+    channelLayout->addStretch();
+    
+    alertLayout->addLayout(channelLayout);
+    
+    // 高级配置按钮
+    QPushButton* alertConfigBtn = new QPushButton(QStringLiteral("高级配置..."), this);
+    ButtonStyles::setSecondary(alertConfigBtn);
+    alertConfigBtn->setFixedWidth(100);
+    connect(alertConfigBtn, &QPushButton::clicked, this, [this]() {
+        // 打开详细配置对话框
+        QMessageBox::information(this, QStringLiteral("智能预警配置"), 
+            QStringLiteral("详细配置已集成到 AlertSettingsWidget 模块\n请通过代码集成到设置页面"));
+    });
+    alertLayout->addWidget(alertConfigBtn);
+    
+    contentLayout->addWidget(alertGroup);
+    
     contentLayout->addStretch();
     
     // ========== 连接信号 ==========

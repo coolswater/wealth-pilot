@@ -132,6 +132,8 @@ target_sources(Presentation PRIVATE
         views/settings/CTPBrokerDialog.cpp
         views/settings/RiskSettingsPage.h
         views/settings/RiskSettingsPage.cpp
+        views/settings/AlertSettingsWidget.h
+        views/settings/AlertSettingsWidget.cpp
         views/warning/WarningPage.h
         views/warning/WarningPage.cpp
         views/aboutus/AboutUSPage.h

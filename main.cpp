@@ -31,6 +31,8 @@
 #include "shared/utils/Logger.h"
 #include "infrastructure/database/DatabaseManager.h"
 #include "src/presentation/viewmodels/ViewModelRegistration.h"
+#include "core/services/lifecycle/ServiceLifecycle.h"
+#include "core/services/alert/AlertNotificationService.h"
 #include <QApplication>
 #include <QFontDatabase>
 #include <QLocale>
@@ -47,15 +49,15 @@
 #endif
 
 /**
- * @brief 清理所有服务
+ * @brief 清理所有服务 - 使用 ServiceLifecycle 优雅关闭
  */
 void cleanupServices()
 {
     LOG_INFO("========================================");
     LOG_INFO("Cleaning up services...");
 
-    // 清理数据库管理器
-    DatabaseManager::instance()->shutdown();
+    // 使用 ServiceLifecycle 关闭所有服务（按依赖逆序）
+    WealthPilot::ServiceLifecycle::instance()->shutdownAll();
 
     LOG_INFO("All services cleaned up");
     LOG_INFO("========================================");
@@ -113,7 +115,57 @@ int main(int argc, char* argv[])
     QApplication::setFont(defaultFont);
 
     // ========== 初始化主题管理器 ==========
-    ThemeManager::instance()->initialize();
+        ThemeManager::instance()->initialize();
+
+        // ========== 注册服务到 ServiceLifecycle ==========
+        auto* lifecycle = WealthPilot::ServiceLifecycle::instance();
+    
+        // 注册数据库服务（优先级最高，最先启动）
+        lifecycle->registerService({
+            QStringLiteral("DatabaseManager"),
+            1,  // 最高优先级
+            {},  // 无依赖
+            []() -> bool {
+                return DatabaseManager::instance()->initialize();
+            },
+            []() {
+                DatabaseManager::instance()->shutdown();
+            }
+        });
+    
+        // 注册智能预警服务（依赖数据库）
+        lifecycle->registerService({
+            QStringLiteral("AlertNotificationService"),
+            10,
+            {QStringLiteral("DatabaseManager")},
+            []() -> bool {
+                // 预警服务初始化（配置从数据库加载）
+                return true;
+            },
+            []() {
+                // 预警服务清理
+            }
+        });
+    
+        // 注册主题服务
+        lifecycle->registerService({
+            QStringLiteral("ThemeManager"),
+            5,
+            {},
+            []() -> bool {
+                ThemeManager::instance()->initialize();
+                return true;
+            },
+            []() {
+                ThemeManager::instance()->clearCache();
+            }
+        });
+    
+        // 初始化所有服务
+        if (!lifecycle->initializeAll()) {
+            LOG_ERROR("Failed to initialize some services");
+            // 继续运行，但记录错误
+        }
 
     // ========== 国际化 ==========
     QTranslator translator;

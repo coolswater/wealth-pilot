@@ -28,6 +28,8 @@
 #include <QComboBox>
 #include <QDateEdit>
 #include <QLabel>
+#include <QVector>
+#include <QPointF>
 #include <QDateTime>
 #include <memory>
 
@@ -40,6 +42,7 @@ class KLineChart;
 struct BacktestResult {
     double totalReturn = 0.0;       ///< 总收益率
     double annualReturn = 0.0;      ///< 年化收益率
+    double annualizedReturn = 0.0;  ///< 年化收益率（兼容字段）
     double maxDrawdown = 0.0;       ///< 最大回撤
     double sharpeRatio = 0.0;       ///< 夏普比率
     double winRate = 0.0;           ///< 胜率
@@ -52,6 +55,9 @@ struct BacktestResult {
     double avgProfit = 0.0;         ///< 平均盈利
     double avgLoss = 0.0;           ///< 平均亏损
     double avgHoldingDays = 0.0;    ///< 平均持仓天数
+    
+    // 权益曲线数据
+    QVector<QPointF> equityCurve;   ///< 权益曲线点集（时间戳, 权益）
 };
 
 /**

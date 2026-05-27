@@ -42,33 +42,70 @@ void ConnectionPool::initialize()
 
 void ConnectionPool::cleanup()
 {
-    QMutexLocker locker(&m_mutex);
+    LOG_INFO("ConnectionPool cleanup starting...");
     
-    // Close all connections
-    while (!m_availableConnections.isEmpty()) {
-        QSqlDatabase db = m_availableConnections.dequeue();
-        QString connectionName = db.connectionName();
-        db.close();
-        QSqlDatabase::removeDatabase(connectionName);
+    // 标记正在关闭
+    m_shuttingDown = true;
+    m_condition.wakeAll();
+    
+    // 等待所有连接返回
+    QElapsedTimer waitTimer;
+    waitTimer.start();
+    
+    while (!m_usedConnections.isEmpty() && waitTimer.elapsed() < 5000) {
+        LOG_DEBUG(QString("Waiting for %1 connections to return...")
+            .arg(m_usedConnections.size()));
+        QThread::msleep(100);
     }
     
-    for (auto& db : m_usedConnections) {
-        QString connectionName = db.connectionName();
-        db.close();
+    // 强制关闭所有连接
+    QMutexLocker locker(&m_mutex);
+    
+    // 先关闭可用连接
+    while (!m_availableConnections.isEmpty()) {
+        QSqlDatabase db = m_availableConnections.dequeue();
+        if (db.isOpen()) {
+            QString connectionName = db.connectionName();
+            db.close();
+            QSqlDatabase::removeDatabase(connectionName);
+        }
+    }
+    
+    // 强制关闭使用中的连接
+    for (auto it = m_usedConnections.begin(); it != m_usedConnections.end(); ) {
+        QString connectionName = it.key();
+        QSqlDatabase db = it.value();
+        if (db.isOpen()) {
+            db.close();
+        }
         QSqlDatabase::removeDatabase(connectionName);
+        it = m_usedConnections.erase(it);
     }
     m_usedConnections.clear();
     
-    LOG_DEBUG("ConnectionPool cleaned up");
+    LOG_INFO("ConnectionPool cleaned up successfully");
 }
 
 QSqlDatabase ConnectionPool::getConnection()
 {
     QMutexLocker locker(&m_mutex);
     
+    // 检查是否正在关闭
+    if (m_shuttingDown) {
+        LOG_WARNING("Connection pool is shutting down, cannot get connection");
+        return QSqlDatabase();
+    }
+    
     // Wait for available connection
     while (m_availableConnections.isEmpty() && m_usedConnections.size() >= m_config.maxConnections) {
         m_condition.wait(&m_mutex, m_config.connectionTimeout);
+        
+        // 再次检查关闭状态
+        if (m_shuttingDown) {
+            LOG_WARNING("Connection pool is shutting down during wait");
+            return QSqlDatabase();
+        }
+        
         if (m_availableConnections.isEmpty() && m_usedConnections.size() >= m_config.maxConnections) {
             LOG_ERROR("Connection pool exhausted");
             return QSqlDatabase();

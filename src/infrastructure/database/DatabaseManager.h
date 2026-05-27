@@ -86,6 +86,7 @@ private:
     mutable QMutex m_mutex;
     QWaitCondition m_condition;
     int m_connectionCounter = 0;
+    bool m_shuttingDown = false;  // 关闭标志，用于优雅退出
 };
 
 /**

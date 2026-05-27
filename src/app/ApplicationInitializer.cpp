@@ -25,6 +25,7 @@
 #include <QElapsedTimer>
 #include <QCoreApplication>
 #include <QThread>
+#include <QThreadPool>
 #include <QtConcurrent>
 
 ApplicationInitializer& ApplicationInitializer::instance()
@@ -101,6 +102,15 @@ void ApplicationInitializer::shutdown()
     // UI -> Plugins -> Services -> Core
     // ============================================================
     
+    // 0. 先等待全局线程池完成所有任务
+    LOG_INFO("Waiting for thread pool to complete...");
+    QThreadPool* globalPool = QThreadPool::globalInstance();
+    if (globalPool) {
+        globalPool->waitForDone(30000);  // 等待最多30秒
+        LOG_INFO(QString("Thread pool completed, active threads: %1")
+            .arg(globalPool->activeThreadCount()));
+    }
+    
     // 1. 关闭 UI 层
     emit phaseStarted(InitPhase::UI);
     for (const auto& module : m_modules[InitPhase::UI]) {
@@ -117,7 +127,7 @@ void ApplicationInitializer::shutdown()
         }
     }
 
-    // 3. 关闭服务层
+    // 3. 关闭服务层（包括 DatabaseManager）
     emit phaseStarted(InitPhase::Services);
     for (const auto& module : m_modules[InitPhase::Services]) {
         if (module.shutdownFunc) {
@@ -224,8 +234,12 @@ bool ApplicationInitializer::initializeCore()
     // 3. 初始化 DataHub 数据中心（新增）
     // ============================================================
     timer.restart();
-    WealthPilot::DataHubBootstrap dataHubBootstrap;
-    bool dataHubResult = dataHubBootstrap.initialize();
+    // 使用静态实例避免局部变量析构导致 DataHub 被关闭
+    static WealthPilot::DataHubBootstrap* s_dataHubBootstrap = nullptr;
+    if (!s_dataHubBootstrap) {
+        s_dataHubBootstrap = new WealthPilot::DataHubBootstrap();
+    }
+    bool dataHubResult = s_dataHubBootstrap->initialize();
     emit moduleInitialized("DataHub", dataHubResult, timer.elapsed());
     emit progressUpdated(++current, total, "DataHub");
 

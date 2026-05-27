@@ -384,8 +384,8 @@ void BacktestChartWidget::resizeEvent(QResizeEvent* event)
 
 void BacktestChartWidget::mouseMoveEvent(QMouseEvent* event)
 {
-    d->mouseX = event->x();
-    d->mouseY = event->y();
+    d->mouseX = static_cast<int>(event->position().x());
+    d->mouseY = static_cast<int>(event->position().y());
     update();
 }
 
@@ -393,7 +393,7 @@ void BacktestChartWidget::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::LeftButton) {
         d->isDragging = true;
-        d->dragStartX = event->x();
+        d->dragStartX = static_cast<int>(event->position().x());
     }
 }
 

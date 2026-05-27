@@ -54,7 +54,6 @@ void BacktestReportWidget::setupUI()
     auto* statsLayout = new QGridLayout(statsGroup);
     statsLayout->setSpacing(15);
     
-    int row = 0;
     auto createStatLabel = [](const QString& title, const QString& value) {
         auto* layout = new QVBoxLayout();
         auto* titleLabel = new QLabel(title);

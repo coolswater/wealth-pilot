@@ -127,6 +127,13 @@ bool PluginLoader::loadPlugin(const QString& pluginName)
         }
     }
     
+    // 调用插件的 load() 方法（内置插件也需要调用）
+    if (!info.plugin->load()) {
+        LOG_ERROR(QString("Failed to load plugin: %1").arg(pluginName));
+        info.state = PluginState::Error;
+        return false;
+    }
+    
     info.state = PluginState::Loaded;
     
     // 初始化插件

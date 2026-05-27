@@ -458,7 +458,7 @@ bool DrawingToolManager::mouseMoveEvent(QMouseEvent* event)
     return true;
 }
 
-bool DrawingToolManager::mouseReleaseEvent(QMouseEvent* event)
+bool DrawingToolManager::mouseReleaseEvent(QMouseEvent* /*event*/)
 {
     if (!m_isDrawing || !m_currentDrawing)
     {
