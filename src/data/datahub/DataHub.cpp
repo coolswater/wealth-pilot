@@ -2,6 +2,7 @@
 #include "services/cache/CacheManager.h"
 #include <QDebug>
 #include <QDateTime>
+#include <QQueue>
 
 #include "utils/Logger.h"
 
@@ -51,33 +52,50 @@ DataHub& DataHub::instance()
 DataHub::DataHub()
     : QObject(nullptr)
     , m_schedulerTimer(new QTimer(this))
+    , m_backpressureTimer(new QTimer(this))
 {
+    // 初始化默认背压策略
+    m_defaultBackpressurePolicy = BackpressurePolicy{};
+    
     // 调度器每秒检查一次需要刷新的topic
     m_schedulerTimer->setInterval(1000);
     connect(m_schedulerTimer, &QTimer::timeout, 
             this, &DataHub::processScheduledRefresh);
     m_schedulerTimer->start();
+    
+    // 背压定时器每 16ms 处理一次队列（约 60fps）
+    m_backpressureTimer->setInterval(16);
+    connect(m_backpressureTimer, &QTimer::timeout,
+            this, &DataHub::processBackpressureQueue);
+    m_backpressureTimer->start();
 
-    LOG_DEBUG("[DataHub] Initialized");
+    LOG_DEBUG("[DataHub] Initialized with backpressure support");
 }
 
 DataHub::~DataHub()
 {
     LOG_DEBUG("[DataHub] Shutdown starting...");
 
-    // 1. 先停止调度器（最重要！）
+    // 1. 先停止所有定时器（最重要！）
     if (m_schedulerTimer) {
         m_schedulerTimer->stop();
-        // 确保定时器事件处理完毕
         m_schedulerTimer->deleteLater();
         m_schedulerTimer = nullptr;
+    }
+    if (m_backpressureTimer) {
+        m_backpressureTimer->stop();
+        m_backpressureTimer->deleteLater();
+        m_backpressureTimer = nullptr;
     }
     
     // 2. 清理所有订阅（避免回调到已销毁的对象）
     m_ownerSubscriptions.clear();
     m_patternSubscriptions.clear();
     
-    // 3. 通知所有 Producer 停止
+    // 3. 清理背压队列
+    m_backpressureQueues.clear();
+    
+    // 4. 通知所有 Producer 停止
     for (auto* producer : m_producers) {
         if (producer) {
             // 通知所有活跃 topic 变为空闲
@@ -90,7 +108,7 @@ DataHub::~DataHub()
     }
     m_producers.clear();
     
-    // 4. 清理 topic 状态
+    // 5. 清理 topic 状态
     m_topics.clear();
 
     LOG_DEBUG("[DataHub] Shutdown complete");
@@ -218,6 +236,24 @@ void DataHub::publish(const QString& topic, const QVariant& value)
 void DataHub::publish(const QString& topic, const QVariant& value, 
                       std::chrono::milliseconds ttl)
 {
+    // 背压检查
+    if (shouldApplyBackpressure(topic)) {
+        auto processedValue = applyBackpressure(topic, value);
+        if (!processedValue.isValid()) {
+            // 被丢弃或采样跳过
+            return;
+        }
+        // 使用处理后的值继续
+        publishInternal(topic, processedValue, ttl);
+        return;
+    }
+    
+    publishInternal(topic, value, ttl);
+}
+
+void DataHub::publishInternal(const QString& topic, const QVariant& value, 
+                               std::chrono::milliseconds ttl)
+{
     auto& state = m_topics[topic];
     
     // 更新缓存
@@ -265,7 +301,9 @@ void DataHub::publish(const QString& topic, const QVariant& value,
         }
     }
 
-    LOG_DEBUG(QString("[DataHub] Published: %1 subscribers: %2").arg(topic,state.subscribers.size()));
+    LOG_DEBUG(QString("[DataHub] Published: %1 subscribers: %2")
+                  .arg(topic)
+                  .arg(state.subscribers.size()));
 }
 
 // ========== Producer管理 ==========
@@ -509,6 +547,146 @@ void DataHub::processScheduledRefresh()
     if (!toRefresh.isEmpty()) {
         request(toRefresh, false);
     }
+}
+
+// ========== 背压处理实现 ==========
+
+bool DataHub::shouldApplyBackpressure(const QString& topic)
+{
+    // 检查是否有该 topic 的背压配置
+    if (!m_backpressureQueues.contains(topic)) {
+        return false;
+    }
+    
+    const auto& queue = m_backpressureQueues[topic];
+    const auto& policy = queue.policy;
+    
+    // 检查队列是否达到阈值
+    if (queue.queue.size() >= policy.maxQueueSize) {
+        return true;
+    }
+    
+    // 检查是否在节流窗口内
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (policy.throttleMs > 0 && (now - queue.lastConsumeMs) < policy.throttleMs) {
+        return true;
+    }
+    
+    return false;
+}
+
+QVariant DataHub::applyBackpressure(const QString& topic, const QVariant& value)
+{
+    auto& queue = m_backpressureQueues[topic];
+    const auto& policy = queue.policy;
+    
+    // 队列已满的处理策略
+    if (queue.queue.size() >= policy.maxQueueSize) {
+        if (policy.dropOnOverload) {
+            // 丢弃旧数据，保留最新
+            queue.queue.dequeue();
+            queue.droppedCount++;
+            LOG_DEBUG(QString("[DataHub] Dropped old data for topic: %1 total dropped: %2")
+                          .arg(topic).arg(queue.droppedCount));
+        } else if (policy.sampleOnOverload) {
+            // 采样模式：按 burstSize 间隔采样
+            queue.burstCounter++;
+            if (queue.burstCounter % policy.burstSize != 0) {
+                queue.throttledCount++;
+                return QVariant(); // 返回无效值表示跳过
+            }
+        } else {
+            // 默认：阻塞等待
+            queue.throttledCount++;
+            return QVariant();
+        }
+    }
+    
+    // 入队
+    queue.queue.enqueue(value);
+    
+    // 如果达到 burstSize，立即消费
+    if (queue.queue.size() >= policy.burstSize) {
+        consumeBackpressureItem(topic);
+    }
+    
+    return value;
+}
+
+void DataHub::processBackpressureQueue()
+{
+    // 处理所有有数据的背压队列
+    for (auto it = m_backpressureQueues.begin(); it != m_backpressureQueues.end(); ++it) {
+        const QString& topic = it.key();
+        auto& queue = it.value();
+        
+        if (queue.queue.isEmpty()) {
+            continue;
+        }
+        
+        qint64 now = QDateTime::currentMSecsSinceEpoch();
+        const auto& policy = queue.policy;
+        
+        // 检查节流间隔
+        if (policy.throttleMs > 0 && (now - queue.lastConsumeMs) < policy.throttleMs) {
+            continue;
+        }
+        
+        // 消费一个批次
+        int consumeCount = qMin(policy.maxConsumeRate, queue.queue.size());
+        for (int i = 0; i < consumeCount && !queue.queue.isEmpty(); ++i) {
+            consumeBackpressureItem(topic);
+        }
+    }
+}
+
+void DataHub::consumeBackpressureItem(const QString& topic)
+{
+    auto it = m_backpressureQueues.find(topic);
+    if (it == m_backpressureQueues.end() || it->queue.isEmpty()) {
+        return;
+    }
+    
+    auto& queue = it.value();
+    QVariant value = queue.queue.dequeue();
+    queue.lastConsumeMs = QDateTime::currentMSecsSinceEpoch();
+    
+    // 直接发布，跳过背压检查
+    publishInternal(topic, value, std::chrono::milliseconds(0));
+}
+
+void DataHub::setBackpressurePolicy(const QString& topic, const BackpressurePolicy& policy)
+{
+    auto& queue = m_backpressureQueues[topic];
+    queue.policy = policy;
+    
+    LOG_DEBUG(QString("[DataHub] Set backpressure policy for %1: queueSize=%2 throttleMs=%3")
+                  .arg(topic)
+                  .arg(policy.maxQueueSize)
+                  .arg(policy.throttleMs));
+}
+
+void DataHub::setDefaultBackpressurePolicy(const BackpressurePolicy& policy)
+{
+    m_defaultBackpressurePolicy = policy;
+    LOG_DEBUG(QString("[DataHub] Set default backpressure policy: queueSize=%2 throttleMs=%3")
+                  .arg(policy.maxQueueSize)
+                  .arg(policy.throttleMs));
+}
+
+QVector<DataHub::BackpressureStats> DataHub::backpressureStats() const
+{
+    QVector<BackpressureStats> result;
+    for (auto it = m_backpressureQueues.begin(); it != m_backpressureQueues.end(); ++it) {
+        BackpressureStats stats;
+        stats.topic = it.key();
+        stats.queueSize = it->queue.size();
+        stats.droppedCount = it->droppedCount;
+        stats.throttledCount = it->throttledCount;
+        stats.lastConsumeMs = it->lastConsumeMs;
+        result.append(stats);
+    }
+    return result;
 }
 
 } // namespace DataHub

@@ -48,11 +48,24 @@
 #include <QSet>
 #include <QTimer>
 #include <QDateTime>
+#include <QQueue>
 #include <functional>
 #include <QMetaObject>
 
 namespace WealthPilot {
 namespace DataHub {
+
+/**
+ * @brief 背压策略配置（简化版）
+ */
+struct BackpressurePolicy {
+    int maxQueueSize = 100;       // 最大队列长度
+    int maxConsumeRate = 10;      // 每次最多消费条数
+    int burstSize = 10;           // 突发合并阈值
+    qint64 throttleMs = 16;       // 节流间隔（毫秒）
+    bool dropOnOverload = true;   // 过载时丢弃旧数据
+    bool sampleOnOverload = false;// 过载时采样
+};
 
 /**
  * @brief Topic刷新策略配置
@@ -218,6 +231,12 @@ public:
                  std::chrono::milliseconds ttl);
     
     /**
+     * @brief 内部发布方法（跳过背压检查）
+     */
+    void publishInternal(const QString& topic, const QVariant& value, 
+                         std::chrono::milliseconds ttl);
+    
+    /**
      * @brief 注册Producer
      */
     void registerProducer(IDataProducer* producer);
@@ -259,6 +278,64 @@ public:
      */
     QVector<TopicStats> stats() const;
     
+    // ========== 背压控制接口 ==========
+    
+    /**
+     * @brief 设置Topic背压策略
+     * @param topic 目标topic
+     * @param policy 背压策略
+     */
+    void setBackpressure(const QString& topic, const BackpressurePolicy& policy);
+    
+    /**
+     * @brief 设置模式背压策略
+     * @param pattern topic模式（如 "market:tick:*"）
+     * @param policy 背压策略
+     */
+    void setBackpressurePattern(const QString& pattern, const BackpressurePolicy& policy);
+    
+    /**
+     * @brief 获取背压状态
+     * @return 队列长度、丢弃数等统计
+     */
+    struct BackpressureStats {
+        QString topic;             ///< Topic名称
+        int queueSize = 0;         ///< 当前队列长度
+        int droppedCount = 0;      ///< 总丢弃数
+        int throttledCount = 0;    ///< 总节流数
+        int mergedCount = 0;       ///< 总合并数
+        qint64 lastConsumeMs = 0;  ///< 上次消费时间
+    };
+    BackpressureStats backpressureStats(const QString& topic) const;
+    QVector<BackpressureStats> backpressureStats() const;
+    
+    /**
+     * @brief 暂停Topic消费（用于降级）
+     */
+    void pauseTopic(const QString& topic);
+    
+    /**
+     * @brief 恢复Topic消费
+     */
+    void resumeTopic(const QString& topic);
+    
+    /**
+     * @brief 清空Topic队列
+     */
+    void clearQueue(const QString& topic);
+    
+    /**
+     * @brief 设置背压策略
+     * @param topic 目标topic
+     * @param policy 背压策略配置
+     */
+    void setBackpressurePolicy(const QString& topic, const BackpressurePolicy& policy);
+    
+    /**
+     * @brief 设置全局默认背压策略
+     */
+    void setDefaultBackpressurePolicy(const BackpressurePolicy& policy);
+
 signals:
     /**
      * @brief Topic更新信号（低级别，用于调试）
@@ -300,6 +377,15 @@ private:
         TopicPolicy policy;
         QSet<QObject*> subscribers;
         IDataProducer* producer = nullptr;
+        
+        // 背压控制
+        BackpressurePolicy backpressurePolicy;      ///< 背压策略
+        QQueue<QVariant> backpressureQueue;         ///< 背压队列
+        int totalDropped = 0;                       ///< 累计丢弃数
+        int totalThrottled = 0;                     ///< 累计节流数
+        int totalMerged = 0;                        ///< 累计合并数
+        qint64 lastConsumeMs = 0;                   ///< 上次消费时间
+        bool isPaused = false;                      ///< 是否暂停消费
     };
     
     // 数据成员
@@ -309,6 +395,20 @@ private:
     QVector<IDataProducer*> m_producers;
     QTimer* m_schedulerTimer;
     
+    // 背压控制
+    struct BackpressureQueue {
+        QQueue<QVariant> queue;
+        BackpressurePolicy policy;
+        int droppedCount = 0;
+        int throttledCount = 0;
+        qint64 lastConsumeMs = 0;
+        qint64 lastThrottleMs = 0;
+        int burstCounter = 0;
+    };
+    QHash<QString, BackpressureQueue> m_backpressureQueues;
+    BackpressurePolicy m_defaultBackpressurePolicy;
+    QTimer* m_backpressureTimer;
+    
     // 内部方法
     void onOwnerDestroyed(QObject* owner);
     IDataProducer* findProducerForTopic(const QString& topic) const;
@@ -316,6 +416,12 @@ private:
     bool isTopicExpired(const QString& topic) const;
     void scheduleRefresh();
     void processScheduledRefresh();
+    
+    // 背压处理方法
+    bool shouldApplyBackpressure(const QString& topic);
+    QVariant applyBackpressure(const QString& topic, const QVariant& value);
+    void processBackpressureQueue();
+    void consumeBackpressureItem(const QString& topic);
 };
 
 // ========== 模板实现 ==========
