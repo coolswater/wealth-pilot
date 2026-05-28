@@ -7,6 +7,8 @@
 #include "data/market/StockDataSource.h"
 #include <QDebug>
 
+#include "utils/Logger.h"
+
 namespace WealthPilot {
 namespace UI {
 
@@ -18,7 +20,7 @@ DataHubPageBase::DataHubPageBase(QWidget* parent)
 DataHubPageBase::~DataHubPageBase()
 {
     // DataHub 会自动清理 this 的所有订阅
-    qDebug() << "[DataHubPageBase] Destroyed, auto-unsubscribed topics:" << m_subscribedTopics.size();
+    LOG_DEBUG(QString("[DataHubPageBase] Destroyed, auto-unsubscribed topics: %1").arg(m_subscribedTopics.size()));
 }
 
 QMetaObject::Connection DataHubPageBase::subscribe(

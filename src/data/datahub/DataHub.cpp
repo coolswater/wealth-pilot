@@ -3,6 +3,8 @@
 #include <QDebug>
 #include <QDateTime>
 
+#include "utils/Logger.h"
+
 namespace WealthPilot {
 namespace DataHub {
 
@@ -10,8 +12,8 @@ namespace DataHub {
 
 void DataHub::shutdown()
 {
-    qDebug() << "[DataHub] Explicit shutdown called";
-    
+    LOG_DEBUG("[DataHub] Explicit shutdown called");
+
     // 停止调度器
     if (m_schedulerTimer) {
         m_schedulerTimer->stop();
@@ -34,8 +36,8 @@ void DataHub::shutdown()
     
     m_topics.clear();
     m_producers.clear();
-    
-    qDebug() << "[DataHub] Shutdown complete";
+
+    LOG_DEBUG("[DataHub] Shutdown complete");
 }
 
 // ========== 单例实现 ==========
@@ -55,14 +57,14 @@ DataHub::DataHub()
     connect(m_schedulerTimer, &QTimer::timeout, 
             this, &DataHub::processScheduledRefresh);
     m_schedulerTimer->start();
-    
-    qDebug() << "[DataHub] Initialized";
+
+    LOG_DEBUG("[DataHub] Initialized");
 }
 
 DataHub::~DataHub()
 {
-    qDebug() << "[DataHub] Shutdown starting...";
-    
+    LOG_DEBUG("[DataHub] Shutdown starting...");
+
     // 1. 先停止调度器（最重要！）
     if (m_schedulerTimer) {
         m_schedulerTimer->stop();
@@ -90,8 +92,8 @@ DataHub::~DataHub()
     
     // 4. 清理 topic 状态
     m_topics.clear();
-    
-    qDebug() << "[DataHub] Shutdown complete";
+
+    LOG_DEBUG("[DataHub] Shutdown complete");
 }
 
 // ========== 订阅实现 ==========
@@ -102,7 +104,7 @@ QMetaObject::Connection DataHub::subscribe(
     std::function<void(const QVariant&)> slot)
 {
     if (!owner || topic.isEmpty()) {
-        qWarning() << "[DataHub] Invalid subscribe parameters";
+        LOG_WARNING("[DataHub] Invalid subscribe parameters");
         return QMetaObject::Connection();
     }
     
@@ -141,11 +143,12 @@ QMetaObject::Connection DataHub::subscribe(
     if (state.cachedValue.isValid() && !isTopicExpired(topic)) {
         slot(state.cachedValue);
     }
-    
-    qDebug() << "[DataHub] Subscribed:" << topic 
-             << "owner:" << owner->objectName()
-             << "subscribers:" << state.subscribers.size();
-    
+
+    LOG_DEBUG(QString("[DataHub] Subscribed: %1 owner: %2 subscribers: %3")
+                  .arg(topic)
+                  .arg(owner->objectName())
+                  .arg(state.subscribers.size()));
+
     return QMetaObject::Connection();
 }
 
@@ -165,9 +168,8 @@ QMetaObject::Connection DataHub::subscribePattern(
     disconnect(owner, &QObject::destroyed, this, nullptr);
     connect(owner, &QObject::destroyed, 
             this, [this, owner]() { onOwnerDestroyed(owner); });
-    
-    qDebug() << "[DataHub] Subscribed pattern:" << pattern;
-    
+
+    LOG_DEBUG(QString("[DataHub] Subscribed pattern: %1").arg(pattern));
     return QMetaObject::Connection();
 }
 
@@ -262,9 +264,8 @@ void DataHub::publish(const QString& topic, const QVariant& value,
             }
         }
     }
-    
-    qDebug() << "[DataHub] Published:" << topic 
-             << "subscribers:" << state.subscribers.size();
+
+    LOG_DEBUG(QString("[DataHub] Published: %1 subscribers: %2").arg(topic,state.subscribers.size()));
 }
 
 // ========== Producer管理 ==========
@@ -285,9 +286,10 @@ void DataHub::registerProducer(IDataProducer* producer)
             }
         }
     }
-    
-    qDebug() << "[DataHub] Registered producer:" << producer->metaObject()->className()
-             << "patterns:" << producer->topicPatterns();
+
+    LOG_DEBUG(QString("[DataHub] Registered producer: %1 patterns: %2")
+                  .arg(producer->metaObject()->className())
+                  .arg(producer->topicPatterns().join(", ")));
 }
 
 void DataHub::unregisterProducer(IDataProducer* producer)

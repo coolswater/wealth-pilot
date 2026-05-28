@@ -26,7 +26,7 @@ bool DataHubBootstrap::initialize()
         return true;
     }
 
-    qDebug() << "[DataHubBootstrap] Initializing DataHub...";
+    LOG_DEBUG("[DataHubBootstrap] Initializing DataHub...");
 
     // 获取 DataHub 实例（确保初始化）
     [[maybe_unused]] auto& hub = DataHub::DataHub::instance();
@@ -41,7 +41,7 @@ bool DataHubBootstrap::initialize()
     registerProducers();
 
     m_initialized = true;
-    qDebug() << "[DataHubBootstrap] DataHub initialized successfully";
+    LOG_DEBUG("[DataHubBootstrap] DataHub initialized successfully");
 
     return true;
 }
@@ -52,7 +52,7 @@ void DataHubBootstrap::shutdown()
         return;
     }
 
-    qDebug() << "[DataHubBootstrap] Shutting down DataHub...";
+    LOG_DEBUG("[DataHubBootstrap] Shutting down DataHub...");
 
     // 1. 先注销 Producer（停止数据生产）
     auto& hub = DataHub::DataHub::instance();
@@ -66,7 +66,7 @@ void DataHubBootstrap::shutdown()
     hub.shutdown();
 
     m_initialized = false;
-    qDebug() << "[DataHubBootstrap] DataHub shutdown complete";
+    LOG_DEBUG("[DataHubBootstrap] DataHub shutdown complete");
 }
 
 void DataHubBootstrap::setupDefaultPolicies()
@@ -113,7 +113,7 @@ void DataHubBootstrap::setupDefaultPolicies()
     snapshotPolicy.priority = 10;
     hub.setPolicyPattern("market:snapshot:*", snapshotPolicy);
 
-    qDebug() << "[DataHubBootstrap] Default policies configured";
+    LOG_DEBUG("[DataHubBootstrap] Default policies configured");
 }
 
 void DataHubBootstrap::registerProducers()
@@ -123,7 +123,7 @@ void DataHubBootstrap::registerProducers()
     // 注册行情 Producer
     hub.registerProducer(m_marketProducer);
 
-    qDebug() << "[DataHubBootstrap] Producers registered";
+    LOG_DEBUG("[DataHubBootstrap] Producers registered");
 }
 
 } // namespace WealthPilot

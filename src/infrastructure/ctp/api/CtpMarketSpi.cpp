@@ -190,13 +190,12 @@ void CtpMarketSpi::unsubscribeMarketData(const QList<QString>& instruments) {
 
 // CTP回调实现
 void CtpMarketSpi::OnFrontConnected() {
-    qDebug() << "=== CtpMarketSpi::OnFrontConnected() CALLED ===";
     LOG_INFO("CtpMarketSpi::OnFrontConnected() - CTP server connected!");
     emit connected();
 }
 
 void CtpMarketSpi::OnFrontDisconnected(int nReason) {
-    qDebug() << "=== CtpMarketSpi::OnFrontDisconnected() CALLED, reason=" << nReason << " ===";
+    LOG_DEBUG(QString("=== CtpMarketSpi::OnFrontDisconnected() CALLED, reason= %1 ===").arg(nReason));
     LOG_WARNING(QString("CtpMarketSpi::OnFrontDisconnected() - reason: %1").arg(nReason));
     emit disconnected(nReason);
 }
@@ -208,13 +207,10 @@ void CtpMarketSpi::OnHeartBeatWarning(int nTimeLapse) {
 void CtpMarketSpi::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin,
                                   CThostFtdcRspInfoField *pRspInfo,
                                   int nRequestID, bool bIsLast) {
-    qDebug() << "=== CtpMarketSpi::OnRspUserLogin() CALLED ===";
-    
     bool success = (pRspInfo && pRspInfo->ErrorID == 0);
     QString msg = success ? "Login成功" :
                       (pRspInfo ? QString::fromLocal8Bit(pRspInfo->ErrorMsg) : "未知Error");
 
-    qDebug() << "Login result: success=" << success << ", msg=" << msg;
     LOG_INFO(QString("CtpMarketSpi::OnRspUserLogin() - success: %1, msg: %2, ErrorID: %3")
              .arg(success).arg(msg).arg(pRspInfo ? pRspInfo->ErrorID : -1));
 

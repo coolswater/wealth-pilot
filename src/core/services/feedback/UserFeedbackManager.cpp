@@ -376,7 +376,7 @@ void UserFeedbackManager::showDialog(const FeedbackRecord& record) {
 void UserFeedbackManager::showNotification(const FeedbackRecord& record) {
     // TODO: 实现系统通知
     // 使用 QSystemTrayIcon 或第三方库
-    qDebug() << "[Notification]" << record.title << ":" << record.message;
+    LOG_DEBUG(QString("[Notification] %1 : %2").arg(record.title, record.message));
 }
 
 void UserFeedbackManager::cleanupHistory() {

@@ -139,7 +139,7 @@ void TitleBarWidget::initConnections()
     connect(d->m_themeButton, &ThemeToggleButton::themeSwitchRequested,
             this, [this](ThemeType type)
             {
-                qDebug() << "User requested theme change to:" << static_cast<int>(type);
+                LOG_DEBUG(QString("User requested theme change to: %1").arg(static_cast<int>(type)));
                 // 实际切换主题
                 if (auto* tm = ThemeManager::instance())
                 {

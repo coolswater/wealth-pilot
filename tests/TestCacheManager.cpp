@@ -5,6 +5,7 @@
 
 #include <QtTest/QtTest>
 #include "../src/core/cache/CacheManager.h"
+#include "utils/Logger.h"
 
 class TestCacheManager : public QObject
 {
@@ -18,13 +19,13 @@ private slots:
             10 * 1024 * 1024,  // 10MB内存
             100 * 1024 * 1024  // 100MB磁盘
         ));
-        qDebug() << "CacheManager Test Suite Started";
+        LOG_DEBUG("CacheManager Test Suite Started");
     }
 
     void cleanupTestCase()
     {
         CacheManager::instance()->clearAll();
-        qDebug() << "CacheManager Test Suite Completed";
+        LOG_DEBUG("CacheManager Test Suite Completed");
     }
 
     void init()
@@ -154,7 +155,7 @@ private slots:
         }
         
         qint64 setTime = timer.elapsed();
-        qDebug() << "Set 1000 items in" << setTime << "ms";
+        LOG_DEBUG(QString("Set 1000 items in %1 ms").arg(setTime))
         
         // 性能测试：获取1000个缓存
         timer.restart();
@@ -165,7 +166,7 @@ private slots:
         }
         
         qint64 getTime = timer.elapsed();
-        qDebug() << "Get 1000 items in" << getTime << "ms";
+        LOG_DEBUG(QString("Get 1000 items in %1 ms").arg(getTime))
         
         // 平均每次操作应该小于1ms
         QVERIFY(setTime < 1000);

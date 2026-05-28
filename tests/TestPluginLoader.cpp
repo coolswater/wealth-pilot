@@ -6,6 +6,8 @@
 #include <QtTest/QtTest>
 #include <QPluginLoader>
 
+#include "utils/Logger.h"
+
 class TestPluginLoader : public QObject
 {
     Q_OBJECT
@@ -13,12 +15,12 @@ class TestPluginLoader : public QObject
 private slots:
     void initTestCase()
     {
-        qDebug() << "PluginLoader Test Suite Started";
+        LOG_DEBUG("PluginLoader Test Suite Started");
     }
 
     void cleanupTestCase()
     {
-        qDebug() << "PluginLoader Test Suite Completed";
+        LOG_DEBUG("PluginLoader Test Suite Completed");
     }
 
     void testPluginInterface()

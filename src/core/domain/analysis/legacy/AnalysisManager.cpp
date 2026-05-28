@@ -13,6 +13,8 @@
 #include "chanlun/ChanLunAnalyzer.h"
 #include <QDebug>
 
+#include "utils/Logger.h"
+
 namespace WealthPilot {
 namespace Analysis {
 
@@ -63,7 +65,7 @@ void AnalysisManager::initialize()
     // 设置信号连接
     setupSignalConnections();
 
-    qDebug() << "AnalysisManager initialized";
+    LOG_DEBUG("AnalysisManager initialized");
 }
 
 void AnalysisManager::registerAnalyzers()
@@ -88,7 +90,7 @@ void AnalysisManager::registerAnalyzers()
     d->analyzers[TheoryType::VolumePattern] = volumePattern;
     d->service->registerAnalyzer(volumePattern);
 
-    qDebug() << "Registered" << d->analyzers.size() << "analyzers";
+    LOG_DEBUG(QString("Registered %1 analyzers").arg(d->analyzers.size()));
 }
 
 void AnalysisManager::setupSignalConnections()
@@ -107,7 +109,7 @@ void AnalysisManager::setupSignalConnections()
 
     connect(d->service, &SignalService::alertTriggered,
             this, [this](const QString& symbol, const CompositeSignal& signal) {
-        qDebug() << "Alert for" << symbol << ":" << signal.description;
+        LOG_DEBUG(QString("Alert for %1 : %2").arg(symbol, signal.description));
     });
 }
 

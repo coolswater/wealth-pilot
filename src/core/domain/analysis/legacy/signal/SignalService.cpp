@@ -203,9 +203,10 @@ QMap<QString, QVariant> SignalService::getOverlayConfig(const QString& symbol) c
 void SignalService::onAnalyzerSignal(const UnifiedSignal& signal)
 {
     // 处理单个分析器产生的信号
-    qDebug() << "Signal from analyzer:" << signal.theoryName()
-             << "Direction:" << signal.directionText()
-             << "Confidence:" << signal.confidence;
+    LOG_DEBUG(QString("Signal from analyzer: %1 Direction: %2 Confidence: %3")
+                  .arg(signal.theoryName())
+                  .arg(signal.directionText())
+                  .arg(signal.confidence));
 }
 
 void SignalService::onTimerUpdate()
@@ -234,9 +235,10 @@ bool SignalService::shouldAlert(const CompositeSignal& signal)
 
 void SignalService::sendAlert(const QString& symbol, const CompositeSignal& signal)
 {
-    qDebug() << "Alert triggered for" << symbol
-             << "Direction:" << static_cast<int>(signal.direction)
-             << "Confidence:" << signal.confidence;
+    LOG_DEBUG(QString("Alert triggered for %1 Direction: %2 Confidence: %3")
+                  .arg(symbol)
+                  .arg(static_cast<int>(signal.direction))
+                  .arg(signal.confidence));
 
     // 发送预警信号
     emit alertTriggered(symbol, signal);
@@ -252,8 +254,7 @@ void SignalService::notifySubscribers(const QString& symbol, const CompositeSign
             // 检查订阅条件
             if (signal.confidence >= subscription.minConfidence) {
                 // 发送通知（实际应用中应该发送到指定渠道）
-                qDebug() << "Notifying subscriber:" << subscription.symbol
-                         << "Channel:" << subscription.alertChannel;
+                LOG_DEBUG(QString("Notifying subscriber: %1 Channel: %2").arg(subscription.symbol, subscription.alertChannel));
             }
         }
     }

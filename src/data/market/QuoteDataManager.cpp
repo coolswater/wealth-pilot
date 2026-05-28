@@ -240,7 +240,7 @@ void QuoteDataManager::generateMockData(int count)
 
     // 发送数据更新信号
     emit dataUpdated(getAllItems());
-    qDebug() << "Generated" << count << "mock items";
+    LOG_DEBUG(QString("Generated %1 mock items").arg(count));
 }
 
 /**
@@ -306,7 +306,7 @@ void QuoteDataManager::generateMockFuturesData()
     }
 
     emit dataUpdated(getAllItems());
-    qDebug() << "Generated" << futuresList.size() << "futures items";
+    LOG_DEBUG(QString("Generated %1 futures items").arg(futuresList.size()));
 }
 
 /**
@@ -419,7 +419,8 @@ void QuoteDataManager::startAutoUpdate(int intervalMs)
 {
     m_updateInterval = intervalMs;
     m_updateTimer->start(intervalMs);
-    qDebug() << "Auto update started, interval:" << intervalMs << "ms";
+
+    LOG_DEBUG(QString("Auto update started, interval: %1 ms").arg(intervalMs));
 }
 
 /**
@@ -428,7 +429,7 @@ void QuoteDataManager::startAutoUpdate(int intervalMs)
 void QuoteDataManager::stopAutoUpdate()
 {
     m_updateTimer->stop();
-    qDebug() << "Auto update stopped";
+    LOG_DEBUG("Auto update stopped");
 }
 
 /**
@@ -653,5 +654,7 @@ void QuoteDataManager::parseHistoryData(const QByteArray& data, const QString& c
     }
 
     // 这里可以存储到历史数据缓存，供复盘使用
-    qDebug() << "Parsed" << history.size() << "history items for" << code;
+    LOG_DEBUG(QString("Parsed %1 history items for %2")
+                  .arg(history.size())
+                  .arg(code));
 }

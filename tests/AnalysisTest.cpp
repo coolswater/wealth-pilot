@@ -6,6 +6,8 @@
 #include <QtTest/QtTest>
 #include <QRandomGenerator>
 
+#include "utils/Logger.h"
+
 class AnalysisTest : public QObject
 {
     Q_OBJECT
@@ -13,12 +15,12 @@ class AnalysisTest : public QObject
 private slots:
     void initTestCase()
     {
-        qDebug() << "Analysis Test Suite Started";
+        LOG_DEBUG("Analysis Test Suite Started");
     }
 
     void cleanupTestCase()
     {
-        qDebug() << "Analysis Test Suite Completed";
+        LOG_DEBUG("Analysis Test Suite Completed");
     }
 
     void testKLineDataStructure()

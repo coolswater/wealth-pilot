@@ -30,6 +30,8 @@
 #include <QDebug>
 #include <QStyle>
 
+#include "utils/Logger.h"
+
 // 静态单例实例指针初始化
 AnimationManager* AnimationManager::s_instance = nullptr;
 
@@ -274,7 +276,7 @@ AnimationManager::AnimationManager(QObject *parent)
  */
 AnimationManager::~AnimationManager()
 {
-    qDebug() << "AnimationManager cleaning up...";
+    LOG_DEBUG("AnimationManager cleaning up...");
 
     // 停止所有活跃动画
     stopAllAnimations();
@@ -302,7 +304,8 @@ AnimationManager::~AnimationManager()
     d->shadowEffectPool.clear();
 
     s_instance = nullptr;
-    qDebug() << "AnimationManager destroyed";
+
+    LOG_DEBUG("AnimationManager destroyed");
 }
 
 /**
@@ -313,7 +316,7 @@ AnimationManager* AnimationManager::instance()
     if (!s_instance) {
         // 确保在主线程创建
         if (QThread::currentThread() != QCoreApplication::instance()->thread()) {
-            qWarning() << "AnimationManager::instance() called from non-main thread!";
+            LOG_WARNING("AnimationManager::instance() called from non-main thread!");
             // 通过元对象系统排队到主线程创建，但此时返回 nullptr，调用方需要处理
             QMetaObject::invokeMethod(QCoreApplication::instance(), []() {
                 AnimationManager::instance();
@@ -346,7 +349,7 @@ void AnimationManager::initialize()
         return;
     }
 
-    qDebug() << "Initializing AnimationManager object pools...";
+    LOG_DEBUG("Initializing AnimationManager object pools...");
 
     // 预创建常用属性的动画对象
     const QByteArray commonProps[] = {"opacity", "pos", "geometry", "blurRadius", "offset", "value"};
@@ -371,7 +374,7 @@ void AnimationManager::initialize()
         d->shadowEffectPool.append(effect);
     }
 
-    qDebug() << "AnimationManager initialized with pools ready";
+    LOG_DEBUG("AnimationManager initialized with pools ready");
 }
 
 /**
@@ -513,7 +516,7 @@ QPropertyAnimation* AnimationManager::createAnimation(QObject* target, const QBy
 
     // 强制主线程检查
     if (!isMainThread()) {
-        qWarning() << "AnimationManager::createAnimation must be called from main thread!";
+        LOG_WARNING("AnimationManager::createAnimation must be called from main thread!");
         return nullptr;
     }
 

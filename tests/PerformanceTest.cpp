@@ -7,6 +7,8 @@
 #include <QElapsedTimer>
 #include <QRandomGenerator>
 
+#include "utils/Logger.h"
+
 class PerformanceTest : public QObject
 {
     Q_OBJECT
@@ -14,12 +16,12 @@ class PerformanceTest : public QObject
 private slots:
     void initTestCase()
     {
-        qDebug() << "Performance Test Suite Started";
+        LOG_DEBUG("Performance Test Suite Started");
     }
 
     void cleanupTestCase()
     {
-        qDebug() << "Performance Test Suite Completed";
+        LOG_DEBUG("Performance Test Suite Completed");
     }
 
     void testLoopPerformance()
@@ -33,7 +35,7 @@ private slots:
         }
 
         qint64 elapsed = timer.elapsed();
-        qDebug() << QString("Loop 1M iterations: %1ms").arg(elapsed);
+        LOG_DEBUG(QString("Loop 1M iterations: %1ms").arg(elapsed));
 
         // 应该在 100ms 内完成
         QVERIFY(elapsed < 100);
@@ -53,7 +55,7 @@ private slots:
         }
 
         qint64 elapsed = timer.elapsed();
-        qDebug() << QString("Generate 10K items: %1ms").arg(elapsed);
+        LOG_DEBUG(QString("Generate 10K items: %1ms").arg(elapsed));
 
         QCOMPARE(data.size(), 10000);
         QVERIFY(elapsed < 50);
@@ -70,7 +72,7 @@ private slots:
         }
 
         qint64 elapsed = timer.elapsed();
-        qDebug() << QString("String format 10K: %1ms").arg(elapsed);
+        LOG_DEBUG(QString("String format 10K: %1ms").arg(elapsed));
 
         QVERIFY(elapsed < 100);
     }

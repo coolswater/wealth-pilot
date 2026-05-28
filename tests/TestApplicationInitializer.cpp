@@ -6,6 +6,8 @@
 #include <QtTest/QtTest>
 #include <QElapsedTimer>
 
+#include "utils/Logger.h"
+
 class TestApplicationInitializer : public QObject
 {
     Q_OBJECT
@@ -13,12 +15,12 @@ class TestApplicationInitializer : public QObject
 private slots:
     void initTestCase()
     {
-        qDebug() << "ApplicationInitializer Test Suite Started";
+        LOG_DEBUG("ApplicationInitializer Test Suite Started");
     }
 
     void cleanupTestCase()
     {
-        qDebug() << "ApplicationInitializer Test Suite Completed";
+        LOG_DEBUG("ApplicationInitializer Test Suite Completed");
     }
 
     void testSingletonPattern()
@@ -65,7 +67,7 @@ private slots:
         }
         
         qint64 elapsed = timer.elapsed();
-        qDebug() << QString("Simulated init: %1ms").arg(elapsed);
+        LOG_DEBUG(QString("Simulated init: %1ms").arg(elapsed));
         QVERIFY(elapsed < 100);
     }
 };

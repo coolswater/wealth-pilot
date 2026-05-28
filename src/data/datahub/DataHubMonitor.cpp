@@ -33,7 +33,7 @@ void DataHubMonitor::start(int updateIntervalMs)
 {
     if (!m_timer->isActive()) {
         m_timer->start(updateIntervalMs);
-        qDebug() << "[DataHubMonitor] Started with interval" << updateIntervalMs << "ms";
+        LOG_DEBUG(QString("[DataHubMonitor] Started with interval %1 ms").arg(updateIntervalMs));
     }
 }
 
@@ -41,7 +41,7 @@ void DataHubMonitor::stop()
 {
     if (m_timer->isActive()) {
         m_timer->stop();
-        qDebug() << "[DataHubMonitor] Stopped";
+        LOG_DEBUG("[DataHubMonitor] Stopped");
     }
 }
 
@@ -85,7 +85,7 @@ void DataHubMonitor::reset()
     m_cacheHits.store(0);
     m_cacheMisses.store(0);
 
-    qDebug() << "[DataHubMonitor] Stats reset";
+    LOG_DEBUG("[DataHubMonitor] Stats reset");
 }
 
 void DataHubMonitor::recordSubscription()
@@ -142,11 +142,12 @@ void DataHubMonitor::onTimerTick()
 
     // 输出日志（可选）
     auto stats = getStats();
-    qDebug() << "[DataHubMonitor]"
-             << "Subscriptions:" << stats.activeSubscriptions
-             << "Publishes/s:" << publishesInInterval
-             << "AvgLatency:" << stats.avgCallbackLatencyUs << "us"
-             << "CacheHitRate:" << (stats.cacheHits + stats.cacheMisses > 0
-                                    ? (double)stats.cacheHits / (stats.cacheHits + stats.cacheMisses) * 100
-                                    : 0) << "%";
+
+    LOG_DEBUG(QString("[DataHubMonitor] Subscriptions: %1 Publishes/s: %2 AvgLatency: %3 us CacheHitRate: %4 %")
+                  .arg(stats.activeSubscriptions)
+                  .arg(publishesInInterval)
+                  .arg(stats.avgCallbackLatencyUs)
+                  .arg(stats.cacheHits + stats.cacheMisses > 0 
+                       ? (double)stats.cacheHits / (stats.cacheHits + stats.cacheMisses) * 100 
+                       : 0.0, 0, 'f', 1));
 }

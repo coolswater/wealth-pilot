@@ -81,8 +81,7 @@ void MarketDataProducer::onTopicIdle(const QString& topic)
 
     if (parsed.type == "quote") {
         m_activeStockSymbols.remove(parsed.symbol);
-        qDebug() << "[MarketDataProducer] Topic idle:" << topic
-                 << "remaining stock symbols:" << m_activeStockSymbols.size();
+        LOG_DEBUG(QString("[MarketDataProducer] Topic idle: %1 remaining stock symbols: %2 ").arg(topic, m_activeStockSymbols.size()));
     } else if (parsed.type == "futures") {
         m_activeFuturesSymbols.remove(parsed.symbol);
     } else if (parsed.type == "kline") {
@@ -97,8 +96,8 @@ void MarketDataProducer::onTopicActive(const QString& topic)
 
     if (parsed.type == "quote") {
         m_activeStockSymbols.insert(parsed.symbol);
-        qDebug() << "[MarketDataProducer] Topic active:" << topic
-                 << "total stock symbols:" << m_activeStockSymbols.size();
+
+        LOG_DEBUG(QString("[MarketDataProducer] Topic active: %1 total stock symbols: %2").arg(topic, m_activeStockSymbols.size()));
     } else if (parsed.type == "futures") {
         m_activeFuturesSymbols.insert(parsed.symbol);
     } else if (parsed.type == "kline") {
@@ -180,7 +179,7 @@ void MarketDataProducer::onStockDataReceived(const QVariantList& quotesData)
         count++;
     }
 
-    qDebug() << "[MarketDataProducer] Published" << count << "stock quotes";
+    LOG_DEBUG(QString("[MarketDataProducer] Published %1 stock quotes").arg(count));
 }
 
 void MarketDataProducer::onFuturesQuotesUpdated()
@@ -244,7 +243,7 @@ void MarketDataProducer::refreshFutures(const QString& symbol)
     if (m_futuresModel) {
         // 触发模型刷新请求
         // FuturesQuoteModel 内部会处理数据获取和更新
-        qDebug() << "[MarketDataProducer] Futures refresh requested:" << symbol;
+        LOG_DEBUG(QString("[MarketDataProducer] Futures refresh requested: %1").arg(symbol));
     }
 }
 
