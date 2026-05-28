@@ -6,7 +6,7 @@
 #include "StockInfoPanel.h"
 #include "infrastructure/config/Tokens.h"
 #include "presentation/components/StyleHelper.h"
-#include "core/services/cache/CacheManager.h"
+#include "services/cache/CacheManager.h"
 #include "data/DataStorageService.h"
 #include "shared/utils/Logger.h"
 #include <QVBoxLayout>

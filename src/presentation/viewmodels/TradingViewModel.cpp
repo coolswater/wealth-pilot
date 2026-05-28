@@ -7,8 +7,8 @@
  */
 
 #include "TradingViewModel.h"
-#include "core/trading/TradingService.h"
-#include "core/trading/RiskController.h"
+#include "domain/trading/TradingService.h"
+#include "domain/trading/RiskController.h"
 #include "shared/utils/Logger.h"
 
 #include <QMessageBox>

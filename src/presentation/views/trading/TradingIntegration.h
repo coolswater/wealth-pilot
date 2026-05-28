@@ -9,7 +9,7 @@
 #include <QObject>
 #include <QVector>
 #include <QVariantMap>
-#include "core/trading/TradingTypes.h"
+#include "domain/trading/TradingTypes.h"
 
 // Forward declarations in WealthPilot namespace
 namespace WealthPilot {

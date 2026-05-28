@@ -126,7 +126,8 @@ target_link_libraries(Infrastructure PUBLIC
         Qt6::WebSockets
         Qt6::Concurrent
         WealthPilot::Shared
-        WealthPilot::Core
+        WealthPilot::Domain
+        WealthPilot::Services
 )
 
 # ==================== 编译选项 ====================

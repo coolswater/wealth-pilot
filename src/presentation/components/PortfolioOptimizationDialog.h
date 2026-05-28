@@ -25,7 +25,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QGroupBox>
-#include "core/domain/portfolio/PortfolioOptimizer.h"
+#include "domain/portfolio/PortfolioOptimizer.h"
 
 /**
  * @brief 投资组合优化对话框

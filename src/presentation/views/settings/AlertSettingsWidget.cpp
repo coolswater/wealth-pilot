@@ -4,7 +4,7 @@
  */
 
 #include "AlertSettingsWidget.h"
-#include "core/services/alert/AlertNotificationService.h"
+#include "services/alert/AlertNotificationService.h"
 #include "presentation/components/StyleHelper.h"
 #include "presentation/styles/ButtonStyles.h"
 #include "infrastructure/config/ConfigManager.h"

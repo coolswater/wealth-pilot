@@ -23,7 +23,7 @@
 #include <QTableWidget>
 #include <QPushButton>
 #include <QTextEdit>
-#include "core/domain/analysis/legacy/AnalysisTypes.h"
+#include "domain/analysis/legacy/AnalysisTypes.h"
 
 namespace WealthPilot {
 namespace UI {

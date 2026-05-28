@@ -5,12 +5,14 @@
 
 #include "TradingPanel.h"
 #include "presentation/components/OrderDialog.h"
-#include "core/trading/TradingService.h"
+#include "services/trading/TradingService.h"
 #include "presentation/components/StyleHelper.h"
 #include "shared/utils/Logger.h"
 
 #include <QMessageBox>
 #include <QHeaderView>
+
+#include "domain/trading/TradingService.h"
 
 TradingPanel::TradingPanel(QWidget *parent)
     : QWidget(parent)

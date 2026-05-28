@@ -21,7 +21,7 @@
 #include "presentation/components/StyleHelper.h"
 #include "presentation/components/PageTemplate.h"
 #include "infrastructure/config/Tokens.h"
-#include "core/services/monitoring/PerformanceMonitor.h"
+#include "services/monitoring/PerformanceMonitor.h"
 #include "presentation/styles/ButtonStyles.h"
 #include "presentation/views/trading/TradeHistoryPage.h"
 #include "presentation/views/trading/ConditionOrderPage.h"

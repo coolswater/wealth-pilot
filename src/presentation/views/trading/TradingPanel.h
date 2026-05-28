@@ -27,7 +27,7 @@
 #include <QGroupBox>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include "core/trading/TradingTypes.h"
+#include "domain/trading/TradingTypes.h"
 #include "presentation/components/OrderDialog.h"
 #include "data/datahub/DataHub.h"
 

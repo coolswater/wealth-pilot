@@ -37,6 +37,7 @@
 #include "presentation/components/TickTableView.h"
 #include "presentation/components/ChartStatusBar.h"
 #include "infrastructure/plugins/ICTPPlugin.h"
+#include "infrastructure/ctp/service/CTPService.h"
 
 #include <QSplitter>
 #include <QDateTime>
@@ -44,7 +45,6 @@
 
 // 前向声明
 namespace CTP {
-    struct MarketData;
     class CTPService;
 }
 

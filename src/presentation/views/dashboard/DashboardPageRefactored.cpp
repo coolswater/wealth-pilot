@@ -18,7 +18,7 @@
 #include "presentation/styles/ThemeManager.h"
 #include "data/market/StockDataSource.h"
 #include "data/DataStorageService.h"
-#include "core/services/cache/CacheManager.h"
+#include "services/cache/CacheManager.h"
 #include "shared/utils/Logger.h"
 
 #include <QVBoxLayout>

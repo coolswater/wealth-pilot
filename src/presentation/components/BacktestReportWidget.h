@@ -22,7 +22,7 @@
 #include <memory>
 
 #include "BacktestChartWidget.h"
-#include "core/domain/backtest/BacktestEngine.h"
+#include "domain/backtest/BacktestEngine.h"
 
 namespace WealthPilot {
 

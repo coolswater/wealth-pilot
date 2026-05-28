@@ -9,7 +9,7 @@
 #include "infrastructure/config/Tokens.h"
 #include "shared/utils/Logger.h"
 #include "presentation/views/feedback/FeedbackDialog.h"
-#include "core/services/feedback/FeedbackSystem.h"
+#include "services/feedback/FeedbackSystem.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>

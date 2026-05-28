@@ -14,7 +14,7 @@
 #include "KLineChart.h"
 #include "SignalMarker.h"
 #include "SignalDetailPanel.h"
-#include "core/domain/analysis/legacy/AnalysisTypes.h"
+#include "domain/analysis/legacy/AnalysisTypes.h"
 #include <QWidget>
 #include <QSplitter>
 

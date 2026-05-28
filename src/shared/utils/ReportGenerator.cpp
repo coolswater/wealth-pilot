@@ -7,8 +7,8 @@
 #include "ExcelExporter.h"
 #include "data/DataStorage.h"
 #include "data/DataStorageService.h"
-#include "core/trading/TradingService.h"
-#include "core/trading/PositionManager.h"
+#include "services/trading/TradingService.h"
+#include "domain/trading/PositionManager.h"
 #include "shared/utils/Logger.h"
 
 #include <QMutexLocker>

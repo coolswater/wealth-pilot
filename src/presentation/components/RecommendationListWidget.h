@@ -21,7 +21,7 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QVBoxLayout>
-#include "core/domain/recommendation/PersonalizedRecommendation.h"
+#include "domain/recommendation/PersonalizedRecommendation.h"
 
 /**
  * @brief 推荐列表组件

@@ -16,11 +16,11 @@
 #define TRADINGVIEWMODEL_H
 
 #include "ViewModelBase.h"
-#include "core/trading/TradingTypes.h"
+#include "domain/trading/TradingTypes.h"
+#include "domain/trading/TradingService.h"
 #include <QTimer>
 
 // 前向声明
-class TradingService;
 class RiskController;
 
 namespace WealthPilot

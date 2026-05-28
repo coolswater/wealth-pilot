@@ -13,8 +13,8 @@
 #include "FuturesPageIntegration.h"
 #include "FuturesQuotesPage.h"
 #include "FuturesKLinePage.h"
-#include "core/services/navigation/PageNavigator.h"
-#include "core/services/di/ServiceLocator.h"
+#include "services/navigation/PageNavigator.h"
+#include "services/di/ServiceLocator.h"
 #include "infrastructure/plugins/ICTPPlugin.h"
 #include "shared/utils/Logger.h"
 #include <QStackedWidget>

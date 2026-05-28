@@ -26,7 +26,7 @@
 #include "data/DataStorageService.h"
 #include "data/datahub/DataHub.h"
 #include "shared/utils/Logger.h"
-#include "core/services/cache/CacheManager.h"
+#include "services/cache/CacheManager.h"
 #include "shared/utils/Logger.h"
 
 #include <QVBoxLayout>

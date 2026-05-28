@@ -15,7 +15,7 @@
 #ifndef NETWORKCACHE_H
 #define NETWORKCACHE_H
 
-#include "core/services/cache/CacheManager.h"
+#include "services/cache/CacheManager.h"
 #include <QObject>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>

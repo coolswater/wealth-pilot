@@ -23,7 +23,7 @@
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QtConcurrent>
-#include "core/services/di/ServiceLocator.h"
+#include "services/di/ServiceLocator.h"
 #include <functional>
 #include <memory>
 

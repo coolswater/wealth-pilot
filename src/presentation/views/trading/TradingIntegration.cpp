@@ -6,8 +6,9 @@
 #include "TradingIntegration.h"
 #include "TradeHistoryPage.h"
 #include "ConditionOrderPage.h"
-#include "core/trading/TradingService.h"
-#include "core/trading/TradingTypes.h"
+#include "domain/trading/TradingService.h"
+#include "services/trading/TradingService.h"
+#include "domain/trading/TradingTypes.h"
 #include "shared/utils/Logger.h"
 
 namespace Trading {

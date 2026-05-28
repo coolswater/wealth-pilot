@@ -17,9 +17,9 @@
 #define ORDERVIEWMODEL_H
 
 #include "ViewModelBase.h"
-#include "core/trading/TradingTypes.h"
-#include "core/trading/TradingService.h"
-#include "core/trading/RiskController.h"
+#include "domain/trading/TradingTypes.h"
+#include "domain/trading/TradingService.h"
+#include "domain/trading/RiskController.h"
 #include <QTimer>
 
 namespace WealthPilot

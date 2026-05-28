@@ -16,7 +16,7 @@
 #include <QPushButton>
 #include <QTableWidget>
 #include <QLineEdit>
-#include "core/services/alert/SmartAlertSystem.h"
+#include "services/alert/SmartAlertSystem.h"
 
 class AlertSettingDialog : public QDialog
 {

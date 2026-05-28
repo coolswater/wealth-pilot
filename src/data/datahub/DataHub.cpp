@@ -1,5 +1,5 @@
 #include "DataHub.h"
-#include "core/services/cache/CacheManager.h"
+#include "services/cache/CacheManager.h"
 #include <QDebug>
 #include <QDateTime>
 

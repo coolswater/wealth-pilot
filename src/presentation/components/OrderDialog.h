@@ -17,7 +17,7 @@
 #include <QFrame>
 #include <QMap>
 #include <QString>
-#include "core/trading/TradingTypes.h"
+#include "domain/trading/TradingTypes.h"
 #include "infrastructure/config/Tokens.h"
 
 // Use types from TradingTypes.h

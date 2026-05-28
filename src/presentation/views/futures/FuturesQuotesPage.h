@@ -20,6 +20,7 @@
 #include <memory>
 #include <atomic>
 #include <presentation/components/DataHubPageBase.h>
+#include "infrastructure/ctp/service/CTPService.h"
 
 // 前向声明
 QT_BEGIN_NAMESPACE
@@ -31,7 +32,6 @@ QT_END_NAMESPACE
 
 namespace CTP {
 class CTPService;
-struct MarketData;
 }
 
 class FuturesQuoteModel;

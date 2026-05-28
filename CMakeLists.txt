@@ -4,6 +4,16 @@
 cmake_minimum_required(VERSION 3.16)
 project(WealthPilot VERSION 1.0.0 LANGUAGES CXX)
 
+# ==================== MinGW PATH 配置 ====================
+# 确保 MinGW bin 目录在 PATH 中（解决 'as' 找不到的问题）
+if (WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # 获取 MinGW 编译器目录
+    get_filename_component(MINGW_BIN_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
+    # 设置环境变量，确保 as.exe 可以被找到
+    set(ENV{PATH} "${MINGW_BIN_DIR};$ENV{PATH}")
+    message(STATUS "MinGW bin directory added to PATH: ${MINGW_BIN_DIR}")
+endif ()
+
 # ==================== 编译器版本检验 (C++20要求) ====================
 if (MSVC AND MSVC_VERSION LESS 1930)
     message(FATAL_ERROR
@@ -127,14 +137,21 @@ set(WEALTHPILOT_INCLUDE_DIRS
         ${CMAKE_SOURCE_DIR}/external
         ${CMAKE_SOURCE_DIR}/src
 )
-
 # ==================== 添加子目录 ====================
-add_subdirectory(src/shared)
-add_subdirectory(src/core)
+# Application Service Layer (应用服务层)
+add_subdirectory(src/application)
+
+# Domain Layer (业务领域层)
+add_subdirectory(src/domain)
+
+# Services Layer (应用服务层)
+add_subdirectory(src/services)
+
+# Data Layer (数据层)
 add_subdirectory(src/data)
 add_subdirectory(src/infrastructure)
 add_subdirectory(src/presentation)
-add_subdirectory(src/app)
+add_subdirectory(src/shared)
 
 # ==================== 主可执行文件 ====================
 add_executable(WealthPilot WIN32 MACOSX_BUNDLE
@@ -143,8 +160,9 @@ add_executable(WealthPilot WIN32 MACOSX_BUNDLE
 
 # 链接所有模块
 target_link_libraries(WealthPilot PRIVATE
-        WealthPilot::App
-        WealthPilot::Core
+        WealthPilot::AppLib
+        WealthPilot::Domain
+        WealthPilot::Services
         WealthPilot::Data
         WealthPilot::Infrastructure
         WealthPilot::Presentation

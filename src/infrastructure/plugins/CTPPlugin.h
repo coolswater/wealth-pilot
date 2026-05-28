@@ -16,9 +16,9 @@
 #define CTPPLUGIN_H
 
 #include "ICTPPlugin.h"
-#include "core/services/di/ServiceLocator.h"
+#include "services/di/ServiceLocator.h"
 #include "infrastructure/config/EnvironmentConfig.h"
-#include "core/services/cache/CacheManager.h"
+#include "services/cache/CacheManager.h"
 #include <QTimer>
 #include <QQueue>
 #include <memory>

@@ -31,9 +31,9 @@
 #include "shared/utils/Logger.h"
 #include "infrastructure/database/DatabaseManager.h"
 #include "src/presentation/viewmodels/ViewModelRegistration.h"
-#include "core/services/lifecycle/ServiceLifecycle.h"
-#include "core/services/alert/AlertNotificationService.h"
-#include "app/ApplicationInitializer.h"
+#include "services/lifecycle/ServiceLifecycle.h"
+#include "services/alert/AlertNotificationService.h"
+#include "application/ApplicationInitializer.h"
 #include "data/datahub/DataHub.h"
 #include <QApplication>
 #include <QThreadPool>
@@ -44,7 +44,7 @@
 #include <QQmlEngine>
 #include <QtCharts/QChart>
 
-#include "app/FeatureIntegration.h"
+#include "application/FeatureIntegration.h"
 
 // 导入 Qt Charts QML 插件
 #ifdef QT_CHARTS_LIB

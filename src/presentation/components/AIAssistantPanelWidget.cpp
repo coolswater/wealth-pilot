@@ -8,7 +8,7 @@
 #include "infrastructure/config/Tokens.h"
 #include "infrastructure/config/ConfigManager.h"
 #include "shared/utils/Logger.h"
-#include "core/services/navigation/PageNavigator.h"
+#include "services/navigation/PageNavigator.h"
 
 #include <QHBoxLayout>
 #include <QLabel>

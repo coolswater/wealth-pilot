@@ -4,7 +4,7 @@
  */
 
 #include "NewsDataSource.h"
-#include "core/domain/analysis/NewsSentimentAnalyzer.h"
+#include "domain/analysis/NewsSentimentAnalyzer.h"
 #include "shared/utils/Logger.h"
 #include <QNetworkReply>
 #include <QJsonDocument>

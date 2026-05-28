@@ -260,7 +260,8 @@ target_link_libraries(Presentation PUBLIC
         Qt6::Network
         Qt6::Sql
         WealthPilot::Shared
-        WealthPilot::Core
+        WealthPilot::Domain
+        WealthPilot::Services
         WealthPilot::Data
 )
 

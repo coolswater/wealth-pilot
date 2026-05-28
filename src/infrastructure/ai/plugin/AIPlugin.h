@@ -16,9 +16,9 @@
 #define AIPLUGIN_H
 
 #include "../../plugins/IAIPlugin.h"
-#include "core/services/di/ServiceLocator.h"
+#include "services/di/ServiceLocator.h"
 #include "infrastructure/config/EnvironmentConfig.h"
-#include "core/services/cache/CacheManager.h"
+#include "services/cache/CacheManager.h"
 #include <QTimer>
 #include <QNetworkAccessManager>
 #include <QQueue>

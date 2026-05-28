@@ -6,7 +6,7 @@
 #include "ConditionOrderPage.h"
 #include "infrastructure/config/Tokens.h"
 #include "presentation/components/StyleHelper.h"
-#include "core/trading/ConditionOrderEngine.h"
+#include "domain/trading/ConditionOrderEngine.h"
 #include "shared/utils/Logger.h"
 
 #include <QVBoxLayout>

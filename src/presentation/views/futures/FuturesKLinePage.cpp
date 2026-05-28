@@ -20,9 +20,9 @@
 #include <QTimer>
 #include <QResizeEvent>
 
-#include "core/services/navigation/PageNavigator.h"
-#include "core/services/di/ServiceLocator.h"
-#include "core/services/cache/CacheManager.h"
+#include "services/navigation/PageNavigator.h"
+#include "services/di/ServiceLocator.h"
+#include "services/cache/CacheManager.h"
 #include "infrastructure/plugins/IAIPlugin.h"
 #include "shared/utils/Logger.h"
 #include "shared/utils/TechnicalIndicators.h"

@@ -11,7 +11,7 @@ target_include_directories(CacheManagerTest PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(CacheManagerTest
         PRIVATE
         Qt6::Test
-        WealthPilot::Core
+        WealthPilot::Services
 )
 add_test(NAME CacheManagerTest COMMAND CacheManagerTest)
 

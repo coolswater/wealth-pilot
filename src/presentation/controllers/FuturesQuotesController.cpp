@@ -9,7 +9,7 @@
 #include "FuturesQuotesController.h"
 #include "data/models/FuturesQuoteModel.h"
 #include "data/models/FuturesQuoteItem.h"
-#include "core/services/di/ServiceLocator.h"
+#include "services/di/ServiceLocator.h"
 #include "shared/utils/Logger.h"
 
 #include <QSortFilterProxyModel>

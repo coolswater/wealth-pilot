@@ -24,7 +24,7 @@
 #include <QPropertyAnimation>
 #include <QQueue>
 #include <memory>
-#include "core/services/feedback/UserFeedbackManager.h"
+#include "services/feedback/UserFeedbackManager.h"
 
 namespace WealthPilot {
 namespace UI {

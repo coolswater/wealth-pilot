@@ -4,11 +4,11 @@
  */
 
 #include "MainWindow.h"
-#include "app/ApplicationInitializer.h"
-#include "core/services/di/ServiceLocator.h"
+#include "application/ApplicationInitializer.h"
+#include "services/di/ServiceLocator.h"
 #include "infrastructure/config/EnvironmentConfig.h"
 #include "infrastructure/config/Tokens.h"
-#include "core/services/navigation/PageNavigator.h"
+#include "services/navigation/PageNavigator.h"
 #include "presentation/styles/ThemeManager.h"
 #include "presentation/components/StyleHelper.h"
 #include "presentation/components/LayoutConstants.h"
@@ -36,7 +36,7 @@
 #include "../stock/StockKLinePage.h"
 #include "../futures/FuturesKLinePage.h"
 #include "../feedback/FeedbackDialog.h"
-#include "core/services/feedback/FeedbackSystem.h"
+#include "services/feedback/FeedbackSystem.h"
 #include "presentation/components/BasePage.h"
 
 // 使用 WealthPilot 命名空间中的类

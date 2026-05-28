@@ -8,7 +8,7 @@
 
 #include "AIStockPicker.h"
 #include "AIService.h"
-#include "core/services/cache/CacheManager.h"
+#include "services/cache/CacheManager.h"
 #include "data/DataStorageService.h"
 #include "shared/types/MarketTypes.h"
 #include "shared/utils/Logger.h"
