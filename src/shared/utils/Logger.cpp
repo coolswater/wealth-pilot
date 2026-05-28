@@ -11,6 +11,7 @@
 #include <QDir>
 #include <QMutexLocker>
 #include <QRegularExpression>
+#include <cstdio>
 
 // ========== PIMPL 实现 ==========
 
@@ -23,6 +24,7 @@ struct Logger::Impl {
     QString logFileBaseName;  ///< 日志文件基础名称（不含日期）
     QDate currentDate;        ///< 当前日期（用于检测日期变化）
     int maxDays = 30;         ///< 保留日志的最大天数
+    bool consoleOutput = true; ///< 是否输出到控制台
 };
 
 // ========== 构造和析构 ==========
@@ -119,23 +121,12 @@ void Logger::log(Level level, const QString& message)
     QString levelStr = levelToString(level);
     QString formatted = QString("[%1] [%2] %3").arg(timestamp, levelStr, message);
 
-    // 输出到控制台
-    {
+    // 输出到控制台（使用 fprintf 直接输出到 stdout/stderr，避免被 GDB 捕获）
+    if (d->consoleOutput) {
         QMutexLocker locker(&d->mutex);
-        switch (level) {
-            case Level::Debug:
-                qDebug().noquote() << formatted;
-                break;
-            case Level::Info:
-                qInfo().noquote() << formatted;
-                break;
-            case Level::Warning:
-                qWarning().noquote() << formatted;
-                break;
-            case Level::Error:
-                qCritical().noquote() << formatted;
-                break;
-        }
+        FILE* out = (level >= Level::Warning) ? stderr : stdout;
+        fprintf(out, "%s\n", formatted.toUtf8().constData());
+        fflush(out);
     }
 
     // 输出到文件

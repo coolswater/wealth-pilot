@@ -254,6 +254,27 @@ if (WIN32)
                 "$<TARGET_FILE:WealthPilot>"
         )
     endif ()
+
+    # 使用 rcedit 设置 exe 图标（构建后处理）
+    # rcedit.exe 已下载到 tools 目录
+    set(RCEDIT_EXECUTABLE "${CMAKE_SOURCE_DIR}/tools/rcedit.exe")
+    if (EXISTS "${RCEDIT_EXECUTABLE}")
+        add_custom_command(TARGET WealthPilot POST_BUILD
+                COMMAND "${RCEDIT_EXECUTABLE}"
+                "$<TARGET_FILE:WealthPilot>"
+                --set-icon "${CMAKE_SOURCE_DIR}/resources/images/appicon.ico"
+                --set-file-version "1.0.0.0"
+                --set-product-version "1.0.0.0"
+                --set-version-string "CompanyName" "Hexd"
+                --set-version-string "FileDescription" "WealthPilot"
+                --set-version-string "ProductName" "WealthPilot"
+                --set-version-string "LegalCopyright" "Copyright 2026 Hexd"
+                COMMENT "Setting exe icon and version info"
+        )
+        message(STATUS "Using rcedit for exe icon: ${RCEDIT_EXECUTABLE}")
+    else ()
+        message(STATUS "rcedit not found at ${RCEDIT_EXECUTABLE} - exe icon will use default")
+    endif ()
 endif ()
 
 # ==================== 输出信息 ====================
