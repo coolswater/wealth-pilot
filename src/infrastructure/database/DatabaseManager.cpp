@@ -425,6 +425,12 @@ bool DatabaseManager::initialize(const DatabaseConfig& config)
 {
     QMutexLocker locker(&m_mutex);
     
+    // 检查是否已初始化，避免重复初始化导致连接池被销毁
+    if (m_connectionPool) {
+        LOG_DEBUG("DatabaseManager already initialized, skipping");
+        return true;
+    }
+    
     // Create connection pool
     m_connectionPool = std::make_unique<ConnectionPool>(config);
     m_connectionPool->initialize();
